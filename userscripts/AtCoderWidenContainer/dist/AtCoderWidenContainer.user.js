@@ -8,8 +8,8 @@
 // @description:ja AtCoderのページ幅を広げるユーザースクリプト
 // @author         nsubaru
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/AtCoderWidenContainer
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderWidenContainer
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/*
 // @exclude        https://atcoder.jp/
 // @exclude        https://atcoder.jp/?*
@@ -19,8 +19,8 @@
 // @grant          GM_registerMenuCommand
 // @run-at         document-start
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js
 // ==/UserScript==
 
 "use strict";

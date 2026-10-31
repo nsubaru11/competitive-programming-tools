@@ -45,14 +45,14 @@ bun run --cwd userscripts ./build.ts AtCoderHighlighter
 
 提出一覧の絞り込み・並び替えのデフォルトを適用します。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderCustomDefaultSubmissions/dist/AtCoderCustomDefaultSubmissions.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderCustomDefaultSubmissions/dist/AtCoderCustomDefaultSubmissions.user.js)
 
 ### AtCoder Easy Test for Java
 
 サンプル入出力のテストを簡単に行えるようにします（Java 向け拡張）。出力比較は `@atcoder-tools/shared` の
 `evaluateEasyTestOutput` と runner CLI で共通です。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js)
 - ローカル実行: [local-runner/README.md](../local-runner/README.md)
 
 ### AtCoder Highlighter
@@ -65,7 +65,7 @@ bun run --cwd userscripts ./build.ts AtCoderHighlighter
 
 「問題」タブにホバーで各問題へ飛べるドロップダウンを表示します。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderListingTasks/dist/AtCoderListingTasks.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderListingTasks/dist/AtCoderListingTasks.user.js)
 
 ### AtCoder Markdown Copier
 
@@ -77,19 +77,19 @@ AtCoder の問題文を Markdown 形式でコピーする機能を追加しま�
 
 レーティンググラフにパフォーマンスを重ねて表示します。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js)
 
 ### AtCoder Widen Container
 
 AtCoder のページ中央コンテナを指定した幅に広げます。設定は Tampermonkey のユーザースクリプトメニューから変更できます。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js)
 
 ### Java Code Submitter
 
 Java 提出の補助（Compiler APIによるMain/DEBUG/library変換、折りたたみ、ショートカット）。LocalRunner不在時のみsharedの字句変換へフォールバックします。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js)
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js)
 
 ## 使い方（利用者向け）
 

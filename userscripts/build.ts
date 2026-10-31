@@ -46,12 +46,15 @@ type ScriptMeta = { [K in MetaSingleKey]?: string; } & { [K in MetaMultiKey]?: s
 // endregion
 
 // region 共通メタ（全スクリプト共通で自動補完されるフィールド）
-const REPO_ROOT = "https://github.com/nsubaru11/atcoder-java-tools";
-const RAW_ROOT = "https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main";
+const REPO_SLUG = "nsubaru11/competitive-programming-tools";
+const REPO_ROOT = `https://github.com/${REPO_SLUG}`;
+const RAW_ROOT = `https://raw.githubusercontent.com/${REPO_SLUG}/main`;
+// Tampermonkey は namespace と name でスクリプトを識別するため、リポジトリ改名後も変更しない。
+const SCRIPT_NAMESPACE = "https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts";
 
 function buildCommonMeta(scriptName: string): Partial<ScriptMeta> {
 	return {
-		namespace: `${REPO_ROOT}/tree/main/userscripts`,
+		namespace: SCRIPT_NAMESPACE,
 		icon: "https://atcoder.jp/favicon.ico",
 		license: "MIT",
 		homepageURL: `${REPO_ROOT}/tree/main/userscripts/${scriptName}`,

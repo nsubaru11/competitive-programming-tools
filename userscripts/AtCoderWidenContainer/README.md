@@ -15,4 +15,4 @@ AtCoder の標準レイアウトでは画面幅に対してコンテンツの最
 
 ## インストール
 
-[Tampermonkey に追加する](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js)
+[Tampermonkey に追加する](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js)

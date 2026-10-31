@@ -8,8 +8,8 @@
 // @description:ja AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。
 // @author         magurofly (original), nsubaru (modified)
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/AtCoderEasyTestForJava
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderEasyTestForJava
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/contests/*/tasks/*
 // @match          https://atcoder.jp/contests/*/submit*
 // @match          https://yukicoder.me/problems/no/*
@@ -28,8 +28,8 @@
 // @grant          GM_setValue
 // @run-at         document-end
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js
 // ==/UserScript==
 
 (() => {

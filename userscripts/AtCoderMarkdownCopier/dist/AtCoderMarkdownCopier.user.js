@@ -8,15 +8,15 @@
 // @description:ja AtCoderの問題文をMarkdown形式でコピーする機能を追加します。
 // @author         nsubaru
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/AtCoderMarkdownCopier
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderMarkdownCopier
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/contests/*/tasks/*
 // @grant          GM_setClipboard
 // @require        https://unpkg.com/turndown/dist/turndown.js
 // @require        https://unpkg.com/turndown-plugin-gfm/dist/turndown-plugin-gfm.js
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderMarkdownCopier/dist/AtCoderMarkdownCopier.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderMarkdownCopier/dist/AtCoderMarkdownCopier.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderMarkdownCopier/dist/AtCoderMarkdownCopier.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderMarkdownCopier/dist/AtCoderMarkdownCopier.user.js
 // ==/UserScript==
 
 (() => {

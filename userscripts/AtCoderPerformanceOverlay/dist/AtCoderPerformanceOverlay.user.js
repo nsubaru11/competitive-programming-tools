@@ -8,8 +8,8 @@
 // @description:ja レーティンググラフにパフォーマンスのグラフを重ねて表示します。
 // @author         nzm_ort (original), nsubaru (modified)
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/AtCoderPerformanceOverlay
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderPerformanceOverlay
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/users/*
 // @exclude        *://atcoder.jp/users/*?graph=rank
 // @exclude        *://atcoder.jp/users/*?graph=dist
@@ -17,8 +17,8 @@
 // @grant          none
 // @run-at         document-end
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js
 // ==/UserScript==
 
 "use strict";

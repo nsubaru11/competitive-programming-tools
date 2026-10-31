@@ -8,8 +8,8 @@
 // @description:ja Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。
 // @author         nsubaru
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/JavaCodeSubmitter
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/JavaCodeSubmitter
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://onlinejudge.u-aizu.ac.jp/*
 // @match          https://atcoder.jp/contests/*
 // @match          https://judge.yosupo.jp/problem/*
@@ -21,8 +21,8 @@
 // @connect        127.0.0.1
 // @run-at         document-end
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js
 // ==/UserScript==
 
 (() => {

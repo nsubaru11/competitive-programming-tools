@@ -8,16 +8,16 @@
 // @description:ja AtCoder の問題文中の数字と変数、実行時間/メモリ制限を自動で強調表示させます
 // @author         nsubaru
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts/AtCoderHighlighter
-// @supportURL     https://github.com/nsubaru11/atcoder-java-tools/issues
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderHighlighter
+// @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/contests/*/tasks/*
 // @grant          GM_getValue
 // @grant          GM_setValue
 // @grant          GM_registerMenuCommand
 // @run-at         document-idle
 // @icon           https://atcoder.jp/favicon.ico
-// @updateURL      https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderHighlighter/dist/AtCoderHighlighter.user.js
-// @downloadURL    https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderHighlighter/dist/AtCoderHighlighter.user.js
+// @updateURL      https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderHighlighter/dist/AtCoderHighlighter.user.js
+// @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderHighlighter/dist/AtCoderHighlighter.user.js
 // ==/UserScript==
 
 (() => {

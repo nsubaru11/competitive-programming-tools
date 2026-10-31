@@ -16,7 +16,7 @@ Java 提出時に必要となる `public class Main` への書き換えや、デ
 
 ## インストール
 
-[Tampermonkey に追加する](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js)
+[Tampermonkey に追加する](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js)
 
 Compiler API変換には`http://localhost:8080`のLocalRunnerが必要です。利用できない場合は従来の字句変換へフォールバックします。
 LocalRunner通信にはTampermonkeyの`GM_xmlhttpRequest`を使用するため、Library Checkerなどページ側のContent Security Policyがlocalhostへの通常fetchを禁止していても変換できます。接続権限は`localhost`と`127.0.0.1`だけに限定しています。
