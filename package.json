@@ -7,8 +7,9 @@
 		"userscripts"
 	],
 	"scripts": {
-		"typecheck:userscripts": "bun --cwd userscripts run typecheck",
-		"build:userscripts": "bun --cwd userscripts run build",
-		"typecheck:runner": "bun --cwd local-runner run typecheck"
+		"typecheck:userscripts": "bun run --cwd userscripts typecheck",
+		"test:userscripts": "bun run --cwd userscripts test",
+		"build:userscripts": "bun run --cwd userscripts build",
+		"typecheck:runner": "bun run --cwd local-runner typecheck"
 	}
 }
