@@ -1,11 +1,12 @@
 {
 	"name": "AtCoder Performance Overlay",
 	"name:en": "AtCoder Performance Overlay",
-	"version": "1.1.10",
+	"version": "1.1.11",
 	"description": "レーティンググラフにパフォーマンスのグラフを重ねて表示します。",
 	"description:ja": "レーティンググラフにパフォーマンスのグラフを重ねて表示します。",
 	"description:en": "Overlays performance charts on the AtCoder rating graph.",
 	"author": "nzm_ort (original), nsubaru (modified)",
+	"license": "MIT",
 	"match": [
 		"https://atcoder.jp/users/*"
 	],

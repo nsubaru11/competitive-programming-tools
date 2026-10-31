@@ -69,7 +69,6 @@ const STAR_MIN = 3200;
 const PARTICLE_MIN = 3;
 const PARTICLE_MAX = 20;
 const LIFE_MAX = 30;
-const EPS = 1e-9;
 
 let cj: any = null;
 let stage_graph: any, stage_status: any;
@@ -145,7 +144,6 @@ let chart_container: {shadow: any;}, line_shape: {
 let n: number, x_min: number, x_max: number, y_min: number, y_max: number;
 
 //performance graph - グローバルスコープで明示的に定義
-let perf_panel_shape: any, perf_border_shape: any;
 let perf_chart_container: {shadow: any; visible: boolean;}, perf_line_shape: {
 	graphics: {
 		s: (arg0: string) => {(): any; new(): any; ss: {(arg0: number): void; new(): any;};};
@@ -174,7 +172,7 @@ let perf_chart_container: {shadow: any; visible: boolean;}, perf_line_shape: {
 	i: number;
 	addEventListener: (arg0: string, arg1: {(e: any): void; (e: any): void;}) => void;
 };
-let perf_n: number, perf_x_min: number, perf_x_max: number, perf_y_min: number, perf_y_max: number;
+let perf_n: number, perf_y_min: number, perf_y_max: number;
 // windowオブジェクトに格納してグローバルアクセスを保証
 window.perf_rating_history = [];
 
