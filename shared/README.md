@@ -34,4 +34,4 @@ import {
 - **ここに置くもの**: runner と userscript の両方が必要とするロジック（URL、ジャッジ、Local Runner プロトコル、Java 変換、設定 JSON）
 - **ここに置かないもの**: DOM 操作、Tampermonkey UI、CLI のログ表示、JVM 常駐プロセスなど環境依存の処理
 
-`userscripts` のビルドでは Bun の alias `@shared` でこのパッケージをバンドルします。`runner` は workspace 依存として import します。
+`userscripts` のビルドでは Bun の alias `@shared` でこのパッケージをバンドルします。`runner` は workspace 依存として import します。`userscripts/CpToolkit` はプロジェクト参照で利用するので、`tsconfig.json` の `composite` は外さないでください。

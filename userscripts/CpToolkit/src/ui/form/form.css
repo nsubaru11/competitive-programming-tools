@@ -1,0 +1,77 @@
+.switch {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	width: 36px;
+	height: 20px;
+}
+
+.switch input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.switch span {
+	width: 100%;
+	border-radius: 10px;
+	background: var(--cp-border);
+	transition: background 120ms;
+}
+
+.switch span::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--cp-surface);
+	transition: transform 120ms;
+}
+
+.switch input:checked + span {
+	background: var(--cp-accent);
+}
+
+.switch input:checked + span::after {
+	transform: translateX(16px);
+}
+
+.switch input:focus-visible + span {
+	outline: 2px solid var(--cp-accent);
+	outline-offset: 2px;
+}
+
+.field {
+	display: grid;
+	gap: 4px;
+}
+
+.field-label {
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.field input:not([type="checkbox"], [type="color"]),
+.field select {
+	width: 100%;
+	padding: 4px 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.field input[aria-invalid="true"] {
+	border-color: var(--cp-danger);
+}
+
+.field-error {
+	color: var(--cp-danger);
+	font-size: 12px;
+}

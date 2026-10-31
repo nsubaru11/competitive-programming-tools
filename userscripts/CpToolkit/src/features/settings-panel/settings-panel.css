@@ -1,0 +1,102 @@
+.notice {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: var(--cp-notice-surface);
+	color: var(--cp-notice-text);
+}
+
+.error {
+	margin: 0 0 16px;
+	color: var(--cp-danger);
+}
+
+.empty {
+	margin: 0;
+	color: var(--cp-text-muted);
+}
+
+.category + .category {
+	margin-top: 20px;
+}
+
+.category h3 {
+	margin: 0 0 8px;
+	color: var(--cp-text-muted);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.feature {
+	border: 1px solid var(--cp-border);
+	border-radius: 8px;
+}
+
+.feature + .feature {
+	margin-top: 8px;
+}
+
+.feature-summary {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+}
+
+.feature-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.feature-title {
+	font-weight: 600;
+}
+
+.feature-description {
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.status {
+	flex: none;
+	color: var(--cp-text-muted);
+	font-size: 12px;
+}
+
+.status[data-state="running"] {
+	color: var(--cp-success);
+}
+
+.status[data-state="failed"] {
+	color: var(--cp-danger);
+}
+
+.status[data-state="reloadRequired"] {
+	color: var(--cp-notice-text);
+}
+
+.feature-options {
+	padding: 0 12px 10px;
+}
+
+.feature-options summary {
+	color: var(--cp-text-muted);
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.feature-fields {
+	display: grid;
+	gap: 12px;
+	margin-top: 8px;
+}
+
+.footer-version {
+	margin-left: auto;
+	color: var(--cp-text-muted);
+	font-size: 12px;
+}

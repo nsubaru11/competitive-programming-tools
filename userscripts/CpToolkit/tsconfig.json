@@ -1,0 +1,13 @@
+{
+	"files": [],
+	"references": [
+		{"path": "src/domain"},
+		{"path": "src/catalog"},
+		{"path": "src/application"},
+		{"path": "src/ui"},
+		{"path": "src/adapters"},
+		{"path": "src/features"},
+		{"path": "src/app"},
+		{"path": "tests"}
+	]
+}

@@ -1,0 +1,15 @@
+id: atcoder
+name: AtCoder
+
+# Tampermonkey の @match にそのまま出力する
+matches:
+  - https://atcoder.jp/*
+
+# パスとクエリに対する正規表現
+routes:
+  page: '^/[^?]'  # トップページ以外
+
+# 設定画面へのリンクを追加するメニュー。ヘッダーの形が2種類あるため上から順に探す
+navigationLists:
+  - '#navbar-collapse .navbar-right'  # コンテストのページ
+  - '#header .header-page'            # それ以外のページ

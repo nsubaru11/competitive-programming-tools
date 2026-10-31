@@ -1,0 +1,27 @@
+# キーの型はこのファイルから生成する。en.yaml にも同じキーが必要
+settings.open: 設定を開く
+settings.title: CP Toolkit の設定
+settings.close: 閉じる
+settings.empty: 設定できる機能はありません。
+settings.options: 詳細設定
+settings.invalidValue: 値の形式が正しくありません。
+settings.reloadNotice: 変更を反映するには再読み込みしてください。
+settings.reload: 再読み込み
+settings.export: 設定を書き出す
+settings.import: 設定を読み込む
+settings.importFailed: 設定ファイルを読み込めませんでした。
+settings.reset: 初期状態に戻す
+settings.resetConfirm: すべての設定を初期状態に戻します。よろしいですか?
+
+status.disabled: 無効
+status.outOfScope: このページは対象外
+status.pending: 待機中
+status.running: 動作中
+status.reloadRequired: 再読み込みで反映
+status.failed: 起動に失敗
+
+category.layout: 表示
+
+wideLayout.title: ページ幅の拡張
+wideLayout.description: ページ中央の幅を広げます。
+wideLayout.width: "幅(例: 50%, 1200px)"

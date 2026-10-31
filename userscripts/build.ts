@@ -168,7 +168,7 @@ function buildBanner(meta: ScriptMeta, scriptName: string): string {
 	);
 
 	const appendLine = (key: string, value: string) => {
-		lines.push(`// @${key.padEnd(keyWidth)} ${value}`);
+		lines.push(`// @${key.padEnd(keyWidth)} ${value}`.trimEnd());
 	};
 
 	for (const key of ORDER) {
@@ -190,6 +190,7 @@ function buildBanner(meta: ScriptMeta, scriptName: string): string {
 // region ファイルパス
 const scriptDir = getScriptDir();
 const watchDebounceMs = 100;
+const watchedSourcePattern = /(\.ts|\.css|\.yaml|meta\.json)$/;
 const ignoredDirectoryNames = ["node_modules"];
 
 function getScriptDir(): string {
@@ -294,6 +295,19 @@ async function discoverScripts(explicitNames: string[]): Promise<string[]> {
 // endregion
 
 // region メタ読み込み
+/** data/judges/*.yaml の matches から @match を生成する。meta.json と二重に管理しないため。 */
+async function loadJudgeMatches(name: string): Promise<string[]> {
+	const judgesDir = join(scriptDir, name, "data", "judges");
+	if (!(await pathExists(judgesDir))) return [];
+	const fileNames = (await readdir(judgesDir)).filter((fileName) => fileName.endsWith(".yaml")).sort();
+	const matches: string[] = [];
+	for (const fileName of fileNames) {
+		const judge = Bun.YAML.parse(await readFile(join(judgesDir, fileName), "utf8")) as {matches?: string[]};
+		matches.push(...(judge.matches ?? []));
+	}
+	return unique(matches);
+}
+
 async function loadMeta(name: string): Promise<ScriptMeta> {
 	const {meta: metaPath} = scriptPaths(name);
 	const raw = await readFile(metaPath, "utf8");
@@ -303,7 +317,9 @@ async function loadMeta(name: string): Promise<ScriptMeta> {
 	} catch (e) {
 		throw new Error(`${basename(metaPath)} for ${name}: invalid JSON — ${errorMessage(e)}`);
 	}
-	return validateMeta(parsed, name);
+	const meta = validateMeta(parsed, name);
+	const match = await loadJudgeMatches(name);
+	return match.length > 0 ? {...meta, match} : meta;
 }
 
 // endregion
@@ -389,7 +405,7 @@ async function watchAndBuild(buildQueued: () => Promise<void>): Promise<void> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	for await (const event of watcher) {
 		const fileName = event.filename ? String(event.filename) : "";
-		if (!fileName.endsWith(".ts") && !fileName.endsWith("meta.json")) continue;
+		if (!watchedSourcePattern.test(fileName) || fileName.endsWith(".d.yaml.ts")) continue;
 		if (fileName.includes("dist\\") || fileName.includes("dist/")) continue;
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => {

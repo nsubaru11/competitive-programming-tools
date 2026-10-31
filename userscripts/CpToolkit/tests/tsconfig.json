@@ -1,0 +1,9 @@
+{
+	"extends": "../tsconfig.layer.json",
+	"compilerOptions": {
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": ["bun-types"]
+	},
+	"include": ["./**/*.ts", "../types/assets.d.ts"],
+	"references": [{"path": "../src/domain"}, {"path": "../src/catalog"}, {"path": "../src/application"}, {"path": "../src/ui"}, {"path": "../src/adapters"}, {"path": "../src/features"}, {"path": "../src/app"}]
+}

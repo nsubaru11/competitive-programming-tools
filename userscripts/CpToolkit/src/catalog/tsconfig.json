@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.layer.json",
+	"compilerOptions": {
+		"lib": ["ES2022"],
+		"types": []
+	},
+	"include": ["./**/*.ts", "../../data/**/*.d.yaml.ts"],
+	"references": [{"path": "../domain"}]
+}

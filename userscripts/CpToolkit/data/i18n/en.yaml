@@ -1,0 +1,26 @@
+settings.open: Open settings
+settings.title: CP Toolkit settings
+settings.close: Close
+settings.empty: No features are available.
+settings.options: Options
+settings.invalidValue: This value is not valid.
+settings.reloadNotice: Reload the page to apply your changes.
+settings.reload: Reload
+settings.export: Export settings
+settings.import: Import settings
+settings.importFailed: The settings file could not be read.
+settings.reset: Reset to defaults
+settings.resetConfirm: All settings will be reset to their defaults. Continue?
+
+status.disabled: "Off"
+status.outOfScope: Not on this page
+status.pending: Waiting
+status.running: Running
+status.reloadRequired: Reload to apply
+status.failed: Failed to start
+
+category.layout: Layout
+
+wideLayout.title: Wider page
+wideLayout.description: Widens the central column of the page.
+wideLayout.width: "Width (e.g. 50%, 1200px)"

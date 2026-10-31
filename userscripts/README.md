@@ -25,6 +25,7 @@ cd tools
 bun install
 bun run --cwd userscripts typecheck
 bun run --cwd userscripts build
+bun run --cwd userscripts test
 bun run --cwd userscripts watch
 ```
 
@@ -37,9 +38,15 @@ bun run --cwd userscripts ./build.ts AtCoderHighlighter
 ## 型定義
 
 - `types/userscript.d.ts` … `GM_*`、`unsafeWindow`、AtCoder ページ向け Window 拡張
-- `tsconfig.json` … `**/src/**/*.ts` と `build.ts` を型チェック
+- `tsconfig.json` … `**/src/**/*.ts` と `build.ts` を型チェック(`CpToolkit` は層ごとの `tsconfig.json` で検査)
 
 ## スクリプト一覧
+
+### CP Toolkit
+
+このフォルダのスクリプトを1本に統合し、機能ごとに ON/OFF できるようにするスクリプトです。移行中で、構成と開発の規則は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。
+
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js)
 
 ### AtCoder Custom Default Submissions
 

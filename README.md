@@ -66,6 +66,7 @@ cd competitive-programming-tools
 bun install
 bun run --cwd userscripts typecheck
 bun run --cwd userscripts build
+bun run --cwd userscripts test
 bun run --cwd local-runner typecheck
 ```
 

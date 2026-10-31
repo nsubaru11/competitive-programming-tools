@@ -7,13 +7,18 @@
 		"@atcoder-tools/shared": "workspace:*"
 	},
 	"scripts": {
-		"typecheck": "tsc --noEmit",
+		"data:types": "bun scripts/gen-data-types.ts",
+		"typecheck": "bun run data:types && tsc --noEmit && tsc -b CpToolkit",
+		"test": "bun run data:types && bun test CpToolkit/tests",
 		"build": "bun build.ts",
 		"watch": "bun build.ts --watch"
 	},
 	"devDependencies": {
+		"@happy-dom/global-registrator": "^21.0.4",
 		"@types/node": "^24.12.4",
+		"@types/tampermonkey": "^5.5.0",
 		"bun-types": "^1.2.0",
+		"happy-dom": "^21.0.4",
 		"prettier": "^3.5.0",
 		"typescript": "^5.9.0"
 	}

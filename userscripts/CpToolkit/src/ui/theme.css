@@ -1,0 +1,59 @@
+:host {
+	--cp-surface: #ffffff;
+	--cp-surface-muted: #f6f8fa;
+	--cp-text: #1f2328;
+	--cp-text-muted: #59636e;
+	--cp-border: #d0d7de;
+	--cp-accent: #0969da;
+	--cp-on-accent: #ffffff;
+	--cp-success: #1a7f37;
+	--cp-danger: #cf222e;
+	--cp-notice-surface: #fff8c5;
+	--cp-notice-text: #6c5400;
+	font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+	color: var(--cp-text);
+}
+
+@media (prefers-color-scheme: dark) {
+	:host {
+		--cp-surface: #1c2128;
+		--cp-surface-muted: #262c36;
+		--cp-text: #e6edf3;
+		--cp-text-muted: #9198a1;
+		--cp-border: #3d444d;
+		--cp-accent: #4493f8;
+		--cp-on-accent: #0d1117;
+		--cp-success: #3fb950;
+		--cp-danger: #f85149;
+		--cp-notice-surface: #3a2f0b;
+		--cp-notice-text: #e3b341;
+	}
+}
+
+*, *::before, *::after {
+	box-sizing: border-box;
+}
+
+/* display を指定した要素でも hidden を優先する */
+[hidden] {
+	display: none !important;
+}
+
+button {
+	padding: 4px 12px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface-muted);
+	color: var(--cp-text);
+	font: inherit;
+	cursor: pointer;
+}
+
+button:hover {
+	border-color: var(--cp-text-muted);
+}
+
+:focus-visible {
+	outline: 2px solid var(--cp-accent);
+	outline-offset: 1px;
+}

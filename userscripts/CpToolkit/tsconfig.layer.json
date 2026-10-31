@@ -1,0 +1,23 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+		"noEmit": false,
+		"emitDeclarationOnly": true,
+		"rootDir": ".",
+		"outDir": ".tsbuild",
+		"allowArbitraryExtensions": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"paths": {
+			"@data/*": ["./data/*"],
+			"@domain/*": ["./src/domain/*"],
+			"@catalog/*": ["./src/catalog/*"],
+			"@application/*": ["./src/application/*"],
+			"@ui/*": ["./src/ui/*"],
+			"@adapters/*": ["./src/adapters/*"],
+			"@features/*": ["./src/features/*"],
+			"@app/*": ["./src/app/*"]
+		}
+	}
+}
