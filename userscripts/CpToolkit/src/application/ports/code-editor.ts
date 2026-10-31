@@ -20,6 +20,9 @@ export interface CodeEditor {
 }
 
 export interface CodeEditorLocator {
-	/** エディタが生成されるまで待つ。時間内に見つからなければ null を返す。 */
-	locate(target: SubmissionTarget, timeoutMs?: number): Promise<CodeEditor | null>;
+	/**
+	 * エディタが生成されるまで待つ。時間内に見つからなければ null を返す。
+	 * delayMs を指定すると、サイトがエディタを初期化する時間を空けてから探す。
+	 */
+	locate(target: SubmissionTarget, options?: {timeoutMs?: number; delayMs?: number}): Promise<CodeEditor | null>;
 }

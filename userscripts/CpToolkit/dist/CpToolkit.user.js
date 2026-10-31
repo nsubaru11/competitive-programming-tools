@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.0
+// @version        1.0.1
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -965,6 +965,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		async reach(phase) {
 			if (phase === "ready" && document.readyState === "loading") {
 				await waitForEvent(document, "DOMContentLoaded");
+				await new Promise((resolve) => setTimeout(resolve));
 			}
 			if (phase === "load" && document.readyState !== "complete") {
 				await waitForEvent(window, "load");
@@ -1754,6 +1755,11 @@ ${settings_panel_default}`,
 				selector: "#task-statement pre",
 				container: ".part",
 			},
+			{
+				selector: "#task-statement .div-btn-copy+pre",
+				container: ".part",
+				insideIoStyle: true,
+			},
 		],
 	};
 	// CpToolkit/data/judges/codeforces.yaml
@@ -1892,8 +1898,8 @@ ${settings_panel_default}`,
 		"statementCopy.formatMarkdown": "Markdown",
 		"statementCopy.formatPlain": "Plain text",
 		"statementCopy.copy": "Copy",
-		"statementCopy.copyAll": "Copy all",
-		"statementCopy.copied": "Copied",
+		"statementCopy.copyAll": "All Copy",
+		"statementCopy.copied": "Copied!",
 		"statementCopy.defaultTitle": "Task",
 		"efficientLayout.title": "Side-by-side samples",
 		"efficientLayout.description": "Places the input and output formats and samples side by side.",
@@ -1953,8 +1959,8 @@ ${settings_panel_default}`,
 		"ratingGraph.description": "Overlays performance on the rating graph.",
 		"ratingGraph.recentByDefault": "Show only recent results at first",
 		"ratingGraph.togglePerformance": "Toggle performance",
-		"ratingGraph.showAll": "Show all",
-		"ratingGraph.showRecent": "Show recent",
+		"ratingGraph.showAll": "all",
+		"ratingGraph.showRecent": "recent",
 		"historyColors.title": "Colored contest history",
 		"historyColors.description": "Colors performance and rating values in the contest history.",
 		"historyColors.performanceMode": "Performance coloring",
@@ -1985,6 +1991,7 @@ ${settings_panel_default}`,
 		"easyTest.testAll": "Test All Samples",
 		"easyTest.restore": "Restore Last Play",
 		"easyTest.environment": "Environment",
+		"easyTest.noEnvironment": "No environment available",
 		"easyTest.standardInput": "Standard input",
 		"easyTest.standardOutput": "Standard output",
 		"easyTest.standardError": "Standard error",
@@ -2043,9 +2050,9 @@ ${settings_panel_default}`,
 		"statementCopy.format": "コピーする形式",
 		"statementCopy.formatMarkdown": "Markdown",
 		"statementCopy.formatPlain": "プレーンテキスト",
-		"statementCopy.copy": "コピー",
-		"statementCopy.copyAll": "すべてコピー",
-		"statementCopy.copied": "コピーしました",
+		"statementCopy.copy": "Copy",
+		"statementCopy.copyAll": "All Copy",
+		"statementCopy.copied": "Copied!",
 		"statementCopy.defaultTitle": "問題",
 		"efficientLayout.title": "サンプルの横並び",
 		"efficientLayout.description": "入出力の形式とサンプルを横に並べて表示します。",
@@ -2104,9 +2111,9 @@ ${settings_panel_default}`,
 		"ratingGraph.title": "パフォーマンスのグラフ",
 		"ratingGraph.description": "レーティンググラフにパフォーマンスを重ねて表示します。",
 		"ratingGraph.recentByDefault": "最初は最近の結果だけを表示する",
-		"ratingGraph.togglePerformance": "パフォーマンス ON/OFF",
-		"ratingGraph.showAll": "すべて表示",
-		"ratingGraph.showRecent": "最近のみ表示",
+		"ratingGraph.togglePerformance": "パフォーマンス ON/OFF切り替え",
+		"ratingGraph.showAll": "all",
+		"ratingGraph.showRecent": "recent",
 		"historyColors.title": "成績表の色付け",
 		"historyColors.description": "成績表のパフォーマンスとレーティングに色を付けます。",
 		"historyColors.performanceMode": "パフォーマンスの色付け",
@@ -2132,11 +2139,12 @@ ${settings_panel_default}`,
 		"easyTest.savedCodeLimit": "保存するコードの数",
 		"easyTest.allowableError": "許容誤差",
 		"easyTest.running": "実行中...",
-		"easyTest.run": "実行",
+		"easyTest.run": "Run",
 		"easyTest.testAndSubmit": "Test & Submit",
 		"easyTest.testAll": "Test All Samples",
 		"easyTest.restore": "Restore Last Play",
 		"easyTest.environment": "実行環境",
+		"easyTest.noEnvironment": "実行環境がありません",
 		"easyTest.standardInput": "標準入力",
 		"easyTest.standardOutput": "標準出力",
 		"easyTest.standardError": "標準エラー出力",
@@ -2771,7 +2779,7 @@ ${settings_panel_default}`,
 	var libraries = libraries_default;
 
 	// CpToolkit/src/application/execution/local-runner.ts
-	var REQUEST_TIMEOUT_MS = 30000;
+	var TRANSFORM_TIMEOUT_MS = 30000;
 	var STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
 	class LocalRunnerError extends Error {
@@ -2797,7 +2805,10 @@ ${settings_panel_default}`,
 			return this.post(buildLocalRunnerListRequest());
 		}
 		transform(sourceCode, header) {
-			return this.post(buildLocalRunnerTransformRequest(sourceCode, false, true, false, header));
+			return this.post(
+				buildLocalRunnerTransformRequest(sourceCode, false, true, false, header),
+				TRANSFORM_TIMEOUT_MS,
+			);
 		}
 		prepare(sourceCode) {
 			const endpoint = this.endpoint() ?? "";
@@ -2832,7 +2843,7 @@ ${settings_panel_default}`,
 		runProgram(programId, input, compilerName) {
 			return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
 		}
-		async post(request) {
+		async post(request, timeoutMs) {
 			const url = this.endpoint();
 			if (url === null) throw new LocalRunnerError("Local Runner is not configured.", 0);
 			const response = await this.http.send({
@@ -2840,7 +2851,7 @@ ${settings_panel_default}`,
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(request),
-				timeoutMs: REQUEST_TIMEOUT_MS,
+				timeoutMs,
 			});
 			if (response.status < 200 || response.status >= 300) {
 				throw new LocalRunnerError(`Local Runner returned ${response.status}.`, response.status);
@@ -3183,7 +3194,13 @@ ${settings_panel_default}`,
 				if (withParticles) setParticles(entry.NewRating, color, alpha);
 				stageGraph.update();
 			};
-			const drawSeries = (values, lineColor, highestLabel, radius) => {
+			const drawSeries = (
+				values,
+				lineColor,
+				highestLabel,
+				radius,
+				highestVertex = { radius, strokeWidth: 0.5 },
+			) => {
 				const container = new cj.Container();
 				stageGraph.addChild(container);
 				container.shadow = new cj.Shadow("rgba(0,0,0,0.3)", 1, 2, 3);
@@ -3203,8 +3220,12 @@ ${settings_panel_default}`,
 				};
 				const vertices = values.map((value, index) => {
 					const vertex = newShape(container);
-					vertex.graphics.beginStroke(index === highestIndex ? "#000" : "#FFF");
-					vertex.graphics.setStrokeStyle(0.5).beginFill(tierOf(ratingScale, value).color).dc(0, 0, radius);
+					const isHighest = index === highestIndex;
+					vertex.graphics.beginStroke(isHighest ? "#000" : "#FFF");
+					vertex.graphics.setStrokeStyle(isHighest ? highestVertex.strokeWidth : 0.5);
+					vertex.graphics
+						.beginFill(tierOf(ratingScale, value).color)
+						.dc(0, 0, isHighest ? highestVertex.radius : radius);
 					vertex.x = pointX(history[index]?.EndTime ?? 0);
 					vertex.y = pointY(value);
 					vertex.index = index;
@@ -3284,7 +3305,8 @@ ${settings_panel_default}`,
 				"Highest(Rate)",
 				3.5,
 			);
-			if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8);
+			if (showPerformance && performances.length > 0)
+				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, { radius: 2.5, strokeWidth: 1 });
 			updateStatus(count - 1, false);
 			stageGraph.update();
 			stageStatus.update();
@@ -3313,8 +3335,9 @@ ${settings_panel_default}`,
 		return result;
 	}
 	function parseSamples(page) {
-		for (const { selector, container } of atcoderSampleSelectors) {
+		for (const { selector, container, insideIoStyle } of atcoderSampleSelectors) {
 			const elements = [...page.querySelectorAll(selector)].filter((element) => {
+				if (insideIoStyle) return element.childElementCount === 0;
 				return !element.closest(".io-style") && !element.querySelector("var");
 			});
 			if (elements.length === 0) continue;
@@ -3392,11 +3415,11 @@ ${settings_panel_default}`,
 			document.querySelector("#submit")?.click();
 		}
 		samples() {
-			if (/^\/contests\/[^/]+\/tasks\//.test(location.pathname)) return Promise.resolve(parseSamples(document));
 			const taskUri = this.taskUri();
 			const cached = this.samplesByTask.get(taskUri);
 			if (cached) return cached;
-			const samples = this.fetchSamples(taskUri);
+			const isTaskPage = /^\/contests\/[^/]+\/tasks\//.test(location.pathname);
+			const samples = isTaskPage ? Promise.resolve(parseSamples(document)) : this.fetchSamples(taskUri);
 			this.samplesByTask.set(taskUri, samples);
 			samples.catch(() => this.samplesByTask.delete(taskUri));
 			return samples;
@@ -3661,6 +3684,7 @@ ${settings_panel_default}`,
 	// CpToolkit/src/adapters/page/code-editors.ts
 	var JAVA_MODE_PATTERN = /(^|\/)java$/i;
 	var DEFAULT_TIMEOUT_MS = 30000;
+	var MIN_PASTED_LENGTH = 30;
 
 	class AceCodeEditor {
 		editor;
@@ -3693,9 +3717,11 @@ ${settings_panel_default}`,
 			const session = this.editor.getSession();
 			const folded = new Set(session.getAllFolds().map((fold) => fold.start.row));
 			for (const line of lines) {
-				if (folded.has(line) || !session.getFoldWidget(line)) continue;
-				const range = session.getFoldWidgetRange(line);
-				if (range) session.addFold("...", range);
+				if (folded.has(line)) continue;
+				try {
+					const range = session.getFoldWidget(line) ? session.getFoldWidgetRange(line) : null;
+					if (range) session.addFold("...", range);
+				} catch {}
 			}
 		}
 	}
@@ -3724,7 +3750,14 @@ ${settings_panel_default}`,
 		}
 		setWritable() {}
 		onPaste(listener) {
-			this.editor.onDidPaste(listener);
+			try {
+				this.editor.onDidPaste(listener);
+			} catch {
+				this.model.onDidChangeContent(({ isFlush, changes }) => {
+					if (!isFlush && changes.length === 1 && (changes[0]?.text.length ?? 0) >= MIN_PASTED_LENGTH)
+						listener();
+				});
+			}
 		}
 		onChange(listener) {
 			this.model.onDidChangeContent(listener);
@@ -3734,12 +3767,17 @@ ${settings_panel_default}`,
 			if (!action) return;
 			const position = this.editor.getPosition();
 			(async () => {
-				for (const line of lines) {
-					this.editor.setPosition({ lineNumber: line + 1, column: 1 });
-					await action.run();
+				try {
+					for (const line of lines) {
+						this.editor.setPosition({ lineNumber: line + 1, column: 1 });
+						await action.run();
+					}
+				} finally {
+					this.editor.setPosition(position);
 				}
-				this.editor.setPosition(position);
-			})();
+			})().catch(() => {
+				return;
+			});
 		}
 	}
 	function findEditor(target) {
@@ -3760,9 +3798,10 @@ ${settings_panel_default}`,
 	}
 
 	class PageCodeEditorLocator {
-		locate(target, timeoutMs = DEFAULT_TIMEOUT_MS) {
+		async locate(target, { timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0 } = {}) {
+			if (delayMs > 0) await sleep(delayMs);
 			const editor = findEditor(target);
-			if (editor) return Promise.resolve(editor);
+			if (editor) return editor;
 			return new Promise((resolve) => {
 				const finish = (found) => {
 					observer.disconnect();
@@ -5476,7 +5515,7 @@ ${inner}
 	function createTranslate() {
 		return createTranslator(detectLocale);
 	}
-	function createServices(page, settings) {
+	function createServices(page, settings, openSettings) {
 		const state = new GmKeyValueStore();
 		const http = new GmHttpClient();
 		const site = new SameOriginHttpClient();
@@ -5522,6 +5561,7 @@ ${inner}
 			localRunner: localRunner2,
 			runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
 			judgeSite: getJudgeSite,
+			openSettings,
 			get statementConverter() {
 				converter ??= new TurndownStatementConverter();
 				return converter;
@@ -5619,64 +5659,96 @@ ${inner}
 }
 
 .dock-toggle {
-	padding: 2px 32px;
+	padding: 10px 3em;
 	border: 0;
-	border-radius: 6px 6px 0 0;
-	background: rgb(0 0 0 / 55%);
+	border-radius: 5px 5px 0 0;
+	background: #000;
 	color: #fff;
+	line-height: 1;
+	opacity: 0.5;
 	pointer-events: auto;
+}
+
+.dock-toggle::before {
+	content: "\\25B2";
+}
+
+.dock-toggle[data-open="true"]::before {
+	content: "\\25BC";
+}
+
+@media (max-width: 767px) {
+	.dock-toggle {
+		opacity: 0.25;
+	}
 }
 
 .dock-panel {
 	width: 100%;
-	border-top: 1px solid var(--cp-border);
-	background: var(--cp-surface);
-	color: var(--cp-text);
+	background: rgb(0 0 0 / 80%);
+	color: #fff;
 	pointer-events: auto;
 }
 
 .dock-tabs {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px;
-	padding: 6px 12px 0;
-	background: var(--cp-surface-muted);
-	cursor: ns-resize;
+	gap: 2px;
+	padding: 3px 0 0 10px;
+	border-bottom: 1px solid #ddd;
+	cursor: n-resize;
 }
 
 .dock-tab {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	padding: 2px 10px;
-	border-bottom: 0;
-	border-radius: 6px 6px 0 0;
+	margin-bottom: -1px;
+	padding: 10px 15px;
+	border: 1px solid #ccc;
+	border-radius: 4px 4px 0 0;
+	background: rgb(150 150 150 / 50%);
+	color: #000;
+	line-height: 1.43;
 	cursor: pointer;
+	filter: brightness(0.75);
 }
 
-.dock-tab[data-active="true"] {
-	background: var(--cp-surface);
+.dock-tab:hover {
+	color: #111;
+	filter: brightness(0.9);
 }
 
 .dock-tab[data-tone="success"] {
-	color: var(--cp-success);
+	background: #dff0d8;
 }
 
 .dock-tab[data-tone="warning"] {
-	color: var(--cp-danger);
+	background: #fcf8e3;
+}
+
+.dock-tab[data-active="true"] {
+	border-bottom-color: transparent;
+	color: #333;
+	filter: none;
+}
+
+.dock-tab[data-active="true"]:not([data-tone]) {
+	background: #eee;
 }
 
 .dock-tab-close {
-	padding: 0;
+	margin-right: -6px;
+	padding: 0 0 0 6px;
 	border: 0;
 	background: none;
-	color: var(--cp-text-muted);
+	color: #333;
+	font-size: 8pt;
 	line-height: 1;
 }
 
 .dock-content {
-	height: 45vh;
-	padding: 12px;
+	max-height: 50vh;
+	padding: 5px 15px;
 	overflow-y: auto;
 }
 `;
@@ -5686,15 +5758,18 @@ ${inner}
 		const tabs = h("div", { className: "dock-tabs" });
 		const content = h("div", { className: "dock-content" });
 		const panel = h("div", { className: "dock-panel", hidden: true }, tabs, content);
-		const toggle = () => {
-			panel.hidden = !panel.hidden;
+		const setOpen = (open) => {
+			panel.hidden = !open;
+			toggleButton.dataset.open = String(open);
 		};
-		const dock = h(
-			"div",
-			{ className: "dock" },
-			h("button", { type: "button", className: "dock-toggle", textContent: toggleLabel, onclick: toggle }),
-			panel,
-		);
+		const toggleButton = h("button", {
+			type: "button",
+			className: "dock-toggle",
+			title: toggleLabel,
+			ariaLabel: toggleLabel,
+			onclick: () => setOpen(panel.hidden),
+		});
+		const dock = h("div", { className: "dock" }, toggleButton, panel);
 		const host = h("div");
 		host.attachShadow({ mode: "open" }).append(
 			h("style", {
@@ -5716,22 +5791,23 @@ ${css}`,
 			tabs.addEventListener("pointermove", onMove);
 			tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), { once: true });
 		});
-		const select = (tab, pane) => {
+		const activate = (tab, pane) => {
 			for (const other of tabs.children) other.dataset.active = String(other === tab);
 			for (const other of content.children) other.hidden = other !== pane;
 		};
 		return {
 			addTab(label, pane, { closable = false } = {}) {
 				const tab = h("div", { className: "dock-tab", textContent: label });
+				const select = () => activate(tab, pane);
 				const show = () => {
-					panel.hidden = false;
-					select(tab, pane);
+					setOpen(true);
+					select();
 				};
 				const close = () => {
 					const wasActive = !pane.hidden;
 					tab.remove();
 					pane.remove();
-					if (wasActive) select(tabs.firstElementChild, content.firstElementChild);
+					if (wasActive) activate(tabs.firstElementChild, content.firstElementChild);
 				};
 				tab.addEventListener("click", show);
 				if (closable) {
@@ -5751,8 +5827,9 @@ ${css}`,
 				pane.hidden = content.children.length > 0;
 				tabs.append(tab);
 				content.append(pane);
-				if (tabs.children.length === 1) select(tab, pane);
+				if (tabs.children.length === 1) select();
 				return {
+					select,
 					show,
 					close,
 					setTone(tone) {
@@ -5760,14 +5837,14 @@ ${css}`,
 					},
 				};
 			},
-			toggle,
+			toggle: () => setOpen(panel.hidden),
 			remove: () => host.remove(),
 		};
 	}
 
 	// CpToolkit/src/ui/shortcuts.ts
 	var EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
-	var handlers = new Map();
+	var shortcuts = new Map();
 	var listening = false;
 	function comboOf(event) {
 		const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
@@ -5781,74 +5858,305 @@ ${css}`,
 		return isEditable && target.closest(EDITOR_ELEMENTS) === null;
 	}
 	function onKeyDown(event) {
-		if (isTextField(event.target)) return;
-		if (!handlers.get(comboOf(event))?.()) return;
+		const shortcut = shortcuts.get(comboOf(event));
+		if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
+		if (!shortcut.handler()) return;
 		event.preventDefault();
 		event.stopPropagation();
 	}
-	function registerShortcut(combo, handler) {
+	function registerShortcut(combo, handler, { inTextFields = false } = {}) {
 		if (!listening) {
 			document.addEventListener("keydown", onKeyDown, true);
 			listening = true;
 		}
-		handlers.set(combo, handler);
-		return () => handlers.delete(combo);
+		shortcuts.set(combo, { handler, inTextFields });
+		return () => shortcuts.delete(combo);
 	}
 
 	// CpToolkit/src/features/easy-test/easy-test.css
-	var easy_test_default = `.panel-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 12px;
-}
-
-.panel-field {
-	display: grid;
-	gap: 4px;
-	color: var(--cp-text-muted);
-	font-size: 13px;
-}
-
-.panel-field select,
-.panel-field textarea,
-.panel-field input[type="text"] {
+	var easy_test_default = `select,
+textarea,
+input[type="text"] {
+	display: block;
 	width: 100%;
-	padding: 4px 8px;
-	border: 1px solid var(--cp-border);
-	border-radius: 6px;
-	background: var(--cp-surface);
-	color: var(--cp-text);
-	font: 13px/1.4 ui-monospace, Consolas, monospace;
+	padding: 6px 12px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #555;
+	font: inherit;
 }
 
-.panel-actions {
-	margin-top: 12px;
+input:disabled {
+	background: #eee;
 }
 
-.result-grid {
+.test-form {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 12px;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 0 30px;
+	padding-top: 10px;
 }
 
-.result-summary {
+@media (max-width: 1199px) {
+	.test-form {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.form-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 5fr);
+	gap: 0 15px;
+	margin-bottom: 15px;
+}
+
+.form-row-label {
+	padding-top: 7px;
+	font-weight: 700;
+	text-align: right;
+}
+
+.environment {
+	border: 0;
+	background: transparent;
+	color: #fff;
+}
+
+.environment option {
+	color: #333;
+}
+
+.input-group {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 16px;
-	margin-bottom: 8px;
-	font-size: 13px;
 }
 
-.result-summary b {
-	font-size: 15px;
+.input-group-addon {
+	display: flex;
+	align-items: center;
+	padding: 6px 12px;
+	border: 1px solid #ccc;
+	border-right: 0;
+	border-radius: 4px 0 0 4px;
+	background: #eee;
 }
 
-.result-status[data-tone="success"] {
-	color: var(--cp-success);
+.input-group input[type="text"] {
+	border-radius: 0 4px 4px 0;
 }
 
-.result-status[data-tone="warning"] {
-	color: var(--cp-danger);
+summary {
+	margin-bottom: 15px;
+	padding-top: 7px;
+	cursor: pointer;
+}
+
+.test-actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 15px;
+}
+
+.run-button {
+	padding: 6px 12px;
+	border: 1px solid #2e6da4;
+	border-radius: 4px;
+	background: #337ab7;
+	color: #fff;
+}
+
+.run-button:hover {
+	border-color: #204d74;
+	background: #286090;
+}
+
+.run-button:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.settings-button {
+	padding: 1px 5px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: #fff;
+	color: #333;
+	font-size: 12px;
+}
+
+.result {
+	max-width: 1170px;
+	margin: 0 auto;
+	padding-top: 10px;
+}
+
+.result textarea {
+	background: #eee;
+	font-family: monospace;
+	font-weight: normal;
+}
+
+.result textarea[data-tone="success"] {
+	background: #dff0d8;
+}
+
+.result textarea[data-tone="warning"] {
+	background: #fcf8e3;
+}
+
+.result-field {
+	display: block;
+	margin-bottom: 15px;
+	font-weight: 700;
+}
+
+.result-inputs,
+.result-outputs {
+	display: flex;
+	gap: 0 30px;
+}
+
+.result-inputs {
+	flex-direction: row-reverse;
+}
+
+.result-inputs > *,
+.result-outputs > * {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+@media (max-width: 767px) {
+	.result-inputs {
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 991px) {
+	.result-outputs {
+		flex-direction: column;
+	}
+}
+
+.result-stats {
+	width: 50%;
+	margin: 0 auto 20px;
+	overflow: hidden;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	border-spacing: 0;
+	background: #fff;
+	color: #333;
+	text-align: center;
+}
+
+.result-stats th,
+.result-stats td {
+	padding: 5px;
+	border-top: 1px solid #ddd;
+}
+
+.result-stats td[data-tone="success"] {
+	background: #dff0d8;
+}
+
+.result-stats td[data-tone="danger"] {
+	background: #f2dede;
+}
+`;
+
+	// CpToolkit/src/features/easy-test/result-row.css
+	var result_row_default = `/* サイトの Bootstrap の有無に左右されないよう、提出欄の下の行は専用のクラスで表示する */
+.cp-et-row {
+	position: relative;
+	margin-bottom: 20px;
+	padding: 15px 35px 15px 15px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #333;
+}
+
+.cp-et-row[data-tone="success"] {
+	border-color: #d6e9c6;
+	background: #dff0d8;
+	color: #3c763d;
+}
+
+.cp-et-row[data-tone="warning"] {
+	border-color: #faebcc;
+	background: #fcf8e3;
+	color: #8a6d3b;
+}
+
+.cp-et-close {
+	position: absolute;
+	top: 13px;
+	right: 14px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1;
+	opacity: 0.2;
+	cursor: pointer;
+}
+
+.cp-et-close:hover {
+	opacity: 0.5;
+}
+
+.cp-et-progress {
+	height: 20px;
+	margin-bottom: 20px;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #f5f5f5;
+}
+
+.cp-et-progress-bar {
+	width: 0;
+	height: 100%;
+	background: #337ab7;
+	color: #fff;
+	font-size: 12px;
+	line-height: 20px;
+	text-align: center;
+	transition: width 0.6s ease;
+}
+
+.cp-et-time {
+	position: absolute;
+	right: 1em;
+	font-family: monospace;
+	text-align: right;
+}
+
+.cp-et-label {
+	display: inline-block;
+	margin: 3px;
+	padding: 0.2em 0.6em 0.3em;
+	border-radius: 0.25em;
+	background: #777;
+	color: #fff;
+	font-size: 75%;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.cp-et-label[data-tone="success"] {
+	background: #5cb85c;
+}
+
+.cp-et-label[data-tone="warning"] {
+	background: #f0ad4e;
+}
+
+.cp-et-label[data-tone="danger"] {
+	background: #d9534f;
 }
 `;
 
@@ -5879,64 +6187,178 @@ ${css}`,
 		if (status === "AC") return "success";
 		return status === "OK" ? null : "warning";
 	}
-	function outputField(label, value) {
-		return h("label", { className: "panel-field" }, label, h("textarea", { readOnly: true, rows: 5, value }));
+	function resultField(label, rows) {
+		const textarea = h("textarea", { rows, readOnly: true });
+		return { textarea, element: h("label", { className: "result-field" }, label, textarea) };
 	}
 	function createResultView(translate) {
-		const element = h("div", { textContent: translate("easyTest.running") });
+		const input = resultField(translate("easyTest.standardInput"), 3);
+		const expected = resultField(translate("easyTest.expectedOutput"), 3);
+		const output = resultField(translate("easyTest.standardOutput"), 5);
+		const error = resultField(translate("easyTest.standardError"), 5);
+		expected.element.hidden = true;
+		error.element.hidden = true;
+		const exitCode = h("td");
+		const execTime = h("td");
+		const memory = h("td");
+		const element = h(
+			"div",
+			{ className: "result" },
+			h("div", { className: "result-inputs" }, input.element, expected.element),
+			h(
+				"table",
+				{ className: "result-stats" },
+				h(
+					"tbody",
+					{},
+					h(
+						"tr",
+						{},
+						h("th", { textContent: translate("easyTest.exitCode") }),
+						h("th", { textContent: translate("easyTest.execTime") }),
+						h("th", { textContent: translate("easyTest.memory") }),
+					),
+					h("tr", {}, exitCode, execTime, memory),
+				),
+			),
+			h("div", { className: "result-outputs" }, output.element, error.element),
+		);
 		return {
 			element,
 			show(result) {
-				const status = h("b", { className: "result-status", textContent: result.status });
 				const tone = toneOf(result);
-				if (tone) status.dataset.tone = tone;
-				const fields = [
-					outputField(translate("easyTest.standardInput"), result.input),
-					outputField(translate("easyTest.standardOutput"), result.output ?? ""),
-				];
+				if (tone) output.textarea.dataset.tone = tone;
+				input.textarea.value = result.input;
+				output.textarea.value = result.output ?? "";
 				if (result.expectedOutput !== undefined) {
-					fields.push(outputField(translate("easyTest.expectedOutput"), result.expectedOutput));
+					expected.textarea.value = result.expectedOutput;
+					expected.element.hidden = false;
 				}
-				if (result.error) fields.push(outputField(translate("easyTest.standardError"), result.error));
-				element.replaceChildren(
-					h(
-						"div",
-						{ className: "result-summary" },
-						status,
-						h("span", { textContent: `${translate("easyTest.exitCode")}: ${result.exitCode ?? "-"}` }),
-						h("span", { textContent: `${translate("easyTest.execTime")}: ${result.execTime ?? "-"} ms` }),
-						h("span", { textContent: `${translate("easyTest.memory")}: ${result.memory ?? "-"} KB` }),
-					),
-					h("div", { className: "result-grid" }, ...fields),
-				);
+				if (result.error) {
+					error.textarea.value = result.error;
+					error.element.hidden = false;
+				}
+				exitCode.textContent = String(result.exitCode ?? "");
+				exitCode.dataset.tone = String(result.exitCode) === "0" ? "success" : "danger";
+				execTime.textContent = result.execTime === undefined ? "" : `${result.execTime} ms`;
+				memory.textContent = result.memory === undefined ? "" : `${result.memory} KB`;
 			},
 		};
 	}
-	function createTestPanel(translate, allowableError, onRun) {
-		const environment = h("select");
-		const input = h("textarea", { rows: 4 });
-		const expected = h("textarea", { rows: 4 });
+	function createResultRow(total, closeLabel, onClose) {
+		const bar = h("div", { className: "cp-et-progress-bar", textContent: `0 / ${total}` });
+		const element = h(
+			"div",
+			{ className: "cp-et-row" },
+			h("button", {
+				type: "button",
+				className: "cp-et-close",
+				textContent: "×",
+				ariaLabel: closeLabel,
+				onclick() {
+					element.remove();
+					onClose();
+				},
+			}),
+			h("div", { className: "cp-et-progress" }, bar),
+			h("div", { className: "cp-et-time", textContent: new Date().toTimeString().slice(0, 8) }),
+		);
+		let finished = 0;
+		let accepted = 0;
+		return {
+			element,
+			track(result, onShow) {
+				const label = h("div", { className: "cp-et-label", textContent: "WJ", onclick: onShow });
+				element.append(label);
+				result.then(({ status }) => {
+					label.textContent = status;
+					if (status === "IE") label.dataset.tone = "danger";
+					else if (status === "AC") label.dataset.tone = "success";
+					else if (status !== "OK") label.dataset.tone = "warning";
+					finished++;
+					if (status === "AC") accepted++;
+					bar.textContent = `${finished} / ${total}`;
+					bar.style.width = `${(100 * finished) / total}%`;
+					if (finished === total) element.dataset.tone = accepted === total ? "success" : "warning";
+				});
+			},
+		};
+	}
+	function formRow(label, control) {
+		return h(
+			"div",
+			{ className: "form-row" },
+			h("span", { className: "form-row-label", textContent: label }),
+			control,
+		);
+	}
+	function createTestPanel(translate, allowableError, { onRun, onOpenSettings }) {
+		const environment = h("select", { className: "environment" });
+		const input = h("textarea", { rows: 3 });
+		const expected = h("textarea", { rows: 3 });
 		const allowable = h("input", { type: "text", value: allowableError });
-		const runButton = h("button", { type: "button", textContent: translate("easyTest.run"), onclick: onRun });
+		const useAllowable = h("input", {
+			type: "checkbox",
+			checked: true,
+			onchange() {
+				allowable.disabled = !useAllowable.checked;
+			},
+		});
+		const runButton = h("button", {
+			type: "button",
+			className: "run-button",
+			textContent: translate("easyTest.run"),
+			onclick: onRun,
+		});
 		const element = h(
 			"div",
 			{},
 			h(
 				"div",
-				{ className: "panel-grid" },
-				h("label", { className: "panel-field" }, translate("easyTest.environment"), environment),
-				h("label", { className: "panel-field" }, translate("easyTest.allowableError"), allowable),
-				h("label", { className: "panel-field" }, translate("easyTest.standardInput"), input),
-				h("label", { className: "panel-field" }, translate("easyTest.expectedOutput"), expected),
+				{ className: "test-form" },
+				h(
+					"div",
+					{},
+					formRow(translate("easyTest.environment"), environment),
+					formRow(translate("easyTest.standardInput"), input),
+				),
+				h(
+					"details",
+					{},
+					h("summary", { textContent: translate("easyTest.expectedOutput") }),
+					formRow(
+						translate("easyTest.allowableError"),
+						h(
+							"div",
+							{ className: "input-group" },
+							h("span", { className: "input-group-addon" }, useAllowable),
+							allowable,
+						),
+					),
+					formRow(translate("easyTest.expectedOutput"), expected),
+				),
 			),
-			h("div", { className: "panel-actions" }, runButton),
+			h(
+				"div",
+				{ className: "test-actions" },
+				runButton,
+				h("button", {
+					type: "button",
+					className: "settings-button",
+					textContent: translate("settings.open"),
+					onclick: onOpenSettings,
+				}),
+			),
 		);
 		return {
 			element,
 			environment,
 			input,
 			expected,
-			allowableError: allowable,
+			allowableError() {
+				const value = Number.parseFloat(allowable.value);
+				return useAllowable.checked && value > 0 ? value : undefined;
+			},
 			setRunnable(runnable) {
 				runButton.disabled = !runnable;
 			},
@@ -5946,6 +6368,8 @@ ${css}`,
 	// CpToolkit/src/features/easy-test/index.ts
 	var RUNNER_SELECTION_KEY = "easy-test:runner-selection";
 	var PRECOMPILE_DELAY_MS = 180;
+	var TEST_AND_SUBMIT_KEY = "Ctrl+Enter";
+	var TEST_ALL_KEY = "Alt+Enter";
 	var featureOptions = {
 		precompile: option.boolean(true, "easyTest.precompile"),
 		keyboardShortcuts: option.boolean(true, "easyTest.keyboardShortcuts"),
@@ -5960,29 +6384,30 @@ ${css}`,
 		panel;
 		savedCodes;
 		buttons = [];
-		resultList = h("div");
+		resultList = h("div", { className: "row" });
 		candidates = [];
+		refreshing = Promise.resolve();
 		runnable = false;
-		refreshToken = 0;
 		runCount = 0;
 		running = 0;
 		constructor(site, context) {
 			this.site = site;
 			this.context = context;
-			const { options, state, translate } = context;
+			const { options, state, translate, openSettings } = context;
 			this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
 			this.dock = createDock({
 				css: easy_test_default,
 				toggleLabel: "Easy Test",
 				closeLabel: translate("settings.close"),
 			});
-			this.panel = createTestPanel(translate, options.allowableError, () => {
-				const { input, expected } = this.panel;
-				this.execute({ title: "Run", input: input.value, output: expected.value || null }, {});
+			this.panel = createTestPanel(translate, options.allowableError, {
+				onRun: () => void this.runPanel(),
+				onOpenSettings: openSettings,
 			});
 			this.dock.addTab("Easy Test", this.panel.element);
 		}
 		start() {
+			injectStyle(result_row_default);
 			this.panel.environment.addEventListener("change", () => this.rememberRunner());
 			this.site.onLanguageChange(() => void this.refreshEnvironment());
 			this.refreshEnvironment();
@@ -5996,11 +6421,16 @@ ${css}`,
 				type: "button",
 				className: `btn ${className}`,
 				textContent: label,
-				disabled: !this.runnable,
 				onclick: onClick,
 			});
-			button.style.marginLeft = "1rem";
+			button.classList.toggle("disabled", !this.runnable);
 			this.buttons.push(button);
+			return button;
+		}
+		createTestButton(label, className, shortcut, onClick) {
+			const button = this.createButton(label, className, onClick);
+			button.title = shortcut;
+			button.style.marginLeft = "1rem";
 			return button;
 		}
 		placeButtons() {
@@ -6008,13 +6438,27 @@ ${css}`,
 			const { testButtons, sideButtons, results } = this.site.mounts;
 			if (testButtons instanceof Element) {
 				testButtons.append(
-					this.createButton(translate("easyTest.testAndSubmit"), "btn-info", () => void this.testAndSubmit()),
-					this.createButton(translate("easyTest.testAll"), "btn-default btn-sm", () => void this.testAll()),
+					this.createTestButton(
+						translate("easyTest.testAndSubmit"),
+						"btn-info",
+						TEST_AND_SUBMIT_KEY,
+						() => void this.testAndSubmit(),
+					),
+					this.createTestButton(
+						translate("easyTest.testAll"),
+						"btn-default btn-sm",
+						TEST_ALL_KEY,
+						() => void this.testAll(),
+					),
 				);
 			}
 			if (sideButtons instanceof Element) {
 				sideButtons.append(
-					this.createButton(translate("easyTest.restore"), "btn-danger btn-sm", () => this.restore()),
+					h("a", {
+						className: "btn btn-danger btn-sm",
+						textContent: translate("easyTest.restore"),
+						onclick: () => this.restore(),
+					}),
 				);
 			}
 			if (results instanceof Element) results.append(this.resultList);
@@ -6023,9 +6467,13 @@ ${css}`,
 			this.site.samples().then((samples) => {
 				for (const sample of samples) {
 					if (!(sample.anchor instanceof Element)) continue;
-					const button = this.createButton("Run", "btn-primary btn-sm", () => {
-						this.execute(sample, {}).then(({ tab }) => tab.show());
-					});
+					const button = this.createButton(
+						this.context.translate("easyTest.run"),
+						"btn-primary btn-sm",
+						() => void this.runSample(sample),
+					);
+					button.style.verticalAlign = "top";
+					button.style.marginLeft = "0.5em";
 					sample.anchor.after(button);
 				}
 			});
@@ -6033,7 +6481,7 @@ ${css}`,
 		watchSource() {
 			const { localRunner: localRunner2 } = this.context;
 			let timer;
-			this.site.onSourceChange(() => {
+			const schedule = () => {
 				clearTimeout(timer);
 				timer = setTimeout(() => {
 					const code = this.site.sourceCode();
@@ -6042,7 +6490,9 @@ ${css}`,
 							return;
 						});
 				}, PRECOMPILE_DELAY_MS);
-			});
+			};
+			this.site.onSourceChange(schedule);
+			schedule();
 		}
 		registerShortcuts() {
 			const handled = (action) => () => {
@@ -6050,16 +6500,19 @@ ${css}`,
 				return true;
 			};
 			registerShortcut(
-				"Ctrl+Enter",
+				TEST_AND_SUBMIT_KEY,
 				handled(() => void this.testAndSubmit()),
+				{ inTextFields: true },
 			);
 			registerShortcut(
-				"Alt+Enter",
+				TEST_ALL_KEY,
 				handled(() => void this.testAll()),
+				{ inTextFields: true },
 			);
 			registerShortcut(
 				"Alt+Escape",
 				handled(() => this.dock.toggle()),
+				{ inTextFields: true },
 			);
 		}
 		selections() {
@@ -6073,33 +6526,47 @@ ${css}`,
 				[language.id]: this.panel.environment.value,
 			});
 		}
-		async refreshEnvironment() {
-			const token = ++this.refreshToken;
+		refreshEnvironment() {
+			this.refreshing = this.refreshing.then(() => this.loadEnvironment());
+			return this.refreshing;
+		}
+		async loadEnvironment() {
+			const { runners, translate } = this.context;
 			const { environment } = this.panel;
 			const language = this.site.language();
-			const candidates = language ? await this.context.runners.candidates(language) : [];
-			if (token !== this.refreshToken) return;
+			const candidates = language ? await runners.candidates(language) : [];
+			const previous = environment.value;
 			this.candidates = candidates;
-			environment.replaceChildren(
-				...candidates.map(({ id, label }) => h("option", { value: id, textContent: label })),
-			);
+			const signature = candidates.map(
+				({ id, label }) => `${id}
+${label}`,
+			).join(`
+`);
+			if (environment.dataset.signature !== signature || candidates.length === 0) {
+				environment.dataset.signature = signature;
+				environment.replaceChildren(
+					...candidates.map(({ id, label }) => h("option", { value: id, textContent: label })),
+				);
+				if (candidates.length === 0)
+					environment.append(h("option", { textContent: translate("easyTest.noEnvironment") }));
+			}
+			const isCandidate = (id) => candidates.some((candidate) => candidate.id === id);
 			const local = candidates.find(({ kind }) => kind === "local")?.id;
 			const saved = language ? this.selections()[language.id] : undefined;
-			const preferred = local ?? (candidates.some(({ id }) => id === saved) ? saved : undefined);
-			if (preferred) environment.value = preferred;
-			this.setRunnable(candidates.length > 0);
+			const next2 = local ?? (isCandidate(previous) ? previous : isCandidate(saved) ? saved : candidates[0]?.id);
+			if (next2 !== undefined) environment.value = next2;
+			this.setRunnable(candidates.length > 0 && this.running === 0);
 		}
 		setRunnable(runnable) {
 			this.runnable = runnable;
 			this.panel.setRunnable(runnable);
-			for (const button of this.buttons) button.disabled = !runnable;
+			for (const button of this.buttons) button.classList.toggle("disabled", !runnable);
 		}
 		runOptions(extra) {
-			const allowableError = Number.parseFloat(this.panel.allowableError.value);
-			return { trim: true, split: true, ...(allowableError > 0 ? { allowableError } : {}), ...extra };
+			const allowableError = this.panel.allowableError();
+			return { trim: true, split: true, ...(allowableError === undefined ? {} : { allowableError }), ...extra };
 		}
-		async execute(testCase, options) {
-			await this.refreshEnvironment();
+		execute(testCase, options) {
 			const { runners, translate } = this.context;
 			const code = this.site.sourceCode();
 			if (code) this.savedCodes.save(this.site.taskUri(), code);
@@ -6125,33 +6592,36 @@ ${css}`,
 				});
 			return { result, tab };
 		}
-		async runSamples(samples) {
+		async runPanel() {
+			await this.refreshEnvironment();
+			const { input, expected } = this.panel;
+			this.execute({ title: "Run", input: input.value, output: expected.value || null }, {});
+		}
+		async runSample(sample) {
+			await this.refreshEnvironment();
+			const { result, tab } = this.execute(sample, {});
+			await result;
+			tab.show();
+		}
+		async runSamples() {
+			const samples = await this.site.samples();
+			await this.refreshEnvironment();
 			const runGroupId = crypto.randomUUID();
-			const executions = await Promise.all(samples.map((sample) => this.execute(sample, { runGroupId })));
-			const row = h("div", { className: "alert alert-info", textContent: "..." });
-			this.resultList.prepend(row);
+			const executions = samples.map((sample) => this.execute(sample, { runGroupId }));
+			executions[0]?.tab.select();
+			const row = createResultRow(samples.length, this.context.translate("settings.close"), () => {
+				for (const { tab } of executions) tab.close();
+			});
+			this.resultList.prepend(row.element);
+			for (const { result, tab } of executions) row.track(result, () => tab.show());
 			const results = await Promise.all(executions.map(({ result }) => result));
-			const accepted = results.every(({ status }) => status === "AC");
-			row.className = `alert ${accepted ? "alert-success" : "alert-warning"}`;
-			row.replaceChildren(
-				...results.map(({ status }, index) => {
-					const label = h("span", {
-						className: `label ${status === "AC" ? "label-success" : "label-warning"}`,
-						textContent: status,
-					});
-					label.style.margin = "3px";
-					label.style.cursor = "pointer";
-					label.addEventListener("click", () => executions[index]?.tab.show());
-					return label;
-				}),
-			);
-			return accepted;
+			return results.every(({ status }) => status === "AC");
 		}
 		async testAll() {
-			await this.runSamples(await this.site.samples());
+			await this.runSamples();
 		}
 		async testAndSubmit() {
-			if (await this.runSamples(await this.site.samples())) this.site.submit();
+			if (await this.runSamples()) this.site.submit();
 		}
 		restore() {
 			const { translate } = this.context;
@@ -6424,6 +6894,7 @@ ${efficient_layout_default}`);
 	var FOLD_SHORTCUT = "Ctrl+Shift+M";
 	var MIN_SOURCE_LENGTH = 30;
 	var FOLD_DELAY_MS = 100;
+	var EDITOR_SETUP_DELAY_MS = 500;
 	function findSubmitButton({ submitButtons, labeledSubmit }) {
 		for (const selector of submitButtons) {
 			const button = document.querySelector(selector);
@@ -6465,7 +6936,7 @@ ${efficient_layout_default}`);
 				return button !== null;
 			});
 			const header = options.addHeader ? options.headerName || true : false;
-			editors.locate(target).then((editor) => {
+			editors.locate(target, { delayMs: EDITOR_SETUP_DELAY_MS }).then((editor) => {
 				if (!editor) return;
 				const fold = () => editor.foldLines(findFoldStartLines(editor.getValue()));
 				registerShortcut(FOLD_SHORTCUT, () => {
@@ -6530,7 +7001,7 @@ ${efficient_layout_default}`);
 	}
 	async function unlockEditor({ editors, judge }) {
 		const target = judge?.submission;
-		const editor = target ? await editors.locate(target, EDITOR_TIMEOUT_MS) : null;
+		const editor = target ? await editors.locate(target, { timeoutMs: EDITOR_TIMEOUT_MS }) : null;
 		const deadline = Date.now() + UNLOCK_DURATION_MS;
 		while (editor?.isReadOnly() && Date.now() < deadline) {
 			editor.setWritable();
@@ -6568,6 +7039,19 @@ ${efficient_layout_default}`);
 	});
 
 	// CpToolkit/src/features/rating-graph/index.ts
+	function createGraphButton(marginLeft, onClick) {
+		const button = h("button", { className: "btn btn-default", type: "button", onclick: onClick });
+		Object.assign(button.style, {
+			marginLeft,
+			padding: "5px 10px",
+			border: "1px solid #ccc",
+			borderRadius: "4px",
+			backgroundColor: "#fff",
+			color: "#0275d8",
+			fontSize: "14px",
+		});
+		return button;
+	}
 	var ratingGraph = defineFeature({
 		id: "rating-graph",
 		title: "ratingGraph.title",
@@ -6590,28 +7074,21 @@ ${efficient_layout_default}`);
 			const history = safeJsonParse(response.text, []);
 			if (!(await graph.prepare(ratedPerformances(history)))) return;
 			const view = { showPerformance: true, recentOnly: options.recentByDefault };
-			const periodButton = h("button", { className: "btn btn-default btn-sm", type: "button" });
 			const redraw = () => {
 				periodButton.textContent = translate(
 					view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent",
 				);
 				graph.draw(view);
 			};
-			periodButton.addEventListener("click", () => {
+			const periodButton = createGraphButton("10px", () => {
 				view.recentOnly = !view.recentOnly;
 				redraw();
 			});
-			const performanceButton = h("button", {
-				className: "btn btn-default btn-sm",
-				type: "button",
-				textContent: translate("ratingGraph.togglePerformance"),
-				onclick() {
-					view.showPerformance = !view.showPerformance;
-					redraw();
-				},
+			const performanceButton = createGraphButton("100px", () => {
+				view.showPerformance = !view.showPerformance;
+				redraw();
 			});
-			performanceButton.style.marginLeft = "20px";
-			periodButton.style.marginLeft = "10px";
+			performanceButton.textContent = translate("ratingGraph.togglePerformance");
 			buttonGroup.append(performanceButton, periodButton);
 			redraw();
 		},
@@ -7510,8 +7987,13 @@ button.primary {
 		label.addEventListener("click", (event) => event.stopPropagation());
 		return h("li", {}, label);
 	}
-	function createTaskLink(href, text, state) {
+	function withIcon(link, icon) {
+		link.prepend(h("span", { className: `glyphicon ${icon}`, ariaHidden: "true" }), " ");
+		return link;
+	}
+	function createTaskLink(href, text, state, icon) {
 		const link = h("a", { href, textContent: text });
+		if (icon) withIcon(link, icon);
 		link.addEventListener("click", () => {
 			const newTab = state.get(NEW_TAB_KEY) === true;
 			link.target = newTab ? "_blank" : "_self";
@@ -7537,7 +8019,7 @@ button.primary {
 			const menu = turnIntoDropdown(tab);
 			menu.append(
 				createNewTabToggle(state, translate),
-				createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state),
+				createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state, "glyphicon-list"),
 			);
 			const tasks = await loadContestTasks(contestId, {
 				site,
@@ -7565,7 +8047,10 @@ button.primary {
 					if (category !== "other") state.set(RANGES_KEY, { ...ranges, [category]: range });
 				},
 			});
-			const openAtOnce = h("a", { href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...` });
+			const openAtOnce = withIcon(
+				h("a", { href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...` }),
+				"glyphicon-sort-by-attributes-alt",
+			);
 			openAtOnce.addEventListener("click", (event) => {
 				event.preventDefault();
 				modal.open();
@@ -7710,7 +8195,8 @@ ${wide_layout_default}`);
 		const settings = new SettingsService(new GmKeyValueStore());
 		importLegacySettings(new LocalStorageLegacyInbox(), settings);
 		const page = matchPage(judges, location.href);
-		const services = createServices(page, settings);
+		let panel = null;
+		const services = createServices(page, settings, () => panel?.open());
 		const runtime = new FeatureRuntime({
 			features,
 			page,
@@ -7721,10 +8207,10 @@ ${wide_layout_default}`);
 		});
 		runtime.start();
 		const { translate } = services;
-		const panel = createSettingsPanel({ features, settings, runtime, translate, version: host.version });
+		panel = createSettingsPanel({ features, settings, runtime, translate, version: host.version });
 		lifecycle.reach("ready").then(() => {
-			host.registerCommand(translate("settings.open"), () => panel.open());
-			if (page) addNavigationEntry(page.judge.navigationLists, host.name, () => panel.open());
+			host.registerCommand(translate("settings.open"), () => panel?.open());
+			if (page) addNavigationEntry(page.judge.navigationLists, host.name, () => panel?.open());
 		});
 	}
 

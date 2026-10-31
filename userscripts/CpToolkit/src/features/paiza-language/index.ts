@@ -55,7 +55,7 @@ function unlockTextInputs(): void {
 
 async function unlockEditor({editors, judge}: FeatureServices): Promise<void> {
 	const target = judge?.submission;
-	const editor = target ? await editors.locate(target, EDITOR_TIMEOUT_MS) : null;
+	const editor = target ? await editors.locate(target, {timeoutMs: EDITOR_TIMEOUT_MS}) : null;
 	const deadline = Date.now() + UNLOCK_DURATION_MS;
 	while (editor?.isReadOnly() && Date.now() < deadline) {
 		editor.setWritable();

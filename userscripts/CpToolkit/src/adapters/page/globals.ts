@@ -24,7 +24,7 @@ export type MonacoModel = {
 	getValue(): string;
 	setValue(value: string): void;
 	getLanguageId(): string;
-	onDidChangeContent(listener: () => void): void;
+	onDidChangeContent(listener: (event: {isFlush: boolean; changes: ReadonlyArray<{text: string}>}) => void): void;
 };
 
 export type MonacoEditor = {

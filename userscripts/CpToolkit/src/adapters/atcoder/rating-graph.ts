@@ -249,6 +249,7 @@ export class CreateJsRatingGraph implements RatingGraph {
 			lineColor: string,
 			highestLabel: string,
 			radius: number,
+			highestVertex = {radius, strokeWidth: 0.5},
 		): void => {
 			const container = new cj.Container();
 			stageGraph.addChild(container);
@@ -271,8 +272,10 @@ export class CreateJsRatingGraph implements RatingGraph {
 
 			const vertices: Easel[] = values.map((value, index) => {
 				const vertex = newShape(container);
-				vertex.graphics.beginStroke(index === highestIndex ? "#000" : "#FFF");
-				vertex.graphics.setStrokeStyle(0.5).beginFill(tierOf(ratingScale, value).color).dc(0, 0, radius);
+				const isHighest = index === highestIndex;
+				vertex.graphics.beginStroke(isHighest ? "#000" : "#FFF");
+				vertex.graphics.setStrokeStyle(isHighest ? highestVertex.strokeWidth : 0.5);
+				vertex.graphics.beginFill(tierOf(ratingScale, value).color).dc(0, 0, isHighest ? highestVertex.radius : radius);
 				vertex.x = pointX(history[index]?.EndTime ?? 0);
 				vertex.y = pointY(value);
 				vertex.index = index;
@@ -349,7 +352,7 @@ export class CreateJsRatingGraph implements RatingGraph {
 		drawBackground();
 		createStatus();
 		drawSeries(history.map((entry) => entry.NewRating), "#000", "Highest(Rate)", 3.5);
-		if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8);
+		if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {radius: 2.5, strokeWidth: 1});
 		updateStatus(count - 1, false);
 		stageGraph.update();
 		stageStatus.update();

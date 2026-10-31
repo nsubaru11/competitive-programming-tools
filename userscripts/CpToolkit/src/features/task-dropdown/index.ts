@@ -49,8 +49,14 @@ function createNewTabToggle(state: KeyValueStore, translate: Translate): HTMLEle
 	return h("li", {}, label);
 }
 
-function createTaskLink(href: string, text: string, state: KeyValueStore): HTMLElement {
+function withIcon(link: HTMLAnchorElement, icon: string): HTMLAnchorElement {
+	link.prepend(h("span", {className: `glyphicon ${icon}`, ariaHidden: "true"}), " ");
+	return link;
+}
+
+function createTaskLink(href: string, text: string, state: KeyValueStore, icon?: string): HTMLElement {
 	const link = h("a", {href, textContent: text});
+	if (icon) withIcon(link, icon);
 	link.addEventListener("click", () => {
 		const newTab = state.get(NEW_TAB_KEY) === true;
 		link.target = newTab ? "_blank" : "_self";
@@ -76,7 +82,7 @@ export const taskDropdown = defineFeature({
 		injectStyle(css);
 		const taskTableUrl = tab.href;
 		const menu = turnIntoDropdown(tab);
-		menu.append(createNewTabToggle(state, translate), createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state));
+		menu.append(createNewTabToggle(state, translate), createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state, "glyphicon-list"));
 
 		const tasks = await loadContestTasks(contestId, {
 			site,
@@ -102,7 +108,7 @@ export const taskDropdown = defineFeature({
 				if (category !== "other") state.set(RANGES_KEY, {...ranges, [category]: range});
 			},
 		});
-		const openAtOnce = h("a", {href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...`});
+		const openAtOnce = withIcon(h("a", {href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...`}), "glyphicon-sort-by-attributes-alt");
 		openAtOnce.addEventListener("click", (event) => {
 			event.preventDefault();
 			modal.open();

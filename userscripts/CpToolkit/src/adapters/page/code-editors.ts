@@ -1,9 +1,11 @@
+import {sleep} from "@atcoder-tools/shared";
 import type {SubmissionTarget} from "@domain/page/route";
 import type {CodeEditor, CodeEditorLocator} from "@application/ports/code-editor";
 import {type AceEditor, type MonacoEditor, pageGlobals} from "./globals";
 
 const JAVA_MODE_PATTERN = /(^|\/)java$/i;
 const DEFAULT_TIMEOUT_MS = 30_000;
+const MIN_PASTED_LENGTH = 30;
 
 class AceCodeEditor implements CodeEditor {
 	constructor(private readonly editor: AceEditor) {
@@ -42,9 +44,13 @@ class AceCodeEditor implements CodeEditor {
 		const session = this.editor.getSession();
 		const folded = new Set(session.getAllFolds().map((fold) => fold.start.row));
 		for (const line of lines) {
-			if (folded.has(line) || !session.getFoldWidget(line)) continue;
-			const range = session.getFoldWidgetRange(line);
-			if (range) session.addFold("...", range);
+			if (folded.has(line)) continue;
+			try {
+				const range = session.getFoldWidget(line) ? session.getFoldWidgetRange(line) : null;
+				if (range) session.addFold("...", range);
+			} catch {
+				// 既存の折りたたみと重なる行は飛ばす
+			}
 		}
 	}
 }
@@ -79,7 +85,14 @@ class MonacoCodeEditor implements CodeEditor {
 	}
 
 	onPaste(listener: () => void): void {
-		this.editor.onDidPaste(listener);
+		try {
+			this.editor.onDidPaste(listener);
+		} catch {
+			// onDidPaste がない版では、まとまった入力を貼り付けとして扱う
+			this.model.onDidChangeContent(({isFlush, changes}) => {
+				if (!isFlush && changes.length === 1 && (changes[0]?.text.length ?? 0) >= MIN_PASTED_LENGTH) listener();
+			});
+		}
 	}
 
 	onChange(listener: () => void): void {
@@ -91,12 +104,15 @@ class MonacoCodeEditor implements CodeEditor {
 		if (!action) return;
 		const position = this.editor.getPosition();
 		void (async () => {
-			for (const line of lines) {
-				this.editor.setPosition({lineNumber: line + 1, column: 1});
-				await action.run();
+			try {
+				for (const line of lines) {
+					this.editor.setPosition({lineNumber: line + 1, column: 1});
+					await action.run();
+				}
+			} finally {
+				this.editor.setPosition(position);
 			}
-			this.editor.setPosition(position);
-		})();
+		})().catch(() => undefined);
 	}
 }
 
@@ -116,9 +132,13 @@ function findEditor(target: SubmissionTarget): CodeEditor | null {
 }
 
 export class PageCodeEditorLocator implements CodeEditorLocator {
-	locate(target: SubmissionTarget, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<CodeEditor | null> {
+	async locate(
+		target: SubmissionTarget,
+		{timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: {timeoutMs?: number; delayMs?: number} = {},
+	): Promise<CodeEditor | null> {
+		if (delayMs > 0) await sleep(delayMs);
 		const editor = findEditor(target);
-		if (editor) return Promise.resolve(editor);
+		if (editor) return editor;
 		return new Promise((resolve) => {
 			const finish = (found: CodeEditor | null): void => {
 				observer.disconnect();

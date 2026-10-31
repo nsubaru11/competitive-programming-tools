@@ -13,7 +13,7 @@ import {
 } from "@atcoder-tools/shared";
 import type {HttpClient} from "@application/ports/services";
 
-const REQUEST_TIMEOUT_MS = 30_000;
+const TRANSFORM_TIMEOUT_MS = 30_000;
 const STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
 export class LocalRunnerError extends Error {
@@ -41,7 +41,7 @@ export class LocalRunnerClient {
 	}
 
 	transform(sourceCode: string, header: LocalRunnerHeaderOption): Promise<LocalRunnerTransformResponse> {
-		return this.post(buildLocalRunnerTransformRequest(sourceCode, false, true, false, header));
+		return this.post(buildLocalRunnerTransformRequest(sourceCode, false, true, false, header), TRANSFORM_TIMEOUT_MS);
 	}
 
 	/** 同じソースはコンパイルし直さない。 */
@@ -81,7 +81,8 @@ export class LocalRunnerClient {
 		return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
 	}
 
-	private async post<T>(request: LocalRunnerRequest): Promise<T> {
+	/** 実行はサンプルの数だけ順番に待つことがあるので、既定では時間を制限しない。 */
+	private async post<T>(request: LocalRunnerRequest, timeoutMs?: number): Promise<T> {
 		const url = this.endpoint();
 		if (url === null) throw new LocalRunnerError("Local Runner is not configured.", 0);
 		const response = await this.http.send({
@@ -89,7 +90,7 @@ export class LocalRunnerClient {
 			method: "POST",
 			headers: {"Content-Type": "application/json"},
 			body: JSON.stringify(request),
-			timeoutMs: REQUEST_TIMEOUT_MS,
+			timeoutMs,
 		});
 		if (response.status < 200 || response.status >= 300) {
 			throw new LocalRunnerError(`Local Runner returned ${response.status}.`, response.status);

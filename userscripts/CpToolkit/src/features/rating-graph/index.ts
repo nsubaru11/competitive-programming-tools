@@ -4,6 +4,20 @@ import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
 import {h} from "@ui/element";
 
+function createGraphButton(marginLeft: string, onClick: () => void): HTMLButtonElement {
+	const button = h("button", {className: "btn btn-default", type: "button", onclick: onClick});
+	Object.assign(button.style, {
+		marginLeft,
+		padding: "5px 10px",
+		border: "1px solid #ccc",
+		borderRadius: "4px",
+		backgroundColor: "#fff",
+		color: "#0275d8",
+		fontSize: "14px",
+	});
+	return button;
+}
+
 export const ratingGraph = defineFeature({
 	id: "rating-graph",
 	title: "ratingGraph.title",
@@ -28,26 +42,19 @@ export const ratingGraph = defineFeature({
 		if (!(await graph.prepare(ratedPerformances(history)))) return;
 
 		const view = {showPerformance: true, recentOnly: options.recentByDefault};
-		const periodButton = h("button", {className: "btn btn-default btn-sm", type: "button"});
 		const redraw = (): void => {
 			periodButton.textContent = translate(view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent");
 			graph.draw(view);
 		};
-		periodButton.addEventListener("click", () => {
+		const periodButton = createGraphButton("10px", () => {
 			view.recentOnly = !view.recentOnly;
 			redraw();
 		});
-		const performanceButton = h("button", {
-			className: "btn btn-default btn-sm",
-			type: "button",
-			textContent: translate("ratingGraph.togglePerformance"),
-			onclick() {
-				view.showPerformance = !view.showPerformance;
-				redraw();
-			},
+		const performanceButton = createGraphButton("100px", () => {
+			view.showPerformance = !view.showPerformance;
+			redraw();
 		});
-		performanceButton.style.marginLeft = "20px";
-		periodButton.style.marginLeft = "10px";
+		performanceButton.textContent = translate("ratingGraph.togglePerformance");
 		buttonGroup.append(performanceButton, periodButton);
 		redraw();
 	},

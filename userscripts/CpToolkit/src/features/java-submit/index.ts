@@ -8,6 +8,8 @@ import {registerShortcut} from "@ui/shortcuts";
 const FOLD_SHORTCUT = "Ctrl+Shift+M";
 const MIN_SOURCE_LENGTH = 30;
 const FOLD_DELAY_MS = 100;
+/** ace.edit を先に呼ぶとサイトの初期化の設定が無視されるので、サイトの処理を待つ。 */
+const EDITOR_SETUP_DELAY_MS = 500;
 
 function findSubmitButton({submitButtons, labeledSubmit}: SubmissionTarget): HTMLElement | null {
 	for (const selector of submitButtons) {
@@ -54,7 +56,7 @@ export const javaSubmit = defineFeature({
 
 		// エディタのないページも多いので、見つかるのを待たずに起動を終える
 		const header = options.addHeader ? options.headerName || true : false;
-		void editors.locate(target).then((editor) => {
+		void editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((editor) => {
 			if (!editor) return;
 			const fold = (): void => editor.foldLines(findFoldStartLines(editor.getValue()));
 			registerShortcut(FOLD_SHORTCUT, () => {
