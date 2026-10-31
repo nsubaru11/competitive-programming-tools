@@ -19,6 +19,9 @@
     "shared": {
       "name": "@atcoder-tools/shared",
       "version": "0.1.0",
+      "devDependencies": {
+        "typescript": "^5.9.0",
+      },
     },
     "userscripts": {
       "name": "@atcoder-tools/userscripts",

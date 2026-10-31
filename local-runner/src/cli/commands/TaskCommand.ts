@@ -126,7 +126,7 @@ export abstract class TaskCommand implements Command {
 	protected abstract readonly debug: boolean;
 	/** -d/--debug=true/false を受け付けるか（test のみ true。submit は本番なので不可）。 */
 	protected readonly supportsDebugOption: boolean = false;
-	/** --full / --wa-only の表示オプションを受け付けるか（test のみ true）。 */
+	/** --full / --wa-only の表示オプションを受け付けるか（test / submit は true）。 */
 	protected readonly supportsDisplayOptions: boolean = false;
 
 	async execute(args: readonly string[]): Promise<number> {

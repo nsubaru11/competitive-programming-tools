@@ -32,7 +32,7 @@ function commandAvailable(command: string, args: string[]): boolean {
 
 /**
  * Local Runner サーバーを起動する。
- * Windows: native Bun/JDKを優先し、未導入時または明示指定時だけWSLへフォールバックする。
+ * Windows: 既定は WSL で起動し、LOCAL_RUNNER_BACKEND=native のときだけ Windows の Bun/JDK を使う。
  * WSL/Linux 内: setsid でバックグラウンド化し、ログは ~/.atcoder/runner-autostart.log へ。
  */
 function startServer(): void {

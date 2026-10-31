@@ -31,7 +31,6 @@ function findLibrarySourceRoot(): string {
 	const candidates = [
 		process.env.ATCODER_LIB_SRC,
 		path.resolve(PROJECT_ROOT, "../library/java/src"),
-		path.resolve(PROJECT_ROOT, "library/src"),
 	].filter(Boolean) as string[];
 	for (const candidate of candidates) {
 		if (fs.existsSync(path.join(candidate, "lib"))) return path.resolve(candidate);
