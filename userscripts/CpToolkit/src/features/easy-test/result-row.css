@@ -1,0 +1,91 @@
+/* サイトの Bootstrap の有無に左右されないよう、提出欄の下の行は専用のクラスで表示する */
+.cp-et-row {
+	position: relative;
+	margin-bottom: 20px;
+	padding: 15px 35px 15px 15px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #333;
+}
+
+.cp-et-row[data-tone="success"] {
+	border-color: #d6e9c6;
+	background: #dff0d8;
+	color: #3c763d;
+}
+
+.cp-et-row[data-tone="warning"] {
+	border-color: #faebcc;
+	background: #fcf8e3;
+	color: #8a6d3b;
+}
+
+.cp-et-close {
+	position: absolute;
+	top: 13px;
+	right: 14px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1;
+	opacity: 0.2;
+	cursor: pointer;
+}
+
+.cp-et-close:hover {
+	opacity: 0.5;
+}
+
+.cp-et-progress {
+	height: 20px;
+	margin-bottom: 20px;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #f5f5f5;
+}
+
+.cp-et-progress-bar {
+	width: 0;
+	height: 100%;
+	background: #337ab7;
+	color: #fff;
+	font-size: 12px;
+	line-height: 20px;
+	text-align: center;
+	transition: width 0.6s ease;
+}
+
+.cp-et-time {
+	position: absolute;
+	right: 1em;
+	font-family: monospace;
+	text-align: right;
+}
+
+.cp-et-label {
+	display: inline-block;
+	margin: 3px;
+	padding: 0.2em 0.6em 0.3em;
+	border-radius: 0.25em;
+	background: #777;
+	color: #fff;
+	font-size: 75%;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.cp-et-label[data-tone="success"] {
+	background: #5cb85c;
+}
+
+.cp-et-label[data-tone="warning"] {
+	background: #f0ad4e;
+}
+
+.cp-et-label[data-tone="danger"] {
+	background: #d9534f;
+}

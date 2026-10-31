@@ -21,7 +21,11 @@ export type RouteId = RouteIdOf<JudgeData>;
 
 export const judges: readonly JudgeDefinition[] = [atcoder, codeforces, yukicoder, aoj, libraryChecker, paiza];
 
-export const atcoderSampleSelectors: readonly {readonly selector: string; readonly container: string}[] = atcoder.samples;
+export const atcoderSampleSelectors: readonly {
+	readonly selector: string;
+	readonly container: string;
+	readonly insideIoStyle?: boolean;
+}[] = atcoder.samples;
 
 export const paizaLanguageSelect: {
 	readonly selects: readonly string[];

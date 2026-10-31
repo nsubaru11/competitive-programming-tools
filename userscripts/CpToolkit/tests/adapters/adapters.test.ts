@@ -46,6 +46,29 @@ describe("AtCoderSite", () => {
 		expect(samples[0]?.anchor).toBe(document.querySelector(".btn-copy"));
 	});
 
+	test("起動時に読み取ったサンプルを使い続ける", async () => {
+		history.replaceState(null, "", "/contests/abc2/tasks/abc2_a");
+		document.body.innerHTML = `<div id="task-statement">
+			<div class="part"><section><h3>入力例 1</h3><div class="div-btn-copy"></div><pre>1</pre></section></div>
+			<div class="part"><section><h3>出力例 1</h3><div class="div-btn-copy"></div><pre>2</pre></section></div>
+		</div>`;
+		const site = new AtCoderSite(bridge, noHttp);
+		await site.samples();
+		document.querySelector("#task-statement")?.replaceChildren();
+		expect(await site.samples()).toMatchObject([{input: "1", output: "2"}]);
+	});
+
+	test(".io-style の中にしかサンプルがない問題も読み取る", async () => {
+		history.replaceState(null, "", "/contests/maximum-cup-2018/tasks/maximum_cup_2018_d");
+		document.body.innerHTML = `<div id="task-statement"><div class="io-style"><div class="part">
+			<div class="div-btn-copy"><span class="btn-copy"></span></div><pre>1</pre>
+			<div class="div-btn-copy"><span class="btn-copy"></span></div><pre>2</pre>
+		</div></div></div>`;
+		const samples = await new AtCoderSite(bridge, noHttp).samples();
+		expect(samples).toMatchObject([{input: "1", output: "2"}]);
+		expect(samples[0]?.anchor).toBe(document.querySelector(".btn-copy"));
+	});
+
 	test("提出ページでは問題ページからサンプルを取得する", async () => {
 		history.replaceState(null, "", "/contests/abc1/submit");
 		document.body.innerHTML = '<select id="select-task"><option value="abc1_a" selected>A</option></select>';

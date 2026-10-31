@@ -5,6 +5,8 @@ import dockCss from "./dock.css" with {type: "text"};
 export type DockTone = "success" | "warning";
 
 export type DockTab = {
+	/** 開閉の状態は変えずに、このタブを選ぶ。 */
+	select(): void;
 	show(): void;
 	close(): void;
 	setTone(tone: DockTone): void;
@@ -21,15 +23,18 @@ export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleL
 	const tabs = h("div", {className: "dock-tabs"});
 	const content = h("div", {className: "dock-content"});
 	const panel = h("div", {className: "dock-panel", hidden: true}, tabs, content);
-	const toggle = (): void => {
-		panel.hidden = !panel.hidden;
+	const setOpen = (open: boolean): void => {
+		panel.hidden = !open;
+		toggleButton.dataset.open = String(open);
 	};
-	const dock = h(
-		"div",
-		{className: "dock"},
-		h("button", {type: "button", className: "dock-toggle", textContent: toggleLabel, onclick: toggle}),
-		panel,
-	);
+	const toggleButton = h("button", {
+		type: "button",
+		className: "dock-toggle",
+		title: toggleLabel,
+		ariaLabel: toggleLabel,
+		onclick: () => setOpen(panel.hidden),
+	});
+	const dock = h("div", {className: "dock"}, toggleButton, panel);
 
 	const host = h("div");
 	host.attachShadow({mode: "open"}).append(h("style", {textContent: `${themeCss}\n${dockCss}\n${css}`}), dock);
@@ -48,7 +53,7 @@ export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleL
 		tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), {once: true});
 	});
 
-	const select = (tab: HTMLElement | undefined, pane: HTMLElement | undefined): void => {
+	const activate = (tab: HTMLElement | undefined, pane: HTMLElement | undefined): void => {
 		for (const other of tabs.children) (other as HTMLElement).dataset.active = String(other === tab);
 		for (const other of content.children) (other as HTMLElement).hidden = other !== pane;
 	};
@@ -56,15 +61,16 @@ export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleL
 	return {
 		addTab(label, pane, {closable = false} = {}) {
 			const tab = h("div", {className: "dock-tab", textContent: label});
+			const select = (): void => activate(tab, pane);
 			const show = (): void => {
-				panel.hidden = false;
-				select(tab, pane);
+				setOpen(true);
+				select();
 			};
 			const close = (): void => {
 				const wasActive = !pane.hidden;
 				tab.remove();
 				pane.remove();
-				if (wasActive) select(tabs.firstElementChild as HTMLElement, content.firstElementChild as HTMLElement);
+				if (wasActive) activate(tabs.firstElementChild as HTMLElement, content.firstElementChild as HTMLElement);
 			};
 			tab.addEventListener("click", show);
 			if (closable) {
@@ -82,8 +88,9 @@ export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleL
 			pane.hidden = content.children.length > 0;
 			tabs.append(tab);
 			content.append(pane);
-			if (tabs.children.length === 1) select(tab, pane);
+			if (tabs.children.length === 1) select();
 			return {
+				select,
 				show,
 				close,
 				setTone(tone) {
@@ -91,7 +98,7 @@ export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleL
 				},
 			};
 		},
-		toggle,
+		toggle: () => setOpen(panel.hidden),
 		remove: () => host.remove(),
 	};
 }

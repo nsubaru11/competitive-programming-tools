@@ -1,9 +1,14 @@
 /** 処理したキー操作なら true を返す。false ならサイトへそのまま渡す。 */
 export type ShortcutHandler = () => boolean;
 
+type Shortcut = {
+	readonly handler: ShortcutHandler;
+	readonly inTextFields: boolean;
+};
+
 const EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
 
-const handlers = new Map<string, ShortcutHandler>();
+const shortcuts = new Map<string, Shortcut>();
 let listening = false;
 
 function comboOf(event: KeyboardEvent): string {
@@ -18,8 +23,9 @@ function isTextField(target: EventTarget | null): boolean {
 }
 
 function onKeyDown(event: KeyboardEvent): void {
-	if (isTextField(event.target)) return;
-	if (!handlers.get(comboOf(event))?.()) return;
+	const shortcut = shortcuts.get(comboOf(event));
+	if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
+	if (!shortcut.handler()) return;
 	event.preventDefault();
 	event.stopPropagation();
 }
@@ -27,12 +33,13 @@ function onKeyDown(event: KeyboardEvent): void {
 /**
  * キー操作は修飾キーまで完全に一致したときだけ実行する。
  * 同じキーを別の機能が登録すると、後の登録で置き換わる。
+ * 入力欄の中でも実行するなら inTextFields を指定する。
  */
-export function registerShortcut(combo: string, handler: ShortcutHandler): () => void {
+export function registerShortcut(combo: string, handler: ShortcutHandler, {inTextFields = false} = {}): () => void {
 	if (!listening) {
 		document.addEventListener("keydown", onKeyDown, true);
 		listening = true;
 	}
-	handlers.set(combo, handler);
-	return () => handlers.delete(combo);
+	shortcuts.set(combo, {handler, inTextFields});
+	return () => shortcuts.delete(combo);
 }

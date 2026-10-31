@@ -41,3 +41,5 @@ samples:
   - {selector: '#task-statement>.part section>pre', container: .part}
   - {selector: '#task-statement>.part:not(.io-style)>h3+section>pre', container: .part}
   - {selector: '#task-statement pre', container: .part}
+  # maximum_cup_2018_d はサンプルも .io-style の中にある
+  - {selector: '#task-statement .div-btn-copy+pre', container: .part, insideIoStyle: true}

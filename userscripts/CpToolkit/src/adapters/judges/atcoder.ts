@@ -16,8 +16,9 @@ function pairs<T>(items: readonly T[]): Array<[T, T]> {
 
 /** コンテストにより書式が違うので、サンプルが見つかるセレクタまで順に試す。 */
 function parseSamples(page: Document): SampleCase[] {
-	for (const {selector, container} of atcoderSampleSelectors) {
+	for (const {selector, container, insideIoStyle} of atcoderSampleSelectors) {
 		const elements = [...page.querySelectorAll(selector)].filter((element) => {
+			if (insideIoStyle) return element.childElementCount === 0;
 			return !element.closest(".io-style") && !element.querySelector("var");
 		});
 		if (elements.length === 0) continue;
@@ -102,12 +103,13 @@ export class AtCoderSite implements JudgeSite {
 		document.querySelector<HTMLElement>("#submit")?.click();
 	}
 
+	/** Run ボタンを置くと問題文の形が変わるので、問題ごとに最初の結果を使い続ける。 */
 	samples(): Promise<readonly SampleCase[]> {
-		if (/^\/contests\/[^/]+\/tasks\//.test(location.pathname)) return Promise.resolve(parseSamples(document));
 		const taskUri = this.taskUri();
 		const cached = this.samplesByTask.get(taskUri);
 		if (cached) return cached;
-		const samples = this.fetchSamples(taskUri);
+		const isTaskPage = /^\/contests\/[^/]+\/tasks\//.test(location.pathname);
+		const samples = isTaskPage ? Promise.resolve(parseSamples(document)) : this.fetchSamples(taskUri);
 		this.samplesByTask.set(taskUri, samples);
 		samples.catch(() => this.samplesByTask.delete(taskUri));
 		return samples;

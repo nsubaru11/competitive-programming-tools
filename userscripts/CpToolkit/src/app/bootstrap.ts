@@ -7,7 +7,7 @@ import {DocumentLifecycle} from "@adapters/page/document-lifecycle";
 import {LocalStorageLegacyInbox} from "@adapters/page/local-storage-legacy-inbox";
 import {GmKeyValueStore} from "@adapters/userscript/gm-key-value-store";
 import {GmScriptHost} from "@adapters/userscript/gm-script-host";
-import {createSettingsPanel} from "@features/settings-panel/index";
+import {createSettingsPanel, type SettingsPanel} from "@features/settings-panel/index";
 import {addNavigationEntry} from "@features/settings-panel/navigation-entry";
 import {createServices, judges} from "./container";
 import {features} from "./registry";
@@ -21,7 +21,8 @@ export function bootstrap(): void {
 	const settings = new SettingsService(new GmKeyValueStore());
 	importLegacySettings(new LocalStorageLegacyInbox(), settings);
 	const page = matchPage(judges, location.href);
-	const services = createServices(page, settings);
+	let panel: SettingsPanel | null = null;
+	const services = createServices(page, settings, () => panel?.open());
 
 	const runtime = new FeatureRuntime({
 		features,
@@ -34,10 +35,10 @@ export function bootstrap(): void {
 	runtime.start();
 
 	const {translate} = services;
-	const panel = createSettingsPanel({features, settings, runtime, translate, version: host.version});
+	panel = createSettingsPanel({features, settings, runtime, translate, version: host.version});
 	// ページの言語は DOM の構築後に確定するので、それを待ってから文言を決める
 	void lifecycle.reach("ready").then(() => {
-		host.registerCommand(translate("settings.open"), () => panel.open());
-		if (page) addNavigationEntry(page.judge.navigationLists, host.name, () => panel.open());
+		host.registerCommand(translate("settings.open"), () => panel?.open());
+		if (page) addNavigationEntry(page.judge.navigationLists, host.name, () => panel?.open());
 	});
 }

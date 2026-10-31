@@ -29,7 +29,7 @@ export function createTranslate(): Translate {
 }
 
 /** 機能が使うサービスを組み立てる。重いものは最初に使われるまで生成しない。 */
-export function createServices(page: PageMatch | null, settings: SettingsService): FeatureServices {
+export function createServices(page: PageMatch | null, settings: SettingsService, openSettings: () => void): FeatureServices {
 	const state = new GmKeyValueStore();
 	const http = new GmHttpClient();
 	const site = new SameOriginHttpClient();
@@ -80,6 +80,7 @@ export function createServices(page: PageMatch | null, settings: SettingsService
 		localRunner,
 		runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
 		judgeSite: getJudgeSite,
+		openSettings,
 		get statementConverter() {
 			converter ??= new TurndownStatementConverter();
 			return converter;

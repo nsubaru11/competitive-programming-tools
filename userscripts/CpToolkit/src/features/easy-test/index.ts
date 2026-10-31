@@ -4,14 +4,17 @@ import type {CodeRunner} from "@application/execution/runner-catalog";
 import {defineFeature, type FeatureContext} from "@application/feature/definition";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
 import {createDock, type Dock, type DockTab} from "@ui/dock/dock";
-import {h} from "@ui/element";
+import {h, injectStyle} from "@ui/element";
 import {registerShortcut} from "@ui/shortcuts";
 import css from "./easy-test.css" with {type: "text"};
+import resultRowCss from "./result-row.css" with {type: "text"};
 import {SavedCodes} from "./saved-code";
-import {createResultView, createTestPanel, type TestPanel, toneOf} from "./views";
+import {createResultRow, createResultView, createTestPanel, type TestPanel, toneOf} from "./views";
 
 const RUNNER_SELECTION_KEY = "easy-test:runner-selection";
 const PRECOMPILE_DELAY_MS = 180;
+const TEST_AND_SUBMIT_KEY = "Ctrl+Enter";
+const TEST_ALL_KEY = "Alt+Enter";
 
 const featureOptions = {
 	precompile: option.boolean(true, "easyTest.precompile"),
@@ -27,26 +30,27 @@ class EasyTest {
 	private readonly dock: Dock;
 	private readonly panel: TestPanel;
 	private readonly savedCodes: SavedCodes;
-	private readonly buttons: HTMLButtonElement[] = [];
-	private readonly resultList = h("div");
+	private readonly buttons: HTMLElement[] = [];
+	private readonly resultList = h("div", {className: "row"});
 	private candidates: readonly CodeRunner[] = [];
+	private refreshing: Promise<void> = Promise.resolve();
 	private runnable = false;
-	private refreshToken = 0;
 	private runCount = 0;
 	private running = 0;
 
 	constructor(private readonly site: JudgeSite, private readonly context: Context) {
-		const {options, state, translate} = context;
+		const {options, state, translate, openSettings} = context;
 		this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
 		this.dock = createDock({css, toggleLabel: "Easy Test", closeLabel: translate("settings.close")});
-		this.panel = createTestPanel(translate, options.allowableError, () => {
-			const {input, expected} = this.panel;
-			this.execute({title: "Run", input: input.value, output: expected.value || null}, {});
+		this.panel = createTestPanel(translate, options.allowableError, {
+			onRun: () => void this.runPanel(),
+			onOpenSettings: openSettings,
 		});
 		this.dock.addTab("Easy Test", this.panel.element);
 	}
 
 	start(): void {
+		injectStyle(resultRowCss);
 		this.panel.environment.addEventListener("change", () => this.rememberRunner());
 		this.site.onLanguageChange(() => void this.refreshEnvironment());
 		void this.refreshEnvironment();
@@ -56,10 +60,18 @@ class EasyTest {
 		if (this.context.options.keyboardShortcuts) this.registerShortcuts();
 	}
 
+	/** 実行中でも次の実行を受け付けるので、見た目だけを切り替える。 */
 	private createButton(label: string, className: string, onClick: () => void): HTMLButtonElement {
-		const button = h("button", {type: "button", className: `btn ${className}`, textContent: label, disabled: !this.runnable, onclick: onClick});
-		button.style.marginLeft = "1rem";
+		const button = h("button", {type: "button", className: `btn ${className}`, textContent: label, onclick: onClick});
+		button.classList.toggle("disabled", !this.runnable);
 		this.buttons.push(button);
+		return button;
+	}
+
+	private createTestButton(label: string, className: string, shortcut: string, onClick: () => void): HTMLButtonElement {
+		const button = this.createButton(label, className, onClick);
+		button.title = shortcut;
+		button.style.marginLeft = "1rem";
 		return button;
 	}
 
@@ -68,12 +80,12 @@ class EasyTest {
 		const {testButtons, sideButtons, results} = this.site.mounts;
 		if (testButtons instanceof Element) {
 			testButtons.append(
-				this.createButton(translate("easyTest.testAndSubmit"), "btn-info", () => void this.testAndSubmit()),
-				this.createButton(translate("easyTest.testAll"), "btn-default btn-sm", () => void this.testAll()),
+				this.createTestButton(translate("easyTest.testAndSubmit"), "btn-info", TEST_AND_SUBMIT_KEY, () => void this.testAndSubmit()),
+				this.createTestButton(translate("easyTest.testAll"), "btn-default btn-sm", TEST_ALL_KEY, () => void this.testAll()),
 			);
 		}
 		if (sideButtons instanceof Element) {
-			sideButtons.append(this.createButton(translate("easyTest.restore"), "btn-danger btn-sm", () => this.restore()));
+			sideButtons.append(h("a", {className: "btn btn-danger btn-sm", textContent: translate("easyTest.restore"), onclick: () => this.restore()}));
 		}
 		if (results instanceof Element) results.append(this.resultList);
 	}
@@ -82,9 +94,9 @@ class EasyTest {
 		void this.site.samples().then((samples) => {
 			for (const sample of samples) {
 				if (!(sample.anchor instanceof Element)) continue;
-				const button = this.createButton("Run", "btn-primary btn-sm", () => {
-					void this.execute(sample, {}).then(({tab}) => tab.show());
-				});
+				const button = this.createButton(this.context.translate("easyTest.run"), "btn-primary btn-sm", () => void this.runSample(sample));
+				button.style.verticalAlign = "top";
+				button.style.marginLeft = "0.5em";
 				sample.anchor.after(button);
 			}
 		});
@@ -93,13 +105,15 @@ class EasyTest {
 	private watchSource(): void {
 		const {localRunner} = this.context;
 		let timer: ReturnType<typeof setTimeout> | undefined;
-		this.site.onSourceChange(() => {
+		const schedule = (): void => {
 			clearTimeout(timer);
 			timer = setTimeout(() => {
 				const code = this.site.sourceCode();
 				if (code && localRunner.isAvailable()) void localRunner.prepare(code).catch(() => undefined);
 			}, PRECOMPILE_DELAY_MS);
-		});
+		};
+		this.site.onSourceChange(schedule);
+		schedule();
 	}
 
 	private registerShortcuts(): void {
@@ -107,9 +121,9 @@ class EasyTest {
 			action();
 			return true;
 		};
-		registerShortcut("Ctrl+Enter", handled(() => void this.testAndSubmit()));
-		registerShortcut("Alt+Enter", handled(() => void this.testAll()));
-		registerShortcut("Alt+Escape", handled(() => this.dock.toggle()));
+		registerShortcut(TEST_AND_SUBMIT_KEY, handled(() => void this.testAndSubmit()), {inTextFields: true});
+		registerShortcut(TEST_ALL_KEY, handled(() => void this.testAll()), {inTextFields: true});
+		registerShortcut("Alt+Escape", handled(() => this.dock.toggle()), {inTextFields: true});
 	}
 
 	private selections(): Readonly<Record<string, string>> {
@@ -122,35 +136,46 @@ class EasyTest {
 		this.context.state.set(RUNNER_SELECTION_KEY, {...this.selections(), [language.id]: this.panel.environment.value});
 	}
 
+	/** 言語の切り替えと実行が重なっても、最新の状態になるよう順番に更新する。 */
+	private refreshEnvironment(): Promise<void> {
+		this.refreshing = this.refreshing.then(() => this.loadEnvironment());
+		return this.refreshing;
+	}
+
 	/** サイトで選んだ言語に合わせて、実行環境の候補を更新する。 */
-	private async refreshEnvironment(): Promise<void> {
-		const token = ++this.refreshToken;
+	private async loadEnvironment(): Promise<void> {
+		const {runners, translate} = this.context;
 		const {environment} = this.panel;
 		const language = this.site.language();
-		const candidates = language ? await this.context.runners.candidates(language) : [];
-		if (token !== this.refreshToken) return;
+		const candidates = language ? await runners.candidates(language) : [];
+		const previous = environment.value;
 		this.candidates = candidates;
-		environment.replaceChildren(...candidates.map(({id, label}) => h("option", {value: id, textContent: label})));
+		const signature = candidates.map(({id, label}) => `${id}\n${label}`).join("\n");
+		if (environment.dataset.signature !== signature || candidates.length === 0) {
+			environment.dataset.signature = signature;
+			environment.replaceChildren(...candidates.map(({id, label}) => h("option", {value: id, textContent: label})));
+			if (candidates.length === 0) environment.append(h("option", {textContent: translate("easyTest.noEnvironment")}));
+		}
+		const isCandidate = (id: string | undefined): boolean => candidates.some((candidate) => candidate.id === id);
 		const local = candidates.find(({kind}) => kind === "local")?.id;
 		const saved = language ? this.selections()[language.id] : undefined;
-		const preferred = local ?? (candidates.some(({id}) => id === saved) ? saved : undefined);
-		if (preferred) environment.value = preferred;
-		this.setRunnable(candidates.length > 0);
+		const next = local ?? (isCandidate(previous) ? previous : isCandidate(saved) ? saved : candidates[0]?.id);
+		if (next !== undefined) environment.value = next;
+		this.setRunnable(candidates.length > 0 && this.running === 0);
 	}
 
 	private setRunnable(runnable: boolean): void {
 		this.runnable = runnable;
 		this.panel.setRunnable(runnable);
-		for (const button of this.buttons) button.disabled = !runnable;
+		for (const button of this.buttons) button.classList.toggle("disabled", !runnable);
 	}
 
 	private runOptions(extra: RunOptions): RunOptions {
-		const allowableError = Number.parseFloat(this.panel.allowableError.value);
-		return {trim: true, split: true, ...(allowableError > 0 ? {allowableError} : {}), ...extra};
+		const allowableError = this.panel.allowableError();
+		return {trim: true, split: true, ...(allowableError === undefined ? {} : {allowableError}), ...extra};
 	}
 
-	private async execute(testCase: TestCase, options: RunOptions): Promise<Execution> {
-		await this.refreshEnvironment();
+	private execute(testCase: TestCase, options: RunOptions): Execution {
 		const {runners, translate} = this.context;
 		const code = this.site.sourceCode();
 		if (code) this.savedCodes.save(this.site.taskUri(), code);
@@ -170,30 +195,41 @@ class EasyTest {
 		return {result, tab};
 	}
 
-	private async runSamples(samples: readonly SampleCase[]): Promise<boolean> {
+	private async runPanel(): Promise<void> {
+		await this.refreshEnvironment();
+		const {input, expected} = this.panel;
+		this.execute({title: "Run", input: input.value, output: expected.value || null}, {});
+	}
+
+	private async runSample(sample: SampleCase): Promise<void> {
+		await this.refreshEnvironment();
+		const {result, tab} = this.execute(sample, {});
+		await result;
+		tab.show();
+	}
+
+	private async runSamples(): Promise<boolean> {
+		const samples = await this.site.samples();
+		await this.refreshEnvironment();
 		const runGroupId = crypto.randomUUID();
-		const executions = await Promise.all(samples.map((sample) => this.execute(sample, {runGroupId})));
-		const row = h("div", {className: "alert alert-info", textContent: "..."});
-		this.resultList.prepend(row);
+		const executions = samples.map((sample) => this.execute(sample, {runGroupId}));
+		// 次に開いたときは、このテストの先頭の結果から見られるようにする
+		executions[0]?.tab.select();
+		const row = createResultRow(samples.length, this.context.translate("settings.close"), () => {
+			for (const {tab} of executions) tab.close();
+		});
+		this.resultList.prepend(row.element);
+		for (const {result, tab} of executions) row.track(result, () => tab.show());
 		const results = await Promise.all(executions.map(({result}) => result));
-		const accepted = results.every(({status}) => status === "AC");
-		row.className = `alert ${accepted ? "alert-success" : "alert-warning"}`;
-		row.replaceChildren(...results.map(({status}, index) => {
-			const label = h("span", {className: `label ${status === "AC" ? "label-success" : "label-warning"}`, textContent: status});
-			label.style.margin = "3px";
-			label.style.cursor = "pointer";
-			label.addEventListener("click", () => executions[index]?.tab.show());
-			return label;
-		}));
-		return accepted;
+		return results.every(({status}) => status === "AC");
 	}
 
 	private async testAll(): Promise<void> {
-		await this.runSamples(await this.site.samples());
+		await this.runSamples();
 	}
 
 	private async testAndSubmit(): Promise<void> {
-		if (await this.runSamples(await this.site.samples())) this.site.submit();
+		if (await this.runSamples()) this.site.submit();
 	}
 
 	private restore(): void {

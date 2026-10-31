@@ -11,63 +11,95 @@
 }
 
 .dock-toggle {
-	padding: 2px 32px;
+	padding: 10px 3em;
 	border: 0;
-	border-radius: 6px 6px 0 0;
-	background: rgb(0 0 0 / 55%);
+	border-radius: 5px 5px 0 0;
+	background: #000;
 	color: #fff;
+	line-height: 1;
+	opacity: 0.5;
 	pointer-events: auto;
+}
+
+.dock-toggle::before {
+	content: "\25B2";
+}
+
+.dock-toggle[data-open="true"]::before {
+	content: "\25BC";
+}
+
+@media (max-width: 767px) {
+	.dock-toggle {
+		opacity: 0.25;
+	}
 }
 
 .dock-panel {
 	width: 100%;
-	border-top: 1px solid var(--cp-border);
-	background: var(--cp-surface);
-	color: var(--cp-text);
+	background: rgb(0 0 0 / 80%);
+	color: #fff;
 	pointer-events: auto;
 }
 
 .dock-tabs {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px;
-	padding: 6px 12px 0;
-	background: var(--cp-surface-muted);
-	cursor: ns-resize;
+	gap: 2px;
+	padding: 3px 0 0 10px;
+	border-bottom: 1px solid #ddd;
+	cursor: n-resize;
 }
 
 .dock-tab {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	padding: 2px 10px;
-	border-bottom: 0;
-	border-radius: 6px 6px 0 0;
+	margin-bottom: -1px;
+	padding: 10px 15px;
+	border: 1px solid #ccc;
+	border-radius: 4px 4px 0 0;
+	background: rgb(150 150 150 / 50%);
+	color: #000;
+	line-height: 1.43;
 	cursor: pointer;
+	filter: brightness(0.75);
 }
 
-.dock-tab[data-active="true"] {
-	background: var(--cp-surface);
+.dock-tab:hover {
+	color: #111;
+	filter: brightness(0.9);
 }
 
 .dock-tab[data-tone="success"] {
-	color: var(--cp-success);
+	background: #dff0d8;
 }
 
 .dock-tab[data-tone="warning"] {
-	color: var(--cp-danger);
+	background: #fcf8e3;
+}
+
+.dock-tab[data-active="true"] {
+	border-bottom-color: transparent;
+	color: #333;
+	filter: none;
+}
+
+.dock-tab[data-active="true"]:not([data-tone]) {
+	background: #eee;
 }
 
 .dock-tab-close {
-	padding: 0;
+	margin-right: -6px;
+	padding: 0 0 0 6px;
 	border: 0;
 	background: none;
-	color: var(--cp-text-muted);
+	color: #333;
+	font-size: 8pt;
 	line-height: 1;
 }
 
 .dock-content {
-	height: 45vh;
-	padding: 12px;
+	max-height: 50vh;
+	padding: 5px 15px;
 	overflow-y: auto;
 }

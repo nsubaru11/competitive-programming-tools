@@ -43,6 +43,7 @@ export type FeatureServices = {
 	readonly ratingGraph: RatingGraph;
 	/** EasyTest が対応するサイトなら、そのサイトの操作を返す。 */
 	readonly judgeSite: () => Promise<JudgeSite | null>;
+	readonly openSettings: () => void;
 };
 
 export type FeatureContext<S extends OptionSet> = FeatureServices & {

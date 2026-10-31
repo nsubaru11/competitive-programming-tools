@@ -47,8 +47,8 @@ statementCopy.format: Copy format
 statementCopy.formatMarkdown: Markdown
 statementCopy.formatPlain: Plain text
 statementCopy.copy: Copy
-statementCopy.copyAll: Copy all
-statementCopy.copied: Copied
+statementCopy.copyAll: All Copy
+statementCopy.copied: 'Copied!'
 statementCopy.defaultTitle: Task
 
 efficientLayout.title: Side-by-side samples
@@ -119,8 +119,8 @@ ratingGraph.title: Performance graph
 ratingGraph.description: Overlays performance on the rating graph.
 ratingGraph.recentByDefault: Show only recent results at first
 ratingGraph.togglePerformance: Toggle performance
-ratingGraph.showAll: Show all
-ratingGraph.showRecent: Show recent
+ratingGraph.showAll: all
+ratingGraph.showRecent: recent
 
 historyColors.title: Colored contest history
 historyColors.description: Colors performance and rating values in the contest history.
@@ -155,6 +155,7 @@ easyTest.testAndSubmit: Test & Submit
 easyTest.testAll: Test All Samples
 easyTest.restore: Restore Last Play
 easyTest.environment: Environment
+easyTest.noEnvironment: No environment available
 easyTest.standardInput: Standard input
 easyTest.standardOutput: Standard output
 easyTest.standardError: Standard error

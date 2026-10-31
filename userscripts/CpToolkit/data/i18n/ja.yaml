@@ -47,9 +47,9 @@ statementCopy.description: 問題文の各項目と全体をコピーするボ�
 statementCopy.format: コピーする形式
 statementCopy.formatMarkdown: Markdown
 statementCopy.formatPlain: プレーンテキスト
-statementCopy.copy: コピー
-statementCopy.copyAll: すべてコピー
-statementCopy.copied: コピーしました
+statementCopy.copy: Copy
+statementCopy.copyAll: All Copy
+statementCopy.copied: 'Copied!'
 statementCopy.defaultTitle: 問題
 
 efficientLayout.title: サンプルの横並び
@@ -119,9 +119,9 @@ tessokuDifficulty.sortById: 問題番号順で並べ替え
 ratingGraph.title: パフォーマンスのグラフ
 ratingGraph.description: レーティンググラフにパフォーマンスを重ねて表示します。
 ratingGraph.recentByDefault: 最初は最近の結果だけを表示する
-ratingGraph.togglePerformance: パフォーマンス ON/OFF
-ratingGraph.showAll: すべて表示
-ratingGraph.showRecent: 最近のみ表示
+ratingGraph.togglePerformance: パフォーマンス ON/OFF切り替え
+ratingGraph.showAll: all
+ratingGraph.showRecent: recent
 
 historyColors.title: 成績表の色付け
 historyColors.description: 成績表のパフォーマンスとレーティングに色を付けます。
@@ -151,11 +151,12 @@ easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Ente
 easyTest.savedCodeLimit: 保存するコードの数
 easyTest.allowableError: 許容誤差
 easyTest.running: "実行中..."
-easyTest.run: 実行
+easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
 easyTest.testAll: Test All Samples
 easyTest.restore: Restore Last Play
 easyTest.environment: 実行環境
+easyTest.noEnvironment: 実行環境がありません
 easyTest.standardInput: 標準入力
 easyTest.standardOutput: 標準出力
 easyTest.standardError: 標準エラー出力

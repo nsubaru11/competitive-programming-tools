@@ -55,9 +55,16 @@ describe("easyTest", () => {
 		};
 	}
 
+	const runnerLookups = {count: 0};
+
 	function createRunners(run: CodeRunner["run"]) {
 		const runner: CodeRunner = {id: "local:java", label: "Java [Local]", kind: "local", run};
-		return new RunnerCatalogService(() => [{runnersFor: async () => [runner]}], ["local"], 3);
+		return new RunnerCatalogService(() => [{
+			runnersFor: async () => {
+				runnerLookups.count++;
+				return [runner];
+			},
+		}], ["local"], 3);
 	}
 
 	const echo = async (_code: string, input: string): Promise<RunResult> => ({status: "OK", input, output: input});
@@ -65,6 +72,7 @@ describe("easyTest", () => {
 	async function start(site: JudgeSite, run: CodeRunner["run"], extra = {}) {
 		await easyTest.run(undefined, createFakeServices({
 			judgeSite: async () => site,
+			openSettings: () => undefined,
 			runners: createRunners(run),
 			localRunner: new LocalRunnerClient(new FakeHttpClient(() => ({status: 500, text: ""})), () => null),
 			...extra,
@@ -73,6 +81,11 @@ describe("easyTest", () => {
 	}
 
 	const button = (label: string) => [...document.querySelectorAll("button")].find(({textContent}) => textContent === label);
+	const dock = () => shadowRoots().find((root) => root.querySelector(".dock"));
+	const tabs = () => [...(dock()?.querySelectorAll<HTMLElement>(".dock-tab") ?? [])];
+	const tabLabels = () => tabs().map(({firstChild}) => firstChild?.textContent);
+	const activeTab = () => tabs().find(({dataset}) => dataset.active === "true")?.firstChild?.textContent;
+	const row = () => document.querySelector<HTMLElement>(".cp-et-row");
 
 	test("サンプルの実行ボタンは置ける場所にだけ追加する", async () => {
 		await start(createSite(), echo);
@@ -85,7 +98,7 @@ describe("easyTest", () => {
 		button("Test & Submit")?.click();
 		await wait(30);
 		expect(site.submit).toHaveBeenCalledTimes(1);
-		expect(document.querySelector(".alert-success")).not.toBeNull();
+		expect(row()?.dataset.tone).toBe("success");
 	});
 
 	test("不正解があれば提出しない", async () => {
@@ -94,21 +107,133 @@ describe("easyTest", () => {
 		button("Test & Submit")?.click();
 		await wait(30);
 		expect(site.submit).not.toHaveBeenCalled();
-		expect(document.querySelector(".alert-warning")).not.toBeNull();
+		expect(row()?.dataset.tone).toBe("warning");
 	});
 
-	test("実行環境がなければボタンを無効にする", async () => {
+	test("実行環境がなければボタンを無効の表示にして理由を示す", async () => {
 		await start(createSite({language: () => null}), echo);
-		expect(button("Test & Submit")?.disabled).toBe(true);
+		expect(button("Test & Submit")?.classList.contains("disabled")).toBe(true);
+		expect(dock()?.querySelector("select")?.textContent).toBe("実行環境がありません");
 	});
 
-	test("実行結果をタブに表示する", async () => {
+	test("すべてのサンプルを順番どおりに実行する", async () => {
+		await start(createSite(), async (_code, input) => {
+			await wait(input === "1" ? 20 : 0);
+			return {status: "OK", input, output: input};
+		});
+		button("Test All Samples")?.click();
+		await wait(60);
+		expect(tabLabels()).toEqual(["Easy Test", "#1 Sample 1", "#2 Sample 2"]);
+		const [input, , expected] = [...(dock()?.querySelector(".result")?.querySelectorAll("textarea") ?? [])];
+		expect(input?.value).toBe("1");
+		expect(expected?.value).toBe("1");
+		expect(tabs()[1]?.dataset.tone).toBe("success");
+	});
+
+	test("実行環境の一覧はテスト1回につき1回だけ取得する", async () => {
+		await start(createSite(), echo);
+		const before = runnerLookups.count;
+		button("Test All Samples")?.click();
+		await wait(30);
+		expect(runnerLookups.count - before).toBe(1);
+	});
+
+	test("次に開くときは最後のテストの先頭の結果を表示する", async () => {
 		await start(createSite(), echo);
 		button("Test All Samples")?.click();
 		await wait(30);
-		const dock = shadowRoots().find((root) => root.querySelector(".dock"));
-		expect(dock?.querySelectorAll(".dock-tab")).toHaveLength(3);
-		expect(dock?.querySelector(".result-status")?.textContent).toBe("AC");
+		button("Test All Samples")?.click();
+		await wait(30);
+		expect(activeTab()).toBe("#3 Sample 1");
+		expect(dock()?.querySelector<HTMLElement>(".dock-panel")?.hidden).toBe(true);
+		dock()?.querySelector<HTMLElement>(".dock-toggle")?.click();
+		expect(dock()?.querySelector<HTMLElement>(".dock-panel")?.hidden).toBe(false);
+		expect(activeTab()).toBe("#3 Sample 1");
+	});
+
+	test("実行中でも次の実行を受け付ける", async () => {
+		await start(createSite(), () => new Promise(() => undefined));
+		button("Test All Samples")?.click();
+		await wait();
+		expect(button("Test All Samples")?.classList.contains("disabled")).toBe(true);
+		button("Test All Samples")?.click();
+		await wait();
+		expect(tabLabels()).toHaveLength(5);
+	});
+
+	test("行に進捗を表示し、閉じると結果のタブも閉じる", async () => {
+		let finish: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => {
+			finish = resolve;
+		});
+		await start(createSite(), async (_code, input) => {
+			if (input === "2") await gate;
+			return {status: "OK", input, output: input};
+		});
+		button("Test All Samples")?.click();
+		await wait();
+		const labels = () => [...(row()?.querySelectorAll(".cp-et-label") ?? [])].map(({textContent}) => textContent);
+		expect(labels()).toEqual(["AC", "WJ"]);
+		expect(row()?.querySelector(".cp-et-progress-bar")?.textContent).toBe("1 / 2");
+		finish();
+		await wait();
+		expect(labels()).toEqual(["AC", "AC"]);
+		row()?.querySelector<HTMLElement>(".cp-et-close")?.click();
+		expect(row()).toBeNull();
+		expect(tabLabels()).toEqual(["Easy Test"]);
+		expect(activeTab()).toBe("Easy Test");
+	});
+
+	test("行のラベルからその結果を開ける", async () => {
+		await start(createSite(), echo);
+		button("Test All Samples")?.click();
+		await wait(30);
+		document.querySelectorAll<HTMLElement>(".cp-et-label")[1]?.click();
+		expect(activeTab()).toBe("#2 Sample 2");
+		expect(dock()?.querySelector<HTMLElement>(".dock-panel")?.hidden).toBe(false);
+	});
+
+	test("サンプルの Run は結果が出てから開く", async () => {
+		let finish: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => {
+			finish = resolve;
+		});
+		await start(createSite(), async (_code, input) => {
+			await gate;
+			return {status: "OK", input, output: input};
+		});
+		button("Run")?.click();
+		await wait();
+		expect(dock()?.querySelector<HTMLElement>(".dock-panel")?.hidden).toBe(true);
+		finish();
+		await wait();
+		expect(dock()?.querySelector<HTMLElement>(".dock-panel")?.hidden).toBe(false);
+		expect(activeTab()).toBe("#1 Sample 1");
+	});
+
+	test("許容誤差のチェックを外すと使わない", async () => {
+		const options: unknown[] = [];
+		await start(createSite(), async (_code, input, runOptions) => {
+			options.push(runOptions.allowableError);
+			return {status: "OK", input, output: input};
+		});
+		button("Test All Samples")?.click();
+		await wait(30);
+		const checkbox = dock()?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+		checkbox?.click();
+		button("Test All Samples")?.click();
+		await wait(30);
+		expect(options).toEqual([1e-6, 1e-6, undefined, undefined]);
+	});
+
+	test("ショートカットは入力欄の中でも動く", async () => {
+		const site = createSite();
+		await start(site, echo);
+		const textarea = document.createElement("textarea");
+		document.body.append(textarea);
+		textarea.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", ctrlKey: true, bubbles: true}));
+		await wait(30);
+		expect(site.submit).toHaveBeenCalledTimes(1);
 	});
 
 	test("実行したコードを記憶し、呼び戻せる", async () => {
@@ -120,11 +245,19 @@ describe("easyTest", () => {
 			await start(createSite({setSourceCode}), echo, {state});
 			button("Test All Samples")?.click();
 			await wait(30);
-			button("Restore Last Play")?.click();
+			[...document.querySelectorAll<HTMLElement>("a")].find(({textContent}) => textContent === "Restore Last Play")?.click();
 			expect(setSourceCode).toHaveBeenCalledWith("code");
 		} finally {
 			window.confirm = originalConfirm;
 		}
+	});
+
+	test("Restore Last Play は実行中も押せる", async () => {
+		await start(createSite(), () => new Promise(() => undefined));
+		button("Test All Samples")?.click();
+		await wait();
+		const restore = [...document.querySelectorAll("a")].find(({textContent}) => textContent === "Restore Last Play");
+		expect(restore?.classList.contains("disabled")).toBe(false);
 	});
 });
 
@@ -233,7 +366,7 @@ describe("taskDropdown", () => {
 		document.querySelector("ul")!.id = "contest-nav-tabs";
 		await taskDropdown.run(undefined, createFakeServices({site: new FakeHttpClient(() => ({status: 200, text: tasksPage}))}));
 
-		const labels = [...document.querySelectorAll(".cp-task-menu a")].map(({textContent}) => textContent);
+		const labels = [...document.querySelectorAll(".cp-task-menu a")].map(({textContent}) => textContent?.trim());
 		expect(labels).toEqual(["問題一覧", "まとめて開く...", "A - First", "B - Second"]);
 	});
 
