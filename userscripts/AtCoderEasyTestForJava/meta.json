@@ -6,6 +6,7 @@
 	"description:ja": "AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。",
 	"description:en": "Automates sample testing on AtCoder, yukicoder, and Codeforces. Optimized for Java.",
 	"author": "magurofly (original), nsubaru (modified)",
+	"license": "MIT",
 	"match": [
 		"https://atcoder.jp/contests/*/tasks/*",
 		"https://atcoder.jp/contests/*/submit*",

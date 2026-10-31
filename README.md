@@ -44,7 +44,7 @@ bun run --cwd userscripts watch
 
 ## runner
 
-サンプルケースのローカル実行 (`test`) と提出 (`submit`) を行う CLI と、常駐 Local Runner HTTP サーバーです。詳細は [local-runner/README.md](./runner/README.md) を参照してください。
+サンプルケースのローカル実行 (`test`) と提出 (`submit`) を行う CLI と、常駐 Local Runner HTTP サーバーです。詳細は [local-runner/README.md](./local-runner/README.md) を参照してください。
 
 ```powershell
 cd competitive-programming-tools
@@ -68,3 +68,7 @@ bun run --cwd userscripts typecheck
 bun run --cwd userscripts build
 bun run --cwd local-runner typecheck
 ```
+
+## ライセンス
+
+本リポジトリの内容は、[0BSD（Zero-Clause BSD）](./LICENSE)で提供します。第三者のスクリプトを改変した UserScript は元のライセンスに従います。対象と条件は [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) を参照してください。

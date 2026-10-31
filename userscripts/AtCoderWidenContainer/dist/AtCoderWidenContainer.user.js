@@ -2,12 +2,12 @@
 // @name           AtCoder Widen Container
 // @name:en        AtCoder Widen Container
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.3
+// @version        1.0.4
 // @description    AtCoderのページ幅を広げるユーザースクリプト
 // @description:en Widens the container width on AtCoder pages.
 // @description:ja AtCoderのページ幅を広げるユーザースクリプト
 // @author         nsubaru
-// @license        MIT
+// @license        0BSD
 // @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderWidenContainer
 // @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/*

@@ -56,7 +56,7 @@ function buildCommonMeta(scriptName: string): Partial<ScriptMeta> {
 	return {
 		namespace: SCRIPT_NAMESPACE,
 		icon: "https://atcoder.jp/favicon.ico",
-		license: "MIT",
+		license: "0BSD",
 		homepageURL: `${REPO_ROOT}/tree/main/userscripts/${scriptName}`,
 		supportURL: `${REPO_ROOT}/issues`,
 		downloadURL: `${RAW_ROOT}/userscripts/${scriptName}/dist/${scriptName}.user.js`,

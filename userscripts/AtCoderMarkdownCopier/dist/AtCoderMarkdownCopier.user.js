@@ -2,12 +2,12 @@
 // @name           AtCoder Markdown Copier
 // @name:en        AtCoder Markdown Copier
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.6
+// @version        1.0.7
 // @description    AtCoderの問題文をMarkdown形式でコピーする機能を追加します。
 // @description:en Adds functionality to copy AtCoder problem statements in Markdown format.
 // @description:ja AtCoderの問題文をMarkdown形式でコピーする機能を追加します。
 // @author         nsubaru
-// @license        MIT
+// @license        0BSD
 // @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderMarkdownCopier
 // @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/contests/*/tasks/*
