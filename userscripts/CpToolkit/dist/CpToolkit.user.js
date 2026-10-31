@@ -40,6 +40,7 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js
 // ==/UserScript==
 
+// @formatter:off
 /*!
 CP Toolkit includes code derived from the following projects.
 The toolkit's own code is available under the 0BSD license.
@@ -879,10 +880,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		AtCoderEasyTestForJava: (stored) => {
 			const config = parseStoredObject(stored.config);
 			return [
-				{
-					featureId: "local-runner",
-					options: defined({url: config["codeRunner.localRunnerURL"] || undefined}),
-				},
+				{featureId: "local-runner", options: defined({url: config["codeRunner.localRunnerURL"] || undefined})},
 				{
 					featureId: "easy-test",
 					options: defined({
@@ -1406,7 +1404,10 @@ ${css}`,
 			element: h(
 				"label",
 				{className: "field"},
-				h("span", {className: "field-label", textContent: label}),
+				h("span", {
+					className: "field-label",
+					textContent: label,
+				}),
 				control,
 				error,
 			),
@@ -1657,17 +1658,9 @@ ${css}`,
 			"div",
 			{className: "notice", hidden: true},
 			h("span", {textContent: translate("settings.reloadNotice")}),
-			h("button", {
-				type: "button",
-				textContent: translate("settings.reload"),
-				onclick: () => location.reload(),
-			}),
+			h("button", {type: "button", textContent: translate("settings.reload"), onclick: () => location.reload()}),
 		);
-		const importError = h("p", {
-			className: "error",
-			textContent: translate("settings.importFailed"),
-			hidden: true,
-		});
+		const importError = h("p", {className: "error", textContent: translate("settings.importFailed"), hidden: true});
 		const content = h("div");
 		let rows = [];
 		let modal = null;
@@ -1678,9 +1671,7 @@ ${css}`,
 		const render = () => {
 			rows = [];
 			const sections = [...groupByCategory(features)].map(([category, members]) => {
-				const memberRows = members.map((feature) =>
-					createFeatureRow({feature, settings, runtime, translate}),
-				);
+				const memberRows = members.map((feature) => createFeatureRow({feature, settings, runtime, translate}));
 				rows.push(...memberRows);
 				return h(
 					"section",
@@ -2986,11 +2977,7 @@ ${settings_panel_default}`,
 	function judgeResult(result, expected, options) {
 		if (expected === null) return result;
 		if (result.status !== "OK") return {...result, expectedOutput: expected};
-		const judged = evaluateEasyTestOutput(
-			{status: result.status, output: result.output ?? ""},
-			expected,
-			options,
-		);
+		const judged = evaluateEasyTestOutput({status: result.status, output: result.output ?? ""}, expected, options);
 		return {...result, ...judged};
 	}
 
@@ -3046,7 +3033,13 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/domain/rating/scale.ts
-	var UNRATED_TIER = {min: -1, color: "#000000", alpha: 0.1, background: "#FFFFFF", className: "user-unrated"};
+	var UNRATED_TIER = {
+		min: -1,
+		color: "#000000",
+		alpha: 0.1,
+		background: "#FFFFFF",
+		className: "user-unrated",
+	};
 
 	function tierOf(scale, value) {
 		return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;
@@ -3413,7 +3406,10 @@ ${settings_panel_default}`,
 				3.5,
 			);
 			if (showPerformance && performances.length > 0)
-				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {radius: 2.5, strokeWidth: 1});
+				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {
+					radius: 2.5,
+					strokeWidth: 1,
+				});
 			updateStatus(count - 1, false);
 			stageGraph.update();
 			stageStatus.update();
@@ -3960,7 +3956,7 @@ ${settings_panel_default}`,
 					this.editor.setPosition(position);
 				}
 			})().catch(() => {
-
+				return;
 			});
 		}
 	}
@@ -4093,6 +4089,14 @@ ${settings_panel_default}`,
 			return location.href.replace(/\/(tasks\/.+|submit.*)$/, "/custom_test");
 		}
 
+		run(languageId, sourceCode, input, groupId) {
+			const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
+			this.last = result.catch(() => {
+				return;
+			});
+			return result;
+		}
+
 		async execute(languageId, sourceCode, input, groupId) {
 			if (groupId && this.failedGroups.has(groupId)) return {status: "CE", input};
 			const submitted = await this.site.send({
@@ -4130,14 +4134,6 @@ ${settings_panel_default}`,
 				};
 			}
 			return {status: "TLE", input, error: "Custom test timed out"};
-		}
-
-		run(languageId, sourceCode, input, groupId) {
-			const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
-			this.last = result.catch(() => {
-
-			});
-			return result;
 		}
 	}
 
@@ -4220,6 +4216,14 @@ ${body}
 			this.scripts = scripts;
 		}
 
+		run(sourceCode, input) {
+			const result = this.queue.then(() => this.execute(sourceCode, input));
+			this.queue = result.catch(() => {
+				return;
+			});
+			return result;
+		}
+
 		async load() {
 			const {baseUrl} = runnerCatalog.pyodide;
 			await this.scripts.loadScript(`${baseUrl}pyodide.js`);
@@ -4258,14 +4262,6 @@ ${body}
 				error: pyodide.globals.get("__stderr").getvalue(),
 			};
 		}
-
-		run(sourceCode, input) {
-			const result = this.queue.then(() => this.execute(sourceCode, input));
-			this.queue = result.catch(() => {
-
-			});
-			return result;
-		}
 	}
 
 	class PyodideRunnerProvider {
@@ -4293,12 +4289,6 @@ ${body}
 			this.language = language;
 			this.id = `paiza:${language}`;
 			this.label = `${label} [PaizaIO]`;
-		}
-
-		async request(path, query2, method = "GET") {
-			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query2, api_key: "guest"})}`;
-			const response = await this.http.send({url, method});
-			return JSON.parse(response.text);
 		}
 
 		async run(sourceCode, input) {
@@ -4335,6 +4325,12 @@ ${body}
 				output: details.stdout,
 				error: details.stderr,
 			};
+		}
+
+		async request(path, query2, method = "GET") {
+			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query2, api_key: "guest"})}`;
+			const response = await this.http.send({url, method});
+			return JSON.parse(response.text);
 		}
 	}
 
@@ -4437,20 +4433,6 @@ ${body}
 			this.optimization = compiler.switches.find((item) => item["display-name"] === "Optimization")?.name;
 		}
 
-		async collectAclFiles(source, files = new Map()) {
-			const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
-			const missing = paths.filter((path) => !files.has(path));
-			const loaded = await Promise.all(
-				missing.map(async (path) => {
-					const response = await this.http.send({url: runnerCatalog.wandbox.aclBaseUrl + path});
-					return [path, response.text];
-				}),
-			);
-			for (const [path, code] of loaded) files.set(path, code);
-			for (const [, code] of loaded) await this.collectAclFiles(code, files);
-			return files;
-		}
-
 		async run(sourceCode, input, _options) {
 			const usesAcl = this.compiler.language === "C++";
 			const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map();
@@ -4465,7 +4447,10 @@ ${body}
 					stdin: input,
 					options: this.optimization,
 					...(usesAcl
-						? {"compiler-option-raw": "-I.", codes: [...files].map(([file, code]) => ({file, code}))}
+						? {
+								"compiler-option-raw": "-I.",
+								codes: [...files].map(([file, code]) => ({file, code})),
+							}
 						: {}),
 				}),
 			});
@@ -4483,6 +4468,20 @@ ${body}
 				error: (body.compiler_error ?? "") + error,
 			};
 		}
+
+		async collectAclFiles(source, files = new Map()) {
+			const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
+			const missing = paths.filter((path) => !files.has(path));
+			const loaded = await Promise.all(
+				missing.map(async (path) => {
+					const response = await this.http.send({url: runnerCatalog.wandbox.aclBaseUrl + path});
+					return [path, response.text];
+				}),
+			);
+			for (const [path, code] of loaded) files.set(path, code);
+			for (const [, code] of loaded) await this.collectAclFiles(code, files);
+			return files;
+		}
 	}
 
 	class WandboxRunnerProvider {
@@ -4494,6 +4493,13 @@ ${body}
 			this.state = state;
 		}
 
+		async runnersFor({family}) {
+			const compilers = await this.compilers();
+			return compilers
+				.filter(({language, version}) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
+				.map((compiler) => new WandboxRunner(this.http, compiler));
+		}
+
 		async compilers() {
 			const cached = this.state.get(CACHE_KEY);
 			if (cached && Date.now() - cached.fetchedAt < runnerCatalog.wandbox.cacheHours * HOUR_MS)
@@ -4502,13 +4508,6 @@ ${body}
 			const compilers = JSON.parse(response.text);
 			this.state.set(CACHE_KEY, {compilers, fetchedAt: Date.now()});
 			return compilers;
-		}
-
-		async runnersFor({family}) {
-			const compilers = await this.compilers();
-			return compilers
-				.filter(({language, version}) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
-				.map((compiler) => new WandboxRunner(this.http, compiler));
 		}
 	}
 
@@ -4536,9 +4535,9 @@ ${body}
 		while (
 			indexEnd > 0 &&
 			string[indexEnd - 1] ===
-			`
+				`
 `
-			)
+		)
 			indexEnd--;
 		return string.substring(0, indexEnd);
 	}
@@ -4994,10 +4993,10 @@ ${body}
 	function cleanAttribute(attribute) {
 		return attribute
 			? attribute.replace(
-				/(\n+\s*)+/g,
-				`
+					/(\n+\s*)+/g,
+					`
 `,
-			)
+				)
 			: "";
 	}
 
@@ -5061,7 +5060,7 @@ ${body}
 			var rule = rules2[i];
 			if (filterValue(rule, node, options)) return rule;
 		}
-
+		return;
 	}
 
 	function filterValue(rule, node, options) {
@@ -5330,8 +5329,8 @@ ${body}
 					? `
 
 ` +
-					node.outerHTML +
-					`
+							node.outerHTML +
+							`
 
 `
 					: node.outerHTML;
@@ -5341,8 +5340,8 @@ ${body}
 					? `
 
 ` +
-					content +
-					`
+							content +
+							`
 
 `
 					: content;
@@ -5791,7 +5790,7 @@ ${inner}
 		live: true,
 		start() {
 			return () => {
-
+				return;
 			};
 		},
 	});
@@ -5909,7 +5908,7 @@ ${inner}
 			const isCaseTable = rows.every((row2) => row2.querySelectorAll("td").length === COLUMN_COUNT);
 			if (tables2.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable)
 				return () => {
-
+					return;
 				};
 			const {accepted, total, averageTimeMs, averageMemoryKb, timeIsLowerBound} = summarizeJudgeCases(
 				rows.map(readCase),
@@ -6466,10 +6465,6 @@ summary {
 			this.limit = limit;
 		}
 
-		list() {
-			return this.state.get(SAVED_CODE_KEY) ?? [];
-		}
-
 		save(path, code) {
 			const others = this.list().filter((saved) => saved.path !== path);
 			this.state.set(SAVED_CODE_KEY, [...others, {path, code}].slice(-this.limit));
@@ -6477,6 +6472,10 @@ summary {
 
 		find(path) {
 			return this.list().find((saved) => saved.path === path)?.code ?? null;
+		}
+
+		list() {
+			return this.state.get(SAVED_CODE_KEY) ?? [];
 		}
 	}
 
@@ -6587,12 +6586,7 @@ summary {
 	}
 
 	function formRow(label, control) {
-		return h(
-			"div",
-			{className: "form-row"},
-			h("span", {className: "form-row-label", textContent: label}),
-			control,
-		);
+		return h("div", {className: "form-row"}, h("span", {className: "form-row-label", textContent: label}), control);
 	}
 
 	function createTestPanel(translate, allowableError, {onRun, onOpenSettings}) {
@@ -6797,7 +6791,7 @@ summary {
 					const code = this.site.sourceCode();
 					if (code && localRunner2.isAvailable())
 						localRunner2.prepare(code).catch(() => {
-
+							return;
 						});
 				}, PRECOMPILE_DELAY_MS);
 			};
@@ -6860,7 +6854,12 @@ ${label}`,
 			if (environment.dataset.signature !== signature || candidates.length === 0) {
 				environment.dataset.signature = signature;
 				environment.replaceChildren(
-					...candidates.map(({id, label}) => h("option", {value: id, textContent: label})),
+					...candidates.map(({id, label}) =>
+						h("option", {
+							value: id,
+							textContent: label,
+						}),
+					),
 				);
 				if (candidates.length === 0)
 					environment.append(h("option", {textContent: translate("easyTest.noEnvironment")}));
@@ -7591,9 +7590,7 @@ ${toast_default}`,
 				.map((link) => SUBMISSION_ID_PATTERN.exec(link.href)?.[1])
 				.find(Boolean);
 			if (!id || !isJudging(status)) return [];
-			return [
-				{id, contestId, taskName: row.querySelectorAll("td")[1]?.textContent?.trim() ?? "", addedAt: now},
-			];
+			return [{id, contestId, taskName: row.querySelectorAll("td")[1]?.textContent?.trim() ?? "", addedAt: now}];
 		});
 	}
 
@@ -7655,7 +7652,7 @@ ${toast_default}`,
 						id,
 						submissions.filter((submission) => submission.contestId === id),
 					).catch(() => {
-
+						return;
 					});
 				}
 			};
@@ -7705,7 +7702,7 @@ ${toast_default}`,
 			const container2 = document.getElementById("task-statement");
 			if (!container2)
 				return () => {
-
+					return;
 				};
 			const convert = (element) => {
 				const html = withoutControls(element).innerHTML;
@@ -7856,7 +7853,12 @@ ${body}`.trim();
 	function replaceWithSegments(node, segments, className) {
 		node.replaceWith(
 			...segments.map(({text, emphasized}) =>
-				emphasized ? h("span", {className, textContent: text}) : text,
+				emphasized
+					? h("span", {
+							className,
+							textContent: text,
+						})
+					: text,
 			),
 		);
 	}
@@ -8021,7 +8023,7 @@ ${statement_highlight_default}`);
 			const title = document.querySelector(".h2");
 			if (!task || !title)
 				return () => {
-
+					return;
 				};
 			const createLink = (label, orderBy) => {
 				const query2 = buildAtCoderSubmissionsQuery({
@@ -8091,7 +8093,10 @@ ${statement_highlight_default}`);
 				h(
 					"label",
 					{className: "field"},
-					h("span", {className: "field-label", textContent: translate("submissionTimer.minutes")}),
+					h("span", {
+						className: "field-label",
+						textContent: translate("submissionTimer.minutes"),
+					}),
 					minutes,
 				),
 				info,
@@ -8258,9 +8263,9 @@ button.primary {
 				canOpenAll
 					? ""
 					: h("span", {
-						className: "open-tasks-caution",
-						textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
-					}),
+							className: "open-tasks-caution",
+							textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
+						}),
 			),
 			h(
 				"div",
@@ -8275,11 +8280,7 @@ button.primary {
 		);
 		modal.footer.append(
 			h("span", {className: "open-tasks-spacer"}),
-			h("button", {
-				type: "button",
-				textContent: translate("taskDropdown.cancel"),
-				onclick: () => modal.close(),
-			}),
+			h("button", {type: "button", textContent: translate("taskDropdown.cancel"), onclick: () => modal.close()}),
 			h("button", {
 				type: "button",
 				className: "primary",
@@ -8433,7 +8434,10 @@ button.primary {
 				},
 			});
 			const openAtOnce = withIcon(
-				h("a", {href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...`}),
+				h("a", {
+					href: "#",
+					textContent: `${translate("taskDropdown.openAtOnce")}...`,
+				}),
 				"glyphicon-sort-by-attributes-alt",
 			);
 			openAtOnce.addEventListener("click", (event) => {

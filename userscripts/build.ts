@@ -3,7 +3,7 @@
 
 import {access, mkdir, readdir, readFile, stat, watch as fsWatch, writeFile} from "node:fs/promises";
 import {basename, dirname, isAbsolute, join, resolve} from "node:path";
-import {format} from "prettier";
+import {formatOutput} from "./scripts/format-output";
 
 // region UserScript メタデータの型定義
 /** @match / @exclude / @grant など複数値を取れるキー */
@@ -363,15 +363,7 @@ async function formatUserscriptOutput(outfile: string, banner: string, notices: 
 		throw new Error(`Generated output does not start with the expected UserScript metadata: ${outfile}`);
 	}
 	const body = await wrapRetiredScript(name, raw.slice(banner.length).trimStart());
-	const formattedBody = await format(body, {
-		parser: "babel",
-		useTabs: true,
-		tabWidth: 4,
-		printWidth: 120,
-		endOfLine: "lf",
-		embeddedLanguageFormatting: "off",
-	});
-	await writeFile(outfile, `${banner}\n${notices}${formattedBody}`, "utf8");
+	await writeFile(outfile, `${banner}\n// @formatter:off\n${notices}${await formatOutput(body)}`, "utf8");
 }
 
 async function buildOne(name: string): Promise<void> {

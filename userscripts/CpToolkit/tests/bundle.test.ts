@@ -85,6 +85,13 @@ describe("配布物", () => {
 		expect(code).not.toMatch(/@require/);
 	});
 
+	test("ソースと同じ書式に整形する", () => {
+		expect(code).toContain("{once: true}");
+		expect(code).not.toContain("{ once: true }");
+		expect(code).not.toMatch(/\n\t*}\n\t*(?:async )?function /);
+		expect(code).not.toMatch(/\) \{\}\n/);
+	});
+
 	test("第三者のライセンスの表記を含む", () => {
 		expect(code).toContain("Copyright (c) magurofly");
 		expect(code).toContain("Apache License");

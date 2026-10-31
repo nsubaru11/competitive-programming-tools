@@ -25,6 +25,7 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js
 // ==/UserScript==
 
+// @formatter:off
 // 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
 const cpToolkitRetirement = (() => {
 	const scriptId = "JavaCodeSubmitter";

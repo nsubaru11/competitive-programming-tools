@@ -20,6 +20,7 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderListingTasks/dist/AtCoderListingTasks.user.js
 // ==/UserScript==
 
+// @formatter:off
 // 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
 const cpToolkitRetirement = (() => {
 	const scriptId = "AtCoderListingTasks";
@@ -665,10 +666,7 @@ if (!cpToolkitRetirement.replaced) {
 					if (this.setting.problemList !== null) {
 						for (let data of this.setting.problemList) {
 							let a = $("<a>", {href: data.url, text: `${data.diff} - ${data.name}`});
-							a[0].addEventListener("click", {
-								handleEvent: this.changeNewTabAttr,
-								setting: this.setting,
-							});
+							a[0].addEventListener("click", {handleEvent: this.changeNewTabAttr, setting: this.setting});
 							dropdown_menu.append($("<li>").append(a));
 						}
 					} else {

@@ -21,6 +21,7 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js
 // ==/UserScript==
 
+// @formatter:off
 // 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
 const cpToolkitRetirement = (() => {
 	const scriptId = "AtCoderPerformanceOverlay";
@@ -97,8 +98,8 @@ if (!cpToolkitRetirement.replaced) {
 		{
 			const element =
 				document.getElementsByClassName("btn-text-group")[
-				document.getElementsByClassName("btn-text-group").length - 1
-					];
+					document.getElementsByClassName("btn-text-group").length - 1
+				];
 			const insertButton = Object.assign(document.createElement("button"), {
 				className: "btn btn-default",
 				id: "onoffButton",

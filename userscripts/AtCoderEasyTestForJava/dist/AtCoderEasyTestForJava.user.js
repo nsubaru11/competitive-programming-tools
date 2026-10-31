@@ -32,6 +32,7 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js
 // ==/UserScript==
 
+// @formatter:off
 // 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
 const cpToolkitRetirement = (() => {
 	const scriptId = "AtCoderEasyTestForJava";
@@ -341,6 +342,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 
 				_value;
+
 				get value() {
 					return this._value;
 				}
@@ -719,6 +721,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 
 				_label;
+
 				get label() {
 					return this._label;
 				}
@@ -868,14 +871,14 @@ if (!cpToolkitRetirement.replaced) {
 					try {
 						const res2 = await fetch(
 							"https://api.paiza.io/runners/create?" +
-							buildQueryString({
-								source_code: sourceCode,
-								language: this.name,
-								input,
-								longpoll: "true",
-								longpoll_timeout: "10",
-								api_key: "guest",
-							}),
+								buildQueryString({
+									source_code: sourceCode,
+									language: this.name,
+									input,
+									longpoll: "true",
+									longpoll_timeout: "10",
+									api_key: "guest",
+								}),
 							{
 								method: "POST",
 								mode: "cors",
@@ -893,10 +896,10 @@ if (!cpToolkitRetirement.replaced) {
 					while (status === "running") {
 						const res2 = await fetch(
 							"https://api.paiza.io/runners/get_status?" +
-							buildQueryString({
-								id,
-								api_key: "guest",
-							}),
+								buildQueryString({
+									id,
+									api_key: "guest",
+								}),
 							{
 								mode: "cors",
 							},
@@ -905,10 +908,10 @@ if (!cpToolkitRetirement.replaced) {
 					}
 					const res = await fetch(
 						"https://api.paiza.io/runners/get_details?" +
-						buildQueryString({
-							id,
-							api_key: "guest",
-						}),
+							buildQueryString({
+								id,
+								api_key: "guest",
+							}),
 						{
 							mode: "cors",
 						},
@@ -1617,6 +1620,7 @@ def __run():
 				}
 
 				_element;
+
 				get element() {
 					return this._element;
 				}
@@ -2312,11 +2316,7 @@ def __run():
 					try {
 						let prepared = await prepareLocalProgram(apiURL, sourceCode);
 						if (prepared.status !== "success" || !prepared.programId) {
-							return {
-								status: "CE",
-								input,
-								error: prepared.diagnostics || "LocalRunner prepare failed.",
-							};
+							return {status: "CE", input, error: prepared.diagnostics || "LocalRunner prepare failed."};
 						}
 						const runPrepared = (programId) =>
 							fetch(apiURL, {
@@ -2845,6 +2845,7 @@ def __run():
 				}
 
 				_element;
+
 				get element() {
 					return this._element;
 				}
@@ -2956,6 +2957,7 @@ def __run():
 				}
 
 				_title = "";
+
 				get title() {
 					return this._title;
 				}
@@ -2965,16 +2967,19 @@ def __run():
 				}
 
 				_uid;
+
 				get uid() {
 					return this._uid;
 				}
 
 				_element;
+
 				get element() {
 					return this._element;
 				}
 
 				_result;
+
 				get result() {
 					return this._result;
 				}
