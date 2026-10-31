@@ -1,10 +1,10 @@
 {
 	"name": "AtCoder Markdown Copier",
 	"name:en": "AtCoder Markdown Copier",
-	"version": "1.0.7",
-	"description": "AtCoderの問題文をMarkdown形式でコピーする機能を追加します。",
-	"description:ja": "AtCoderの問題文をMarkdown形式でコピーする機能を追加します。",
-	"description:en": "Adds functionality to copy AtCoder problem statements in Markdown format.",
+	"version": "1.0.8",
+	"description": "【更新終了】CP Toolkit へ統合しました。AtCoderの問題文をMarkdown形式でコピーする機能を追加します。",
+	"description:ja": "【更新終了】CP Toolkit へ統合しました。AtCoderの問題文をMarkdown形式でコピーする機能を追加します。",
+	"description:en": "[Discontinued] Merged into CP Toolkit. Adds functionality to copy AtCoder problem statements in Markdown format.",
 	"author": "nsubaru",
 	"match": [
 		"https://atcoder.jp/contests/*/tasks/*"
@@ -15,5 +15,6 @@
 	],
 	"grant": [
 		"GM_setClipboard"
-	]
+	],
+	"homepageURL": "https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit"
 }

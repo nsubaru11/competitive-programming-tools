@@ -1,10 +1,10 @@
 {
 	"name": "Java Code Submitter",
 	"name:en": "Java Code Submitter",
-	"version": "1.2.12",
-	"description": "Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。",
-	"description:ja": "Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。",
-	"description:en": "Automatically removes package declarations and renames classes to Main when submitting Java source code.",
+	"version": "1.2.13",
+	"description": "【更新終了】CP Toolkit へ統合しました。Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。",
+	"description:ja": "【更新終了】CP Toolkit へ統合しました。Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。",
+	"description:en": "[Discontinued] Merged into CP Toolkit. Automatically removes package declarations and renames classes to Main when submitting Java source code.",
 	"author": "nsubaru",
 	"match": [
 		"https://onlinejudge.u-aizu.ac.jp/*",
@@ -21,5 +21,6 @@
 		"localhost",
 		"127.0.0.1"
 	],
-	"run-at": "document-end"
+	"run-at": "document-end",
+	"homepageURL": "https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit"
 }

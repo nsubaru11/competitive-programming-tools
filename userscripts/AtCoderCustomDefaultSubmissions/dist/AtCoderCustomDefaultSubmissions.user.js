@@ -2,13 +2,13 @@
 // @name           AtCoder Custom Default Submissions
 // @name:en        AtCoder Custom Default Submissions
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.6.7
-// @description    AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
-// @description:en Sets default filters and sorting for AtCoder submission lists. Settings can be changed from the menu.
-// @description:ja AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
+// @version        1.6.8
+// @description    【更新終了】CP Toolkit へ統合しました。AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
+// @description:en [Discontinued] Merged into CP Toolkit. Sets default filters and sorting for AtCoder submission lists. Settings can be changed from the menu.
+// @description:ja 【更新終了】CP Toolkit へ統合しました。AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
 // @author         ktnyori (original), nsubaru (modified)
 // @license        MIT
-// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/AtCoderCustomDefaultSubmissions
+// @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit
 // @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
 // @match          https://atcoder.jp/contests/*
 // @grant          GM_getValue
@@ -19,182 +19,224 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderCustomDefaultSubmissions/dist/AtCoderCustomDefaultSubmissions.user.js
 // ==/UserScript==
 
-(() => {
-	var __defProp = Object.defineProperty;
-	var __getOwnPropNames = Object.getOwnPropertyNames;
-	var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-	var __hasOwnProp = Object.prototype.hasOwnProperty;
-	function __accessProp(key) {
-		return this[key];
+// 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
+const cpToolkitRetirement = (() => {
+	const scriptId = "AtCoderCustomDefaultSubmissions";
+	const settingKeys = ["config"];
+	const installUrl =
+		"https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js";
+	const noticeKey = `cp-toolkit:retired-notice:${scriptId}`;
+
+	// スクリプトごとの保存領域は新版から読めないので、サイトの localStorage を経由して渡す
+	if (settingKeys.length > 0 && typeof GM_getValue === "function") {
+		const settings = Object.fromEntries(settingKeys.map((key) => [key, GM_getValue(key)]));
+		localStorage.setItem(`cp-toolkit:legacy:${scriptId}`, JSON.stringify(settings));
 	}
-	var __toCommonJS = (from) => {
-		var entry = (__moduleCache ??= new WeakMap()).get(from),
-			desc;
-		if (entry) return entry;
-		entry = __defProp({}, "__esModule", { value: true });
-		if ((from && typeof from === "object") || typeof from === "function") {
-			for (var key of __getOwnPropNames(from))
-				if (!__hasOwnProp.call(entry, key))
-					__defProp(entry, key, {
-						get: __accessProp.bind(from, key),
-						enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-					});
-		}
-		__moduleCache.set(from, entry);
-		return entry;
+
+	const showNotice = () => {
+		if (document.documentElement.dataset.cpToolkit || localStorage.getItem(noticeKey)) return;
+		localStorage.setItem(noticeKey, "1");
+		const notice = document.createElement("div");
+		notice.style.cssText =
+			"position:fixed;right:16px;bottom:16px;z-index:2147483000;max-width:360px;padding:12px;" +
+			"border:1px solid #999;border-radius:8px;background:#fff;color:#222;font-size:14px;";
+		const link = document.createElement("a");
+		link.href = installUrl;
+		link.target = "_blank";
+		link.rel = "noopener";
+		link.textContent = "CP Toolkit";
+		const close = document.createElement("button");
+		close.type = "button";
+		close.textContent = "×";
+		close.style.cssText = "float:right;border:0;background:none;cursor:pointer;";
+		close.addEventListener("click", () => notice.remove());
+		notice.append(close, `${scriptId} の更新は終了しました。機能は `, link, " に統合されています。");
+		document.body.append(notice);
 	};
-	var __moduleCache;
+	if (document.readyState === "complete") showNotice();
+	else window.addEventListener("load", showNotice, { once: true });
 
-	// AtCoderCustomDefaultSubmissions/src/main.ts
-	var exports_main = {};
-	// ../shared/src/query.ts
-	function buildQueryString(data) {
-		const params = new URLSearchParams();
-		for (const [key, value] of Object.entries(data)) {
-			if (value == null) continue;
-			params.set(key, String(value));
+	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+})();
+
+if (!cpToolkitRetirement.replaced) {
+	(() => {
+		var __defProp = Object.defineProperty;
+		var __getOwnPropNames = Object.getOwnPropertyNames;
+		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+		var __hasOwnProp = Object.prototype.hasOwnProperty;
+		function __accessProp(key) {
+			return this[key];
 		}
-		return params.toString();
-	}
-
-	// ../shared/src/atcoder-url.ts
-	var ATCODER_TASK_URL_PATTERN = /^https:\/\/atcoder\.jp\/contests\/([^/?#]+)\/tasks\/([^/?#]+)/;
-	function parseAtCoderTaskUrl(url) {
-		const match = url.match(ATCODER_TASK_URL_PATTERN);
-		if (!match) return null;
-		return {
-			contestId: match[1],
-			taskId: match[2],
+		var __toCommonJS = (from) => {
+			var entry = (__moduleCache ??= new WeakMap()).get(from),
+				desc;
+			if (entry) return entry;
+			entry = __defProp({}, "__esModule", { value: true });
+			if ((from && typeof from === "object") || typeof from === "function") {
+				for (var key of __getOwnPropNames(from))
+					if (!__hasOwnProp.call(entry, key))
+						__defProp(entry, key, {
+							get: __accessProp.bind(from, key),
+							enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
+						});
+			}
+			__moduleCache.set(from, entry);
+			return entry;
 		};
-	}
-	function buildAtCoderSubmissionsQuery(filter) {
-		const params = {};
-		if (filter.language !== undefined) params["f.LanguageName"] = filter.language;
-		if (filter.status !== undefined) params["f.Status"] = filter.status;
-		if (filter.orderBy !== undefined) params["orderBy"] = filter.orderBy;
-		if (filter.task) params["f.Task"] = filter.task;
-		return buildQueryString(params);
-	}
-	// ../shared/src/json.ts
-	function safeJsonParse(text, fallback) {
-		if (typeof text !== "string") return fallback;
-		try {
-			return JSON.parse(text);
-		} catch {
-			return fallback;
+		var __moduleCache;
+
+		// AtCoderCustomDefaultSubmissions/src/main.ts
+		var exports_main = {};
+		// ../shared/src/query.ts
+		function buildQueryString(data) {
+			const params = new URLSearchParams();
+			for (const [key, value] of Object.entries(data)) {
+				if (value == null) continue;
+				params.set(key, String(value));
+			}
+			return params.toString();
 		}
-	}
-	function parseStoredObject(raw) {
-		if (raw == null) return {};
-		if (typeof raw === "string") {
-			const parsed = safeJsonParse(raw, null);
-			if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-				return parsed;
+
+		// ../shared/src/atcoder-url.ts
+		var ATCODER_TASK_URL_PATTERN = /^https:\/\/atcoder\.jp\/contests\/([^/?#]+)\/tasks\/([^/?#]+)/;
+		function parseAtCoderTaskUrl(url) {
+			const match = url.match(ATCODER_TASK_URL_PATTERN);
+			if (!match) return null;
+			return {
+				contestId: match[1],
+				taskId: match[2],
+			};
+		}
+		function buildAtCoderSubmissionsQuery(filter) {
+			const params = {};
+			if (filter.language !== undefined) params["f.LanguageName"] = filter.language;
+			if (filter.status !== undefined) params["f.Status"] = filter.status;
+			if (filter.orderBy !== undefined) params["orderBy"] = filter.orderBy;
+			if (filter.task) params["f.Task"] = filter.task;
+			return buildQueryString(params);
+		}
+		// ../shared/src/json.ts
+		function safeJsonParse(text, fallback) {
+			if (typeof text !== "string") return fallback;
+			try {
+				return JSON.parse(text);
+			} catch {
+				return fallback;
+			}
+		}
+		function parseStoredObject(raw) {
+			if (raw == null) return {};
+			if (typeof raw === "string") {
+				const parsed = safeJsonParse(raw, null);
+				if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+					return parsed;
+				}
+				return {};
+			}
+			if (typeof raw === "object" && !Array.isArray(raw)) {
+				return raw;
 			}
 			return {};
 		}
-		if (typeof raw === "object" && !Array.isArray(raw)) {
-			return raw;
+		function mergeWithDefaults(defaults, raw) {
+			return Object.assign({}, defaults, parseStoredObject(raw));
 		}
-		return {};
-	}
-	function mergeWithDefaults(defaults, raw) {
-		return Object.assign({}, defaults, parseStoredObject(raw));
-	}
-	// AtCoderCustomDefaultSubmissions/src/main.ts
-	(function () {
-		const DEFAULTS = {
-			language: "Java",
-			status: "AC",
-			orderBy: "time_consumption",
-			includeTaskFilter: true,
-		};
-		function readConfig() {
-			const raw = typeof GM_getValue === "function" ? GM_getValue("config") : undefined;
-			return mergeWithDefaults(DEFAULTS, raw);
-		}
-		function writeConfig(config2) {
-			if (typeof GM_setValue === "function") {
-				GM_setValue("config", config2);
+		// AtCoderCustomDefaultSubmissions/src/main.ts
+		(function () {
+			const DEFAULTS = {
+				language: "Java",
+				status: "AC",
+				orderBy: "time_consumption",
+				includeTaskFilter: true,
+			};
+			function readConfig() {
+				const raw = typeof GM_getValue === "function" ? GM_getValue("config") : undefined;
+				return mergeWithDefaults(DEFAULTS, raw);
 			}
-		}
-		function configureLanguage() {
-			const current = readConfig();
-			const language = window.prompt("Language name (e.g. Java, C#, Python3, Rust):", current.language);
-			if (language === null) return;
-			const next = Object.assign({}, current, {
-				language: language.trim() || DEFAULTS.language,
-			});
-			writeConfig(next);
-			window.alert("設定を保存しました。ページを再読み込みしてください。");
-		}
-		function configureStatus() {
-			const current = readConfig();
-			const status = window.prompt("Status filter (AC/WA/TLE/... or empty for all):", current.status);
-			if (status === null) return;
-			const next = Object.assign({}, current, {
-				status: status.trim(),
-			});
-			writeConfig(next);
-			window.alert("設定を保存しました。ページを再読み込みしてください。");
-		}
-		function configureOrderBy() {
-			const current = readConfig();
-			const orderBy = window.prompt(
-				"Sort key (source_length/time_consumption/memory_consumption/score):",
-				current.orderBy,
-			);
-			if (orderBy === null) return;
-			const next = Object.assign({}, current, {
-				orderBy: orderBy.trim() || DEFAULTS.orderBy,
-			});
-			writeConfig(next);
-			window.alert("設定を保存しました。ページを再読み込みしてください。");
-		}
-		function toggleTaskFilter() {
-			const current = readConfig();
-			const next = Object.assign({}, current, {
-				includeTaskFilter: !current.includeTaskFilter,
-			});
-			writeConfig(next);
-			window.alert(`問題番号の絞り込み: ${next.includeTaskFilter ? "ON" : "OFF"}`);
-		}
-		function resetConfig() {
-			writeConfig(Object.assign({}, DEFAULTS));
-			window.alert("設定をリセットしました。ページを再読み込みしてください。");
-		}
-		if (typeof GM_registerMenuCommand === "function") {
-			GM_registerMenuCommand("AtCoder Custom Default Submissions: 言語設定", configureLanguage);
-			GM_registerMenuCommand("AtCoder Custom Default Submissions: 結果フィルタ設定", configureStatus);
-			GM_registerMenuCommand("AtCoder Custom Default Submissions: 並び順設定", configureOrderBy);
-			GM_registerMenuCommand("AtCoder Custom Default Submissions: 問題番号絞り込み切替", toggleTaskFilter);
-			GM_registerMenuCommand("AtCoder Custom Default Submissions: 設定リセット", resetConfig);
-		}
-		function getTaskId() {
-			return parseAtCoderTaskUrl(location.href)?.taskId ?? "";
-		}
-		function buildSubmissionQuery(config2, task2) {
-			return buildAtCoderSubmissionsQuery({
-				language: config2.language,
-				status: config2.status,
-				orderBy: config2.orderBy,
-				task: task2 || undefined,
-			});
-		}
-		function isSubmissionLink(url) {
-			return /\/submissions(?:\/me)?\/?$/.test(url.pathname);
-		}
-		const config = readConfig();
-		const task = config.includeTaskFilter ? getTaskId() : "";
-		const querystring = buildSubmissionQuery(config, task);
-		const links = document.querySelectorAll("#contest-nav-tabs a");
-		for (let i = 0; i < links.length; i++) {
-			const href = links[i].getAttribute("href");
-			if (!href) continue;
-			const url = new URL(href, location.origin);
-			if (!isSubmissionLink(url)) continue;
-			url.search = querystring;
-			links[i].setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
-		}
+			function writeConfig(config2) {
+				if (typeof GM_setValue === "function") {
+					GM_setValue("config", config2);
+				}
+			}
+			function configureLanguage() {
+				const current = readConfig();
+				const language = window.prompt("Language name (e.g. Java, C#, Python3, Rust):", current.language);
+				if (language === null) return;
+				const next = Object.assign({}, current, {
+					language: language.trim() || DEFAULTS.language,
+				});
+				writeConfig(next);
+				window.alert("設定を保存しました。ページを再読み込みしてください。");
+			}
+			function configureStatus() {
+				const current = readConfig();
+				const status = window.prompt("Status filter (AC/WA/TLE/... or empty for all):", current.status);
+				if (status === null) return;
+				const next = Object.assign({}, current, {
+					status: status.trim(),
+				});
+				writeConfig(next);
+				window.alert("設定を保存しました。ページを再読み込みしてください。");
+			}
+			function configureOrderBy() {
+				const current = readConfig();
+				const orderBy = window.prompt(
+					"Sort key (source_length/time_consumption/memory_consumption/score):",
+					current.orderBy,
+				);
+				if (orderBy === null) return;
+				const next = Object.assign({}, current, {
+					orderBy: orderBy.trim() || DEFAULTS.orderBy,
+				});
+				writeConfig(next);
+				window.alert("設定を保存しました。ページを再読み込みしてください。");
+			}
+			function toggleTaskFilter() {
+				const current = readConfig();
+				const next = Object.assign({}, current, {
+					includeTaskFilter: !current.includeTaskFilter,
+				});
+				writeConfig(next);
+				window.alert(`問題番号の絞り込み: ${next.includeTaskFilter ? "ON" : "OFF"}`);
+			}
+			function resetConfig() {
+				writeConfig(Object.assign({}, DEFAULTS));
+				window.alert("設定をリセットしました。ページを再読み込みしてください。");
+			}
+			if (typeof GM_registerMenuCommand === "function") {
+				GM_registerMenuCommand("AtCoder Custom Default Submissions: 言語設定", configureLanguage);
+				GM_registerMenuCommand("AtCoder Custom Default Submissions: 結果フィルタ設定", configureStatus);
+				GM_registerMenuCommand("AtCoder Custom Default Submissions: 並び順設定", configureOrderBy);
+				GM_registerMenuCommand("AtCoder Custom Default Submissions: 問題番号絞り込み切替", toggleTaskFilter);
+				GM_registerMenuCommand("AtCoder Custom Default Submissions: 設定リセット", resetConfig);
+			}
+			function getTaskId() {
+				return parseAtCoderTaskUrl(location.href)?.taskId ?? "";
+			}
+			function buildSubmissionQuery(config2, task2) {
+				return buildAtCoderSubmissionsQuery({
+					language: config2.language,
+					status: config2.status,
+					orderBy: config2.orderBy,
+					task: task2 || undefined,
+				});
+			}
+			function isSubmissionLink(url) {
+				return /\/submissions(?:\/me)?\/?$/.test(url.pathname);
+			}
+			const config = readConfig();
+			const task = config.includeTaskFilter ? getTaskId() : "";
+			const querystring = buildSubmissionQuery(config, task);
+			const links = document.querySelectorAll("#contest-nav-tabs a");
+			for (let i = 0; i < links.length; i++) {
+				const href = links[i].getAttribute("href");
+				if (!href) continue;
+				const url = new URL(href, location.origin);
+				if (!isSubmissionLink(url)) continue;
+				url.search = querystring;
+				links[i].setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+			}
+		})();
 	})();
-})();
+}

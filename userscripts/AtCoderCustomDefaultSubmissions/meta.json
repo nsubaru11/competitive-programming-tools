@@ -1,10 +1,10 @@
 {
 	"name": "AtCoder Custom Default Submissions",
 	"name:en": "AtCoder Custom Default Submissions",
-	"version": "1.6.7",
-	"description": "AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。",
-	"description:ja": "AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。",
-	"description:en": "Sets default filters and sorting for AtCoder submission lists. Settings can be changed from the menu.",
+	"version": "1.6.8",
+	"description": "【更新終了】CP Toolkit へ統合しました。AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。",
+	"description:ja": "【更新終了】CP Toolkit へ統合しました。AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。",
+	"description:en": "[Discontinued] Merged into CP Toolkit. Sets default filters and sorting for AtCoder submission lists. Settings can be changed from the menu.",
 	"author": "ktnyori (original), nsubaru (modified)",
 	"license": "MIT",
 	"match": [
@@ -14,5 +14,6 @@
 		"GM_getValue",
 		"GM_setValue",
 		"GM_registerMenuCommand"
-	]
+	],
+	"homepageURL": "https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit"
 }

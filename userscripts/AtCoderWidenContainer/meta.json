@@ -1,10 +1,10 @@
 {
 	"name": "AtCoder Widen Container",
 	"name:en": "AtCoder Widen Container",
-	"version": "1.0.4",
-	"description": "AtCoderのページ幅を広げるユーザースクリプト",
-	"description:ja": "AtCoderのページ幅を広げるユーザースクリプト",
-	"description:en": "Widens the container width on AtCoder pages.",
+	"version": "1.0.5",
+	"description": "【更新終了】CP Toolkit へ統合しました。AtCoderのページ幅を広げるユーザースクリプト",
+	"description:ja": "【更新終了】CP Toolkit へ統合しました。AtCoderのページ幅を広げるユーザースクリプト",
+	"description:en": "[Discontinued] Merged into CP Toolkit. Widens the container width on AtCoder pages.",
 	"author": "nsubaru",
 	"match": [
 		"https://atcoder.jp/*"
@@ -19,5 +19,6 @@
 		"GM_setValue",
 		"GM_registerMenuCommand"
 	],
-	"run-at": "document-start"
+	"run-at": "document-start",
+	"homepageURL": "https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit"
 }

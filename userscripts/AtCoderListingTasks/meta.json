@@ -1,10 +1,10 @@
 {
 	"name": "AtCoder Listing Tasks",
 	"name:en": "AtCoder Listing Tasks",
-	"version": "1.5.10",
-	"description": "「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。",
-	"description:ja": "「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。",
-	"description:en": "Hover on the \"Tasks\" tab to open a drop-down list that takes you to the page for each problem in the contest.",
+	"version": "1.5.11",
+	"description": "【更新終了】CP Toolkit へ統合しました。「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。",
+	"description:ja": "【更新終了】CP Toolkit へ統合しました。「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。",
+	"description:en": "[Discontinued] Merged into CP Toolkit. Hover on the \"Tasks\" tab to open a drop-down list that takes you to the page for each problem in the contest.",
 	"author": "luuguas (original), nsubaru (modified)",
 	"license": "Apache-2.0",
 	"match": [
@@ -17,5 +17,6 @@
 	],
 	"grant": [
 		"none"
-	]
+	],
+	"homepageURL": "https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit"
 }
