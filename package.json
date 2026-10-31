@@ -1,5 +1,5 @@
 {
-	"name": "atcoder-tools",
+	"name": "competitive-programming-tools",
 	"private": true,
 	"workspaces": [
 		"shared",

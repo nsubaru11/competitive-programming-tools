@@ -1,6 +1,6 @@
 # competitive-programming-tools
 
-AtCoder 向けの補助ツールを Bun ワークスペースで管理しています。
+競技プログラミング向けの補助ツールを Bun ワークスペースで管理しています。
 
 ## ワークスペース構成
 
@@ -11,7 +11,7 @@ competitive-programming-tools/
 ├── tsconfig.base.json
 ├── shared/               # @atcoder-tools/shared
 ├── userscripts/          # @atcoder-tools/userscripts
-└── local-runner/           # @atcoder-tools/runner
+└── local-runner/        # @atcoder-tools/runner
 ```
 
 ## shared
