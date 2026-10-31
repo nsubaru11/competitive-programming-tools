@@ -1,21 +1,29 @@
 import fs from "node:fs";
 import path from "node:path";
+import type {LocalRunnerHeaderOption} from "@atcoder-tools/shared";
 import {CliUsageError, type Command} from "./Command";
+import * as options from "./options";
 import * as source from "./source";
 
 /** ソースを Main クラス化して Main.java（または指定パス）に書き出す。DEBUG は無効（本番想定）。 */
 export class TomainCommand implements Command {
 	readonly name = "tomain";
 	readonly usageLines = [
-		"  tomain [-f|--force] <sourceFile> [outFile]",
+		"  tomain [-f|--force] [--no-header|--header=<name>] <sourceFile> [outFile]",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {
 		const positionals: string[] = [];
 		let force = false;
+		let header: LocalRunnerHeaderOption = true;
 		for (const arg of args) {
 			if (arg === "-f" || arg === "--force") {
 				force = true;
+				continue;
+			}
+			const h = options.parseHeaderFlag(arg);
+			if (h !== undefined) {
+				header = h;
 				continue;
 			}
 			if (arg.startsWith("-")) throw new CliUsageError(`Unknown option: ${arg}`);
@@ -24,7 +32,7 @@ export class TomainCommand implements Command {
 		const [sourceFilePath, outFilePath] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceFilePath);
+		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceFilePath, false, {header});
 		const outPath = outFilePath
 			? path.resolve(outFilePath)
 			: path.join(path.dirname(resolvedSourcePath), "Main.java");
@@ -34,7 +42,7 @@ export class TomainCommand implements Command {
 		}
 
 		fs.mkdirSync(path.dirname(outPath), {recursive: true});
-		fs.writeFileSync(outPath, source.withSubmissionHeader(transformed), "utf8");
+		fs.writeFileSync(outPath, transformed, "utf8");
 		console.log(`Converted: ${resolvedSourcePath} -> ${outPath}`);
 		return 0;
 	}

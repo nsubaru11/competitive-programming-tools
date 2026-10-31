@@ -23,12 +23,17 @@ export type LocalRunnerPrecompileRequest = {
 	sourceCode: string;
 };
 
+/** 提出物の先頭に付けるヘッダー。true は既定のファイル、文字列は templates/header/<名前>.txt、false は付けない。 */
+export type LocalRunnerHeaderOption = boolean | string;
+
 export type LocalRunnerTransformRequest = {
 	mode: "transform";
 	sourceCode: string;
 	debug?: boolean;
 	autoImport?: boolean;
 	validate?: boolean;
+	/** 省略時は既定のヘッダーを付ける。 */
+	header?: LocalRunnerHeaderOption;
 };
 
 export type LocalRunnerPrepareRequest = {
@@ -37,6 +42,8 @@ export type LocalRunnerPrepareRequest = {
 	debug?: boolean;
 	autoImport?: boolean;
 	validate?: boolean;
+	/** 省略時は付けない。指定しても返すソースにだけ付け、コンパイルはヘッダーなしで行う。 */
+	header?: LocalRunnerHeaderOption;
 };
 
 export type LocalRunnerRunRequest = {
@@ -120,8 +127,9 @@ export function buildLocalRunnerTransformRequest(
 	debug = false,
 	autoImport = true,
 	validate = true,
+	header: LocalRunnerHeaderOption = true,
 ): LocalRunnerTransformRequest {
-	return {mode: "transform", sourceCode, debug, autoImport, validate};
+	return {mode: "transform", sourceCode, debug, autoImport, validate, header};
 }
 
 export function buildLocalRunnerPrepareRequest(
@@ -129,8 +137,9 @@ export function buildLocalRunnerPrepareRequest(
 	debug = false,
 	autoImport = true,
 	validate = false,
+	header: LocalRunnerHeaderOption = false,
 ): LocalRunnerPrepareRequest {
-	return {mode: "prepare", sourceCode, debug, autoImport, validate};
+	return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
 }
 
 export function buildLocalRunnerRunRequest(

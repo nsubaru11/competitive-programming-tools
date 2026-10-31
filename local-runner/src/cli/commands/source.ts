@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as shared from "@atcoder-tools/shared";
-import {CLI_CONFIG, resolveSubmissionHeaderFile} from "../../config";
+import {CLI_CONFIG} from "../../config";
 import * as ensureServer from "../ensureServer";
 import * as transform from "../transform";
 
@@ -17,37 +17,31 @@ export type PreparedSource = {
 	inlinedClasses: string[];
 };
 
-/** 提出物の先頭にヘッダーを付ける。既にヘッダーがあるソースやファイルが無い場合はそのまま返す。 */
-export function withSubmissionHeader(sourceCode: string): string {
-	if (sourceCode.startsWith("// ====")) return sourceCode;
-	const headerFile = resolveSubmissionHeaderFile();
-	if (!fs.existsSync(headerFile)) return sourceCode;
-	return `${shared.normalizeNewlines(fs.readFileSync(headerFile, "utf8")).trimEnd()}\n\n${sourceCode}`;
-}
-
 /**
  * ソースファイルを解決して読み込み、ライブラリ展開（lib import があれば）→
  * Main クラス化 + （任意で）DEBUG 有効化した文字列を返す。
  * run / localtest / tomain / test / submit が共通で使う前処理。
  * すべての経路がバンドル後のソースを使うため、ローカル実行と提出物が常に一致する。
+ * ヘッダーはバンドル時に付ける。既定では実行用（compile）に付けず、提出物を作る経路にだけ付ける。
  */
 export async function prepareSource(
 	sourceFilePath: string,
 	debug = false,
-	options: {compile?: boolean; validate?: boolean} = {},
+	options: {compile?: boolean; validate?: boolean; header?: shared.LocalRunnerHeaderOption} = {},
 ): Promise<PreparedSource> {
 	const resolvedSourcePath = transform.resolveSourceFilePath(sourceFilePath);
 	const sourceText = shared.normalizeNewlines(fs.readFileSync(resolvedSourcePath, "utf8"));
 	await ensureServer.ensureLocalRunnerReady();
 	const compile = options.compile === true;
 	const validate = options.validate ?? !compile;
+	const header = options.header ?? !compile;
 	let preparedByServer = compile;
 	let response = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
 		method: "POST",
 		headers: {"Content-Type": "application/json"},
 		body: JSON.stringify(compile
-			? shared.buildLocalRunnerPrepareRequest(sourceText, debug, true, validate)
-			: shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate)),
+			? shared.buildLocalRunnerPrepareRequest(sourceText, debug, true, validate, header)
+			: shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate, header)),
 	});
 	// 更新前の常駐daemonが残っている場合も、そのコマンドだけ従来経路で動作させる。
 	if (compile && response.status === 400) {
@@ -55,7 +49,7 @@ export async function prepareSource(
 		response = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
 			method: "POST",
 			headers: {"Content-Type": "application/json"},
-			body: JSON.stringify(shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate)),
+			body: JSON.stringify(shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate, header)),
 		});
 	}
 	if (!response.ok) throw new Error(`Local runner transform failed: ${response.status}`);

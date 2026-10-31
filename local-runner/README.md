@@ -103,6 +103,8 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 |-------------------------------|------------------------------------------------|----------------------------------------------------------------------------------------------------------|
 | `-f`, `--force`               | `submit` / `tomain`                            | submit: サンプルが非 AC でも提出する / tomain: 既存の出力ファイルを上書きする                            |
 | `-d`, `--debug[=true\|false]` | `test` / `localtest` / `run`                   | ソースの DEBUG ブロックの有効/無効を上書き（既定は有効）。`-d` だけなら有効、`--debug=false` で無効      |
+| `--no-header`                 | `submit` / `tomain` / `toclip`                 | 提出物の先頭にヘッダーを付けない                                                                         |
+| `--header=<name>`             | `submit` / `tomain` / `toclip`                 | `templates/header/<name>.txt` をヘッダーに使う（既定は `java`）                                          |
 | `--full`                      | `test` / `localtest` / `submit` / `crosscheck` | WA 差分を行数で折りたたまず**全行表示**する（`--max-lines` より優先）                                    |
 | `--wa-only`                   | `test` / `localtest` / `submit` / `crosscheck` | WA 差分のうち**不一致行（×）だけ**を抽出して表示する（行番号は元のまま保持）                             |
 | `--max-lines=N`               | `test` / `localtest` / `submit` / `crosscheck` | WA 差分の折りたたみ行数を `N` に変更する（既定 20）                                                      |
@@ -129,7 +131,14 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 
 ### 提出用ヘッダー
 
-`submit` / `tomain` / `toclip` は、提出物の先頭に `templates/header/java.txt` を付けます。`ATCODER_HEADER_FILE` で差し替えられます。ファイルが無い場合や、ソースが既に `// ====` で始まる場合は付けません。
+ヘッダーは解答に書かず、提出物を作るときに付けます。`submit` / `tomain` / `toclip` と JavaCodeSubmitter の貼り付け変換は、バンドル後のソースの先頭に `templates/header/java.txt` を付けます。
+
+- `--no-header` で付けずに出力し、`--header=<name>` で `templates/header/<name>.txt` を選べます。
+- 既定のファイルは `ATCODER_HEADER_FILE` で差し替えられます。既定のファイルが無い場合は付けず、`--header` で選んだファイルが無い場合はエラーで止まります。
+- ソースがヘッダーの1行目で始まる場合は重ねて付けません（`toclip` の出力を貼り付けた場合など）。
+- `run` / `test` / `localtest` / `crosscheck` と EasyTest の実行には付けません。ローカルの行番号を元のソースと揃えるためです。
+
+ヘッダーにはサイトやコンテストで変わらない情報だけを書きます。言語のバージョンのように提出先で変わるものは書きません。
 
 ### 実行時間の警告
 
@@ -189,12 +198,12 @@ bun run --cwd local-runner localtest D.java
 | `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                          |
 | `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                          |
 | `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`         |
-| `ATCODER_HEADER_FILE`            | 提出物の先頭に付けるヘッダーファイル               | `../templates/header/java.txt` |
+| `ATCODER_HEADER_FILE`            | 提出物の先頭に付ける既定のヘッダーファイル         | `../templates/header/java.txt` |
 | `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                             |
 | `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                             |
 | `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`      |
 
-既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
+既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
 
 ## セッションファイル例
 

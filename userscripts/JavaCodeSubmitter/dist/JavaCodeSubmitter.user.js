@@ -2,7 +2,7 @@
 // @name           Java Code Submitter
 // @name:en        Java Code Submitter
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.2.11
+// @version        1.2.12
 // @description    Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。
 // @description:en Automatically removes package declarations and renames classes to Main when submitting Java source code.
 // @description:ja Java のソースコードを提出する際に、パッケージ名の削除やクラス名の Main への変更を自動で行います。
@@ -311,8 +311,14 @@
 		return Object.assign({}, defaults, parseStoredObject(raw));
 	}
 	// ../shared/src/local-runner.ts
-	function buildLocalRunnerTransformRequest(sourceCode, debug = false, autoImport = true, validate = true) {
-		return { mode: "transform", sourceCode, debug, autoImport, validate };
+	function buildLocalRunnerTransformRequest(
+		sourceCode,
+		debug = false,
+		autoImport = true,
+		validate = true,
+		header = true,
+	) {
+		return { mode: "transform", sourceCode, debug, autoImport, validate, header };
 	}
 	// JavaCodeSubmitter/src/main.ts
 	(function () {
@@ -321,6 +327,7 @@
 			removePackage: true,
 			renameClass: true,
 			fixDebug: true,
+			header: true,
 			foldMainOnPaste: true,
 			logEnabled: false,
 			localRunnerURL: "http://localhost:8080",
@@ -367,7 +374,7 @@
 			} catch {}
 		};
 		function requestLocalTransform(code) {
-			const body = JSON.stringify(buildLocalRunnerTransformRequest(code, false, true, false));
+			const body = JSON.stringify(buildLocalRunnerTransformRequest(code, false, true, false, SETTINGS.header));
 			if (typeof GM_xmlhttpRequest === "function") {
 				return new Promise((resolve, reject) => {
 					GM_xmlhttpRequest({

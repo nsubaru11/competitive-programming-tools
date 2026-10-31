@@ -1,4 +1,18 @@
+import type {LocalRunnerHeaderOption} from "@atcoder-tools/shared";
 import {CliUsageError} from "./Command";
+
+/**
+ * 提出物のヘッダー指定を解釈するヘルパー。受け付ける形式:
+ *   --no-header       → 付けない
+ *   --header=<名前>   → templates/header/<名前>.txt を付ける
+ *
+ * arg がこのフラグでなければ undefined を返す。
+ */
+export function parseHeaderFlag(arg: string): LocalRunnerHeaderOption | undefined {
+	if (arg === "--no-header") return false;
+	if (arg.startsWith("--header=")) return arg.slice("--header=".length);
+	return undefined;
+}
 
 /**
  * 真偽値オプションを解釈する汎用ヘルパー。

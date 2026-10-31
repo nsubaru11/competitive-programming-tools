@@ -42,9 +42,15 @@ export function resolveLibrarySourceRoot(): string {
 	return preparedLibrarySourceRoot || findLibrarySourceRoot();
 }
 
-/** 提出物の先頭に付けるヘッダーファイル。無ければヘッダーなしで提出する。 */
-export function resolveSubmissionHeaderFile(): string {
-	return process.env.ATCODER_HEADER_FILE || path.resolve(PROJECT_ROOT, "../templates/header/java.txt");
+/**
+ * 提出物の先頭に付けるヘッダーファイル。name で templates/header/<name>.txt を選べる。
+ * name は HTTP で受け取る値なので、このフォルダの外を指せない形式だけを許可する。
+ */
+export function resolveSubmissionHeaderFile(name?: string): string {
+	const headerDir = path.resolve(PROJECT_ROOT, "../templates/header");
+	if (name === undefined) return process.env.ATCODER_HEADER_FILE || path.join(headerDir, "java.txt");
+	if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(name)) throw new Error(`Invalid header name: "${name}"`);
+	return path.join(headerDir, `${name}.txt`);
 }
 
 export const CLI_CONFIG = {

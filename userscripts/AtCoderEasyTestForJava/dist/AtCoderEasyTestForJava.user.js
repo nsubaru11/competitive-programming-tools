@@ -134,8 +134,14 @@
 	function buildLocalRunnerListRequest() {
 		return { mode: "list" };
 	}
-	function buildLocalRunnerPrepareRequest(sourceCode, debug = false, autoImport = true, validate = false) {
-		return { mode: "prepare", sourceCode, debug, autoImport, validate };
+	function buildLocalRunnerPrepareRequest(
+		sourceCode,
+		debug = false,
+		autoImport = true,
+		validate = false,
+		header = false,
+	) {
+		return { mode: "prepare", sourceCode, debug, autoImport, validate, header };
 	}
 	function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
 		return {

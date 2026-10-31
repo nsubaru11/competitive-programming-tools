@@ -3,6 +3,7 @@ import http from "node:http";
 import {pathToFileURL} from "node:url";
 import type {
 	LocalRunnerCompilerInfo,
+	LocalRunnerHeaderOption,
 	LocalRunnerPrepareResponse,
 	LocalRunnerRunResponse,
 	LocalRunnerTransformResponse,
@@ -15,6 +16,7 @@ import * as color from "../utils/color";
 import * as logging from "../utils/logging";
 import * as compiler from "./compiler";
 import * as dispatcher from "./dispatcher";
+import {applySubmissionHeader} from "./header";
 
 const serverStartedAt = Date.now();
 const PRECOMPILE_IDLE_DELAY_MS = 150;
@@ -295,7 +297,7 @@ const server = http.createServer(async (req, res) => {
 
 	let request: {
 		mode?: string; sourceCode?: string; programId?: string; stdin?: string; prepared?: boolean; debug?: boolean;
-		autoImport?: boolean; validate?: boolean
+		autoImport?: boolean; validate?: boolean; header?: LocalRunnerHeaderOption
 	};
 	try {
 		request = JSON.parse(body) as {mode?: string; sourceCode?: string; stdin?: string};
@@ -326,12 +328,17 @@ const server = http.createServer(async (req, res) => {
 			schedulePrecompile(request.sourceCode);
 			response = {status: "accepted"};
 		} else if (request.mode === "transform" && typeof request.sourceCode === "string") {
-			response = await transformCode(request.sourceCode, !!request.debug, request.autoImport !== false,
-				request.validate !== false);
+			response = applySubmissionHeader(
+				await transformCode(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate !== false),
+				request.header ?? true,
+			);
 		} else if (request.mode === "prepare" && typeof request.sourceCode === "string") {
 			cancelMatchingPrecompile(request.sourceCode);
-			response = await prepareCodeCached(request.sourceCode, !!request.debug, request.autoImport !== false,
-				request.validate === true);
+			// コンパイルはヘッダーなしで行い、ローカル実行の行番号を元ソースと揃える。
+			response = applySubmissionHeader(
+				await prepareCodeCached(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate === true),
+				request.header ?? false,
+			);
 		} else if (request.mode === "run" &&
 			(typeof request.sourceCode === "string" || typeof request.programId === "string")) {
 			if (typeof request.sourceCode === "string") cancelMatchingPrecompile(request.sourceCode);

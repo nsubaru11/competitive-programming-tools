@@ -2,19 +2,19 @@ import * as shared from "@atcoder-tools/shared";
 import * as color from "../../utils/color";
 import * as atcoder from "../atcoder";
 import {TaskCommand, type TaskRunContext} from "./TaskCommand";
-import * as source from "./source";
 
 /** サンプルが全 AC なら（-f 指定時は非 AC でも）AtCoder へ提出し、結果をポーリング表示する。 */
 export class SubmitCommand extends TaskCommand {
 	readonly name = "submit";
 	readonly usageLines = [
-		"  submit [-f|--force] [--full] [--wa-only] [--max-lines=N] <taskScreenName> <sourceFile>",
+		"  submit [-f|--force] [--no-header|--header=<name>] [--full] [--wa-only] [--max-lines=N] <taskScreenName> <sourceFile>",
 		"  submit [...options] <task>              (短縮: 同上。例: submit d)",
 	];
 	protected readonly allowForce = true;
 	protected readonly debug = false;
 	// 提出前のサンプル表示は test と同じ表示オプションを使える（DEBUG は本番固定なので -d は不可）。
 	protected readonly supportsDisplayOptions = true;
+	protected readonly supportsHeaderOption = true;
 
 	protected async onSamplesComplete({task, transformed, allAccepted, force}: TaskRunContext): Promise<number> {
 		if (!allAccepted) {
@@ -26,7 +26,7 @@ export class SubmitCommand extends TaskCommand {
 		}
 
 		const cookieHeader = atcoder.toCookieHeader();
-		const submitResult = await atcoder.submitToAtCoder(task, source.withSubmissionHeader(transformed), cookieHeader);
+		const submitResult = await atcoder.submitToAtCoder(task, transformed, cookieHeader);
 
 		let submissionId = submitResult.submissionId;
 		let submissionUrl = submitResult.submissionUrl;

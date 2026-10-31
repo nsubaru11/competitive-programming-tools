@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import type {LocalRunnerHeaderOption} from "@atcoder-tools/shared";
 import type {Task} from "../../types";
 import * as atcoder from "../atcoder";
 import * as parser from "../parser";
@@ -128,13 +129,15 @@ export abstract class TaskCommand implements Command {
 	protected readonly supportsDebugOption: boolean = false;
 	/** --full / --wa-only の表示オプションを受け付けるか（test / submit は true）。 */
 	protected readonly supportsDisplayOptions: boolean = false;
+	/** 提出用ヘッダーを付け、--no-header / --header=<名前> を受け付けるか（submit のみ true）。 */
+	protected readonly supportsHeaderOption: boolean = false;
 
 	async execute(args: readonly string[]): Promise<number> {
-		const {task, sourceFilePath, force, debug, display} = this.validate(args);
+		const {task, sourceFilePath, force, debug, header, display} = this.validate(args);
 		const {transformed, originalFileName, originalClassName, programId} = await source.prepareSource(
 			sourceFilePath,
 			debug,
-			{compile: true, validate: false},
+			{compile: true, validate: false, header},
 		);
 
 		const cookieHeader = atcoder.toCookieHeader();
@@ -165,11 +168,13 @@ export abstract class TaskCommand implements Command {
 		sourceFilePath: string;
 		force: boolean;
 		debug: boolean;
+		header: LocalRunnerHeaderOption;
 		display: sampleJudge.SampleDisplayOptions;
 	} {
 		const positionals: string[] = [];
 		let force = false;
 		let debug = this.debug; // 既定値。-d/--debug があれば上書き。
+		let header: LocalRunnerHeaderOption = this.supportsHeaderOption;
 		const display: sampleJudge.SampleDisplayOptions = {};
 		for (const arg of args) {
 			if (arg === "-f" || arg === "--force") {
@@ -184,6 +189,13 @@ export abstract class TaskCommand implements Command {
 				const d = options.parseBoolFlag(arg, "--debug", "-d");
 				if (d !== undefined) {
 					debug = d;
+					continue;
+				}
+			}
+			if (this.supportsHeaderOption) {
+				const h = options.parseHeaderFlag(arg);
+				if (h !== undefined) {
+					header = h;
 					continue;
 				}
 			}
@@ -221,6 +233,6 @@ export abstract class TaskCommand implements Command {
 		if (!task || !sourceFilePath) {
 			throw new CliUsageError();
 		}
-		return {task, sourceFilePath, force, debug, display};
+		return {task, sourceFilePath, force, debug, header, display};
 	}
 }

@@ -1,5 +1,6 @@
 import {
 	buildLocalRunnerTransformRequest,
+	type LocalRunnerHeaderOption,
 	type LocalRunnerTransformResponse,
 	mergeWithDefaults,
 	modifyJavaCode,
@@ -21,6 +22,8 @@ import {
 		renameClass: true,
 		// DEBUG = true を自動的に false に強制するか
 		fixDebug: true,
+		// LocalRunner の変換でヘッダーを付けるか（文字列なら templates/header/<名前>.txt を使う）
+		header: true as LocalRunnerHeaderOption,
 		// 貼り付け後にトップレベル型と複数行コメントを自動折りたたみするか
 		foldMainOnPaste: true,
 		// デバッグログを有効化するか
@@ -77,7 +80,7 @@ import {
 	 * ペーストされたコードを自動修正する
 	 */
 	function requestLocalTransform(code: string): Promise<LocalRunnerTransformResponse> {
-		const body = JSON.stringify(buildLocalRunnerTransformRequest(code, false, true, false));
+		const body = JSON.stringify(buildLocalRunnerTransformRequest(code, false, true, false, SETTINGS.header));
 		if (typeof GM_xmlhttpRequest === 'function') {
 			return new Promise((resolve, reject) => {
 				GM_xmlhttpRequest({
