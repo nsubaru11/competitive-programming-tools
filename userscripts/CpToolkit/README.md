@@ -115,6 +115,8 @@ CSS は `.css` に分けます。YAML と CSS はビルド時に JS へ同梱さ
 
 YAML の型は `scripts/gen-data-types.ts` が `<name>.d.yaml.ts` として生成します。`typecheck` と `test` が自動で実行し、生成物は Git に入れません。
 
+機能が記憶する値は、以前の版が書いた形のまま残ることがあります。`KeyValueStore` の値はキャストせず、`readStored` と `domain/validation/guards.ts` で形を確かめて読みます。
+
 `@match` は `data/judges/*.yaml` の `matches` から、`@connect` は `data/runners.yaml` の `connect` から生成するので、`meta.json` には書きません。
 
 `data/tessoku.yaml` の難易度は「競技プログラミングの鉄則」の書籍を出典とします。第三者のスクリプトから写したものではありません。

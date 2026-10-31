@@ -11,6 +11,8 @@
 
 ソースは複数モジュール・shared 利用で問題ありません。配布物だけが 1 ファイルの `.user.js` になります。
 
+`build` は `scripts/format-output.ts` で配布物をソースと同じ書式に整形します。IDE で整形し直す必要はありません。配布物の先頭の `@formatter:off` が、IDE の整形の対象から外します。
+
 機能の追加と変更は CP Toolkit で行います。手順は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。
 
 ```text
