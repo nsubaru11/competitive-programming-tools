@@ -55,6 +55,8 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 - ショートカットは修飾キーまで完全に一致したときだけ動く
 - Local Runner の既定の URL は `http://localhost:8080`
 - Easy Test の画面は Shadow DOM の中に作り直し、ページの `window` には何も公開しない
+- Easy Test の下部のパネルの設定ボタンは、CP Toolkit の設定画面を開く
+- Codeforces に Bootstrap を読み込まないので、Easy Test のボタンは飾りのない表示になる
 
 引き継ぎの仕組みは [userscripts/README.md](../README.md#更新を終了したスクリプト) を参照してください。
 
@@ -129,6 +131,8 @@ YAML の型は `scripts/gen-data-types.ts` が `<name>.d.yaml.ts` として生�
 4. `src/app/registry.ts` に登録する
 
 設定画面は `options` の宣言から自動で生成します。
+
+`phase: "ready"` の機能は、サイト自身の `DOMContentLoaded` の処理が終わってから起動します。AtCoder はこの時点で問題文の Copy ボタンや数式の描画を行うので、それより前に DOM を変えないようにします。
 
 `start` が後始末の関数を返す機能は `live: true` を指定できます。ON/OFF と設定変更が再読み込みなしで反映されます。指定しない機能は再読み込みで反映します。
 
