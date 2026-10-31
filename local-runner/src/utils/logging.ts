@@ -33,7 +33,7 @@ function stripAnsi(text: string) {
 
 /** 実行環境のタイムゾーンによらず JST で返す。JST に夏時間はないので固定オフセットでよい。 */
 function formatJstTimestamp() {
-	return new Date(Date.now() + JST_OFFSET_MS).toISOString().replace("Z", "+09:00");
+	return new Date(Date.now() + JST_OFFSET_MS).toISOString().replace("T", " ").replace("Z", "");
 }
 
 function formatLogLine(level: string, message: string) {
