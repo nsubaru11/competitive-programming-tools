@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import {LOG_FILE_PATH, RUNNER_CONFIG} from "../config";
 
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
 export function logInfo(message: string) {
 	const line = formatLogLine("INFO", message);
 	process.stdout.write(`${line}\n`);
@@ -29,8 +31,13 @@ function stripAnsi(text: string) {
 	return String(text || "").replace(/\x1B\[[0-9;]*m/g, "");
 }
 
+/** 実行環境のタイムゾーンによらず JST で返す。JST に夏時間はないので固定オフセットでよい。 */
+function formatJstTimestamp() {
+	return new Date(Date.now() + JST_OFFSET_MS).toISOString().replace("Z", "+09:00");
+}
+
 function formatLogLine(level: string, message: string) {
-	return `[${new Date().toISOString()}] [${level}] ${message}`;
+	return `[${formatJstTimestamp()}] [${level}] ${message}`;
 }
 
 function rotateLogFileIfNeeded() {
