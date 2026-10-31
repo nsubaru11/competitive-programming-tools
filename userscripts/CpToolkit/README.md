@@ -1,10 +1,62 @@
 # CP Toolkit
 
-競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるようにする UserScript です。既存の UserScript を順に移行しています。
+競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるようにする UserScript です。
+
+- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js)
 
 ## 使い方
 
 Tampermonkey のメニューの「設定を開く」、または AtCoder のヘッダーの「CP Toolkit」から設定画面を開きます。
+
+## 機能
+
+既定で OFF の機能には「OFF」と書いています。それ以外は最初から有効です。
+
+| 分類 | 機能 | 内容 |
+|---|---|---|
+| 表示 | ページ幅の拡張 | ページ中央の幅を広げる |
+| 表示 | メニューのホバー表示 | マウスを重ねるだけでメニューを開く |
+| 問題文 | 問題文の強調表示 | 数字、変数、実行時間とメモリの制限を強調する |
+| 問題文 | 問題文のコピー | 各項目と全体を Markdown でコピーする |
+| 問題文 | サンプルの横並び(OFF) | 入出力の形式とサンプルを横に並べる |
+| 提出 | 提出一覧の既定の絞り込み | 提出タブのリンクに絞り込みと並び順を設定する |
+| 提出 | AC 提出への近道 | AC 提出を実行時間順とコード長順で開く |
+| 提出 | 提出結果の通知 | 判定が終わると、どのページにいても通知する |
+| 提出 | 実行結果の平均 | 提出の詳細に実行時間とメモリの平均を表示する |
+| 提出 | 時間指定の提出(OFF) | 指定した時間が経ったら提出する |
+| コンテスト | 問題のドロップダウン | 「問題」タブから各問題へ移動し、まとめて開く |
+| コンテスト | 解説の一覧表示 | すべての問題の解説をまとめて表示する |
+| コンテスト | トップページのコンテスト一覧 | 種類ごとの過去問へのリンクに置き換える |
+| コンテスト | 鉄則本の難易度表示 | 問題一覧に書籍の難易度を表示する |
+| 成績 | パフォーマンスのグラフ | レーティンググラフにパフォーマンスを重ねる |
+| 成績 | 成績表の色付け | 成績表のパフォーマンスとレーティングに色を付ける |
+| 実行環境 | Local Runner | Java の変換と実行に使う手元のサーバーへ接続する |
+| 実行環境 | Java の提出補助 | 貼り付けたコードの変換とショートカットでの提出 |
+| 実行環境 | Easy Test | 問題ページからサンプルを実行する |
+| 実行環境 | paiza の言語選択 | paiza の提出ページで言語を自動で選ぶ |
+
+対象サイトは AtCoder が中心です。Easy Test は yukicoder と Codeforces、Java の提出補助は Codeforces、AOJ、Library Checker、paiza でも動きます。
+
+## 旧スクリプトからの移行
+
+旧スクリプトの最終版と CP Toolkit を両方入れてページを開くと、旧スクリプトは本体を実行せず、次の設定を引き継ぎます。すでに CP Toolkit で設定した項目は上書きしません。
+
+| 旧スクリプト | 引き継ぐ設定 |
+|---|---|
+| AtCoder Custom Default Submissions | 絞り込みと並び順 |
+| AtCoder Easy Test for Java | 編集中のコードの事前コンパイルなどの設定、Local Runner の URL |
+| AtCoder Highlighter | 強調の色 |
+| AtCoder Widen Container | ページ幅 |
+
+次の点は旧スクリプトと異なります。
+
+- AtCoder Listing Tasks と Java Code Submitter の設定、Easy Test に保存したコードは引き継がない
+- 色の設定は `#rrggbb` の形式だけを受け付ける
+- ショートカットは修飾キーまで完全に一致したときだけ動く
+- Local Runner の既定の URL は `http://localhost:8080`
+- Easy Test の画面は Shadow DOM の中に作り直し、ページの `window` には何も公開しない
+
+引き継ぎの仕組みは [userscripts/README.md](../README.md#更新を終了したスクリプト) を参照してください。
 
 ## 構成
 
@@ -61,7 +113,13 @@ CSS は `.css` に分けます。YAML と CSS はビルド時に JS へ同梱さ
 
 YAML の型は `scripts/gen-data-types.ts` が `<name>.d.yaml.ts` として生成します。`typecheck` と `test` が自動で実行し、生成物は Git に入れません。
 
-`@match` は `data/judges/*.yaml` の `matches` から生成するので、`meta.json` には書きません。
+`@match` は `data/judges/*.yaml` の `matches` から、`@connect` は `data/runners.yaml` の `connect` から生成するので、`meta.json` には書きません。
+
+`data/tessoku.yaml` の難易度は「競技プログラミングの鉄則」の書籍を出典とします。第三者のスクリプトから写したものではありません。
+
+## ライセンス
+
+配布物には第三者のコードと turndown を含むので、ライセンスは `MIT AND Apache-2.0 AND 0BSD` です。表記は `NOTICES.txt` に書き、ビルド時に配布物へ埋め込みます。対象は [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md) を参照してください。
 
 ## 機能の追加
 

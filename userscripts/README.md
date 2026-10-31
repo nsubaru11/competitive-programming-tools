@@ -1,6 +1,6 @@
 # userscripts
 
-AtCoder 関連の UserScript を TypeScript で開発し、[Tampermonkey](https://www.tampermonkey.net/) 向けに配布します。
+競技プログラミング向けの UserScript を TypeScript で開発し、[Tampermonkey](https://www.tampermonkey.net/) 向けに配布します。
 
 ## 開発の流れ
 
@@ -10,6 +10,8 @@ AtCoder 関連の UserScript を TypeScript で開発し、[Tampermonkey](https:
 4. Tampermonkey に `dist/*.user.js` の URL を登録する
 
 ソースは複数モジュール・shared 利用で問題ありません。配布物だけが 1 ファイルの `.user.js` になります。
+
+機能の追加と変更は CP Toolkit で行います。手順は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。
 
 ```text
 <ScriptName>/
@@ -32,7 +34,7 @@ bun run --cwd userscripts watch
 特定スクリプトのみビルド:
 
 ```powershell
-bun run --cwd userscripts ./build.ts AtCoderHighlighter
+bun run --cwd userscripts ./build.ts CpToolkit
 ```
 
 ## 型定義
@@ -44,59 +46,34 @@ bun run --cwd userscripts ./build.ts AtCoderHighlighter
 
 ### CP Toolkit
 
-このフォルダのスクリプトを1本に統合し、機能ごとに ON/OFF できるようにするスクリプトです。移行中で、構成と開発の規則は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。
+競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるスクリプトです。機能の一覧と構成は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。
 
 - [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js)
-
-### AtCoder Custom Default Submissions
-
-提出一覧の絞り込み・並び替えのデフォルトを適用します。
-
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderCustomDefaultSubmissions/dist/AtCoderCustomDefaultSubmissions.user.js)
-
-### AtCoder Easy Test for Java
-
-サンプル入出力のテストを簡単に行えるようにします（Java 向け拡張）。出力比較は `@atcoder-tools/shared` の
-`evaluateEasyTestOutput` と runner CLI で共通です。
-
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js)
 - ローカル実行: [local-runner/README.md](../local-runner/README.md)
 
-### AtCoder Highlighter
+### 更新を終了したスクリプト
 
-問題文の数字・変数（KaTeX）と制限時間を強調表示します。
+次の8本は CP Toolkit へ統合しました。今後は更新しません。
 
-- [Greasy Fork](https://update.greasyfork.org/scripts/566471/AtCoder%20Highlighter.user.js)（更新 URL は meta.json を参照）
+| スクリプト | CP Toolkit の機能 |
+|---|---|
+| AtCoder Custom Default Submissions | 提出一覧の既定の絞り込み |
+| AtCoder Easy Test for Java | Easy Test、Local Runner |
+| AtCoder Highlighter | 問題文の強調表示 |
+| AtCoder Listing Tasks | 問題のドロップダウン |
+| AtCoder Markdown Copier | 問題文のコピー |
+| AtCoder Performance Overlay | パフォーマンスのグラフ |
+| AtCoder Widen Container | ページ幅の拡張 |
+| Java Code Submitter | Java の提出補助 |
 
-### AtCoder Listing Tasks
+利用中の環境へ最終版が届くまでの間だけフォルダを残し、その後に削除します。
 
-「問題」タブにホバーで各問題へ飛べるドロップダウンを表示します。
+最終版は `build.ts` の `RETIRED_SCRIPTS` に載せたスクリプトの先頭へ `retirement.js` を埋め込んだものです。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderListingTasks/dist/AtCoderListingTasks.user.js)
-
-### AtCoder Markdown Copier
-
-AtCoder の問題文を Markdown 形式でコピーする機能を追加します。個別パートのコピーと、全パートの一括コピーが可能です。
-
-- [Greasy Fork](https://update.greasyfork.org/scripts/580283/AtCoder%20Markdown%20Copier.user.js)（更新 URL は meta.json を参照）
-
-### AtCoder Performance Overlay
-
-レーティンググラフにパフォーマンスを重ねて表示します。
-
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js)
-
-### AtCoder Widen Container
-
-AtCoder のページ中央コンテナを指定した幅に広げます。設定は Tampermonkey のユーザースクリプトメニューから変更できます。
-
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js)
-
-### Java Code Submitter
-
-Java 提出の補助（Compiler APIによるMain/DEBUG/library変換、折りたたみ、ショートカット）。LocalRunner不在時のみsharedの字句変換へフォールバックします。
-
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js)
+- ページの `data-cp-toolkit` の印で CP Toolkit の動作を判定し、動いていれば本体を実行しない
+- 動いていなければ本体を今までどおり実行し、CP Toolkit への移行を1回だけ案内する
+- `RETIRED_SCRIPTS` に書いた設定をサイトの `localStorage` の `cp-toolkit:legacy:<スクリプト名>` へ書き出す。スクリプトごとの保存領域は CP Toolkit から読めないため
+- CP Toolkit は起動時にこれを読み、設定へ取り込んで受け渡し場所を空にする
 
 ## 使い方（利用者向け）
 
@@ -106,9 +83,4 @@ Java 提出の補助（Compiler APIによるMain/DEBUG/library変換、折りた
 
 ## shared との関係
 
-| スクリプト                      | shared の主な利用                                          |
-|---------------------------------|------------------------------------------------------------|
-| AtCoderEasyTestForJava          | Local Runner API、ジャッジ、query、JSON                    |
-| AtCoderCustomDefaultSubmissions | `parseAtCoderTaskUrl`、提出一覧クエリ、設定 JSON           |
-| JavaCodeSubmitter               | LocalRunner `transform` API、フォールバック変換、設定 JSON |
-| その他                          | DOM 専用のため shared 未使用のものあり                     |
+CP Toolkit は `@atcoder-tools/shared` の Local Runner API、ジャッジ、提出一覧クエリ、Java 変換を使います。これらは runner CLI と共通です。

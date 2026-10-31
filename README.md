@@ -33,7 +33,7 @@ import {parseAtCoderTaskUrl, evaluateEasyTestOutput} from "@atcoder-tools/shared
 ## userscripts
 
 TypeScript で開発し、Bun で Tampermonkey 用の単一 `.user.js`
-にバンドルします。詳細は [userscripts/README.md](./userscripts/README.md) を参照してください。
+にバンドルします。補助機能は [CP Toolkit](./userscripts/CpToolkit/README.md) の1本にまとめ、機能ごとに ON/OFF できます。詳細は [userscripts/README.md](./userscripts/README.md) を参照してください。
 
 ```powershell
 cd competitive-programming-tools
@@ -57,7 +57,7 @@ bun run --cwd local-runner test abc001_a A.java
 - パッケージマネージャは **Bun**（`competitive-programming-tools/bun.lock`）
 - `@ts-nocheck` / `@ts-ignore` は使わない
 - 共通設定は `tsconfig.base.json`
-- `userscripts/dist/*.user.js` は生成物。`src/main.ts` を編集して再ビルドする
+- `userscripts/*/dist/*.user.js` は生成物。`src/` を編集して再ビルドする
 
 ## 変更後の確認
 

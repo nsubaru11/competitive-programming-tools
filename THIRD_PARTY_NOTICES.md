@@ -11,17 +11,25 @@
 
 いずれも nsubaru が改変しています。
 
+`CpToolkit` は上の4本から派生したコードと、次のライブラリを含みます。配布物のライセンスは `MIT AND Apache-2.0 AND 0BSD` です。
+
+| ライブラリ                                                                     | 作者         | ライセンス |
+|--------------------------------------------------------------------------------|--------------|------------|
+| [turndown](https://github.com/mixmark-io/turndown)                             | Dom Christie | MIT        |
+| [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm)       | Dom Christie | MIT        |
+
 ## Apache License 2.0
 
-`AtCoderListingTasks` に適用されます。全文は [LICENSES/Apache-2.0.txt](./LICENSES/Apache-2.0.txt) を参照してください。
+`AtCoderListingTasks` と、`CpToolkit` のうちそこから派生した部分に適用されます。全文は [LICENSES/Apache-2.0.txt](./LICENSES/Apache-2.0.txt) を参照してください。
 
 ## MIT License
 
-`AtCoderCustomDefaultSubmissions`、`AtCoderEasyTestForJava`、`AtCoderPerformanceOverlay` に適用されます。
+`AtCoderCustomDefaultSubmissions`、`AtCoderEasyTestForJava`、`AtCoderPerformanceOverlay` と、`CpToolkit` のうちそれらから派生した部分および turndown に適用されます。
 
 Copyright (c) ktnyori
 Copyright (c) magurofly
 Copyright (c) nzm_ort
+Copyright (c) 2017 Dom Christie
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
