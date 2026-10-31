@@ -1,0 +1,37 @@
+.open-tasks-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.open-tasks-row select {
+	min-width: 120px;
+	padding: 4px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.open-tasks-caution {
+	color: var(--cp-danger);
+	font-size: 13px;
+}
+
+.open-tasks-info {
+	margin: 0;
+	color: var(--cp-text-muted);
+}
+
+.open-tasks-spacer {
+	margin-left: auto;
+}
+
+button.primary {
+	border-color: var(--cp-accent);
+	background: var(--cp-accent);
+	color: var(--cp-on-accent);
+}

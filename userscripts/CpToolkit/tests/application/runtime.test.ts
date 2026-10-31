@@ -1,12 +1,11 @@
 import {beforeEach, describe, expect, mock, test} from "bun:test";
-import {createTranslator} from "@catalog/messages";
 import {option} from "@domain/settings/option";
 import {matchPage} from "@domain/page/route";
 import {judges} from "@catalog/judges";
 import {defineFeature, type Feature} from "@application/feature/definition";
 import {FeatureRuntime} from "@application/feature/runtime";
 import {SettingsService} from "@application/settings/settings-service";
-import {immediateLifecycle, MemoryStore, RecordingLogger} from "../support/fakes";
+import {createFakeServices, immediateLifecycle, MemoryStore, RecordingLogger} from "../support/fakes";
 
 const metadata = {
 	title: "wideLayout.title",
@@ -52,7 +51,7 @@ describe("FeatureRuntime", () => {
 			page: matchPage(judges, href),
 			lifecycle: immediateLifecycle,
 			settings,
-			services: {translate: createTranslator(() => "ja")},
+			services: createFakeServices(),
 			logger,
 		});
 	}

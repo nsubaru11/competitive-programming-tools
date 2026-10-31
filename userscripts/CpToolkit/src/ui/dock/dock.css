@@ -1,0 +1,73 @@
+.dock {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 2147482000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	pointer-events: none;
+}
+
+.dock-toggle {
+	padding: 2px 32px;
+	border: 0;
+	border-radius: 6px 6px 0 0;
+	background: rgb(0 0 0 / 55%);
+	color: #fff;
+	pointer-events: auto;
+}
+
+.dock-panel {
+	width: 100%;
+	border-top: 1px solid var(--cp-border);
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	pointer-events: auto;
+}
+
+.dock-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 12px 0;
+	background: var(--cp-surface-muted);
+	cursor: ns-resize;
+}
+
+.dock-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 10px;
+	border-bottom: 0;
+	border-radius: 6px 6px 0 0;
+	cursor: pointer;
+}
+
+.dock-tab[data-active="true"] {
+	background: var(--cp-surface);
+}
+
+.dock-tab[data-tone="success"] {
+	color: var(--cp-success);
+}
+
+.dock-tab[data-tone="warning"] {
+	color: var(--cp-danger);
+}
+
+.dock-tab-close {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--cp-text-muted);
+	line-height: 1;
+}
+
+.dock-content {
+	height: 45vh;
+	padding: 12px;
+	overflow-y: auto;
+}

@@ -1,0 +1,26 @@
+id: paiza
+name: paiza
+
+matches:
+  - https://paiza.jp/*
+
+routes:
+  page: '^/'
+
+navigationLists: []
+
+submission:
+  editor: ace
+  editorElements: ['#editor-div', '#editor']
+  shortcut: Ctrl+Enter
+  submitButtons:
+    - '#handin'
+    - '[onclick*="hand_in_code"]'
+  labeledSubmit:
+    selector: 'a, button, input[type="button"], input[type="submit"]'
+    labels: ['コードを提出する', '提出する', '提出']
+
+# 言語の選択欄と、選択を反映する隠し項目
+languageSelect:
+  selects: ['#language_id', 'select[name="language[id]"]']
+  hiddenFields: ['programming_language_id', 'submit_programming_language_id']

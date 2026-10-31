@@ -1,0 +1,29 @@
+# トップページのコンテスト一覧に置くリンク。各リストが .contest-list に対応する
+lists:
+  - - title: コンテスト情報
+      description: 過去(50件まで)、未来のコンテスト一覧
+      href: https://atcoder.jp/contests
+    - title: ABC
+      subtitle: AtCoder Beginner Contest
+      label: 初心者〜中級者向け
+      labelClass: label-success
+      description: 初心者でも参加しやすい基礎コンテスト
+      href: https://atcoder.jp/contests/archive?ratedType=1&category=0&keyword=
+    - title: ARC
+      subtitle: AtCoder Regular Contest
+      label: 初級者〜上級者向け
+      labelClass: label-primary
+      description: より深い考察力を問うコンテスト
+      href: https://atcoder.jp/contests/archive?ratedType=2&category=0&keyword=
+    - title: AGC
+      subtitle: AtCoder Grand Contest
+      label: 世界ランカー向け
+      labelClass: label-danger
+      description: 世界最高水準の問題をそろえたコンテスト
+      href: https://atcoder.jp/contests/archive?ratedType=3&category=0&keyword=
+  - - title: AHC
+      subtitle: AtCoder Heuristic Contest
+      label: 最適化
+      labelClass: label-warning
+      description: 最適解を求めることが困難な問題に対して、どれだけ良い解を求められるかを競うコンテスト
+      href: https://atcoder.jp/contests/archive?ratedType=4&category=0&keyword=

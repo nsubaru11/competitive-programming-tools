@@ -2,19 +2,37 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        0.1.0
+// @version        1.0.0
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @author         nsubaru
-// @license        0BSD
+// @license        MIT AND Apache-2.0 AND 0BSD
 // @homepageURL    https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit
 // @supportURL     https://github.com/nsubaru11/competitive-programming-tools/issues
+// @match          https://onlinejudge.u-aizu.ac.jp/*
 // @match          https://atcoder.jp/*
+// @match          https://codeforces.com/*
+// @match          https://*.contest.codeforces.com/*
+// @match          https://m1.codeforces.com/*
+// @match          https://m2.codeforces.com/*
+// @match          https://m3.codeforces.com/*
+// @match          https://judge.yosupo.jp/problem/*
+// @match          https://paiza.jp/*
+// @match          https://yukicoder.me/problems/*
+// @grant          unsafeWindow
 // @grant          GM_getValue
 // @grant          GM_setValue
 // @grant          GM_addValueChangeListener
 // @grant          GM_registerMenuCommand
+// @grant          GM_setClipboard
+// @grant          GM_notification
+// @grant          GM_xmlhttpRequest
+// @connect        localhost
+// @connect        127.0.0.1
+// @connect        api.paiza.io
+// @connect        wandbox.org
+// @connect        cdn.jsdelivr.net
 // @run-at         document-start
 // @icon           https://atcoder.jp/favicon.ico
 // @noframes
@@ -22,91 +40,239 @@
 // @downloadURL    https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js
 // ==/UserScript==
 
+/*!
+CP Toolkit includes code derived from the following projects.
+The toolkit's own code is available under the 0BSD license.
+
+AtCoder Custom Default Submissions by ktnyori (MIT)
+https://greasyfork.org/scripts/393705-atcoder-custom-default-submissions
+
+AtCoder Easy Test v2 by magurofly (MIT)
+https://greasyfork.org/scripts/433152-atcoder-easy-test-v2
+
+AtCoder Perf Graph by nzm_ort (MIT)
+https://greasyfork.org/scripts/476103-atcoder-perf-graph
+
+AtCoder Listing Tasks by luuguas (Apache-2.0), modified by nsubaru
+https://github.com/luuguas/AtCoderListingTasks
+
+turndown 7.2.4 by Dom Christie (MIT)
+https://github.com/mixmark-io/turndown
+
+turndown-plugin-gfm 1.0.2 by Dom Christie (MIT)
+https://github.com/mixmark-io/turndown-plugin-gfm
+
+Copyright (c) ktnyori
+Copyright (c) magurofly
+Copyright (c) nzm_ort
+Copyright (c) 2017 Dom Christie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The Apache License 2.0 below applies to the parts derived from AtCoder Listing Tasks.
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+*/
+
 (() => {
-	// CpToolkit/data/judges/atcoder.yaml
-	var atcoder_default = {
-		id: "atcoder",
-		name: "AtCoder",
-		matches: ["https://atcoder.jp/*"],
-		routes: {
-			page: "^/[^?]",
-		},
-		navigationLists: ["#navbar-collapse .navbar-right", "#header .header-page"],
-	};
-
-	// CpToolkit/src/catalog/judges.ts
-	var judges = [atcoder_default];
-
-	// CpToolkit/data/i18n/en.yaml
-	var en_default = {
-		"settings.open": "Open settings",
-		"settings.title": "CP Toolkit settings",
-		"settings.close": "Close",
-		"settings.empty": "No features are available.",
-		"settings.options": "Options",
-		"settings.invalidValue": "This value is not valid.",
-		"settings.reloadNotice": "Reload the page to apply your changes.",
-		"settings.reload": "Reload",
-		"settings.export": "Export settings",
-		"settings.import": "Import settings",
-		"settings.importFailed": "The settings file could not be read.",
-		"settings.reset": "Reset to defaults",
-		"settings.resetConfirm": "All settings will be reset to their defaults. Continue?",
-		"status.disabled": "Off",
-		"status.outOfScope": "Not on this page",
-		"status.pending": "Waiting",
-		"status.running": "Running",
-		"status.reloadRequired": "Reload to apply",
-		"status.failed": "Failed to start",
-		"category.layout": "Layout",
-		"wideLayout.title": "Wider page",
-		"wideLayout.description": "Widens the central column of the page.",
-		"wideLayout.width": "Width (e.g. 50%, 1200px)",
-	};
-
-	// CpToolkit/data/i18n/ja.yaml
-	var ja_default = {
-		"settings.open": "設定を開く",
-		"settings.title": "CP Toolkit の設定",
-		"settings.close": "閉じる",
-		"settings.empty": "設定できる機能はありません。",
-		"settings.options": "詳細設定",
-		"settings.invalidValue": "値の形式が正しくありません。",
-		"settings.reloadNotice": "変更を反映するには再読み込みしてください。",
-		"settings.reload": "再読み込み",
-		"settings.export": "設定を書き出す",
-		"settings.import": "設定を読み込む",
-		"settings.importFailed": "設定ファイルを読み込めませんでした。",
-		"settings.reset": "初期状態に戻す",
-		"settings.resetConfirm": "すべての設定を初期状態に戻します。よろしいですか?",
-		"status.disabled": "無効",
-		"status.outOfScope": "このページは対象外",
-		"status.pending": "待機中",
-		"status.running": "動作中",
-		"status.reloadRequired": "再読み込みで反映",
-		"status.failed": "起動に失敗",
-		"category.layout": "表示",
-		"wideLayout.title": "ページ幅の拡張",
-		"wideLayout.description": "ページ中央の幅を広げます。",
-		"wideLayout.width": "幅(例: 50%, 1200px)",
-	};
-
-	// CpToolkit/src/catalog/messages.ts
-	var MESSAGES = { ja: ja_default, en: en_default };
-	function createTranslator(getLocale) {
-		return (key) => MESSAGES[getLocale()][key];
-	}
-
 	// CpToolkit/src/domain/page/route.ts
 	var PATH_AND_QUERY_PATTERN = /^[a-z]+:\/\/[^/?#]+([^#]*)/i;
 	function matchPatternToRegExp(pattern) {
 		const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
 		return new RegExp(`^${escaped}$`);
 	}
-	function matchPage(judges2, href) {
-		const judge = judges2.find(({ matches }) =>
-			matches.some((pattern) => matchPatternToRegExp(pattern).test(href)),
-		);
+	function matchPage(judges, href) {
+		const judge = judges.find(({ matches }) => matches.some((pattern) => matchPatternToRegExp(pattern).test(href)));
 		if (!judge) return null;
 		const pathAndQuery = PATH_AND_QUERY_PATTERN.exec(href)?.[1] || "/";
 		const routeIds = Object.entries(judge.routes)
@@ -226,6 +392,323 @@
 			for (const listener of this.listeners) listener();
 		}
 	}
+
+	// ../shared/src/async.ts
+	function sleep(ms) {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+	// ../shared/src/query.ts
+	function buildQueryString(data) {
+		const params = new URLSearchParams();
+		for (const [key, value] of Object.entries(data)) {
+			if (value == null) continue;
+			params.set(key, String(value));
+		}
+		return params.toString();
+	}
+
+	// ../shared/src/atcoder-url.ts
+	var ATCODER_TASK_URL_PATTERN = /^https:\/\/atcoder\.jp\/contests\/([^/?#]+)\/tasks\/([^/?#]+)/;
+	function parseAtCoderTaskUrl(url) {
+		const match = url.match(ATCODER_TASK_URL_PATTERN);
+		if (!match) return null;
+		return {
+			contestId: match[1],
+			taskId: match[2],
+		};
+	}
+	function buildAtCoderSubmissionsQuery(filter) {
+		const params = {};
+		if (filter.language !== undefined) params["f.LanguageName"] = filter.language;
+		if (filter.status !== undefined) params["f.Status"] = filter.status;
+		if (filter.orderBy !== undefined) params["orderBy"] = filter.orderBy;
+		if (filter.task) params["f.Task"] = filter.task;
+		return buildQueryString(params);
+	}
+	function buildAtCoderSubmissionUrl(contestId, submissionId) {
+		return `https://atcoder.jp/contests/${contestId}/submissions/${submissionId}`;
+	}
+	function buildAtCoderSubmissionStatusJsonUrl(contestId, submissionIds) {
+		const base = `https://atcoder.jp/contests/${contestId}/submissions/me/status/json`;
+		const params = new URLSearchParams();
+		params.set("reload", "true");
+		for (const sid of submissionIds) {
+			params.append("sids[]", String(sid));
+		}
+		return `${base}?${params.toString()}`;
+	}
+	// ../shared/src/easy-test-judge.ts
+	var FLOAT_PATTERN = /^[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?$/;
+	function evaluateEasyTestOutput(runResult, expectedOutput, options = { trim: true, split: true }) {
+		const status = runResult.status;
+		if (status !== "OK" || typeof expectedOutput !== "string") {
+			return { status, output: runResult.output || "", expectedOutput };
+		}
+		let output = runResult.output || "";
+		let expected = expectedOutput;
+		if (options.trim) {
+			expected = expected.trim();
+			output = output.trim();
+		}
+		let equals = (x, y) => x === y;
+		const allowableError = options.allowableError;
+		if (allowableError) {
+			const superEquals = equals;
+			equals = (x, y) => {
+				if (FLOAT_PATTERN.test(x) || FLOAT_PATTERN.test(y)) {
+					const a = Number.parseFloat(x);
+					const b = Number.parseFloat(y);
+					return Math.abs(a - b) <= Math.max(allowableError, Math.abs(b) * allowableError);
+				}
+				return superEquals(x, y);
+			};
+		}
+		if (options.split) {
+			const superEquals = equals;
+			equals = (x, y) => {
+				const xs = x.split(/\s+/);
+				const ys = y.split(/\s+/);
+				if (xs.length !== ys.length) return false;
+				for (let i = 0; i < xs.length; i++) {
+					if (!superEquals(xs[i], ys[i])) return false;
+				}
+				return true;
+			};
+		}
+		const judgedStatus = equals(output, expected) ? "AC" : "WA";
+		return { status: judgedStatus, output, expectedOutput: expected };
+	}
+	// ../shared/src/utils.ts
+	function normalizeNewlines(text) {
+		return text.replace(
+			/\r\n?/g,
+			`
+`,
+		);
+	}
+
+	// ../shared/src/java-transform.ts
+	function createMaskedCode(text) {
+		var State;
+		((State2) => {
+			State2[(State2["Normal"] = 0)] = "Normal";
+			State2[(State2["LineComment"] = 1)] = "LineComment";
+			State2[(State2["BlockComment"] = 2)] = "BlockComment";
+			State2[(State2["String"] = 3)] = "String";
+			State2[(State2["Char"] = 4)] = "Char";
+		})((State ||= {}));
+		const out = [];
+		let state = 0; /* Normal */
+		let isEscape = false;
+		const mask = (c) =>
+			c ===
+			`
+`
+				? `
+`
+				: " ";
+		for (let i = 0, len = text.length; i < len; i++) {
+			const c = text[i],
+				n = i + 1 < len ? text[i + 1] : "";
+			if (state === 1 /* LineComment */) {
+				out.push(mask(c));
+				if (
+					c ===
+					`
+`
+				)
+					state = 0 /* Normal */;
+			} else if (state === 2 /* BlockComment */) {
+				if (c === "*" && n === "/") {
+					out.push(" ", " ");
+					i++;
+					state = 0 /* Normal */;
+				} else {
+					out.push(mask(c));
+				}
+			} else if (state === 3 /* String */ || state === 4 /* Char */) {
+				const closeChar = state === 3 /* String */ ? '"' : "'";
+				if (isEscape) {
+					isEscape = false;
+					out.push(" ");
+				} else if (c === "\\") {
+					isEscape = true;
+					out.push(" ");
+				} else if (c === closeChar) {
+					state = 0 /* Normal */;
+					out.push(" ");
+				} else {
+					out.push(mask(c));
+				}
+			} else {
+				if (c === "/" && n === "/") {
+					out.push(" ", " ");
+					i++;
+					state = 1 /* LineComment */;
+				} else if (c === "/" && n === "*") {
+					out.push(" ", " ");
+					i++;
+					state = 2 /* BlockComment */;
+				} else if (c === '"') {
+					state = 3 /* String */;
+					out.push(" ");
+				} else if (c === "'") {
+					state = 4 /* Char */;
+					out.push(" ");
+				} else {
+					out.push(c);
+				}
+			}
+		}
+		return out.join("");
+	}
+	function findMatchingBrace(maskedText, openBraceIdx) {
+		let depth = 1;
+		for (let i = openBraceIdx + 1; i < maskedText.length; i++) {
+			if (maskedText[i] === "{") depth++;
+			else if (maskedText[i] === "}" && --depth === 0) return i;
+		}
+		return -1;
+	}
+	function isPublicClass(maskedText, classKeywordIndex) {
+		const lineStart =
+			maskedText.lastIndexOf(
+				`
+`,
+				classKeywordIndex,
+			) + 1;
+		return /\bpublic\b/.test(maskedText.slice(lineStart, classKeywordIndex));
+	}
+	function buildClassInfo(maskedText, m) {
+		const name = m[1];
+		const classStart = m.index;
+		const nameStart = classStart + m[0].length - name.length;
+		const nameEnd = nameStart + name.length;
+		const openBraceIdx = maskedText.indexOf("{", nameEnd);
+		if (openBraceIdx === -1) return null;
+		return {
+			name,
+			nameStart,
+			nameEnd,
+			classStart,
+			closeBraceIdx: findMatchingBrace(maskedText, openBraceIdx),
+			isPublic: isPublicClass(maskedText, classStart),
+		};
+	}
+	function findMainClassInfo(maskedText) {
+		const mainIndex =
+			/(?:\bpublic\s+static|\bstatic\s+public)\s+void\s+main\s*\(\s*String\s*(?:\[]|\.\.\.)/.exec(maskedText)
+				?.index ?? -1;
+		const classRegex = /\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b/g;
+		const candidates = [];
+		let m;
+		while ((m = classRegex.exec(maskedText)) !== null) {
+			const info = buildClassInfo(maskedText, m);
+			if (!info) continue;
+			candidates.push(info);
+			if (
+				mainIndex !== -1 &&
+				info.closeBraceIdx !== -1 &&
+				mainIndex > info.classStart &&
+				mainIndex < info.closeBraceIdx
+			) {
+				return info;
+			}
+		}
+		return candidates.find((c) => c.isPublic) ?? candidates[0] ?? null;
+	}
+	function removePackageDeclaration(maskedCode, currentCode) {
+		const m = /\bpackage\s+[A-Za-z_][A-Za-z0-9_.]*\s*;/.exec(maskedCode);
+		if (!m) return { code: currentCode, modified: false };
+		let end = m.index + m[0].length;
+		if (
+			currentCode[end] ===
+			`
+`
+		)
+			end++;
+		return {
+			code: currentCode.slice(0, m.index) + currentCode.slice(end),
+			modified: true,
+		};
+	}
+	function renameClassToMain(maskedCode, currentCode) {
+		const info = findMainClassInfo(maskedCode);
+		if (!info || info.name === "Main") return { code: currentCode, modified: false };
+		const escapedName = info.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const refRegex = new RegExp(`\\b${escapedName}\\b`, "g");
+		const replacements = [];
+		let rm;
+		while ((rm = refRegex.exec(maskedCode)) !== null) {
+			replacements.push({ start: rm.index, end: rm.index + info.name.length });
+		}
+		replacements.sort((a, b) => b.start - a.start);
+		let code = currentCode;
+		for (const { start, end } of replacements) {
+			code = code.slice(0, start) + "Main" + code.slice(end);
+		}
+		return { code, modified: true };
+	}
+	function disableDebugStatements(maskedCode, currentCode) {
+		const debugRegex = /\bDEBUG\b\s*=\s*true\b/g;
+		const replacements = [];
+		let dm;
+		while ((dm = debugRegex.exec(maskedCode)) !== null) {
+			const trueIdx = dm.index + dm[0].lastIndexOf("true");
+			replacements.push({ start: trueIdx, end: trueIdx + 4 });
+		}
+		if (!replacements.length) return { code: currentCode, modified: false };
+		replacements.sort((a, b) => b.start - a.start);
+		let code = currentCode;
+		for (const { start, end } of replacements) {
+			code = code.slice(0, start) + "false" + code.slice(end);
+		}
+		return { code, modified: true };
+	}
+	function enableDebugStatements(maskedCode, currentCode) {
+		const debugRegex = /\bDEBUG\b\s*=\s*false\b/g;
+		const replacements = [];
+		let dm;
+		while ((dm = debugRegex.exec(maskedCode)) !== null) {
+			const falseIdx = dm.index + dm[0].lastIndexOf("false");
+			replacements.push({ start: falseIdx, end: falseIdx + 5 });
+		}
+		if (!replacements.length) return { code: currentCode, modified: false };
+		replacements.sort((a, b) => b.start - a.start);
+		let code = currentCode;
+		for (const { start, end } of replacements) {
+			code = code.slice(0, start) + "true" + code.slice(end);
+		}
+		return { code, modified: true };
+	}
+	function modifyJavaCode(originalCode, options) {
+		let currentCode = normalizeNewlines(originalCode);
+		let packageRemoved = false;
+		let classReplaced = false;
+		let debugReplaced = false;
+		if (options.removePackage) {
+			const result = removePackageDeclaration(createMaskedCode(currentCode), currentCode);
+			currentCode = result.code;
+			packageRemoved = result.modified;
+		}
+		if (options.renameClass) {
+			const result = renameClassToMain(createMaskedCode(currentCode), currentCode);
+			currentCode = result.code;
+			classReplaced = result.modified;
+		}
+		if (options.fixDebug) {
+			const result = disableDebugStatements(createMaskedCode(currentCode), currentCode);
+			currentCode = result.code;
+			debugReplaced = result.modified;
+		}
+		if (options.enableDebug) {
+			const result = enableDebugStatements(createMaskedCode(currentCode), currentCode);
+			currentCode = result.code;
+			debugReplaced = result.modified;
+		}
+		currentCode = currentCode.replace(/^(?:[\t ]*\n)+/, "");
+		return { modified: currentCode, packageRemoved, classReplaced, debugReplaced };
+	}
 	// ../shared/src/json.ts
 	function safeJsonParse(text, fallback) {
 		if (typeof text !== "string") return fallback;
@@ -249,6 +732,133 @@
 		}
 		return {};
 	}
+	// ../shared/src/local-runner.ts
+	function isHttpUrl(value) {
+		return /^https?:\/\//.test(value);
+	}
+	function buildLocalRunnerListRequest() {
+		return { mode: "list" };
+	}
+	function buildLocalRunnerTransformRequest(
+		sourceCode,
+		debug = false,
+		autoImport = true,
+		validate = true,
+		header = true,
+	) {
+		return { mode: "transform", sourceCode, debug, autoImport, validate, header };
+	}
+	function buildLocalRunnerPrepareRequest(
+		sourceCode,
+		debug = false,
+		autoImport = true,
+		validate = false,
+		header = false,
+	) {
+		return { mode: "prepare", sourceCode, debug, autoImport, validate, header };
+	}
+	function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
+		return {
+			mode: "run",
+			compilerName,
+			sourceCode,
+			stdin,
+			prepared,
+		};
+	}
+	function buildLocalRunnerProgramRunRequest(programId, stdin, compilerName) {
+		return {
+			mode: "run",
+			compilerName,
+			programId,
+			stdin,
+		};
+	}
+	function toEasyTestStatus(status, exitCode = 0) {
+		switch (status) {
+			case "success":
+				return exitCode === 0 ? "OK" : "RE";
+			case "runtimeError":
+				return "RE";
+			case "timeLimitExceeded":
+				return "TLE";
+			case "compileError":
+				return "CE";
+			case "internalError":
+			case "badRequest":
+			default:
+				return "IE";
+		}
+	}
+	// CpToolkit/src/domain/settings/legacy.ts
+	function defined(options) {
+		return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined && value !== null));
+	}
+	function parseFlag(value) {
+		return value === "true" ? true : value === "false" ? false : undefined;
+	}
+	var LEGACY_SCRIPTS = {
+		AtCoderHighlighter: (stored) => [
+			{
+				featureId: "statement-highlight",
+				options: defined({
+					numberColor: stored.numColor,
+					variableColor: stored.varColor,
+					timeColor: stored.timeLimitColor,
+					memoryColor: stored.memoryLimitColor,
+				}),
+			},
+		],
+		AtCoderWidenContainer: (stored) => [
+			{
+				featureId: "wide-layout",
+				options: defined({ width: stored.containerWidth }),
+			},
+		],
+		AtCoderCustomDefaultSubmissions: (stored) => {
+			const config = parseStoredObject(stored.config);
+			return [
+				{
+					featureId: "submission-defaults",
+					options: defined({
+						language: config.language,
+						status: config.status,
+						orderBy: config.orderBy,
+						taskFilter: config.includeTaskFilter,
+					}),
+				},
+			];
+		},
+		AtCoderEasyTestForJava: (stored) => {
+			const config = parseStoredObject(stored.config);
+			return [
+				{
+					featureId: "local-runner",
+					options: defined({ url: config["codeRunner.localRunnerURL"] || undefined }),
+				},
+				{
+					featureId: "easy-test",
+					options: defined({
+						precompile: parseFlag(config["codeRunner.precompile.enable"]),
+						keyboardShortcuts: parseFlag(config["ui.useKeyboardShortcut"]),
+					}),
+				},
+			];
+		},
+	};
+
+	// CpToolkit/src/application/settings/legacy-import.ts
+	function importLegacySettings(inbox, settings) {
+		for (const [scriptId, migrate] of Object.entries(LEGACY_SCRIPTS)) {
+			const stored = inbox.take(scriptId);
+			if (stored === undefined) continue;
+			for (const { featureId, options } of migrate(parseStoredObject(stored))) {
+				if (Object.keys(parseStoredObject(settings.storedOptions(featureId))).length > 0) continue;
+				for (const [key, value] of Object.entries(options)) settings.setOption(featureId, key, value);
+			}
+		}
+	}
+
 	// CpToolkit/src/domain/settings/settings.ts
 	var CURRENT_SETTINGS_VERSION = 1;
 	var MIGRATIONS = {};
@@ -362,10 +972,17 @@
 		}
 	}
 
-	// CpToolkit/src/adapters/page/locale.ts
-	function detectLocale() {
-		const meta = document.querySelector('meta[http-equiv="Content-Language"]');
-		return (meta?.content || navigator.language).startsWith("ja") ? "ja" : "en";
+	// CpToolkit/src/adapters/page/local-storage-legacy-inbox.ts
+	var KEY_PREFIX = "cp-toolkit:legacy:";
+
+	class LocalStorageLegacyInbox {
+		take(scriptId) {
+			const key = KEY_PREFIX + scriptId;
+			const value = localStorage.getItem(key);
+			if (value === null) return;
+			localStorage.removeItem(key);
+			return safeJsonParse(value, undefined);
+		}
 	}
 
 	// CpToolkit/src/adapters/userscript/gm-key-value-store.ts
@@ -1062,6 +1679,3751 @@ ${settings_panel_default}`,
 		});
 		list?.append(h("li", {}, link));
 	}
+	// CpToolkit/data/judges/aoj.yaml
+	var aoj_default = {
+		id: "aoj",
+		name: "AIZU ONLINE JUDGE",
+		matches: ["https://onlinejudge.u-aizu.ac.jp/*"],
+		routes: {
+			page: "^/",
+		},
+		navigationLists: [],
+		submission: {
+			editor: "ace",
+			editorElements: ["#editor", "#editor-div"],
+			shortcut: "Ctrl+Enter",
+			submitButtons: [".editorFooter .submitBtn", "#submit_button"],
+		},
+	};
+	// CpToolkit/data/judges/atcoder.yaml
+	var atcoder_default = {
+		id: "atcoder",
+		name: "AtCoder",
+		matches: ["https://atcoder.jp/*"],
+		routes: {
+			page: "^/[^?]",
+			home: "^/(\\?|$)",
+			contest: "^/contests/(?!archive)[^/?#]+",
+			task: "^/contests/[^/]+/tasks/[^/?#]+",
+			tasksPrint: "^/contests/[^/]+/tasks_print",
+			tessokuTasks: "^/contests/tessoku-book/tasks/?(\\?|$)",
+			submit: "^/contests/[^/]+/submit",
+			submissions: "^/contests/[^/]+/submissions(/me)?/?(\\?|$)",
+			submissionDetail: "^/contests/[^/]+/submissions/\\d+",
+			editorial: "^/contests/[^/]+/editorial/?(\\?|$)",
+			user: "^/users/[^/?#]+/?(\\?(?!.*graph=(rank|dist)).*)?$",
+			userHistory: "^/users/[^/]+/history",
+		},
+		navigationLists: ["#navbar-collapse .navbar-right", "#header .header-page"],
+		submission: {
+			editor: "ace",
+			editorElements: ["#editor"],
+			shortcut: "Ctrl+Shift+Enter",
+			submitButtons: ["#submit"],
+		},
+		samples: [
+			{
+				selector: "#task-statement p+pre.literal-block",
+				container: ".section",
+			},
+			{
+				selector: "#task-statement pre.source-code-for-copy",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement .lang>*:nth-child(1) .div-btn-copy+pre",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement .div-btn-copy+pre",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement>.part pre.linenums",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement>.part section>pre",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement>.part:not(.io-style)>h3+section>pre",
+				container: ".part",
+			},
+			{
+				selector: "#task-statement pre",
+				container: ".part",
+			},
+		],
+	};
+	// CpToolkit/data/judges/codeforces.yaml
+	var codeforces_default = {
+		id: "codeforces",
+		name: "Codeforces",
+		matches: [
+			"https://codeforces.com/*",
+			"https://*.contest.codeforces.com/*",
+			"https://m1.codeforces.com/*",
+			"https://m2.codeforces.com/*",
+			"https://m3.codeforces.com/*",
+		],
+		routes: {
+			page: "^/",
+			problem:
+				"^/(contest/[^/]+/problem|gym/[^/]+/problem|problemset/problem|group/[^/]+/contest/[^/]+/problem)/",
+		},
+		navigationLists: [],
+		submission: {
+			editor: "ace",
+			editorElements: ["#editor"],
+			shortcut: "Ctrl+Shift+Enter",
+			submitButtons: [".submit-form .submit", ".submitForm .submit", 'input[type="submit"].submit'],
+		},
+	};
+	// CpToolkit/data/judges/library-checker.yaml
+	var library_checker_default = {
+		id: "libraryChecker",
+		name: "Library Checker",
+		matches: ["https://judge.yosupo.jp/problem/*"],
+		routes: {
+			page: "^/problem/",
+		},
+		navigationLists: [],
+		submission: {
+			editor: "monaco",
+			editorElements: [],
+			shortcut: "Ctrl+Shift+Alt+Enter",
+			submitButtons: [],
+			labeledSubmit: {
+				selector: 'form button[type="submit"], form input[type="submit"]',
+				labels: ["提出", "submit"],
+			},
+		},
+	};
+	// CpToolkit/data/judges/paiza.yaml
+	var paiza_default = {
+		id: "paiza",
+		name: "paiza",
+		matches: ["https://paiza.jp/*"],
+		routes: {
+			page: "^/",
+		},
+		navigationLists: [],
+		submission: {
+			editor: "ace",
+			editorElements: ["#editor-div", "#editor"],
+			shortcut: "Ctrl+Enter",
+			submitButtons: ["#handin", '[onclick*="hand_in_code"]'],
+			labeledSubmit: {
+				selector: 'a, button, input[type="button"], input[type="submit"]',
+				labels: ["コードを提出する", "提出する", "提出"],
+			},
+		},
+		languageSelect: {
+			selects: ["#language_id", 'select[name="language[id]"]'],
+			hiddenFields: ["programming_language_id", "submit_programming_language_id"],
+		},
+	};
+	// CpToolkit/data/judges/yukicoder.yaml
+	var yukicoder_default = {
+		id: "yukicoder",
+		name: "yukicoder",
+		matches: ["https://yukicoder.me/problems/*"],
+		routes: {
+			problem: "^/problems/",
+		},
+		navigationLists: [],
+	};
+
+	// CpToolkit/src/catalog/judges.ts
+	var judges = [
+		atcoder_default,
+		codeforces_default,
+		yukicoder_default,
+		aoj_default,
+		library_checker_default,
+		paiza_default,
+	];
+	var atcoderSampleSelectors = atcoder_default.samples;
+	var paizaLanguageSelect = paiza_default.languageSelect;
+
+	// CpToolkit/data/i18n/en.yaml
+	var en_default = {
+		"settings.open": "Open settings",
+		"settings.title": "CP Toolkit settings",
+		"settings.close": "Close",
+		"settings.empty": "No features are available.",
+		"settings.options": "Options",
+		"settings.invalidValue": "This value is not valid.",
+		"settings.reloadNotice": "Reload the page to apply your changes.",
+		"settings.reload": "Reload",
+		"settings.export": "Export settings",
+		"settings.import": "Import settings",
+		"settings.importFailed": "The settings file could not be read.",
+		"settings.reset": "Reset to defaults",
+		"settings.resetConfirm": "All settings will be reset to their defaults. Continue?",
+		"status.disabled": "Off",
+		"status.outOfScope": "Not on this page",
+		"status.pending": "Waiting",
+		"status.running": "Running",
+		"status.reloadRequired": "Reload to apply",
+		"status.failed": "Failed to start",
+		"category.layout": "Layout",
+		"category.statement": "Statement",
+		"category.submission": "Submissions",
+		"category.contest": "Contest",
+		"category.rating": "Results",
+		"category.execution": "Execution",
+		"wideLayout.title": "Wider page",
+		"wideLayout.description": "Widens the central column of the page.",
+		"wideLayout.width": "Width (e.g. 50%, 1200px)",
+		"hoverMenu.title": "Open menus on hover",
+		"hoverMenu.description": "Opens menus when the pointer moves over them.",
+		"hoverMenu.openStatementDetails": "Expand collapsed sections in statements",
+		"statementHighlight.title": "Statement highlighting",
+		"statementHighlight.description": "Highlights numbers, variables, and the time and memory limits.",
+		"statementHighlight.numberColor": "Number color",
+		"statementHighlight.variableColor": "Variable color",
+		"statementHighlight.timeColor": "Time limit color",
+		"statementHighlight.memoryColor": "Memory limit color",
+		"statementCopy.title": "Copy statement",
+		"statementCopy.description": "Adds buttons that copy each section or the whole statement.",
+		"statementCopy.format": "Copy format",
+		"statementCopy.formatMarkdown": "Markdown",
+		"statementCopy.formatPlain": "Plain text",
+		"statementCopy.copy": "Copy",
+		"statementCopy.copyAll": "Copy all",
+		"statementCopy.copied": "Copied",
+		"statementCopy.defaultTitle": "Task",
+		"efficientLayout.title": "Side-by-side samples",
+		"efficientLayout.description": "Places the input and output formats and samples side by side.",
+		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen)",
+		"efficientLayout.samples": "Samples",
+		"efficientLayout.ioFormat": "Input and output",
+		"submissionDefaults.title": "Default submission filters",
+		"submissionDefaults.description": "Applies language, status, and sort defaults to the submission tabs.",
+		"submissionDefaults.language": "Language (e.g. Java, C++, Python)",
+		"submissionDefaults.status": "Status (e.g. AC, or empty for all)",
+		"submissionDefaults.orderBy": "Sort by",
+		"submissionDefaults.orderTime": "Execution time",
+		"submissionDefaults.orderMemory": "Memory",
+		"submissionDefaults.orderLength": "Code size",
+		"submissionDefaults.orderScore": "Score",
+		"submissionDefaults.taskFilter": "Also filter by task on task pages",
+		"submissionDefaults.keepQuery": "Keep search filters between All and My submissions",
+		"submissionShortcuts.title": "Shortcuts to AC submissions",
+		"submissionShortcuts.description": "Adds links to AC submissions sorted by time and by code size.",
+		"submissionShortcuts.language": "Language (empty for all)",
+		"submissionShortcuts.fastest": "Fastest",
+		"submissionShortcuts.shortest": "Shortest",
+		"resultNotifier.title": "Submission notifications",
+		"resultNotifier.description": "Shows the verdict on any page when judging finishes.",
+		"resultNotifier.desktop": "Use desktop notifications while another tab is active",
+		"averageResult.title": "Average results",
+		"averageResult.description": "Shows average time and memory on the submission page.",
+		"averageResult.average": "avg.",
+		"submissionTimer.title": "Timed submission",
+		"submissionTimer.description": "Submits your code after the specified time.",
+		"submissionTimer.minutes": "Minutes until submission",
+		"submissionTimer.set": "Set",
+		"submissionTimer.cancel": "Cancel",
+		"submissionTimer.canceled": "The timer was canceled.",
+		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
+		"taskDropdown.title": "Task dropdown",
+		"taskDropdown.description": "Opens tasks from the Tasks tab and opens several tasks at once.",
+		"taskDropdown.newTab": "Open in a new tab",
+		"taskDropdown.taskTable": "Task table",
+		"taskDropdown.openAtOnce": "Open at once",
+		"taskDropdown.loadFailed": "(Loading failed)",
+		"taskDropdown.all": "All",
+		"taskDropdown.range": "Specify the range",
+		"taskDropdown.reverse": "Open in reverse order",
+		"taskDropdown.cancel": "Cancel",
+		"taskDropdown.tabCount": "{count} tabs will open. If pop-ups are blocked, please allow them.",
+		"taskDropdown.tabLimit": "*Up to {count} tabs can be opened at once.",
+		"editorialList.title": "All editorials",
+		"editorialList.description": "Shows the editorials of every task on the editorial page.",
+		"topLinks.title": "Contest links on the top page",
+		"topLinks.description": "Replaces the top page list with links to past contests by type.",
+		"tessokuDifficulty.title": "Tessoku difficulty",
+		"tessokuDifficulty.description": "Shows the difficulty from the book on the Tessoku task list.",
+		"tessokuDifficulty.sortByDifficulty": "Sort by difficulty",
+		"tessokuDifficulty.sortById": "Sort by task number",
+		"ratingGraph.title": "Performance graph",
+		"ratingGraph.description": "Overlays performance on the rating graph.",
+		"ratingGraph.recentByDefault": "Show only recent results at first",
+		"ratingGraph.togglePerformance": "Toggle performance",
+		"ratingGraph.showAll": "Show all",
+		"ratingGraph.showRecent": "Show recent",
+		"historyColors.title": "Colored contest history",
+		"historyColors.description": "Colors performance and rating values in the contest history.",
+		"historyColors.performanceMode": "Performance coloring",
+		"historyColors.ratingMode": "Rating coloring",
+		"historyColors.modeNone": "None",
+		"historyColors.modeText": "Text",
+		"historyColors.modeBackground": "Background",
+		"localRunner.title": "Local Runner",
+		"localRunner.description": "Connects to the local server used to transform and run Java code.",
+		"localRunner.url": "Server URL",
+		"javaSubmit.title": "Java submission helper",
+		"javaSubmit.description": "Transforms pasted code for submission and adds submit shortcuts.",
+		"javaSubmit.removePackage": "Remove package declarations without Local Runner",
+		"javaSubmit.renameClass": "Rename the class to Main without Local Runner",
+		"javaSubmit.fixDebug": "Set DEBUG to false without Local Runner",
+		"javaSubmit.addHeader": "Add the submission header",
+		"javaSubmit.headerName": "Header name (empty for the default)",
+		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
+		"easyTest.title": "Easy Test",
+		"easyTest.description": "Runs samples from the task page and shows the results.",
+		"easyTest.precompile": "Precompile edited code with Local Runner",
+		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
+		"easyTest.savedCodeLimit": "Number of saved codes",
+		"easyTest.allowableError": "Allowable error",
+		"easyTest.running": "Running...",
+		"easyTest.run": "Run",
+		"easyTest.testAndSubmit": "Test & Submit",
+		"easyTest.testAll": "Test All Samples",
+		"easyTest.restore": "Restore Last Play",
+		"easyTest.environment": "Environment",
+		"easyTest.standardInput": "Standard input",
+		"easyTest.standardOutput": "Standard output",
+		"easyTest.standardError": "Standard error",
+		"easyTest.expectedOutput": "Expected output",
+		"easyTest.exitCode": "Exit code",
+		"easyTest.execTime": "Time",
+		"easyTest.memory": "Memory",
+		"easyTest.noSavedCode": "No saved code was found for this task.",
+		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
+		"paizaLanguage.title": "paiza language selection",
+		"paizaLanguage.description": "Selects the specified language on paiza submission pages.",
+		"paizaLanguage.language": "Language (e.g. c++, java, python3)",
+	};
+
+	// CpToolkit/data/i18n/ja.yaml
+	var ja_default = {
+		"settings.open": "設定を開く",
+		"settings.title": "CP Toolkit の設定",
+		"settings.close": "閉じる",
+		"settings.empty": "設定できる機能はありません。",
+		"settings.options": "詳細設定",
+		"settings.invalidValue": "値の形式が正しくありません。",
+		"settings.reloadNotice": "変更を反映するには再読み込みしてください。",
+		"settings.reload": "再読み込み",
+		"settings.export": "設定を書き出す",
+		"settings.import": "設定を読み込む",
+		"settings.importFailed": "設定ファイルを読み込めませんでした。",
+		"settings.reset": "初期状態に戻す",
+		"settings.resetConfirm": "すべての設定を初期状態に戻します。よろしいですか?",
+		"status.disabled": "無効",
+		"status.outOfScope": "このページは対象外",
+		"status.pending": "待機中",
+		"status.running": "動作中",
+		"status.reloadRequired": "再読み込みで反映",
+		"status.failed": "起動に失敗",
+		"category.layout": "表示",
+		"category.statement": "問題文",
+		"category.submission": "提出",
+		"category.contest": "コンテスト",
+		"category.rating": "成績",
+		"category.execution": "実行環境",
+		"wideLayout.title": "ページ幅の拡張",
+		"wideLayout.description": "ページ中央の幅を広げます。",
+		"wideLayout.width": "幅(例: 50%, 1200px)",
+		"hoverMenu.title": "メニューのホバー表示",
+		"hoverMenu.description": "マウスを重ねるだけでメニューを開きます。",
+		"hoverMenu.openStatementDetails": "問題文の折りたたみを最初から開く",
+		"statementHighlight.title": "問題文の強調表示",
+		"statementHighlight.description": "問題文中の数字と変数、実行時間とメモリの制限を強調します。",
+		"statementHighlight.numberColor": "数字の色",
+		"statementHighlight.variableColor": "変数の色",
+		"statementHighlight.timeColor": "実行時間制限の色",
+		"statementHighlight.memoryColor": "メモリ制限の色",
+		"statementCopy.title": "問題文のコピー",
+		"statementCopy.description": "問題文の各項目と全体をコピーするボタンを追加します。",
+		"statementCopy.format": "コピーする形式",
+		"statementCopy.formatMarkdown": "Markdown",
+		"statementCopy.formatPlain": "プレーンテキスト",
+		"statementCopy.copy": "コピー",
+		"statementCopy.copyAll": "すべてコピー",
+		"statementCopy.copied": "コピーしました",
+		"statementCopy.defaultTitle": "問題",
+		"efficientLayout.title": "サンプルの横並び",
+		"efficientLayout.description": "入出力の形式とサンプルを横に並べて表示します。",
+		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %)",
+		"efficientLayout.samples": "入出力例",
+		"efficientLayout.ioFormat": "入出力形式",
+		"submissionDefaults.title": "提出一覧の既定の絞り込み",
+		"submissionDefaults.description": "提出タブのリンクに、言語や結果の絞り込みと並び順を設定します。",
+		"submissionDefaults.language": "言語(例: Java, C++, Python)",
+		"submissionDefaults.status": "結果(例: AC。空欄ならすべて)",
+		"submissionDefaults.orderBy": "並び順",
+		"submissionDefaults.orderTime": "実行時間",
+		"submissionDefaults.orderMemory": "メモリ",
+		"submissionDefaults.orderLength": "コード長",
+		"submissionDefaults.orderScore": "得点",
+		"submissionDefaults.taskFilter": "問題ページでは問題でも絞り込む",
+		"submissionDefaults.keepQuery": "「すべての提出」と「自分の提出」の間で検索条件を保持する",
+		"submissionShortcuts.title": "AC 提出への近道",
+		"submissionShortcuts.description": "問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。",
+		"submissionShortcuts.language": "言語(空欄ならすべて)",
+		"submissionShortcuts.fastest": "実行時間順",
+		"submissionShortcuts.shortest": "コード長順",
+		"resultNotifier.title": "提出結果の通知",
+		"resultNotifier.description": "判定が終わると、どのページにいても結果を通知します。",
+		"resultNotifier.desktop": "別のタブを見ているときはデスクトップ通知も出す",
+		"averageResult.title": "実行結果の平均",
+		"averageResult.description": "提出の詳細に、実行時間とメモリの平均を表示します。",
+		"averageResult.average": "平均",
+		"submissionTimer.title": "時間指定の提出",
+		"submissionTimer.description": "指定した時間が経ったらコードを提出します。",
+		"submissionTimer.minutes": "何分後に提出するか",
+		"submissionTimer.set": "セットする",
+		"submissionTimer.cancel": "取り消す",
+		"submissionTimer.canceled": "タイマーを取り消しました。",
+		"submissionTimer.scheduled": "{time} ごろに提出します。",
+		"taskDropdown.title": "問題のドロップダウン",
+		"taskDropdown.description": "「問題」タブから各問題へ移動でき、複数の問題をまとめて開けます。",
+		"taskDropdown.newTab": "新しいタブで開く",
+		"taskDropdown.taskTable": "問題一覧",
+		"taskDropdown.openAtOnce": "まとめて開く",
+		"taskDropdown.loadFailed": "(読み込み失敗)",
+		"taskDropdown.all": "すべて",
+		"taskDropdown.range": "範囲を指定",
+		"taskDropdown.reverse": "逆順で開く",
+		"taskDropdown.cancel": "キャンセル",
+		"taskDropdown.tabCount": "{count} 個のタブが開きます。ブロックされた場合はポップアップを許可してください。",
+		"taskDropdown.tabLimit": "※一度に開けるタブは {count} 個までです。",
+		"editorialList.title": "解説の一覧表示",
+		"editorialList.description": "解説ページで、すべての問題の解説をまとめて表示します。",
+		"topLinks.title": "トップページのコンテスト一覧",
+		"topLinks.description": "トップページの一覧を、種類ごとの過去問へのリンクに置き換えます。",
+		"tessokuDifficulty.title": "鉄則本の難易度表示",
+		"tessokuDifficulty.description": "「競技プログラミングの鉄則」の問題一覧に、書籍の難易度を表示します。",
+		"tessokuDifficulty.sortByDifficulty": "難易度順で並べ替え",
+		"tessokuDifficulty.sortById": "問題番号順で並べ替え",
+		"ratingGraph.title": "パフォーマンスのグラフ",
+		"ratingGraph.description": "レーティンググラフにパフォーマンスを重ねて表示します。",
+		"ratingGraph.recentByDefault": "最初は最近の結果だけを表示する",
+		"ratingGraph.togglePerformance": "パフォーマンス ON/OFF",
+		"ratingGraph.showAll": "すべて表示",
+		"ratingGraph.showRecent": "最近のみ表示",
+		"historyColors.title": "成績表の色付け",
+		"historyColors.description": "成績表のパフォーマンスとレーティングに色を付けます。",
+		"historyColors.performanceMode": "パフォーマンスの色付け",
+		"historyColors.ratingMode": "レーティングの色付け",
+		"historyColors.modeNone": "なし",
+		"historyColors.modeText": "文字",
+		"historyColors.modeBackground": "背景",
+		"localRunner.title": "Local Runner",
+		"localRunner.description": "Java の変換と実行に使う、手元のサーバーへ接続します。",
+		"localRunner.url": "接続先の URL",
+		"javaSubmit.title": "Java の提出補助",
+		"javaSubmit.description": "貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。",
+		"javaSubmit.removePackage": "Local Runner がないときにパッケージ宣言を削除する",
+		"javaSubmit.renameClass": "Local Runner がないときにクラス名を Main にする",
+		"javaSubmit.fixDebug": "Local Runner がないときに DEBUG を false にする",
+		"javaSubmit.addHeader": "提出用のヘッダーを付ける",
+		"javaSubmit.headerName": "ヘッダーの名前(空欄なら既定)",
+		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
+		"easyTest.title": "Easy Test",
+		"easyTest.description": "問題ページからサンプルを実行し、結果を確認します。",
+		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
+		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
+		"easyTest.savedCodeLimit": "保存するコードの数",
+		"easyTest.allowableError": "許容誤差",
+		"easyTest.running": "実行中...",
+		"easyTest.run": "実行",
+		"easyTest.testAndSubmit": "Test & Submit",
+		"easyTest.testAll": "Test All Samples",
+		"easyTest.restore": "Restore Last Play",
+		"easyTest.environment": "実行環境",
+		"easyTest.standardInput": "標準入力",
+		"easyTest.standardOutput": "標準出力",
+		"easyTest.standardError": "標準エラー出力",
+		"easyTest.expectedOutput": "期待する出力",
+		"easyTest.exitCode": "終了コード",
+		"easyTest.execTime": "実行時間",
+		"easyTest.memory": "メモリ",
+		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
+		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
+		"paizaLanguage.title": "paiza の言語選択",
+		"paizaLanguage.description": "paiza の提出ページで、指定した言語を自動で選びます。",
+		"paizaLanguage.language": "言語(例: c++, java, python3)",
+	};
+
+	// CpToolkit/src/catalog/messages.ts
+	var MESSAGES = { ja: ja_default, en: en_default };
+	function createTranslator(getLocale) {
+		return (key) => MESSAGES[getLocale()][key];
+	}
+	// CpToolkit/data/contest-links.yaml
+	var contest_links_default = {
+		lists: [
+			[
+				{
+					title: "コンテスト情報",
+					description: "過去(50件まで)、未来のコンテスト一覧",
+					href: "https://atcoder.jp/contests",
+				},
+				{
+					title: "ABC",
+					subtitle: "AtCoder Beginner Contest",
+					label: "初心者〜中級者向け",
+					labelClass: "label-success",
+					description: "初心者でも参加しやすい基礎コンテスト",
+					href: "https://atcoder.jp/contests/archive?ratedType=1&category=0&keyword=",
+				},
+				{
+					title: "ARC",
+					subtitle: "AtCoder Regular Contest",
+					label: "初級者〜上級者向け",
+					labelClass: "label-primary",
+					description: "より深い考察力を問うコンテスト",
+					href: "https://atcoder.jp/contests/archive?ratedType=2&category=0&keyword=",
+				},
+				{
+					title: "AGC",
+					subtitle: "AtCoder Grand Contest",
+					label: "世界ランカー向け",
+					labelClass: "label-danger",
+					description: "世界最高水準の問題をそろえたコンテスト",
+					href: "https://atcoder.jp/contests/archive?ratedType=3&category=0&keyword=",
+				},
+			],
+			[
+				{
+					title: "AHC",
+					subtitle: "AtCoder Heuristic Contest",
+					label: "最適化",
+					labelClass: "label-warning",
+					description: "最適解を求めることが困難な問題に対して、どれだけ良い解を求められるかを競うコンテスト",
+					href: "https://atcoder.jp/contests/archive?ratedType=4&category=0&keyword=",
+				},
+			],
+		],
+	};
+	// CpToolkit/data/contests.yaml
+	var contests_default = {
+		regularPrefixes: ["abc", "arc", "agc", "ahc", "past", "joi", "jag"],
+		permanentPrefixes: ["practice", "APG4b", "abs", "practice2", "typical90", "math-and-algorithm", "tessoku-book"],
+		maxTabsAtOnce: 20,
+		taskCacheDays: 10,
+	};
+	// CpToolkit/data/languages.yaml
+	var languages_default = {
+		families: [
+			{
+				id: "cpp",
+				name: "C++",
+				match: ["^C\\+\\+", "G\\+\\+", "Clang\\+\\+", "Visual C\\+\\+", "^cLay"],
+			},
+			{
+				id: "csharp",
+				name: "C#",
+				match: ["^C#"],
+			},
+			{
+				id: "c",
+				name: "C",
+				match: ["^C\\d*(\\s|\\(|$)", "GCC C\\d"],
+			},
+			{
+				id: "python2",
+				name: "Python2",
+				match: ["^Python ?2", "^PyPy ?2"],
+			},
+			{
+				id: "python3",
+				name: "Python3",
+				match: ["^Python", "^PyPy", "^CPython"],
+			},
+			{
+				id: "java",
+				name: "Java",
+				match: ["^Java(?!Script)"],
+			},
+			{
+				id: "javascript",
+				name: "JavaScript",
+				match: ["^JavaScript", "^Node\\.js"],
+			},
+			{
+				id: "typescript",
+				name: "TypeScript",
+				match: ["^TypeScript"],
+			},
+			{
+				id: "kotlin",
+				name: "Kotlin",
+				match: ["^Kotlin"],
+			},
+			{
+				id: "rust",
+				name: "Rust",
+				match: ["^Rust"],
+			},
+			{
+				id: "go",
+				name: "Go",
+				match: ["^Go\\b"],
+			},
+			{
+				id: "ruby",
+				name: "Ruby",
+				match: ["^Ruby"],
+			},
+			{
+				id: "haskell",
+				name: "Haskell",
+				match: ["^Haskell"],
+			},
+			{
+				id: "d",
+				name: "D",
+				match: ["^D(\\s|\\(|$)"],
+			},
+			{
+				id: "scala",
+				name: "Scala",
+				match: ["^Scala"],
+			},
+			{
+				id: "swift",
+				name: "Swift",
+				match: ["^Swift"],
+			},
+			{
+				id: "php",
+				name: "PHP",
+				match: ["^PHP"],
+			},
+			{
+				id: "perl",
+				name: "Perl",
+				match: ["^Perl"],
+			},
+			{
+				id: "bash",
+				name: "Bash",
+				match: ["^Bash"],
+			},
+			{
+				id: "lua",
+				name: "Lua",
+				match: ["^Lua"],
+			},
+			{
+				id: "nim",
+				name: "Nim",
+				match: ["^Nim"],
+			},
+			{
+				id: "ocaml",
+				name: "OCaml",
+				match: ["^OCaml"],
+			},
+			{
+				id: "crystal",
+				name: "Crystal",
+				match: ["^Crystal"],
+			},
+			{
+				id: "julia",
+				name: "Julia",
+				match: ["^Julia"],
+			},
+			{
+				id: "elixir",
+				name: "Elixir",
+				match: ["^Elixir"],
+			},
+			{
+				id: "erlang",
+				name: "Erlang",
+				match: ["^Erlang"],
+			},
+			{
+				id: "clojure",
+				name: "Clojure",
+				match: ["^Clojure"],
+			},
+			{
+				id: "fsharp",
+				name: "F#",
+				match: ["^F#"],
+			},
+			{
+				id: "scheme",
+				name: "Scheme",
+				match: ["^Scheme"],
+			},
+			{
+				id: "lisp",
+				name: "Lisp",
+				match: ["Lisp"],
+			},
+			{
+				id: "pascal",
+				name: "Pascal",
+				match: ["Pascal", "^Delphi"],
+			},
+			{
+				id: "fortran",
+				name: "Fortran",
+				match: ["^Fortran", "^FORTRAN"],
+			},
+			{
+				id: "cobol",
+				name: "COBOL",
+				match: ["^COBOL"],
+			},
+			{
+				id: "objective-c",
+				name: "Objective-C",
+				match: ["^Objective-C"],
+			},
+			{
+				id: "basic",
+				name: "Visual Basic",
+				match: ["^Visual Basic", "^Basic"],
+			},
+			{
+				id: "text",
+				name: "Text",
+				match: ["^Text"],
+			},
+		],
+	};
+	// CpToolkit/data/libraries.yaml
+	var libraries_default = {
+		katexScript: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js",
+		katexAutoRender: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js",
+		katexStylesheet: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css",
+		prettify: "https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.min.js",
+	};
+	// CpToolkit/data/rating.yaml
+	var rating_default = {
+		tiers: [
+			{
+				min: 0,
+				color: "#808080",
+				alpha: 0.15,
+				background: "#D9D9D9",
+				className: "user-gray",
+			},
+			{
+				min: 400,
+				color: "#804000",
+				alpha: 0.15,
+				background: "#D9C5B2",
+				className: "user-brown",
+			},
+			{
+				min: 800,
+				color: "#008000",
+				alpha: 0.15,
+				background: "#B2D9B2",
+				className: "user-green",
+			},
+			{
+				min: 1200,
+				color: "#00C0C0",
+				alpha: 0.2,
+				background: "#B2ECEC",
+				className: "user-cyan",
+			},
+			{
+				min: 1600,
+				color: "#0000FF",
+				alpha: 0.1,
+				background: "#B2B2FF",
+				className: "user-blue",
+			},
+			{
+				min: 2000,
+				color: "#C0C000",
+				alpha: 0.25,
+				background: "#ECECB2",
+				className: "user-yellow",
+			},
+			{
+				min: 2400,
+				color: "#FF8000",
+				alpha: 0.2,
+				background: "#FFD9B2",
+				className: "user-orange",
+			},
+			{
+				min: 2800,
+				color: "#FF0000",
+				alpha: 0.1,
+				background: "#FFB2B2",
+				className: "user-red",
+			},
+		],
+		crownMin: 3200,
+		crownStep: 400,
+		crownImage: "https://img.atcoder.jp/assets/icon/crown{value}.gif",
+		silverMax: 3600,
+		silverBackground: "linear-gradient(135deg, #E4E4E4, #EEEEEE, #E4E4E4, #CCCCCC, #C4C4C4)",
+		goldBackground: "linear-gradient(135deg, #FFD325, #FDEBA6, #FFE065, #FFCC00, #F0BE00)",
+	};
+	// CpToolkit/data/runners.yaml
+	var runners_default = {
+		order: ["local", "judge", "browser", "paiza", "wandbox"],
+		maxRetry: 3,
+		connect: ["localhost", "127.0.0.1", "api.paiza.io", "wandbox.org", "cdn.jsdelivr.net"],
+		paiza: {
+			apiBase: "https://api.paiza.io/runners",
+			languages: [
+				{
+					family: "c",
+					language: "c",
+					label: "C (C17 / Clang)",
+				},
+				{
+					family: "python3",
+					language: "python3",
+					label: "Python3",
+				},
+				{
+					family: "bash",
+					language: "bash",
+					label: "Bash",
+				},
+				{
+					family: "clojure",
+					language: "clojure",
+					label: "Clojure",
+				},
+				{
+					family: "d",
+					language: "d",
+					label: "D (LDC)",
+				},
+				{
+					family: "erlang",
+					language: "erlang",
+					label: "Erlang",
+				},
+				{
+					family: "elixir",
+					language: "elixir",
+					label: "Elixir",
+				},
+				{
+					family: "fsharp",
+					language: "fsharp",
+					label: "F# (Interactive)",
+				},
+				{
+					family: "haskell",
+					language: "haskell",
+					label: "Haskell",
+				},
+				{
+					family: "javascript",
+					language: "javascript",
+					label: "JavaScript",
+				},
+				{
+					family: "kotlin",
+					language: "kotlin",
+					label: "Kotlin",
+				},
+				{
+					family: "objective-c",
+					language: "objective-c",
+					label: "Objective-C",
+				},
+				{
+					family: "perl",
+					language: "perl",
+					label: "Perl",
+				},
+				{
+					family: "php",
+					language: "php",
+					label: "PHP",
+				},
+				{
+					family: "ruby",
+					language: "ruby",
+					label: "Ruby",
+				},
+				{
+					family: "rust",
+					language: "rust",
+					label: "Rust",
+				},
+				{
+					family: "scala",
+					language: "scala",
+					label: "Scala",
+				},
+				{
+					family: "scheme",
+					language: "scheme",
+					label: "Scheme",
+				},
+				{
+					family: "swift",
+					language: "swift",
+					label: "Swift",
+				},
+				{
+					family: "basic",
+					language: "vb",
+					label: "Visual Basic",
+				},
+				{
+					family: "cobol",
+					language: "cobol",
+					label: "COBOL - Free",
+				},
+			],
+		},
+		wandbox: {
+			listUrl: "https://wandbox.org/api/list.json",
+			compileUrl: "https://wandbox.org/api/compile.json",
+			cacheHours: 24,
+			aclBaseUrl: "https://cdn.jsdelivr.net/gh/atcoder/ac-library/",
+		},
+		pyodide: {
+			baseUrl: "https://cdn.jsdelivr.net/pyodide/v0.24.0/full/",
+		},
+	};
+	// CpToolkit/data/statement.yaml
+	var statement_default = {
+		targetHeadings: ["問題文", "Problem Statement", "制約", "Constraints"],
+		sampleHeadings: ["入力例", "出力例", "Sample Input", "Sample Output"],
+		timeLimitKeywords: ["Time Limit", "実行時間制限"],
+		memoryLimitKeywords: ["Memory Limit", "メモリ制限"],
+		skipTags: ["SCRIPT", "STYLE", "CODE", "PRE", "VAR", "KBD", "SAMP"],
+	};
+	// CpToolkit/data/tessoku.yaml
+	var tessoku_default = {
+		difficulties: {
+			A01: 1,
+			A02: 1,
+			A03: 1,
+			A04: 2,
+			A05: 2,
+			A06: 2,
+			A07: 3,
+			A08: 4,
+			A09: 4,
+			A10: 4,
+			A11: 2,
+			A12: 3,
+			A13: 4,
+			A14: 5,
+			A15: 3,
+			A16: 2,
+			A17: 3,
+			A18: 3,
+			A19: 3,
+			A20: 4,
+			A21: 4,
+			A22: 4,
+			A23: 5,
+			A24: 5,
+			A25: 3,
+			A26: 2,
+			A27: 2,
+			A28: 2,
+			A29: 3,
+			A30: 4,
+			A31: 2,
+			A32: 3,
+			A33: 5,
+			A34: 6,
+			A35: 4,
+			A36: 2,
+			A37: 2,
+			A38: 3,
+			A39: 3,
+			A40: 3,
+			A41: 3,
+			A42: 4,
+			A43: 4,
+			A44: 3,
+			A45: 5,
+			A46: 3,
+			A49: 6,
+			A50: 5,
+			A51: 2,
+			A52: 2,
+			A53: 2,
+			A54: 2,
+			A55: 4,
+			A56: 5,
+			A57: 5,
+			A58: 5,
+			A59: 5,
+			A60: 4,
+			A61: 2,
+			A62: 3,
+			A63: 3,
+			A64: 4,
+			A65: 4,
+			A66: 3,
+			A67: 5,
+			A68: 6,
+			A69: 6,
+			A70: 5,
+			A71: 3,
+			A72: 4,
+			A73: 5,
+			A74: 5,
+			A75: 6,
+			A76: 4,
+			A77: 4,
+			B01: 1,
+			B02: 1,
+			B03: 2,
+			B04: 2,
+			B06: 2,
+			B07: 3,
+			B08: 4,
+			B09: 4,
+			B11: 3,
+			B12: 4,
+			B13: 4,
+			B14: 5,
+			B16: 2,
+			B17: 3,
+			B18: 4,
+			B19: 4,
+			B20: 6,
+			B21: 6,
+			B22: 3,
+			B23: 5,
+			B24: 5,
+			B26: 2,
+			B27: 2,
+			B28: 2,
+			B29: 3,
+			B30: 4,
+			B31: 3,
+			B32: 4,
+			B33: 6,
+			B34: 5,
+			B36: 2,
+			B37: 5,
+			B38: 4,
+			B39: 3,
+			B40: 3,
+			B41: 3,
+			B42: 5,
+			B43: 2,
+			B44: 3,
+			B45: 2,
+			B51: 4,
+			B52: 3,
+			B53: 4,
+			B54: 2,
+			B55: 4,
+			B56: 5,
+			B57: 5,
+			B58: 6,
+			B59: 5,
+			B61: 2,
+			B62: 4,
+			B63: 4,
+			B64: 4,
+			B65: 4,
+			B66: 5,
+			B67: 5,
+			B68: 7,
+			B69: 6,
+			C01: 1,
+			C02: 10,
+			C03: 20,
+			C04: 20,
+			C05: 30,
+			C06: 40,
+			C07: 45,
+			C08: 50,
+			C09: 55,
+			C10: 65,
+			C11: 70,
+			C12: 70,
+			C13: 75,
+			C14: 75,
+			C15: 85,
+			C16: 85,
+			C17: 90,
+			C18: 95,
+			C19: 95,
+			C20: 99,
+		},
+	};
+
+	// CpToolkit/src/catalog/tables.ts
+	var languageCatalog = languages_default;
+	var runnerCatalog = runners_default;
+	var statementCatalog = statement_default;
+	var contestCatalog = contests_default;
+	var ratingScale = rating_default;
+	var contestLinks = contest_links_default.lists;
+	var tessokuDifficulties = tessoku_default.difficulties;
+	var libraries = libraries_default;
+
+	// CpToolkit/src/application/execution/local-runner.ts
+	var REQUEST_TIMEOUT_MS = 30000;
+	var STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
+
+	class LocalRunnerError extends Error {
+		status;
+		constructor(message, status) {
+			super(message);
+			this.status = status;
+		}
+	}
+
+	class LocalRunnerClient {
+		http;
+		endpoint;
+		prepared = null;
+		constructor(http, endpoint) {
+			this.http = http;
+			this.endpoint = endpoint;
+		}
+		isAvailable() {
+			return this.endpoint() !== null;
+		}
+		list() {
+			return this.post(buildLocalRunnerListRequest());
+		}
+		transform(sourceCode, header) {
+			return this.post(buildLocalRunnerTransformRequest(sourceCode, false, true, false, header));
+		}
+		prepare(sourceCode) {
+			const endpoint = this.endpoint() ?? "";
+			if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode)
+				return this.prepared.response;
+			const response = this.post(buildLocalRunnerPrepareRequest(sourceCode, true, true, false));
+			this.prepared = { endpoint, sourceCode, response };
+			response.catch(() => {
+				if (this.prepared?.response === response) this.prepared = null;
+			});
+			return response;
+		}
+		async run(sourceCode, input, compilerName) {
+			let prepared;
+			try {
+				prepared = await this.prepare(sourceCode);
+			} catch (error) {
+				if (error instanceof LocalRunnerError && error.status === 400) {
+					return this.post(buildLocalRunnerRunRequest(sourceCode, input, compilerName));
+				}
+				throw error;
+			}
+			if (prepared.status !== "success" || !prepared.programId) return prepared;
+			const response = await this.runProgram(prepared.programId, input, compilerName);
+			if (response.status !== "badRequest" || !response.stderr?.startsWith(STALE_PROGRAM_MESSAGE))
+				return response;
+			this.prepared = null;
+			prepared = await this.prepare(sourceCode);
+			if (prepared.status !== "success" || !prepared.programId) return prepared;
+			return this.runProgram(prepared.programId, input, compilerName);
+		}
+		runProgram(programId, input, compilerName) {
+			return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
+		}
+		async post(request) {
+			const url = this.endpoint();
+			if (url === null) throw new LocalRunnerError("Local Runner is not configured.", 0);
+			const response = await this.http.send({
+				url,
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(request),
+				timeoutMs: REQUEST_TIMEOUT_MS,
+			});
+			if (response.status < 200 || response.status >= 300) {
+				throw new LocalRunnerError(`Local Runner returned ${response.status}.`, response.status);
+			}
+			return JSON.parse(response.text);
+		}
+	}
+
+	// CpToolkit/src/domain/execution/language.ts
+	function resolveFamily(catalog, label) {
+		const family = catalog.families.find(({ match }) => match.some((pattern) => new RegExp(pattern).test(label)));
+		return family?.id ?? null;
+	}
+	function labelDistance(a, b) {
+		let previous = new Float64Array(b.length + 1);
+		let current = new Float64Array(b.length + 1);
+		for (let i = 0; i < a.length; i++) {
+			current.fill(0);
+			const code = a.charCodeAt(i);
+			for (let j = 0; j < b.length; j++) {
+				const cost = (code - b.charCodeAt(j)) ** 2;
+				current[j + 1] = Math.min(
+					(previous[j] ?? 0) + cost,
+					(previous[j + 1] ?? 0) + cost * 0.25,
+					(current[j] ?? 0) + cost * 0.25,
+				);
+			}
+			[previous, current] = [current, previous];
+		}
+		return previous[b.length] ?? 0;
+	}
+	var JAVASCRIPT_PREFIX = "javascript";
+	function isLanguageOption(optionLabel, target) {
+		const label = optionLabel.trim().replace(/\s+/g, " ").toLowerCase();
+		if (!label || (label.startsWith(JAVASCRIPT_PREFIX) && target !== JAVASCRIPT_PREFIX)) return false;
+		return label === target || label.startsWith(`${target} `) || label.startsWith(`${target}(`);
+	}
+
+	// CpToolkit/src/domain/execution/result.ts
+	function judgeResult(result, expected, options) {
+		if (expected === null) return result;
+		if (result.status !== "OK") return { ...result, expectedOutput: expected };
+		const judged = evaluateEasyTestOutput(
+			{ status: result.status, output: result.output ?? "" },
+			expected,
+			options,
+		);
+		return { ...result, ...judged };
+	}
+
+	// CpToolkit/src/application/execution/runner-catalog.ts
+	class RunnerCatalogService {
+		providers;
+		order;
+		maxRetry;
+		constructor(providers, order, maxRetry) {
+			this.providers = providers;
+			this.order = order;
+			this.maxRetry = maxRetry;
+		}
+		async candidates(language) {
+			const results = await Promise.allSettled(this.providers().map((provider) => provider.runnersFor(language)));
+			const runners = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+			const rank = (runner) => this.order.indexOf(runner.kind);
+			const distance = (runner) => labelDistance(runner.label, language.label);
+			return [...runners].sort((a, b) => rank(a) - rank(b) || distance(a) - distance(b));
+		}
+		async test(candidates, firstRunnerId, sourceCode, testCase, options) {
+			const start = Math.max(
+				0,
+				candidates.findIndex(({ id }) => id === firstRunnerId),
+			);
+			let result = { status: "IE", input: testCase.input };
+			for (let retry = 0; retry < this.maxRetry; retry++) {
+				const runner = candidates[(start + retry) % candidates.length];
+				if (!runner) break;
+				try {
+					result = await runner.run(sourceCode, testCase.input, options);
+				} catch (error) {
+					result = { status: "IE", input: testCase.input, error: String(error) };
+				}
+				if (result.status !== "IE") return judgeResult(result, testCase.output, options);
+			}
+			return result;
+		}
+	}
+
+	// CpToolkit/src/domain/rating/history.ts
+	var HIDDEN_ENTRIES = 3;
+	function dropOldest(entries) {
+		return entries.length > HIDDEN_ENTRIES ? entries.slice(HIDDEN_ENTRIES) : entries;
+	}
+	function ratedPerformances(history) {
+		return history.filter((entry) => entry.IsRated).map((entry) => Math.max(0, entry.Performance ?? 0));
+	}
+
+	// CpToolkit/src/domain/rating/scale.ts
+	var UNRATED_TIER = { min: -1, color: "#000000", alpha: 0.1, background: "#FFFFFF", className: "user-unrated" };
+	function tierOf(scale, value) {
+		return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;
+	}
+	function crownImageOf(scale, value) {
+		if (value < scale.crownMin) return null;
+		const step = Math.floor(value / scale.crownStep) * scale.crownStep;
+		return scale.crownImage.replace("{value}", String(step));
+	}
+	function backgroundOf(scale, value) {
+		if (value < scale.crownMin) return tierOf(scale, value).background;
+		return value < scale.silverMax ? scale.silverBackground : scale.goldBackground;
+	}
+	function tierProgress(scale, value) {
+		const step = scale.tiers[1]?.min ?? 400;
+		const current = tierOf(scale, value);
+		if (current.min < 0) return 0;
+		const next = scale.tiers.find((tier) => tier.min > current.min)?.min ?? current.min + step;
+		return (value - current.min) / (next - current.min);
+	}
+
+	// CpToolkit/src/adapters/page/globals.ts
+	function pageGlobals() {
+		return unsafeWindow;
+	}
+
+	// CpToolkit/src/adapters/atcoder/rating-graph.ts
+	var MARGIN_X = 86400 * 30;
+	var MARGIN_Y_LOW = 100;
+	var MARGIN_Y_HIGH = 300;
+	var OFFSET_X = 50;
+	var OFFSET_Y = 5;
+	var DEFAULT_WIDTH = 640;
+	var HIGHEST_WIDTH = 115;
+	var HIGHEST_HEIGHT = 20;
+	var LABEL_FONT = "12px Lato";
+	var START_YEAR = 2010;
+	var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	var YEAR_SECONDS = 86400 * 365;
+	var STEP_SIZE = 400;
+	var PARTICLE_MIN = 3;
+	var PARTICLE_MAX = 20;
+	var PARTICLE_LIFE = 30;
+	var READY_TIMEOUT_MS = 1e4;
+	var READY_INTERVAL_MS = 50;
+	var ORDINAL_SUFFIXES = ["th", "st", "nd", "rd"];
+	var ratio = (value, low, high) => (value - low) / (high - low);
+	function ordinal(value) {
+		const tail = value % 100;
+		return `${value}${ORDINAL_SUFFIXES[(tail - 20) % 10] ?? ORDINAL_SUFFIXES[tail] ?? ORDINAL_SUFFIXES[0]}`;
+	}
+	function signed(value) {
+		return `${value === 0 ? "±" : value < 0 ? "-" : "+"}${Math.abs(value)}`;
+	}
+	function replaceCanvas(id) {
+		const canvas = document.getElementById(id);
+		if (!(canvas instanceof HTMLCanvasElement)) return null;
+		const clone = canvas.cloneNode(false);
+		canvas.replaceWith(clone);
+		return clone;
+	}
+	function scaleStage(stage, canvas) {
+		const rect = canvas.getBoundingClientRect();
+		const width = Math.round(rect.width || canvas.clientWidth || canvas.width || DEFAULT_WIDTH);
+		const height = Math.round(rect.height || canvas.clientHeight || canvas.height);
+		const pixelRatio = window.devicePixelRatio || 1;
+		canvas.width = Math.round(width * pixelRatio);
+		canvas.height = Math.round(height * pixelRatio);
+		stage.scaleX = stage.scaleY = pixelRatio;
+		Object.assign(canvas.style, {
+			width: `${width}px`,
+			height: `${height}px`,
+			maxWidth: `${width}px`,
+			maxHeight: `${height}px`,
+		});
+		stage.enableMouseOver();
+		return { width, height };
+	}
+
+	class CreateJsRatingGraph {
+		history = [];
+		performances = [];
+		graphCanvas = null;
+		statusCanvas = null;
+		async prepare(performances) {
+			const deadline = Date.now() + READY_TIMEOUT_MS;
+			const isReady = () => {
+				const page = pageGlobals();
+				return (
+					Array.isArray(page.rating_history) &&
+					page.createjs !== undefined &&
+					document.getElementById("ratingGraph") !== null &&
+					document.getElementById("ratingStatus") !== null
+				);
+			};
+			while (!isReady()) {
+				if (Date.now() > deadline) return false;
+				await new Promise((resolve) => setTimeout(resolve, READY_INTERVAL_MS));
+			}
+			this.history = pageGlobals().rating_history ?? [];
+			this.performances = performances;
+			pageGlobals().createjs.Ticker.removeAllEventListeners("tick");
+			this.graphCanvas = replaceCanvas("ratingGraph");
+			this.statusCanvas = replaceCanvas("ratingStatus");
+			return this.history.length > 0;
+		}
+		draw({ showPerformance, recentOnly }) {
+			if (!this.graphCanvas || !this.statusCanvas) return;
+			const history = recentOnly ? dropOldest(this.history) : this.history;
+			const performances = recentOnly ? dropOldest(this.performances) : this.performances;
+			const count = history.length;
+			if (count === 0) return;
+			const cj = pageGlobals().createjs;
+			const stageGraph = new cj.Stage(this.graphCanvas);
+			const stageStatus = new cj.Stage(this.statusCanvas);
+			const graphSize = scaleStage(stageGraph, this.graphCanvas);
+			const statusSize = scaleStage(stageStatus, this.statusCanvas);
+			const panelWidth = graphSize.width - OFFSET_X - 10;
+			const panelHeight = graphSize.height - OFFSET_Y - 30;
+			const statusWidth = statusSize.width - OFFSET_X - 10;
+			const statusHeight = statusSize.height - OFFSET_Y - 5;
+			const times = history.map((entry) => entry.EndTime);
+			const xMin = Math.min(...times) - MARGIN_X;
+			const xMax = Math.max(...times) + MARGIN_X;
+			const shownValues = [...history.map((entry) => entry.NewRating), ...(showPerformance ? performances : [])];
+			const yMin = Math.min(1500, Math.max(0, Math.min(...shownValues) - MARGIN_Y_LOW));
+			const yMax = Math.max(...shownValues) + MARGIN_Y_HIGH;
+			const pointX = (time) => OFFSET_X + panelWidth * ratio(time, xMin, xMax);
+			const pointY = (value) => OFFSET_Y + (panelHeight - panelHeight * ratio(value, yMin, yMax));
+			const newShape = (parent) => {
+				const shape = new cj.Shape();
+				parent.addChild(shape);
+				return shape;
+			};
+			const newText = (parent, x, y, font) => {
+				const text = new cj.Text("", font, "#000");
+				Object.assign(text, { x, y, textAlign: "center", textBaseline: "middle" });
+				parent.addChild(text);
+				return text;
+			};
+			const drawBackground = () => {
+				const panel = newShape(stageGraph);
+				Object.assign(panel, { x: OFFSET_X, y: OFFSET_Y, alpha: 0.3 });
+				const border = newShape(stageGraph);
+				Object.assign(border, { x: OFFSET_X, y: OFFSET_Y });
+				const addLabel = (text, x, y, textAlign, textBaseline) => {
+					const label = new cj.Text(text, LABEL_FONT, "#000");
+					Object.assign(label, { x, y, textAlign, textBaseline });
+					stageGraph.addChild(label);
+				};
+				let top = 0;
+				for (const tier of [...ratingScale.tiers].reverse()) {
+					const bottom = panelHeight - panelHeight * ratio(tier.min, yMin, yMax);
+					if (bottom > 0 && top < panelHeight) {
+						top = Math.max(top, 0);
+						panel.graphics
+							.beginFill(tier.color)
+							.rect(0, top, panelWidth, Math.min(bottom, panelHeight) - top);
+					}
+					top = bottom;
+				}
+				for (let value = 0; value <= yMax; value += STEP_SIZE) {
+					if (value < yMin) continue;
+					const y = panelHeight - panelHeight * ratio(value, yMin, yMax);
+					addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, "right", "middle");
+					border.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
+					border.graphics.moveTo(0, y).lineTo(panelWidth, y);
+				}
+				border.graphics.beginStroke("#FFF").setStrokeStyle(0.5);
+				let monthStep = 6;
+				for (let years = 3; years >= 1; years--) {
+					if (xMax - xMin <= YEAR_SECONDS * years + MARGIN_X * 2) monthStep = years;
+				}
+				let isFirst = true;
+				for (let year = START_YEAR; year < 3000; year++) {
+					let finished = false;
+					for (let month = 0; month < 12; month += monthStep) {
+						const paddedMonth = String(month + 1).padStart(2, "0");
+						const unix = Date.parse(`${year}-${paddedMonth}-01T00:00:00`) / 1000;
+						if (xMin < unix && unix < xMax) {
+							const x = panelWidth * ratio(unix, xMin, xMax);
+							addLabel(
+								MONTH_NAMES[month] ?? "",
+								OFFSET_X + x,
+								OFFSET_Y + panelHeight + 2,
+								"center",
+								"top",
+							);
+							if (month === 0 || isFirst) {
+								addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, "center", "top");
+								isFirst = false;
+							}
+							border.graphics.mt(x, 0).lt(x, panelHeight);
+						}
+						if (unix > xMax) {
+							finished = true;
+							break;
+						}
+					}
+					if (finished) break;
+				}
+				border.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
+			};
+			const particles = [];
+			let status = {};
+			const setParticles = (rating, color, alpha) => {
+				const progress = tierProgress(ratingScale, rating);
+				const active = Math.floor(progress ** 2 * (PARTICLE_MAX - PARTICLE_MIN) + PARTICLE_MIN);
+				particles.forEach((particle, index) => {
+					if (index >= active) {
+						Object.assign(particle, { life: 0, visible: false });
+						return;
+					}
+					const angle = Math.random() * Math.PI * 2;
+					const speed = Math.random() * 4 + 4;
+					Object.assign(particle, {
+						x: status.rating.x,
+						y: status.rating.y,
+						vx: Math.cos(angle) * speed,
+						vy: Math.sin(angle) * speed,
+						rotationSpeed: Math.random() * 20 + 10,
+						life: PARTICLE_LIFE,
+						visible: true,
+						color,
+						text: rating >= ratingScale.crownMin ? "★" : "@",
+						alpha,
+					});
+				});
+			};
+			const updateStatus = (index, withParticles) => {
+				const entry = history[index];
+				if (!entry) return;
+				const { color, alpha } = tierOf(ratingScale, entry.NewRating);
+				status.border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
+				status.rating.text = entry.NewRating;
+				status.rating.color = color;
+				status.performance.text = showPerformance ? `perf: ${performances[index] ?? "-"}` : "";
+				status.place.text = ordinal(entry.Place);
+				status.diff.text = signed(entry.NewRating - entry.OldRating);
+				status.date.text = new Date(entry.EndTime * 1000).toLocaleDateString();
+				status.contest.text = entry.ContestName;
+				status.standingsUrl = entry.StandingsUrl;
+				if (withParticles) setParticles(entry.NewRating, color, alpha);
+				stageGraph.update();
+			};
+			const drawSeries = (values, lineColor, highestLabel, radius) => {
+				const container = new cj.Container();
+				stageGraph.addChild(container);
+				container.shadow = new cj.Shadow("rgba(0,0,0,0.3)", 1, 2, 3);
+				const line = newShape(container);
+				const highestShape = newShape(container);
+				const highestIndex = values.indexOf(Math.max(...values));
+				const onHover = (event) => {
+					const vertex = vertices[event.target.index];
+					vertex.scaleX = vertex.scaleY = 1.2;
+					stageGraph.update();
+					updateStatus(event.target.index, true);
+				};
+				const onLeave = (event) => {
+					const vertex = vertices[event.target.index];
+					vertex.scaleX = vertex.scaleY = 1;
+					stageGraph.update();
+				};
+				const vertices = values.map((value, index) => {
+					const vertex = newShape(container);
+					vertex.graphics.beginStroke(index === highestIndex ? "#000" : "#FFF");
+					vertex.graphics.setStrokeStyle(0.5).beginFill(tierOf(ratingScale, value).color).dc(0, 0, radius);
+					vertex.x = pointX(history[index]?.EndTime ?? 0);
+					vertex.y = pointY(value);
+					vertex.index = index;
+					const hitArea = new cj.Shape();
+					hitArea.graphics.f("#000").dc(1.5, 1.5, 6);
+					vertex.hitArea = hitArea;
+					vertex.addEventListener("mouseover", onHover);
+					vertex.addEventListener("mouseout", onLeave);
+					return vertex;
+				});
+				const highest = vertices[highestIndex];
+				const x = highest.x + ((xMin + xMax) / 2 < (history[highestIndex]?.EndTime ?? 0) ? -80 : 80);
+				const y = highest.y - 16;
+				highestShape.graphics.s("#FFF").mt(highest.x, highest.y).lt(x, y);
+				highestShape.graphics
+					.s("#888")
+					.f("#FFF")
+					.rr(x - HIGHEST_WIDTH / 2, y - HIGHEST_HEIGHT / 2, HIGHEST_WIDTH, HIGHEST_HEIGHT, 2);
+				highestShape.index = highestIndex;
+				newText(stageGraph, x, y, LABEL_FONT).text = `${highestLabel}: ${values[highestIndex]}`;
+				highestShape.addEventListener("mouseover", onHover);
+				highestShape.addEventListener("mouseout", onLeave);
+				line.graphics.s("#AAA").ss(2).mt(vertices[0].x, vertices[0].y);
+				for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
+				line.graphics.s(lineColor).ss(0.5).mt(vertices[0].x, vertices[0].y);
+				for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
+			};
+			const createStatus = () => {
+				const middle = OFFSET_Y + statusHeight / 2;
+				status = {
+					border: newShape(stageStatus),
+					rating: newText(stageStatus, OFFSET_X + 75, middle, "48px 'Squada One'"),
+					performance: newText(stageStatus, OFFSET_X + 75, middle + 25, "16px 'Squada One'"),
+					place: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 2.7, "16px Lato"),
+					diff: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 1.5, "11px Lato"),
+					date: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 4, "14px Lato"),
+					contest: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 1.6, "20px Lato"),
+					standingsUrl: "",
+				};
+				status.diff.color = "#888";
+				status.date.textAlign = status.contest.textAlign = "left";
+				status.contest.maxWidth = statusWidth - 200 - 10;
+				const hitArea = new cj.Shape();
+				hitArea.graphics.f("#000").r(0, -12, status.contest.maxWidth, 24);
+				status.contest.hitArea = hitArea;
+				status.contest.cursor = "pointer";
+				status.contest.addEventListener("click", () => {
+					location.href = status.standingsUrl;
+				});
+				for (let index = 0; index < PARTICLE_MAX; index++) {
+					const particle = newText(stageStatus, 0, 0, "64px Lato");
+					particle.visible = false;
+					particles.push(particle);
+				}
+			};
+			const onTick = () => {
+				for (const particle of particles) {
+					if (particle.life <= 0) {
+						particle.visible = false;
+						continue;
+					}
+					particle.x += particle.vx;
+					particle.vx *= 0.9;
+					particle.y += particle.vy;
+					particle.vy *= 0.9;
+					particle.life--;
+					particle.scaleX = particle.scaleY = particle.life / PARTICLE_LIFE;
+					particle.rotation += particle.rotationSpeed;
+				}
+				stageStatus.update();
+			};
+			drawBackground();
+			createStatus();
+			drawSeries(
+				history.map((entry) => entry.NewRating),
+				"#000",
+				"Highest(Rate)",
+				3.5,
+			);
+			if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8);
+			updateStatus(count - 1, false);
+			stageGraph.update();
+			stageStatus.update();
+			cj.Ticker.removeAllEventListeners("tick");
+			cj.Ticker.setFPS(60);
+			cj.Ticker.addEventListener("tick", onTick);
+		}
+	}
+
+	// CpToolkit/src/adapters/judges/languages.ts
+	function languagesOf(select) {
+		return [...(select?.options ?? [])]
+			.filter(({ value }) => value !== "")
+			.map(({ value, text }) => {
+				const label = text.trim();
+				return { id: value, label, family: resolveFamily(languageCatalog, label) };
+			});
+	}
+
+	// CpToolkit/src/adapters/judges/atcoder.ts
+	function pairs(items) {
+		const result = [];
+		for (let index = 0; index + 1 < items.length; index += 2) {
+			result.push([items[index], items[index + 1]]);
+		}
+		return result;
+	}
+	function parseSamples(page) {
+		for (const { selector, container } of atcoderSampleSelectors) {
+			const elements = [...page.querySelectorAll(selector)].filter((element) => {
+				return !element.closest(".io-style") && !element.querySelector("var");
+			});
+			if (elements.length === 0) continue;
+			return pairs(elements).map(([input, output], index) => {
+				const parent = input.closest(container) ?? input.parentElement;
+				return {
+					title: `Sample ${index + 1}`,
+					input: input.textContent ?? "",
+					output: output.textContent ?? "",
+					anchor: parent?.querySelector(".btn-copy") ?? parent?.querySelector("h1,h2,h3,h4,h5,h6") ?? input,
+				};
+			});
+		}
+		return [];
+	}
+
+	class AtCoderSite {
+		bridge;
+		site;
+		id = "atcoder";
+		samplesByTask = new Map();
+		constructor(bridge, site) {
+			this.bridge = bridge;
+			this.site = site;
+		}
+		get mounts() {
+			return {
+				testButtons: document.querySelector("#submit")?.parentElement ?? null,
+				sideButtons: document.querySelector(".editor-buttons"),
+				results: document.querySelector(".form-code-submit"),
+			};
+		}
+		get taskSelect() {
+			return document.querySelector("#select-task");
+		}
+		get languageSelect() {
+			return document.querySelector("#select-lang select.current");
+		}
+		taskUri() {
+			const task = this.taskSelect?.value;
+			if (!task) return `${location.origin}${location.pathname}`;
+			return `${location.origin}/contests/${pageGlobals().contestScreenName}/tasks/${task}`;
+		}
+		languages() {
+			return languagesOf(this.languageSelect);
+		}
+		language() {
+			const id = this.languageSelect?.value;
+			return this.languages().find((language) => language.id === id) ?? null;
+		}
+		onLanguageChange(listener) {
+			for (const select of document.querySelectorAll("#select-lang select"))
+				this.bridge.onChange(select, listener);
+		}
+		onSourceChange(listener) {
+			const element = document.querySelector("#editor");
+			const ace = pageGlobals().ace;
+			if (ace && element) ace.edit(element).getSession().on("change", listener);
+		}
+		sourceCode() {
+			const page = pageGlobals();
+			const element = document.querySelector("#editor");
+			if (!page.ace || !element) return page.getSourceCode?.() ?? "";
+			const isPlainText = document.querySelector(".btn-toggle-editor")?.classList.contains("active");
+			if (isPlainText) return document.querySelector("#plain-textarea")?.value ?? "";
+			return page.ace.edit(element).getValue();
+		}
+		setSourceCode(code) {
+			const element = document.querySelector("#editor");
+			if (element) pageGlobals().ace?.edit(element).setValue(code);
+			const textarea = document.querySelector("#plain-textarea");
+			if (textarea) textarea.value = code;
+		}
+		submit() {
+			document.querySelector("#submit")?.click();
+		}
+		samples() {
+			if (/^\/contests\/[^/]+\/tasks\//.test(location.pathname)) return Promise.resolve(parseSamples(document));
+			const taskUri = this.taskUri();
+			const cached = this.samplesByTask.get(taskUri);
+			if (cached) return cached;
+			const samples = this.fetchSamples(taskUri);
+			this.samplesByTask.set(taskUri, samples);
+			samples.catch(() => this.samplesByTask.delete(taskUri));
+			return samples;
+		}
+		async fetchSamples(taskUri) {
+			const response = await this.site.send({ url: taskUri });
+			if (response.status !== 200) throw new Error(`Failed to fetch ${taskUri}: ${response.status}`);
+			const samples = parseSamples(new DOMParser().parseFromString(response.text, "text/html"));
+			return samples.map((sample) => ({ ...sample, anchor: null }));
+		}
+	}
+
+	// CpToolkit/src/adapters/judges/codeforces.ts
+	var LANGUAGE_SELECT = "select[name='programTypeId']";
+	function readSampleBlock(pre) {
+		const lines = pre.querySelectorAll(".test-example-line");
+		if (lines.length > 0)
+			return [...lines].map((line) => line.textContent ?? "").join(`
+`);
+		return [...pre.childNodes]
+			.map((node) => {
+				const isLineBreak = node instanceof HTMLElement && (node.tagName === "DIV" || node.tagName === "BR");
+				return (
+					(node.textContent ?? "") +
+					(isLineBreak
+						? `
+`
+						: "")
+				);
+			})
+			.join("");
+	}
+
+	class CodeforcesSiteBase {
+		bridge;
+		id = "codeforces";
+		constructor(bridge) {
+			this.bridge = bridge;
+		}
+		taskUri() {
+			return location.href;
+		}
+		languages() {
+			return languagesOf(this.languageSelect);
+		}
+		language() {
+			const id = this.languageSelect?.value;
+			return this.languages().find((language) => language.id === id) ?? null;
+		}
+		onLanguageChange(listener) {
+			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
+		}
+		onSourceChange(_listener) {}
+	}
+
+	class CodeforcesSite extends CodeforcesSiteBase {
+		buttons = document.createElement("span");
+		textarea = document.createElement("textarea");
+		constructor(bridge) {
+			super(bridge);
+			Object.assign(this.textarea.style, { fontFamily: "monospace", width: "100%", minHeight: "5em" });
+			document.querySelector(".submitForm")?.append(this.buttons);
+			document.getElementById("pageContent")?.append(this.textarea);
+			this.fileInput?.addEventListener("change", () => {
+				this.fileInput?.files?.[0]?.text().then((text) => {
+					this.textarea.value = text;
+				});
+			});
+		}
+		get mounts() {
+			return {
+				testButtons: this.buttons,
+				sideButtons: this.buttons,
+				results: document.getElementById("pageContent"),
+			};
+		}
+		get languageSelect() {
+			return document.querySelector(LANGUAGE_SELECT);
+		}
+		get fileInput() {
+			return document.querySelector('.submitForm input[name="sourceFile"]');
+		}
+		get fastSubmitEditor() {
+			const element = document.getElementById("editor");
+			return element ? pageGlobals().ace?.edit(element) : undefined;
+		}
+		sourceCode() {
+			return this.fastSubmitEditor?.getValue() ?? this.textarea.value;
+		}
+		setSourceCode(code) {
+			this.textarea.value = code;
+			this.fastSubmitEditor?.setValue(code);
+			const files = new DataTransfer();
+			files.items.add(new File([code], "prog.txt", { type: "text/plain" }));
+			if (this.fileInput) this.fileInput.files = files.files;
+		}
+		submit() {
+			this.setSourceCode(this.sourceCode());
+			document.querySelector(".submitForm .submit")?.click();
+		}
+		async samples() {
+			const samples = [];
+			for (const block of document.querySelectorAll(".sample-test")) {
+				const inputs = block.querySelectorAll(".input pre");
+				const outputs = block.querySelectorAll(".output pre");
+				const anchors = block.querySelectorAll(".input .title .input-output-copier");
+				inputs.forEach((input, index) => {
+					const output = outputs[index];
+					const anchor = anchors[index];
+					if (!output || !anchor) return;
+					samples.push({
+						title: `Sample ${samples.length + 1}`,
+						input: readSampleBlock(input),
+						output: readSampleBlock(output),
+						anchor,
+					});
+				});
+			}
+			return samples;
+		}
+	}
+
+	class CodeforcesMobileSite extends CodeforcesSiteBase {
+		main;
+		form;
+		constructor(bridge, main, form) {
+			super(bridge);
+			this.main = main;
+			this.form = form;
+		}
+		static async create(bridge) {
+			const main = document.querySelector("main");
+			const url = /\/contest\/(\d+)\/problem\/([^/]+)/.exec(location.pathname);
+			if (!main || !url) return null;
+			const frame = document.createElement("iframe");
+			frame.src = `/contest/${url[1]}/submit`;
+			frame.style.display = "none";
+			document.body.append(frame);
+			await new Promise((resolve) => frame.addEventListener("load", resolve, { once: true }));
+			const form = frame.contentDocument?.querySelector("._SubmitPage_submitForm");
+			if (!form) return null;
+			const problem = form.elements.namedItem("problemIndex");
+			if (problem) {
+				problem.value = url[2] ?? "";
+				problem.readOnly = true;
+			}
+			main.append(form);
+			return new CodeforcesMobileSite(bridge, main, form);
+		}
+		get mounts() {
+			return { testButtons: this.main, sideButtons: this.main, results: this.main };
+		}
+		get languageSelect() {
+			return this.form.elements.namedItem("programTypeId");
+		}
+		get source() {
+			return this.form.elements.namedItem("source");
+		}
+		sourceCode() {
+			return this.source?.value ?? "";
+		}
+		setSourceCode(code) {
+			if (this.source) this.source.value = code;
+		}
+		submit() {
+			this.form.submit();
+		}
+		async samples() {
+			return [...document.querySelectorAll(".sample-test")].map((block, index) => ({
+				title: `Sample ${index + 1}`,
+				input: block.querySelector(".input pre.content")?.textContent ?? "",
+				output: block.querySelector(".output pre.content")?.textContent ?? "",
+				anchor: block.querySelector(".input .title") ?? block,
+			}));
+		}
+	}
+
+	// CpToolkit/src/adapters/judges/yukicoder.ts
+	class YukicoderSite {
+		bridge;
+		id = "yukicoder";
+		constructor(bridge) {
+			this.bridge = bridge;
+		}
+		get mounts() {
+			return {
+				testButtons: document.querySelector("#submit_form"),
+				sideButtons: document.querySelector("#toggle_source_editor")?.parentElement ?? null,
+				results: document.querySelector("#content"),
+			};
+		}
+		get languageSelect() {
+			return document.querySelector("#lang");
+		}
+		get textarea() {
+			return document.querySelector("#source");
+		}
+		get editor() {
+			return pageGlobals().ace?.edit("rich_source");
+		}
+		taskUri() {
+			return location.href;
+		}
+		languages() {
+			return languagesOf(this.languageSelect);
+		}
+		language() {
+			const id = this.languageSelect?.value;
+			return this.languages().find((language) => language.id === id) ?? null;
+		}
+		onLanguageChange(listener) {
+			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
+		}
+		onSourceChange(listener) {
+			this.editor?.getSession().on("change", listener);
+		}
+		sourceCode() {
+			const textarea = this.textarea;
+			if (textarea && textarea.offsetParent !== null) return textarea.value;
+			return this.editor?.getSession().getValue() ?? "";
+		}
+		setSourceCode(code) {
+			if (this.textarea) this.textarea.value = code;
+			this.editor?.getSession().setValue(code);
+		}
+		submit() {
+			document.querySelector('#submit_form input[type="submit"]')?.click();
+		}
+		async samples() {
+			return [...document.querySelectorAll(".sample")].flatMap((sample, index) => {
+				const [input, output] = sample.querySelectorAll("pre");
+				if (!input || !output) return [];
+				return [
+					{
+						title: `Sample ${index + 1}`,
+						input: input.textContent ?? "",
+						output: output.textContent ?? "",
+						anchor: sample.querySelector(".copy-sample-input") ?? sample,
+					},
+				];
+			});
+		}
+	}
+
+	// CpToolkit/src/adapters/judges/index.ts
+	var CODEFORCES_MOBILE_HOST = /^m[1-3]\.codeforces\.com$/;
+	async function createJudgeSite(judgeId, bridge, site) {
+		switch (judgeId) {
+			case "atcoder":
+				return new AtCoderSite(bridge, site);
+			case "yukicoder":
+				return new YukicoderSite(bridge);
+			case "codeforces":
+				return CODEFORCES_MOBILE_HOST.test(location.host)
+					? CodeforcesMobileSite.create(bridge)
+					: new CodeforcesSite(bridge);
+			default:
+				return null;
+		}
+	}
+
+	// CpToolkit/src/adapters/page/code-editors.ts
+	var JAVA_MODE_PATTERN = /(^|\/)java$/i;
+	var DEFAULT_TIMEOUT_MS = 30000;
+
+	class AceCodeEditor {
+		editor;
+		constructor(editor) {
+			this.editor = editor;
+		}
+		getValue() {
+			return this.editor.getValue();
+		}
+		setValue(value) {
+			this.editor.getSession().setValue(value);
+		}
+		isJava() {
+			const mode = this.editor.getSession().getMode().$id ?? "";
+			return mode === "" || JAVA_MODE_PATTERN.test(mode);
+		}
+		isReadOnly() {
+			return this.editor.getReadOnly();
+		}
+		setWritable() {
+			this.editor.setReadOnly(false);
+		}
+		onPaste(listener) {
+			this.editor.on("paste", () => setTimeout(listener));
+		}
+		onChange(listener) {
+			this.editor.getSession().on("change", listener);
+		}
+		foldLines(lines) {
+			const session = this.editor.getSession();
+			const folded = new Set(session.getAllFolds().map((fold) => fold.start.row));
+			for (const line of lines) {
+				if (folded.has(line) || !session.getFoldWidget(line)) continue;
+				const range = session.getFoldWidgetRange(line);
+				if (range) session.addFold("...", range);
+			}
+		}
+	}
+
+	class MonacoCodeEditor {
+		editor;
+		constructor(editor) {
+			this.editor = editor;
+		}
+		get model() {
+			const model = this.editor.getModel();
+			if (!model) throw new Error("Monaco model is not available.");
+			return model;
+		}
+		getValue() {
+			return this.model.getValue();
+		}
+		setValue(value) {
+			this.model.setValue(value);
+		}
+		isJava() {
+			return this.model.getLanguageId() === "java";
+		}
+		isReadOnly() {
+			return false;
+		}
+		setWritable() {}
+		onPaste(listener) {
+			this.editor.onDidPaste(listener);
+		}
+		onChange(listener) {
+			this.model.onDidChangeContent(listener);
+		}
+		foldLines(lines) {
+			const action = this.editor.getAction("editor.fold");
+			if (!action) return;
+			const position = this.editor.getPosition();
+			(async () => {
+				for (const line of lines) {
+					this.editor.setPosition({ lineNumber: line + 1, column: 1 });
+					await action.run();
+				}
+				this.editor.setPosition(position);
+			})();
+		}
+	}
+	function findEditor(target) {
+		const page = pageGlobals();
+		if (target.editor === "monaco") {
+			const [editor] = page.monaco?.editor.getEditors() ?? [];
+			return editor?.getModel() ? new MonacoCodeEditor(editor) : null;
+		}
+		const element = target.editorElements
+			.map((selector) => document.querySelector(selector))
+			.find((found) => found);
+		if (!page.ace || !element) return null;
+		try {
+			return new AceCodeEditor(page.ace.edit(element));
+		} catch {
+			return null;
+		}
+	}
+
+	class PageCodeEditorLocator {
+		locate(target, timeoutMs = DEFAULT_TIMEOUT_MS) {
+			const editor = findEditor(target);
+			if (editor) return Promise.resolve(editor);
+			return new Promise((resolve) => {
+				const finish = (found) => {
+					observer.disconnect();
+					clearTimeout(timer);
+					resolve(found);
+				};
+				const observer = new MutationObserver(() => {
+					const found = findEditor(target);
+					if (found) finish(found);
+				});
+				const timer = setTimeout(() => finish(null), timeoutMs);
+				observer.observe(document.body, { childList: true, subtree: true });
+			});
+		}
+	}
+
+	// CpToolkit/src/adapters/page/element-script-loader.ts
+	function waitForLoad(element, url) {
+		return new Promise((resolve, reject) => {
+			element.addEventListener("load", () => resolve(), { once: true });
+			element.addEventListener("error", () => reject(new Error(`Failed to load ${url}`)), { once: true });
+			document.head.append(element);
+		});
+	}
+
+	class ElementScriptLoader {
+		loadScript(url) {
+			return waitForLoad(Object.assign(document.createElement("script"), { src: url }), url);
+		}
+		loadStylesheet(url) {
+			return waitForLoad(Object.assign(document.createElement("link"), { rel: "stylesheet", href: url }), url);
+		}
+	}
+
+	// CpToolkit/src/adapters/page/locale.ts
+	function detectLocale() {
+		const meta = document.querySelector('meta[http-equiv="Content-Language"]');
+		return (meta?.content || navigator.language).startsWith("ja") ? "ja" : "en";
+	}
+
+	// CpToolkit/src/adapters/page/page-bridge.ts
+	var MATH_OPTIONS = {
+		delimiters: [
+			{ left: "$$", right: "$$", display: true },
+			{ left: "$", right: "$", display: false },
+			{ left: "\\(", right: "\\)", display: false },
+			{ left: "\\[", right: "\\]", display: true },
+		],
+		ignoredTags: ["script", "noscript", "style", "textarea", "code", "option"],
+		ignoredClasses: ["prettyprint", "source-code-for-copy"],
+		throwOnError: false,
+	};
+
+	class UnsafeWindowPageBridge {
+		onChange(element, listener) {
+			const jQuery = pageGlobals().jQuery;
+			if (jQuery) jQuery(element).on("change", listener);
+			else element.addEventListener("change", listener);
+		}
+		triggerChange(element) {
+			element.dispatchEvent(new Event("input", { bubbles: true }));
+			element.dispatchEvent(new Event("change", { bubbles: true }));
+			pageGlobals().jQuery?.(element).trigger("change");
+		}
+		renderMath(target) {
+			pageGlobals().renderMathInElement?.(target, MATH_OPTIONS);
+		}
+		highlightCode() {
+			pageGlobals().PR?.prettyPrint();
+		}
+	}
+
+	// CpToolkit/src/adapters/page/same-origin-http-client.ts
+	class SameOriginHttpClient {
+		async send({ url, method = "GET", headers, body }) {
+			const response = await fetch(url, {
+				method,
+				headers: headers ? { ...headers } : undefined,
+				body,
+				credentials: "include",
+			});
+			return { status: response.status, text: await response.text() };
+		}
+	}
+
+	// CpToolkit/src/adapters/runners/atcoder-custom-test.ts
+	var MAX_POLLS = 300;
+	var POLL_INTERVAL_MS = 1000;
+
+	class CustomTestQueue {
+		site;
+		last = Promise.resolve();
+		failedGroups = new Set();
+		constructor(site) {
+			this.site = site;
+		}
+		get baseUrl() {
+			return location.href.replace(/\/(tasks\/.+|submit.*)$/, "/custom_test");
+		}
+		async execute(languageId, sourceCode, input, groupId) {
+			if (groupId && this.failedGroups.has(groupId)) return { status: "CE", input };
+			const submitted = await this.site.send({
+				url: `${this.baseUrl}/submit/json`,
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+				body: buildQueryString({
+					"data.LanguageId": languageId,
+					sourceCode,
+					input,
+					csrf_token: pageGlobals().csrfToken,
+				}),
+			});
+			if (submitted.text) throw new Error(submitted.text);
+			for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+				await sleep(POLL_INTERVAL_MS / 10);
+				const response = await this.site.send({ url: `${this.baseUrl}/json?reload=true` });
+				const data = JSON.parse(response.text);
+				const { Result: result } = data;
+				if (!result || data.Interval !== undefined) {
+					await sleep(data.Interval ?? POLL_INTERVAL_MS);
+					continue;
+				}
+				const compileFailed = String(result.TimeConsumption).startsWith("-");
+				const status = result.ExitCode === 0 ? "OK" : compileFailed ? "CE" : "RE";
+				if (status === "CE" && groupId) this.failedGroups.add(groupId);
+				return {
+					status,
+					exitCode: result.ExitCode,
+					execTime: Number.parseInt(String(result.TimeConsumption), 10),
+					memory: Number.parseInt(String(result.MemoryConsumption), 10),
+					input,
+					output: data.Stdout,
+					error: data.Stderr,
+				};
+			}
+			return { status: "TLE", input, error: "Custom test timed out" };
+		}
+		run(languageId, sourceCode, input, groupId) {
+			const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
+			this.last = result.catch(() => {
+				return;
+			});
+			return result;
+		}
+	}
+
+	class AtCoderRunner {
+		queue;
+		language;
+		kind = "judge";
+		id;
+		label;
+		constructor(queue, language) {
+			this.queue = queue;
+			this.language = language;
+			this.id = `atcoder:${language.id}`;
+			this.label = `${language.label} [AtCoder]`;
+		}
+		run(sourceCode, input, options) {
+			return this.queue.run(this.language.id, sourceCode, input, options.runGroupId);
+		}
+	}
+
+	class AtCoderRunnerProvider {
+		judge;
+		queue;
+		constructor(site, judge) {
+			this.judge = judge;
+			this.queue = new CustomTestQueue(site);
+		}
+		async runnersFor(language) {
+			const judge = await this.judge();
+			if (judge?.id !== "atcoder") return [];
+			const sameFamily = judge.languages().filter(({ id, family }) => {
+				return id === language.id || (family !== null && family === language.family);
+			});
+			return sameFamily.map((candidate) => new AtCoderRunner(this.queue, candidate));
+		}
+	}
+
+	// CpToolkit/src/adapters/runners/pyodide.ts
+	var SETUP_CODE = `
+import contextlib, io, platform
+class __redirect_stdin(contextlib._RedirectStream):
+  _stream = "stdin"
+`;
+	function wrapSource(sourceCode) {
+		const body = sourceCode
+			.split(
+				`
+`,
+			)
+			.map((line) => `     ${line}`).join(`
+`);
+		return `
+def __run():
+ global __stdout, __stderr, __stdin, __code
+ with __redirect_stdin(io.StringIO(__stdin)):
+  with contextlib.redirect_stdout(io.StringIO()) as __stdout:
+   with contextlib.redirect_stderr(io.StringIO()) as __stderr:
+    try:
+     pass
+${body}
+    except SystemExit as e:
+     __code = e.code
+`;
+	}
+
+	class PyodideRunner {
+		scripts;
+		kind = "browser";
+		id = "browser:pyodide";
+		label = "Python3 Pyodide [Browser]";
+		pyodide = null;
+		queue = Promise.resolve();
+		constructor(scripts) {
+			this.scripts = scripts;
+		}
+		async load() {
+			const { baseUrl } = runnerCatalog.pyodide;
+			await this.scripts.loadScript(`${baseUrl}pyodide.js`);
+			const pyodide = await pageGlobals().loadPyodide?.({ indexURL: baseUrl });
+			if (!pyodide) throw new Error("Pyodide was not loaded.");
+			await pyodide.runPythonAsync(SETUP_CODE);
+			return pyodide;
+		}
+		async execute(sourceCode, input) {
+			this.pyodide ??= this.load();
+			const pyodide = await this.pyodide;
+			const code = wrapSource(sourceCode);
+			pyodide.globals.set("__stdin", input);
+			pyodide.globals.set("__code", null);
+			const startedAt = Date.now();
+			try {
+				await pyodide.loadPackagesFromImports(code);
+				await pyodide.runPythonAsync(code);
+				pyodide.runPython("__run()");
+			} catch (error) {
+				return {
+					status: "RE",
+					exitCode: "-1",
+					input,
+					error: error instanceof Error ? error.message : String(error),
+				};
+			}
+			const exitCode = pyodide.globals.get("__code");
+			return {
+				status: typeof exitCode === "number" && exitCode !== 0 ? "RE" : "OK",
+				exitCode: String(exitCode ?? 0),
+				execTime: Date.now() - startedAt,
+				input,
+				output: pyodide.globals.get("__stdout").getvalue(),
+				error: pyodide.globals.get("__stderr").getvalue(),
+			};
+		}
+		run(sourceCode, input) {
+			const result = this.queue.then(() => this.execute(sourceCode, input));
+			this.queue = result.catch(() => {
+				return;
+			});
+			return result;
+		}
+	}
+
+	class PyodideRunnerProvider {
+		runner;
+		constructor(scripts) {
+			this.runner = new PyodideRunner(scripts);
+		}
+		async runnersFor({ family }) {
+			return family === "python3" ? [this.runner] : [];
+		}
+	}
+
+	// CpToolkit/src/adapters/runners/simple-runners.ts
+	class PaizaRunner {
+		http;
+		language;
+		kind = "paiza";
+		id;
+		label;
+		constructor(http, language, label) {
+			this.http = http;
+			this.language = language;
+			this.id = `paiza:${language}`;
+			this.label = `${label} [PaizaIO]`;
+		}
+		async request(path, query2, method = "GET") {
+			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({ ...query2, api_key: "guest" })}`;
+			const response = await this.http.send({ url, method });
+			return JSON.parse(response.text);
+		}
+		async run(sourceCode, input) {
+			let { id, status } = await this.request(
+				"create",
+				{
+					source_code: sourceCode,
+					language: this.language,
+					input,
+					longpoll: "true",
+					longpoll_timeout: "10",
+				},
+				"POST",
+			);
+			while (status === "running") {
+				({ status } = await this.request("get_status", { id }));
+			}
+			const details = await this.request("get_details", { id });
+			const measured = { execTime: Number(details.time) * 1000, memory: Number(details.memory) / 1000, input };
+			if (details.build_result === "failure") {
+				return {
+					...measured,
+					status: "CE",
+					exitCode: details.build_exit_code,
+					output: details.build_stdout,
+					error: details.build_stderr,
+				};
+			}
+			const statusByResult = { timeout: "TLE", failure: "RE" };
+			return {
+				...measured,
+				status: statusByResult[details.result] ?? "OK",
+				exitCode: details.exit_code,
+				output: details.stdout,
+				error: details.stderr,
+			};
+		}
+	}
+
+	class PaizaRunnerProvider {
+		http;
+		constructor(http) {
+			this.http = http;
+		}
+		async runnersFor({ family }) {
+			return runnerCatalog.paiza.languages
+				.filter((entry) => entry.family === family)
+				.map(({ language, label }) => new PaizaRunner(this.http, language, label));
+		}
+	}
+
+	class LocalCodeRunner {
+		client;
+		compilerName;
+		kind = "local";
+		id;
+		label;
+		constructor(client, compilerName, label) {
+			this.client = client;
+			this.compilerName = compilerName;
+			this.id = `local:${compilerName}`;
+			this.label = `${label} [Local]`;
+		}
+		async run(sourceCode, input) {
+			const response = await this.client.run(sourceCode, input, this.compilerName);
+			if ("diagnostics" in response) {
+				return { status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed." };
+			}
+			return {
+				status: toEasyTestStatus(response.status, response.exitCode),
+				exitCode: String(response.exitCode),
+				execTime: Number(response.time),
+				memory: Number(response.memory),
+				input,
+				output: response.stdout ?? "",
+				error: response.stderr ?? "",
+			};
+		}
+	}
+
+	class LocalRunnerProvider {
+		client;
+		constructor(client) {
+			this.client = client;
+		}
+		async runnersFor({ family }) {
+			if (!this.client.isAvailable()) return [];
+			const compilers = await this.client.list();
+			return compilers
+				.filter(({ language }) => resolveFamily(languageCatalog, language) === family)
+				.map(({ compilerName, label }) => new LocalCodeRunner(this.client, compilerName, label));
+		}
+	}
+
+	class TextRunner {
+		kind = "browser";
+		id = "browser:text";
+		label = "Text [Browser]";
+		async run(sourceCode, input, _options) {
+			return { status: "OK", exitCode: "0", input, output: sourceCode };
+		}
+	}
+
+	class TextRunnerProvider {
+		async runnersFor({ family }) {
+			return family === "text" ? [new TextRunner()] : [];
+		}
+	}
+
+	// CpToolkit/src/adapters/runners/wandbox.ts
+	var CACHE_KEY = "easy-test:wandbox-compilers";
+	var HOUR_MS = 60 * 60 * 1000;
+	var ACL_INCLUDE_PATTERN = /^#\s*include\s*[<"]atcoder\/([^>"]+)[>"]/gm;
+
+	class WandboxRunner {
+		http;
+		compiler;
+		kind = "wandbox";
+		id;
+		label;
+		optimization;
+		constructor(http, compiler) {
+			this.http = http;
+			this.compiler = compiler;
+			const usesAcl = compiler.language === "C++";
+			this.id = `wandbox:${compiler.name}`;
+			this.label = `${compiler.language} ${compiler.name}${usesAcl ? " + ACL" : ""} [Wandbox]`;
+			this.optimization = compiler.switches.find((item) => item["display-name"] === "Optimization")?.name;
+		}
+		async collectAclFiles(source, files = new Map()) {
+			const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
+			const missing = paths.filter((path) => !files.has(path));
+			const loaded = await Promise.all(
+				missing.map(async (path) => {
+					const response = await this.http.send({ url: runnerCatalog.wandbox.aclBaseUrl + path });
+					return [path, response.text];
+				}),
+			);
+			for (const [path, code] of loaded) files.set(path, code);
+			for (const [, code] of loaded) await this.collectAclFiles(code, files);
+			return files;
+		}
+		async run(sourceCode, input, _options) {
+			const usesAcl = this.compiler.language === "C++";
+			const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map();
+			const startedAt = Date.now();
+			const response = await this.http.send({
+				url: runnerCatalog.wandbox.compileUrl,
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					compiler: this.compiler.name,
+					code: sourceCode,
+					stdin: input,
+					options: this.optimization,
+					...(usesAcl
+						? { "compiler-option-raw": "-I.", codes: [...files].map(([file, code]) => ({ file, code })) }
+						: {}),
+				}),
+			});
+			const execTime = Date.now() - startedAt;
+			const body = JSON.parse(response.text);
+			const output = body.program_output ?? "";
+			const error = body.program_error ?? "";
+			if (String(body.status) === "0") return { status: "OK", exitCode: "0", execTime, input, output, error };
+			return {
+				status: body.compiler_output || body.compiler_error ? "CE" : "RE",
+				exitCode: `${body.status}${body.signal ? ` (${body.signal})` : ""}`,
+				execTime,
+				input,
+				output: (body.compiler_output ?? "") + output,
+				error: (body.compiler_error ?? "") + error,
+			};
+		}
+	}
+
+	class WandboxRunnerProvider {
+		http;
+		state;
+		constructor(http, state) {
+			this.http = http;
+			this.state = state;
+		}
+		async compilers() {
+			const cached = this.state.get(CACHE_KEY);
+			if (cached && Date.now() - cached.fetchedAt < runnerCatalog.wandbox.cacheHours * HOUR_MS)
+				return cached.compilers;
+			const response = await this.http.send({ url: runnerCatalog.wandbox.listUrl });
+			const compilers = JSON.parse(response.text);
+			this.state.set(CACHE_KEY, { compilers, fetchedAt: Date.now() });
+			return compilers;
+		}
+		async runnersFor({ family }) {
+			const compilers = await this.compilers();
+			return compilers
+				.filter(({ language, version }) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
+				.map((compiler) => new WandboxRunner(this.http, compiler));
+		}
+	}
+
+	// ../node_modules/.bun/turndown@7.2.4/node_modules/turndown/lib/turndown.browser.es.js
+	function extend(destination) {
+		for (var i = 1; i < arguments.length; i++) {
+			var source = arguments[i];
+			for (var key in source) {
+				if (Object.prototype.hasOwnProperty.call(source, key)) destination[key] = source[key];
+			}
+		}
+		return destination;
+	}
+	function repeat(character, count) {
+		return Array(count + 1).join(character);
+	}
+	function trimLeadingNewlines(string) {
+		return string.replace(/^\n*/, "");
+	}
+	function trimTrailingNewlines(string) {
+		var indexEnd = string.length;
+		while (
+			indexEnd > 0 &&
+			string[indexEnd - 1] ===
+				`
+`
+		)
+			indexEnd--;
+		return string.substring(0, indexEnd);
+	}
+	function trimNewlines(string) {
+		return trimTrailingNewlines(trimLeadingNewlines(string));
+	}
+	var blockElements = [
+		"ADDRESS",
+		"ARTICLE",
+		"ASIDE",
+		"AUDIO",
+		"BLOCKQUOTE",
+		"BODY",
+		"CANVAS",
+		"CENTER",
+		"DD",
+		"DIR",
+		"DIV",
+		"DL",
+		"DT",
+		"FIELDSET",
+		"FIGCAPTION",
+		"FIGURE",
+		"FOOTER",
+		"FORM",
+		"FRAMESET",
+		"H1",
+		"H2",
+		"H3",
+		"H4",
+		"H5",
+		"H6",
+		"HEADER",
+		"HGROUP",
+		"HR",
+		"HTML",
+		"ISINDEX",
+		"LI",
+		"MAIN",
+		"MENU",
+		"NAV",
+		"NOFRAMES",
+		"NOSCRIPT",
+		"OL",
+		"OUTPUT",
+		"P",
+		"PRE",
+		"SECTION",
+		"TABLE",
+		"TBODY",
+		"TD",
+		"TFOOT",
+		"TH",
+		"THEAD",
+		"TR",
+		"UL",
+	];
+	function isBlock(node) {
+		return is(node, blockElements);
+	}
+	var voidElements = [
+		"AREA",
+		"BASE",
+		"BR",
+		"COL",
+		"COMMAND",
+		"EMBED",
+		"HR",
+		"IMG",
+		"INPUT",
+		"KEYGEN",
+		"LINK",
+		"META",
+		"PARAM",
+		"SOURCE",
+		"TRACK",
+		"WBR",
+	];
+	function isVoid(node) {
+		return is(node, voidElements);
+	}
+	function hasVoid(node) {
+		return has(node, voidElements);
+	}
+	var meaningfulWhenBlankElements = [
+		"A",
+		"TABLE",
+		"THEAD",
+		"TBODY",
+		"TFOOT",
+		"TH",
+		"TD",
+		"IFRAME",
+		"SCRIPT",
+		"AUDIO",
+		"VIDEO",
+	];
+	function isMeaningfulWhenBlank(node) {
+		return is(node, meaningfulWhenBlankElements);
+	}
+	function hasMeaningfulWhenBlank(node) {
+		return has(node, meaningfulWhenBlankElements);
+	}
+	function is(node, tagNames) {
+		return tagNames.indexOf(node.nodeName) >= 0;
+	}
+	function has(node, tagNames) {
+		return (
+			node.getElementsByTagName &&
+			tagNames.some(function (tagName) {
+				return node.getElementsByTagName(tagName).length;
+			})
+		);
+	}
+	var markdownEscapes = [
+		[/\\/g, "\\\\"],
+		[/\*/g, "\\*"],
+		[/^-/g, "\\-"],
+		[/^\+ /g, "\\+ "],
+		[/^(=+)/g, "\\$1"],
+		[/^(#{1,6}) /g, "\\$1 "],
+		[/`/g, "\\`"],
+		[/^~~~/g, "\\~~~"],
+		[/\[/g, "\\["],
+		[/\]/g, "\\]"],
+		[/^>/g, "\\>"],
+		[/_/g, "\\_"],
+		[/^(\d+)\. /g, "$1\\. "],
+	];
+	function escapeMarkdown(string) {
+		return markdownEscapes.reduce(function (accumulator, escape) {
+			return accumulator.replace(escape[0], escape[1]);
+		}, string);
+	}
+	var rules = {};
+	rules.paragraph = {
+		filter: "p",
+		replacement: function (content) {
+			return (
+				`
+
+` +
+				content +
+				`
+
+`
+			);
+		},
+	};
+	rules.lineBreak = {
+		filter: "br",
+		replacement: function (content, node, options) {
+			return (
+				options.br +
+				`
+`
+			);
+		},
+	};
+	rules.heading = {
+		filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
+		replacement: function (content, node, options) {
+			var hLevel = Number(node.nodeName.charAt(1));
+			if (options.headingStyle === "setext" && hLevel < 3) {
+				var underline = repeat(hLevel === 1 ? "=" : "-", content.length);
+				return (
+					`
+
+` +
+					content +
+					`
+` +
+					underline +
+					`
+
+`
+				);
+			} else {
+				return (
+					`
+
+` +
+					repeat("#", hLevel) +
+					" " +
+					content +
+					`
+
+`
+				);
+			}
+		},
+	};
+	rules.blockquote = {
+		filter: "blockquote",
+		replacement: function (content) {
+			content = trimNewlines(content).replace(/^/gm, "> ");
+			return (
+				`
+
+` +
+				content +
+				`
+
+`
+			);
+		},
+	};
+	rules.list = {
+		filter: ["ul", "ol"],
+		replacement: function (content, node) {
+			var parent = node.parentNode;
+			if (parent.nodeName === "LI" && parent.lastElementChild === node) {
+				return (
+					`
+` + content
+				);
+			} else {
+				return (
+					`
+
+` +
+					content +
+					`
+
+`
+				);
+			}
+		},
+	};
+	rules.listItem = {
+		filter: "li",
+		replacement: function (content, node, options) {
+			var prefix = options.bulletListMarker + "   ";
+			var parent = node.parentNode;
+			if (parent.nodeName === "OL") {
+				var start = parent.getAttribute("start");
+				var index = Array.prototype.indexOf.call(parent.children, node);
+				prefix = (start ? Number(start) + index : index + 1) + ".  ";
+			}
+			var isParagraph = /\n$/.test(content);
+			content =
+				trimNewlines(content) +
+				(isParagraph
+					? `
+`
+					: "");
+			content = content.replace(
+				/\n/gm,
+				`
+` + " ".repeat(prefix.length),
+			);
+			return (
+				prefix +
+				content +
+				(node.nextSibling
+					? `
+`
+					: "")
+			);
+		},
+	};
+	rules.indentedCodeBlock = {
+		filter: function (node, options) {
+			return (
+				options.codeBlockStyle === "indented" &&
+				node.nodeName === "PRE" &&
+				node.firstChild &&
+				node.firstChild.nodeName === "CODE"
+			);
+		},
+		replacement: function (content, node, options) {
+			return (
+				`
+
+    ` +
+				node.firstChild.textContent.replace(
+					/\n/g,
+					`
+    `,
+				) +
+				`
+
+`
+			);
+		},
+	};
+	rules.fencedCodeBlock = {
+		filter: function (node, options) {
+			return (
+				options.codeBlockStyle === "fenced" &&
+				node.nodeName === "PRE" &&
+				node.firstChild &&
+				node.firstChild.nodeName === "CODE"
+			);
+		},
+		replacement: function (content, node, options) {
+			var className = node.firstChild.getAttribute("class") || "";
+			var language = (className.match(/language-(\S+)/) || [null, ""])[1];
+			var code = node.firstChild.textContent;
+			var fenceChar = options.fence.charAt(0);
+			var fenceSize = 3;
+			var fenceInCodeRegex = new RegExp("^" + fenceChar + "{3,}", "gm");
+			var match;
+			while ((match = fenceInCodeRegex.exec(code))) {
+				if (match[0].length >= fenceSize) {
+					fenceSize = match[0].length + 1;
+				}
+			}
+			var fence = repeat(fenceChar, fenceSize);
+			return (
+				`
+
+` +
+				fence +
+				language +
+				`
+` +
+				code.replace(/\n$/, "") +
+				`
+` +
+				fence +
+				`
+
+`
+			);
+		},
+	};
+	rules.horizontalRule = {
+		filter: "hr",
+		replacement: function (content, node, options) {
+			return (
+				`
+
+` +
+				options.hr +
+				`
+
+`
+			);
+		},
+	};
+	rules.inlineLink = {
+		filter: function (node, options) {
+			return options.linkStyle === "inlined" && node.nodeName === "A" && node.getAttribute("href");
+		},
+		replacement: function (content, node) {
+			var href = escapeLinkDestination(node.getAttribute("href"));
+			var title = escapeLinkTitle(cleanAttribute(node.getAttribute("title")));
+			var titlePart = title ? ' "' + title + '"' : "";
+			return "[" + content + "](" + href + titlePart + ")";
+		},
+	};
+	rules.referenceLink = {
+		filter: function (node, options) {
+			return options.linkStyle === "referenced" && node.nodeName === "A" && node.getAttribute("href");
+		},
+		replacement: function (content, node, options) {
+			var href = escapeLinkDestination(node.getAttribute("href"));
+			var title = cleanAttribute(node.getAttribute("title"));
+			if (title) title = ' "' + escapeLinkTitle(title) + '"';
+			var replacement;
+			var reference;
+			switch (options.linkReferenceStyle) {
+				case "collapsed":
+					replacement = "[" + content + "][]";
+					reference = "[" + content + "]: " + href + title;
+					break;
+				case "shortcut":
+					replacement = "[" + content + "]";
+					reference = "[" + content + "]: " + href + title;
+					break;
+				default:
+					var id = this.references.length + 1;
+					replacement = "[" + content + "][" + id + "]";
+					reference = "[" + id + "]: " + href + title;
+			}
+			this.references.push(reference);
+			return replacement;
+		},
+		references: [],
+		append: function (options) {
+			var references = "";
+			if (this.references.length) {
+				references =
+					`
+
+` +
+					this.references.join(`
+`) +
+					`
+
+`;
+				this.references = [];
+			}
+			return references;
+		},
+	};
+	rules.emphasis = {
+		filter: ["em", "i"],
+		replacement: function (content, node, options) {
+			if (!content.trim()) return "";
+			return options.emDelimiter + content + options.emDelimiter;
+		},
+	};
+	rules.strong = {
+		filter: ["strong", "b"],
+		replacement: function (content, node, options) {
+			if (!content.trim()) return "";
+			return options.strongDelimiter + content + options.strongDelimiter;
+		},
+	};
+	rules.code = {
+		filter: function (node) {
+			var hasSiblings = node.previousSibling || node.nextSibling;
+			var isCodeBlock = node.parentNode.nodeName === "PRE" && !hasSiblings;
+			return node.nodeName === "CODE" && !isCodeBlock;
+		},
+		replacement: function (content) {
+			if (!content) return "";
+			content = content.replace(/\r?\n|\r/g, " ");
+			var extraSpace = /^`|^ .*?[^ ].* $|`$/.test(content) ? " " : "";
+			var delimiter = "`";
+			var matches = content.match(/`+/gm) || [];
+			while (matches.indexOf(delimiter) !== -1) delimiter = delimiter + "`";
+			return delimiter + extraSpace + content + extraSpace + delimiter;
+		},
+	};
+	rules.image = {
+		filter: "img",
+		replacement: function (content, node) {
+			var alt = escapeMarkdown(cleanAttribute(node.getAttribute("alt")));
+			var src = escapeLinkDestination(node.getAttribute("src") || "");
+			var title = cleanAttribute(node.getAttribute("title"));
+			var titlePart = title ? ' "' + escapeLinkTitle(title) + '"' : "";
+			return src ? "![" + alt + "]" + "(" + src + titlePart + ")" : "";
+		},
+	};
+	function cleanAttribute(attribute) {
+		return attribute
+			? attribute.replace(
+					/(\n+\s*)+/g,
+					`
+`,
+				)
+			: "";
+	}
+	function escapeLinkDestination(destination) {
+		var escaped = destination.replace(/([<>()])/g, "\\$1");
+		return escaped.indexOf(" ") >= 0 ? "<" + escaped + ">" : escaped;
+	}
+	function escapeLinkTitle(title) {
+		return title.replace(/"/g, '\\"');
+	}
+	function Rules(options) {
+		this.options = options;
+		this._keep = [];
+		this._remove = [];
+		this.blankRule = {
+			replacement: options.blankReplacement,
+		};
+		this.keepReplacement = options.keepReplacement;
+		this.defaultRule = {
+			replacement: options.defaultReplacement,
+		};
+		this.array = [];
+		for (var key in options.rules) this.array.push(options.rules[key]);
+	}
+	Rules.prototype = {
+		add: function (key, rule) {
+			this.array.unshift(rule);
+		},
+		keep: function (filter) {
+			this._keep.unshift({
+				filter,
+				replacement: this.keepReplacement,
+			});
+		},
+		remove: function (filter) {
+			this._remove.unshift({
+				filter,
+				replacement: function () {
+					return "";
+				},
+			});
+		},
+		forNode: function (node) {
+			if (node.isBlank) return this.blankRule;
+			var rule;
+			if ((rule = findRule(this.array, node, this.options))) return rule;
+			if ((rule = findRule(this._keep, node, this.options))) return rule;
+			if ((rule = findRule(this._remove, node, this.options))) return rule;
+			return this.defaultRule;
+		},
+		forEach: function (fn) {
+			for (var i = 0; i < this.array.length; i++) fn(this.array[i], i);
+		},
+	};
+	function findRule(rules2, node, options) {
+		for (var i = 0; i < rules2.length; i++) {
+			var rule = rules2[i];
+			if (filterValue(rule, node, options)) return rule;
+		}
+		return;
+	}
+	function filterValue(rule, node, options) {
+		var filter = rule.filter;
+		if (typeof filter === "string") {
+			if (filter === node.nodeName.toLowerCase()) return true;
+		} else if (Array.isArray(filter)) {
+			if (filter.indexOf(node.nodeName.toLowerCase()) > -1) return true;
+		} else if (typeof filter === "function") {
+			if (filter.call(rule, node, options)) return true;
+		} else {
+			throw new TypeError("`filter` needs to be a string, array, or function");
+		}
+	}
+	function collapseWhitespace(options) {
+		var element = options.element;
+		var isBlock2 = options.isBlock;
+		var isVoid2 = options.isVoid;
+		var isPre =
+			options.isPre ||
+			function (node2) {
+				return node2.nodeName === "PRE";
+			};
+		if (!element.firstChild || isPre(element)) return;
+		var prevText = null;
+		var keepLeadingWs = false;
+		var prev = null;
+		var node = next(prev, element, isPre);
+		while (node !== element) {
+			if (node.nodeType === 3 || node.nodeType === 4) {
+				var text = node.data.replace(/[ \r\n\t]+/g, " ");
+				if ((!prevText || / $/.test(prevText.data)) && !keepLeadingWs && text[0] === " ") {
+					text = text.substr(1);
+				}
+				if (!text) {
+					node = remove(node);
+					continue;
+				}
+				node.data = text;
+				prevText = node;
+			} else if (node.nodeType === 1) {
+				if (isBlock2(node) || node.nodeName === "BR") {
+					if (prevText) {
+						prevText.data = prevText.data.replace(/ $/, "");
+					}
+					prevText = null;
+					keepLeadingWs = false;
+				} else if (isVoid2(node) || isPre(node)) {
+					prevText = null;
+					keepLeadingWs = true;
+				} else if (prevText) {
+					keepLeadingWs = false;
+				}
+			} else {
+				node = remove(node);
+				continue;
+			}
+			var nextNode = next(prev, node, isPre);
+			prev = node;
+			node = nextNode;
+		}
+		if (prevText) {
+			prevText.data = prevText.data.replace(/ $/, "");
+			if (!prevText.data) {
+				remove(prevText);
+			}
+		}
+	}
+	function remove(node) {
+		var next = node.nextSibling || node.parentNode;
+		node.parentNode.removeChild(node);
+		return next;
+	}
+	function next(prev, current, isPre) {
+		if ((prev && prev.parentNode === current) || isPre(current)) {
+			return current.nextSibling || current.parentNode;
+		}
+		return current.firstChild || current.nextSibling || current.parentNode;
+	}
+	var root = typeof window !== "undefined" ? window : {};
+	function canParseHTMLNatively() {
+		var Parser = root.DOMParser;
+		var canParse = false;
+		try {
+			if (new Parser().parseFromString("", "text/html")) {
+				canParse = true;
+			}
+		} catch (e) {}
+		return canParse;
+	}
+	function createHTMLParser() {
+		var Parser = function () {};
+		{
+			if (shouldUseActiveX()) {
+				Parser.prototype.parseFromString = function (string) {
+					var doc = new window.ActiveXObject("htmlfile");
+					doc.designMode = "on";
+					doc.open();
+					doc.write(string);
+					doc.close();
+					return doc;
+				};
+			} else {
+				Parser.prototype.parseFromString = function (string) {
+					var doc = document.implementation.createHTMLDocument("");
+					doc.open();
+					doc.write(string);
+					doc.close();
+					return doc;
+				};
+			}
+		}
+		return Parser;
+	}
+	function shouldUseActiveX() {
+		var useActiveX = false;
+		try {
+			document.implementation.createHTMLDocument("").open();
+		} catch (e) {
+			if (root.ActiveXObject) useActiveX = true;
+		}
+		return useActiveX;
+	}
+	var HTMLParser = canParseHTMLNatively() ? root.DOMParser : createHTMLParser();
+	function RootNode(input, options) {
+		var root2;
+		if (typeof input === "string") {
+			var doc = htmlParser().parseFromString(
+				'<x-turndown id="turndown-root">' + input + "</x-turndown>",
+				"text/html",
+			);
+			root2 = doc.getElementById("turndown-root");
+		} else {
+			root2 = input.cloneNode(true);
+		}
+		collapseWhitespace({
+			element: root2,
+			isBlock,
+			isVoid,
+			isPre: options.preformattedCode ? isPreOrCode : null,
+		});
+		return root2;
+	}
+	var _htmlParser;
+	function htmlParser() {
+		_htmlParser = _htmlParser || new HTMLParser();
+		return _htmlParser;
+	}
+	function isPreOrCode(node) {
+		return node.nodeName === "PRE" || node.nodeName === "CODE";
+	}
+	function Node2(node, options) {
+		node.isBlock = isBlock(node);
+		node.isCode = node.nodeName === "CODE" || node.parentNode.isCode;
+		node.isBlank = isBlank(node);
+		node.flankingWhitespace = flankingWhitespace(node, options);
+		return node;
+	}
+	function isBlank(node) {
+		return (
+			!isVoid(node) &&
+			!isMeaningfulWhenBlank(node) &&
+			/^\s*$/i.test(node.textContent) &&
+			!hasVoid(node) &&
+			!hasMeaningfulWhenBlank(node)
+		);
+	}
+	function flankingWhitespace(node, options) {
+		if (node.isBlock || (options.preformattedCode && node.isCode)) {
+			return {
+				leading: "",
+				trailing: "",
+			};
+		}
+		var edges = edgeWhitespace(node.textContent);
+		if (edges.leadingAscii && isFlankedByWhitespace("left", node, options)) {
+			edges.leading = edges.leadingNonAscii;
+		}
+		if (edges.trailingAscii && isFlankedByWhitespace("right", node, options)) {
+			edges.trailing = edges.trailingNonAscii;
+		}
+		return {
+			leading: edges.leading,
+			trailing: edges.trailing,
+		};
+	}
+	function edgeWhitespace(string) {
+		var m = string.match(/^(([ \t\r\n]*)(\s*))(?:(?=\S)[\s\S]*\S)?((\s*?)([ \t\r\n]*))$/);
+		return {
+			leading: m[1],
+			leadingAscii: m[2],
+			leadingNonAscii: m[3],
+			trailing: m[4],
+			trailingNonAscii: m[5],
+			trailingAscii: m[6],
+		};
+	}
+	function isFlankedByWhitespace(side, node, options) {
+		var sibling;
+		var regExp;
+		var isFlanked;
+		if (side === "left") {
+			sibling = node.previousSibling;
+			regExp = / $/;
+		} else {
+			sibling = node.nextSibling;
+			regExp = /^ /;
+		}
+		if (sibling) {
+			if (sibling.nodeType === 3) {
+				isFlanked = regExp.test(sibling.nodeValue);
+			} else if (options.preformattedCode && sibling.nodeName === "CODE") {
+				isFlanked = false;
+			} else if (sibling.nodeType === 1 && !isBlock(sibling)) {
+				isFlanked = regExp.test(sibling.textContent);
+			}
+		}
+		return isFlanked;
+	}
+	var reduce = Array.prototype.reduce;
+	function TurndownService(options) {
+		if (!(this instanceof TurndownService)) return new TurndownService(options);
+		var defaults = {
+			rules,
+			headingStyle: "setext",
+			hr: "* * *",
+			bulletListMarker: "*",
+			codeBlockStyle: "indented",
+			fence: "```",
+			emDelimiter: "_",
+			strongDelimiter: "**",
+			linkStyle: "inlined",
+			linkReferenceStyle: "full",
+			br: "  ",
+			preformattedCode: false,
+			blankReplacement: function (content, node) {
+				return node.isBlock
+					? `
+
+`
+					: "";
+			},
+			keepReplacement: function (content, node) {
+				return node.isBlock
+					? `
+
+` +
+							node.outerHTML +
+							`
+
+`
+					: node.outerHTML;
+			},
+			defaultReplacement: function (content, node) {
+				return node.isBlock
+					? `
+
+` +
+							content +
+							`
+
+`
+					: content;
+			},
+		};
+		this.options = extend({}, defaults, options);
+		this.rules = new Rules(this.options);
+	}
+	TurndownService.prototype = {
+		turndown: function (input) {
+			if (!canConvert(input)) {
+				throw new TypeError(input + " is not a string, or an element/document/fragment node.");
+			}
+			if (input === "") return "";
+			var output = process.call(this, new RootNode(input, this.options));
+			return postProcess.call(this, output);
+		},
+		use: function (plugin) {
+			if (Array.isArray(plugin)) {
+				for (var i = 0; i < plugin.length; i++) this.use(plugin[i]);
+			} else if (typeof plugin === "function") {
+				plugin(this);
+			} else {
+				throw new TypeError("plugin must be a Function or an Array of Functions");
+			}
+			return this;
+		},
+		addRule: function (key, rule) {
+			this.rules.add(key, rule);
+			return this;
+		},
+		keep: function (filter) {
+			this.rules.keep(filter);
+			return this;
+		},
+		remove: function (filter) {
+			this.rules.remove(filter);
+			return this;
+		},
+		escape: function (string) {
+			return escapeMarkdown(string);
+		},
+	};
+	function process(parentNode) {
+		var self = this;
+		return reduce.call(
+			parentNode.childNodes,
+			function (output, node) {
+				node = new Node2(node, self.options);
+				var replacement = "";
+				if (node.nodeType === 3) {
+					replacement = node.isCode ? node.nodeValue : self.escape(node.nodeValue);
+				} else if (node.nodeType === 1) {
+					replacement = replacementForNode.call(self, node);
+				}
+				return join(output, replacement);
+			},
+			"",
+		);
+	}
+	function postProcess(output) {
+		var self = this;
+		this.rules.forEach(function (rule) {
+			if (typeof rule.append === "function") {
+				output = join(output, rule.append(self.options));
+			}
+		});
+		return output.replace(/^[\t\r\n]+/, "").replace(/[\t\r\n\s]+$/, "");
+	}
+	function replacementForNode(node) {
+		var rule = this.rules.forNode(node);
+		var content = process.call(this, node);
+		var whitespace = node.flankingWhitespace;
+		if (whitespace.leading || whitespace.trailing) content = content.trim();
+		return whitespace.leading + rule.replacement(content, node, this.options) + whitespace.trailing;
+	}
+	function join(output, replacement) {
+		var s1 = trimTrailingNewlines(output);
+		var s2 = trimLeadingNewlines(replacement);
+		var nls = Math.max(output.length - s1.length, replacement.length - s2.length);
+		var separator = `
+
+`.substring(0, nls);
+		return s1 + separator + s2;
+	}
+	function canConvert(input) {
+		return (
+			input != null &&
+			(typeof input === "string" ||
+				(input.nodeType && (input.nodeType === 1 || input.nodeType === 9 || input.nodeType === 11)))
+		);
+	}
+
+	// ../node_modules/.bun/turndown-plugin-gfm@1.0.2/node_modules/turndown-plugin-gfm/lib/turndown-plugin-gfm.es.js
+	var highlightRegExp = /highlight-(?:text|source)-([a-z0-9]+)/;
+	function highlightedCodeBlock(turndownService) {
+		turndownService.addRule("highlightedCodeBlock", {
+			filter: function (node) {
+				var firstChild = node.firstChild;
+				return (
+					node.nodeName === "DIV" &&
+					highlightRegExp.test(node.className) &&
+					firstChild &&
+					firstChild.nodeName === "PRE"
+				);
+			},
+			replacement: function (content, node, options) {
+				var className = node.className || "";
+				var language = (className.match(highlightRegExp) || [null, ""])[1];
+				return (
+					`
+
+` +
+					options.fence +
+					language +
+					`
+` +
+					node.firstChild.textContent +
+					`
+` +
+					options.fence +
+					`
+
+`
+				);
+			},
+		});
+	}
+	function strikethrough(turndownService) {
+		turndownService.addRule("strikethrough", {
+			filter: ["del", "s", "strike"],
+			replacement: function (content) {
+				return "~" + content + "~";
+			},
+		});
+	}
+	var indexOf = Array.prototype.indexOf;
+	var every = Array.prototype.every;
+	var rules2 = {};
+	rules2.tableCell = {
+		filter: ["th", "td"],
+		replacement: function (content, node) {
+			return cell(content, node);
+		},
+	};
+	rules2.tableRow = {
+		filter: "tr",
+		replacement: function (content, node) {
+			var borderCells = "";
+			var alignMap = { left: ":--", right: "--:", center: ":-:" };
+			if (isHeadingRow(node)) {
+				for (var i = 0; i < node.childNodes.length; i++) {
+					var border = "---";
+					var align = (node.childNodes[i].getAttribute("align") || "").toLowerCase();
+					if (align) border = alignMap[align] || border;
+					borderCells += cell(border, node.childNodes[i]);
+				}
+			}
+			return (
+				`
+` +
+				content +
+				(borderCells
+					? `
+` + borderCells
+					: "")
+			);
+		},
+	};
+	rules2.table = {
+		filter: function (node) {
+			return node.nodeName === "TABLE" && isHeadingRow(node.rows[0]);
+		},
+		replacement: function (content) {
+			content = content.replace(
+				`
+
+`,
+				`
+`,
+			);
+			return (
+				`
+
+` +
+				content +
+				`
+
+`
+			);
+		},
+	};
+	rules2.tableSection = {
+		filter: ["thead", "tbody", "tfoot"],
+		replacement: function (content) {
+			return content;
+		},
+	};
+	function isHeadingRow(tr) {
+		var parentNode = tr.parentNode;
+		return (
+			parentNode.nodeName === "THEAD" ||
+			(parentNode.firstChild === tr &&
+				(parentNode.nodeName === "TABLE" || isFirstTbody(parentNode)) &&
+				every.call(tr.childNodes, function (n) {
+					return n.nodeName === "TH";
+				}))
+		);
+	}
+	function isFirstTbody(element) {
+		var previousSibling = element.previousSibling;
+		return (
+			element.nodeName === "TBODY" &&
+			(!previousSibling || (previousSibling.nodeName === "THEAD" && /^\s*$/i.test(previousSibling.textContent)))
+		);
+	}
+	function cell(content, node) {
+		var index = indexOf.call(node.parentNode.childNodes, node);
+		var prefix = " ";
+		if (index === 0) prefix = "| ";
+		return prefix + content + " |";
+	}
+	function tables(turndownService) {
+		turndownService.keep(function (node) {
+			return node.nodeName === "TABLE" && !isHeadingRow(node.rows[0]);
+		});
+		for (var key in rules2) turndownService.addRule(key, rules2[key]);
+	}
+	function taskListItems(turndownService) {
+		turndownService.addRule("taskListItems", {
+			filter: function (node) {
+				return node.type === "checkbox" && node.parentNode.nodeName === "LI";
+			},
+			replacement: function (content, node) {
+				return (node.checked ? "[x]" : "[ ]") + " ";
+			},
+		});
+	}
+	function gfm(turndownService) {
+		turndownService.use([highlightedCodeBlock, strikethrough, tables, taskListItems]);
+	}
+
+	// CpToolkit/src/adapters/statement/statement-converter.ts
+	function texOf(element, fallback) {
+		const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
+		const tex =
+			annotation?.textContent ??
+			element.getAttribute("data-tex") ??
+			element.getAttribute("aria-label") ??
+			fallback;
+		return `$${tex.trim()}$`;
+	}
+	function createTurndown() {
+		const service = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced", bulletListMarker: "-" });
+		service.use(gfm);
+		service.addRule("math", {
+			filter: "var",
+			replacement: (content, node) => texOf(node, content),
+		});
+		service.addRule("pre", {
+			filter: "pre",
+			replacement: (content) => `
+\`\`\`text
+${content.trim()}
+\`\`\`
+`,
+		});
+		service.addRule("listItem", {
+			filter: "li",
+			replacement(content, node, options) {
+				const body = content
+					.replace(/^\n+/, "")
+					.replace(
+						/\n+$/,
+						`
+`,
+					)
+					.replace(
+						/\n/gm,
+						`
+  `,
+					);
+				const item = node;
+				const parent = item.parentElement;
+				let prefix = `${options.bulletListMarker} `;
+				if (parent?.nodeName === "OL") {
+					const start = Number(parent.getAttribute("start") ?? 1);
+					prefix = `${start + [...parent.children].indexOf(item)}. `;
+				}
+				return (
+					prefix +
+					body +
+					(item.nextSibling &&
+					!body.endsWith(`
+`)
+						? `
+`
+						: "")
+				);
+			},
+		});
+		return service;
+	}
+	var BLOCK_TAGS = new Set(["P", "DIV", "UL", "OL", "SECTION"]);
+	var IGNORED_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT"]);
+	function plainTextOf(node) {
+		if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
+		if (node.nodeType !== Node.ELEMENT_NODE) return "";
+		const element = node;
+		const tag = element.tagName;
+		if (IGNORED_TAGS.has(tag)) return "";
+		if (tag === "BR")
+			return `
+`;
+		if (tag === "VAR") return texOf(element, element.textContent ?? "");
+		if (tag === "CODE") return `\`${element.textContent ?? ""}\``;
+		if (tag === "PRE")
+			return `
+${(element.textContent ?? "").trim()}
+`;
+		const inner = [...element.childNodes].map(plainTextOf).join("");
+		if (tag === "H3")
+			return `【${inner.trim()}】
+`;
+		if (tag === "LI")
+			return `
+- ${inner.trim()}
+`;
+		return BLOCK_TAGS.has(tag)
+			? `
+${inner}
+`
+			: inner;
+	}
+
+	class TurndownStatementConverter {
+		turndown = createTurndown();
+		toMarkdown(html) {
+			return this.turndown.turndown(html);
+		}
+		toPlainText(html) {
+			const template = document.createElement("template");
+			template.innerHTML = html;
+			return [...template.content.childNodes]
+				.map(plainTextOf)
+				.join("")
+				.replace(
+					/\n{3,}/g,
+					`
+
+`,
+				)
+				.trim();
+		}
+	}
+
+	// CpToolkit/src/adapters/userscript/gm-services.ts
+	class GmClipboard {
+		write(text) {
+			GM_setClipboard(text);
+		}
+	}
+
+	class GmNotifier {
+		notify({ title, text, url }) {
+			GM_notification({ title, text, onclick: url ? () => window.open(url, "_blank") : undefined });
+		}
+	}
+
+	class GmHttpClient {
+		send({ url, method = "GET", headers, body, timeoutMs }) {
+			return new Promise((resolve, reject) => {
+				GM_xmlhttpRequest({
+					url,
+					method,
+					headers: headers ? { ...headers } : undefined,
+					data: body,
+					timeout: timeoutMs,
+					onload: ({ status, responseText }) => resolve({ status, text: responseText }),
+					onerror: () => reject(new Error(`Request failed: ${url}`)),
+					ontimeout: () => reject(new Error(`Request timed out: ${url}`)),
+				});
+			});
+		}
+	}
 
 	// CpToolkit/src/application/feature/definition.ts
 	function defineFeature(definition) {
@@ -1077,10 +5439,2216 @@ ${settings_panel_default}`,
 			live: definition.live === true,
 			async run(storedOptions, services) {
 				const options = normalizeOptions(definition.options, storedOptions);
-				return (await definition.start({ ...services, options })) ?? undefined;
+				const context = Object.assign(Object.create(services), { options });
+				return (await definition.start(context)) ?? undefined;
 			},
 		};
 	}
+
+	// CpToolkit/src/features/local-runner/index.ts
+	var localRunner = defineFeature({
+		id: "local-runner",
+		title: "localRunner.title",
+		description: "localRunner.description",
+		category: "category.execution",
+		defaultEnabled: true,
+		routes: [
+			"atcoder:contest",
+			"codeforces:page",
+			"yukicoder:problem",
+			"aoj:page",
+			"libraryChecker:page",
+			"paiza:page",
+		],
+		phase: "ready",
+		options: {
+			url: option.text("http://localhost:8080", "localRunner.url", { validate: isHttpUrl }),
+		},
+		live: true,
+		start() {
+			return () => {
+				return;
+			};
+		},
+	});
+
+	// CpToolkit/src/app/container.ts
+	function createTranslate() {
+		return createTranslator(detectLocale);
+	}
+	function createServices(page, settings) {
+		const state = new GmKeyValueStore();
+		const http = new GmHttpClient();
+		const site = new SameOriginHttpClient();
+		const scripts = new ElementScriptLoader();
+		const bridge = new UnsafeWindowPageBridge();
+		const localRunnerEndpoint = () => {
+			const { id, defaultEnabled, options } = localRunner;
+			if (!settings.isEnabled(id, defaultEnabled)) return null;
+			return String(normalizeOptions(options, settings.storedOptions(id)).url);
+		};
+		const localRunner2 = new LocalRunnerClient(http, localRunnerEndpoint);
+		let judgeSite = null;
+		const getJudgeSite = () => {
+			judgeSite ??= createJudgeSite(page?.judge.id, bridge, site);
+			return judgeSite;
+		};
+		let providers = null;
+		const getProviders = () => {
+			providers ??= [
+				new LocalRunnerProvider(localRunner2),
+				new AtCoderRunnerProvider(site, getJudgeSite),
+				new TextRunnerProvider(),
+				new PyodideRunnerProvider(scripts),
+				new PaizaRunnerProvider(http),
+				new WandboxRunnerProvider(http, state),
+			];
+			return providers;
+		};
+		let converter = null;
+		let graph = null;
+		return {
+			translate: createTranslate(),
+			isOnRoute: (route) => page?.routeIds.has(route) ?? false,
+			judge: page?.judge ?? null,
+			state,
+			clipboard: new GmClipboard(),
+			notifier: new GmNotifier(),
+			http,
+			site,
+			scripts,
+			page: bridge,
+			editors: new PageCodeEditorLocator(),
+			localRunner: localRunner2,
+			runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
+			judgeSite: getJudgeSite,
+			get statementConverter() {
+				converter ??= new TurndownStatementConverter();
+				return converter;
+			},
+			get ratingGraph() {
+				graph ??= new CreateJsRatingGraph();
+				return graph;
+			},
+		};
+	}
+
+	// CpToolkit/src/domain/submission/status.ts
+	var JUDGING_PROGRESS_PATTERN = /^\d+\s*\/\s*\d+/;
+	function isJudging(status) {
+		return status === "" || status === "WJ" || status === "WR" || JUDGING_PROGRESS_PATTERN.test(status);
+	}
+	function summarizeJudgeCases(cases) {
+		const total = cases.length;
+		const sum = (select) => cases.reduce((value, item) => value + select(item), 0);
+		return {
+			accepted: cases.filter(({ status }) => status === "AC").length,
+			total,
+			averageTimeMs: Math.round((sum(({ timeMs }) => timeMs) / total) * 10) / 10,
+			averageMemoryKb: Math.round(sum(({ memoryKb }) => memoryKb) / total),
+			timeIsLowerBound: cases.some(({ status }) => status === "TLE"),
+		};
+	}
+
+	// CpToolkit/src/features/average-result/index.ts
+	var COLUMN_COUNT = 4;
+	var MIN_TABLES_WITH_CASES = 5;
+	var MIN_CASES = 2;
+	function readCase(row) {
+		const [, status, time, memory] = row.querySelectorAll("td");
+		return {
+			status: status?.textContent?.trim() ?? "",
+			timeMs: Number.parseInt(time?.textContent ?? "", 10) || 0,
+			memoryKb: Number.parseInt(memory?.textContent ?? "", 10) || 0,
+		};
+	}
+	var averageResult = defineFeature({
+		id: "average-result",
+		title: "averageResult.title",
+		description: "averageResult.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:submissionDetail"],
+		phase: "ready",
+		options: {},
+		live: true,
+		start({ translate }) {
+			const tables2 = document.querySelectorAll("table");
+			const body = tables2[tables2.length - 1]?.querySelector("tbody");
+			const rows = [...(body?.querySelectorAll("tr") ?? [])];
+			const isCaseTable = rows.every((row2) => row2.querySelectorAll("td").length === COLUMN_COUNT);
+			if (tables2.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable)
+				return () => {
+					return;
+				};
+			const { accepted, total, averageTimeMs, averageMemoryKb, timeIsLowerBound } = summarizeJudgeCases(
+				rows.map(readCase),
+			);
+			const allAccepted = accepted === total;
+			const row = h(
+				"tr",
+				{},
+				h("td", { className: "text-center" }, h("b", { textContent: translate("averageResult.average") })),
+				h(
+					"td",
+					{ className: "text-center" },
+					h("span", {
+						className: `label ${allAccepted ? "label-success" : "label-warning"}`,
+						textContent: `${accepted}/${total}`,
+					}),
+				),
+				h("td", { className: "text-right", textContent: `${averageTimeMs}${timeIsLowerBound ? "+" : ""} ms` }),
+				h("td", { className: "text-right", textContent: `${averageMemoryKb} KB` }),
+			);
+			body.prepend(row);
+			return () => row.remove();
+		},
+	});
+
+	// CpToolkit/src/ui/dock/dock.css
+	var dock_default = `.dock {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 2147482000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	pointer-events: none;
+}
+
+.dock-toggle {
+	padding: 2px 32px;
+	border: 0;
+	border-radius: 6px 6px 0 0;
+	background: rgb(0 0 0 / 55%);
+	color: #fff;
+	pointer-events: auto;
+}
+
+.dock-panel {
+	width: 100%;
+	border-top: 1px solid var(--cp-border);
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	pointer-events: auto;
+}
+
+.dock-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 12px 0;
+	background: var(--cp-surface-muted);
+	cursor: ns-resize;
+}
+
+.dock-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 10px;
+	border-bottom: 0;
+	border-radius: 6px 6px 0 0;
+	cursor: pointer;
+}
+
+.dock-tab[data-active="true"] {
+	background: var(--cp-surface);
+}
+
+.dock-tab[data-tone="success"] {
+	color: var(--cp-success);
+}
+
+.dock-tab[data-tone="warning"] {
+	color: var(--cp-danger);
+}
+
+.dock-tab-close {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--cp-text-muted);
+	line-height: 1;
+}
+
+.dock-content {
+	height: 45vh;
+	padding: 12px;
+	overflow-y: auto;
+}
+`;
+
+	// CpToolkit/src/ui/dock/dock.ts
+	function createDock({ css, toggleLabel, closeLabel }) {
+		const tabs = h("div", { className: "dock-tabs" });
+		const content = h("div", { className: "dock-content" });
+		const panel = h("div", { className: "dock-panel", hidden: true }, tabs, content);
+		const toggle = () => {
+			panel.hidden = !panel.hidden;
+		};
+		const dock = h(
+			"div",
+			{ className: "dock" },
+			h("button", { type: "button", className: "dock-toggle", textContent: toggleLabel, onclick: toggle }),
+			panel,
+		);
+		const host = h("div");
+		host.attachShadow({ mode: "open" }).append(
+			h("style", {
+				textContent: `${theme_default}
+${dock_default}
+${css}`,
+			}),
+			dock,
+		);
+		document.body.append(host);
+		tabs.addEventListener("pointerdown", (event) => {
+			if (event.target !== tabs) return;
+			const startY = event.clientY;
+			const startHeight = content.getBoundingClientRect().height;
+			const onMove = ({ clientY }) => {
+				content.style.height = `${startHeight - (clientY - startY)}px`;
+			};
+			tabs.setPointerCapture(event.pointerId);
+			tabs.addEventListener("pointermove", onMove);
+			tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), { once: true });
+		});
+		const select = (tab, pane) => {
+			for (const other of tabs.children) other.dataset.active = String(other === tab);
+			for (const other of content.children) other.hidden = other !== pane;
+		};
+		return {
+			addTab(label, pane, { closable = false } = {}) {
+				const tab = h("div", { className: "dock-tab", textContent: label });
+				const show = () => {
+					panel.hidden = false;
+					select(tab, pane);
+				};
+				const close = () => {
+					const wasActive = !pane.hidden;
+					tab.remove();
+					pane.remove();
+					if (wasActive) select(tabs.firstElementChild, content.firstElementChild);
+				};
+				tab.addEventListener("click", show);
+				if (closable) {
+					tab.append(
+						h("button", {
+							type: "button",
+							className: "dock-tab-close",
+							textContent: "×",
+							ariaLabel: closeLabel,
+							onclick(event) {
+								event.stopPropagation();
+								close();
+							},
+						}),
+					);
+				}
+				pane.hidden = content.children.length > 0;
+				tabs.append(tab);
+				content.append(pane);
+				if (tabs.children.length === 1) select(tab, pane);
+				return {
+					show,
+					close,
+					setTone(tone) {
+						tab.dataset.tone = tone;
+					},
+				};
+			},
+			toggle,
+			remove: () => host.remove(),
+		};
+	}
+
+	// CpToolkit/src/ui/shortcuts.ts
+	var EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
+	var handlers = new Map();
+	var listening = false;
+	function comboOf(event) {
+		const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
+		return [event.ctrlKey && "Ctrl", event.shiftKey && "Shift", event.altKey && "Alt", key]
+			.filter(Boolean)
+			.join("+");
+	}
+	function isTextField(target) {
+		if (!(target instanceof HTMLElement)) return false;
+		const isEditable = target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+		return isEditable && target.closest(EDITOR_ELEMENTS) === null;
+	}
+	function onKeyDown(event) {
+		if (isTextField(event.target)) return;
+		if (!handlers.get(comboOf(event))?.()) return;
+		event.preventDefault();
+		event.stopPropagation();
+	}
+	function registerShortcut(combo, handler) {
+		if (!listening) {
+			document.addEventListener("keydown", onKeyDown, true);
+			listening = true;
+		}
+		handlers.set(combo, handler);
+		return () => handlers.delete(combo);
+	}
+
+	// CpToolkit/src/features/easy-test/easy-test.css
+	var easy_test_default = `.panel-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.panel-field {
+	display: grid;
+	gap: 4px;
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.panel-field select,
+.panel-field textarea,
+.panel-field input[type="text"] {
+	width: 100%;
+	padding: 4px 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: 13px/1.4 ui-monospace, Consolas, monospace;
+}
+
+.panel-actions {
+	margin-top: 12px;
+}
+
+.result-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.result-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-bottom: 8px;
+	font-size: 13px;
+}
+
+.result-summary b {
+	font-size: 15px;
+}
+
+.result-status[data-tone="success"] {
+	color: var(--cp-success);
+}
+
+.result-status[data-tone="warning"] {
+	color: var(--cp-danger);
+}
+`;
+
+	// CpToolkit/src/features/easy-test/saved-code.ts
+	var SAVED_CODE_KEY = "easy-test:saved-code";
+
+	class SavedCodes {
+		state;
+		limit;
+		constructor(state, limit) {
+			this.state = state;
+			this.limit = limit;
+		}
+		list() {
+			return this.state.get(SAVED_CODE_KEY) ?? [];
+		}
+		save(path, code) {
+			const others = this.list().filter((saved) => saved.path !== path);
+			this.state.set(SAVED_CODE_KEY, [...others, { path, code }].slice(-this.limit));
+		}
+		find(path) {
+			return this.list().find((saved) => saved.path === path)?.code ?? null;
+		}
+	}
+
+	// CpToolkit/src/features/easy-test/views.ts
+	function toneOf({ status }) {
+		if (status === "AC") return "success";
+		return status === "OK" ? null : "warning";
+	}
+	function outputField(label, value) {
+		return h("label", { className: "panel-field" }, label, h("textarea", { readOnly: true, rows: 5, value }));
+	}
+	function createResultView(translate) {
+		const element = h("div", { textContent: translate("easyTest.running") });
+		return {
+			element,
+			show(result) {
+				const status = h("b", { className: "result-status", textContent: result.status });
+				const tone = toneOf(result);
+				if (tone) status.dataset.tone = tone;
+				const fields = [
+					outputField(translate("easyTest.standardInput"), result.input),
+					outputField(translate("easyTest.standardOutput"), result.output ?? ""),
+				];
+				if (result.expectedOutput !== undefined) {
+					fields.push(outputField(translate("easyTest.expectedOutput"), result.expectedOutput));
+				}
+				if (result.error) fields.push(outputField(translate("easyTest.standardError"), result.error));
+				element.replaceChildren(
+					h(
+						"div",
+						{ className: "result-summary" },
+						status,
+						h("span", { textContent: `${translate("easyTest.exitCode")}: ${result.exitCode ?? "-"}` }),
+						h("span", { textContent: `${translate("easyTest.execTime")}: ${result.execTime ?? "-"} ms` }),
+						h("span", { textContent: `${translate("easyTest.memory")}: ${result.memory ?? "-"} KB` }),
+					),
+					h("div", { className: "result-grid" }, ...fields),
+				);
+			},
+		};
+	}
+	function createTestPanel(translate, allowableError, onRun) {
+		const environment = h("select");
+		const input = h("textarea", { rows: 4 });
+		const expected = h("textarea", { rows: 4 });
+		const allowable = h("input", { type: "text", value: allowableError });
+		const runButton = h("button", { type: "button", textContent: translate("easyTest.run"), onclick: onRun });
+		const element = h(
+			"div",
+			{},
+			h(
+				"div",
+				{ className: "panel-grid" },
+				h("label", { className: "panel-field" }, translate("easyTest.environment"), environment),
+				h("label", { className: "panel-field" }, translate("easyTest.allowableError"), allowable),
+				h("label", { className: "panel-field" }, translate("easyTest.standardInput"), input),
+				h("label", { className: "panel-field" }, translate("easyTest.expectedOutput"), expected),
+			),
+			h("div", { className: "panel-actions" }, runButton),
+		);
+		return {
+			element,
+			environment,
+			input,
+			expected,
+			allowableError: allowable,
+			setRunnable(runnable) {
+				runButton.disabled = !runnable;
+			},
+		};
+	}
+
+	// CpToolkit/src/features/easy-test/index.ts
+	var RUNNER_SELECTION_KEY = "easy-test:runner-selection";
+	var PRECOMPILE_DELAY_MS = 180;
+	var featureOptions = {
+		precompile: option.boolean(true, "easyTest.precompile"),
+		keyboardShortcuts: option.boolean(true, "easyTest.keyboardShortcuts"),
+		savedCodeLimit: option.number(10, "easyTest.savedCodeLimit", { min: 0 }),
+		allowableError: option.text("1e-6", "easyTest.allowableError"),
+	};
+
+	class EasyTest {
+		site;
+		context;
+		dock;
+		panel;
+		savedCodes;
+		buttons = [];
+		resultList = h("div");
+		candidates = [];
+		runnable = false;
+		refreshToken = 0;
+		runCount = 0;
+		running = 0;
+		constructor(site, context) {
+			this.site = site;
+			this.context = context;
+			const { options, state, translate } = context;
+			this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
+			this.dock = createDock({
+				css: easy_test_default,
+				toggleLabel: "Easy Test",
+				closeLabel: translate("settings.close"),
+			});
+			this.panel = createTestPanel(translate, options.allowableError, () => {
+				const { input, expected } = this.panel;
+				this.execute({ title: "Run", input: input.value, output: expected.value || null }, {});
+			});
+			this.dock.addTab("Easy Test", this.panel.element);
+		}
+		start() {
+			this.panel.environment.addEventListener("change", () => this.rememberRunner());
+			this.site.onLanguageChange(() => void this.refreshEnvironment());
+			this.refreshEnvironment();
+			this.placeButtons();
+			this.placeSampleButtons();
+			if (this.context.options.precompile) this.watchSource();
+			if (this.context.options.keyboardShortcuts) this.registerShortcuts();
+		}
+		createButton(label, className, onClick) {
+			const button = h("button", {
+				type: "button",
+				className: `btn ${className}`,
+				textContent: label,
+				disabled: !this.runnable,
+				onclick: onClick,
+			});
+			button.style.marginLeft = "1rem";
+			this.buttons.push(button);
+			return button;
+		}
+		placeButtons() {
+			const { translate } = this.context;
+			const { testButtons, sideButtons, results } = this.site.mounts;
+			if (testButtons instanceof Element) {
+				testButtons.append(
+					this.createButton(translate("easyTest.testAndSubmit"), "btn-info", () => void this.testAndSubmit()),
+					this.createButton(translate("easyTest.testAll"), "btn-default btn-sm", () => void this.testAll()),
+				);
+			}
+			if (sideButtons instanceof Element) {
+				sideButtons.append(
+					this.createButton(translate("easyTest.restore"), "btn-danger btn-sm", () => this.restore()),
+				);
+			}
+			if (results instanceof Element) results.append(this.resultList);
+		}
+		placeSampleButtons() {
+			this.site.samples().then((samples) => {
+				for (const sample of samples) {
+					if (!(sample.anchor instanceof Element)) continue;
+					const button = this.createButton("Run", "btn-primary btn-sm", () => {
+						this.execute(sample, {}).then(({ tab }) => tab.show());
+					});
+					sample.anchor.after(button);
+				}
+			});
+		}
+		watchSource() {
+			const { localRunner: localRunner2 } = this.context;
+			let timer;
+			this.site.onSourceChange(() => {
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+					const code = this.site.sourceCode();
+					if (code && localRunner2.isAvailable())
+						localRunner2.prepare(code).catch(() => {
+							return;
+						});
+				}, PRECOMPILE_DELAY_MS);
+			});
+		}
+		registerShortcuts() {
+			const handled = (action) => () => {
+				action();
+				return true;
+			};
+			registerShortcut(
+				"Ctrl+Enter",
+				handled(() => void this.testAndSubmit()),
+			);
+			registerShortcut(
+				"Alt+Enter",
+				handled(() => void this.testAll()),
+			);
+			registerShortcut(
+				"Alt+Escape",
+				handled(() => this.dock.toggle()),
+			);
+		}
+		selections() {
+			return this.context.state.get(RUNNER_SELECTION_KEY) ?? {};
+		}
+		rememberRunner() {
+			const language = this.site.language();
+			if (!language) return;
+			this.context.state.set(RUNNER_SELECTION_KEY, {
+				...this.selections(),
+				[language.id]: this.panel.environment.value,
+			});
+		}
+		async refreshEnvironment() {
+			const token = ++this.refreshToken;
+			const { environment } = this.panel;
+			const language = this.site.language();
+			const candidates = language ? await this.context.runners.candidates(language) : [];
+			if (token !== this.refreshToken) return;
+			this.candidates = candidates;
+			environment.replaceChildren(
+				...candidates.map(({ id, label }) => h("option", { value: id, textContent: label })),
+			);
+			const local = candidates.find(({ kind }) => kind === "local")?.id;
+			const saved = language ? this.selections()[language.id] : undefined;
+			const preferred = local ?? (candidates.some(({ id }) => id === saved) ? saved : undefined);
+			if (preferred) environment.value = preferred;
+			this.setRunnable(candidates.length > 0);
+		}
+		setRunnable(runnable) {
+			this.runnable = runnable;
+			this.panel.setRunnable(runnable);
+			for (const button of this.buttons) button.disabled = !runnable;
+		}
+		runOptions(extra) {
+			const allowableError = Number.parseFloat(this.panel.allowableError.value);
+			return { trim: true, split: true, ...(allowableError > 0 ? { allowableError } : {}), ...extra };
+		}
+		async execute(testCase, options) {
+			await this.refreshEnvironment();
+			const { runners, translate } = this.context;
+			const code = this.site.sourceCode();
+			if (code) this.savedCodes.save(this.site.taskUri(), code);
+			const view = createResultView(translate);
+			const tab = this.dock.addTab(`#${++this.runCount} ${testCase.title}`, view.element, { closable: true });
+			this.running++;
+			this.setRunnable(false);
+			const result = runners.test(
+				this.candidates,
+				this.panel.environment.value,
+				code,
+				testCase,
+				this.runOptions(options),
+			);
+			result
+				.then((value) => {
+					view.show(value);
+					const tone = toneOf(value);
+					if (tone) tab.setTone(tone);
+				})
+				.finally(() => {
+					if (--this.running === 0) this.setRunnable(this.candidates.length > 0);
+				});
+			return { result, tab };
+		}
+		async runSamples(samples) {
+			const runGroupId = crypto.randomUUID();
+			const executions = await Promise.all(samples.map((sample) => this.execute(sample, { runGroupId })));
+			const row = h("div", { className: "alert alert-info", textContent: "..." });
+			this.resultList.prepend(row);
+			const results = await Promise.all(executions.map(({ result }) => result));
+			const accepted = results.every(({ status }) => status === "AC");
+			row.className = `alert ${accepted ? "alert-success" : "alert-warning"}`;
+			row.replaceChildren(
+				...results.map(({ status }, index) => {
+					const label = h("span", {
+						className: `label ${status === "AC" ? "label-success" : "label-warning"}`,
+						textContent: status,
+					});
+					label.style.margin = "3px";
+					label.style.cursor = "pointer";
+					label.addEventListener("click", () => executions[index]?.tab.show());
+					return label;
+				}),
+			);
+			return accepted;
+		}
+		async testAll() {
+			await this.runSamples(await this.site.samples());
+		}
+		async testAndSubmit() {
+			if (await this.runSamples(await this.site.samples())) this.site.submit();
+		}
+		restore() {
+			const { translate } = this.context;
+			const code = this.savedCodes.find(this.site.taskUri());
+			if (code === null) {
+				window.alert(translate("easyTest.noSavedCode"));
+			} else if (!this.site.sourceCode() || window.confirm(translate("easyTest.restoreConfirm"))) {
+				this.site.setSourceCode(code);
+			}
+		}
+	}
+	var easyTest = defineFeature({
+		id: "easy-test",
+		title: "easyTest.title",
+		description: "easyTest.description",
+		category: "category.execution",
+		defaultEnabled: true,
+		routes: ["atcoder:task", "atcoder:submit", "yukicoder:problem", "codeforces:problem"],
+		phase: "ready",
+		options: featureOptions,
+		async start(context) {
+			const site = await context.judgeSite();
+			if (site) new EasyTest(site, context).start();
+		},
+	});
+
+	// CpToolkit/src/features/editorial-list/index.ts
+	var EDITORIAL_LINK_PATTERN = /\/contests\/[^/]+\/editorial\/\d+$/;
+	var EDITORIAL_BODY = "#main-container > div.row > div:nth-child(2)";
+	var LOAD_INTERVAL_MS = 500;
+	var css = `.cp-editorial {margin-top: 0.3em; font-size: smaller;}
+${EDITORIAL_BODY} > ul > li {font-size: larger;}
+pre code {tab-size: 4;}`;
+	async function loadLibraries({ scripts }) {
+		await scripts.loadStylesheet(libraries.katexStylesheet);
+		await scripts.loadScript(libraries.katexScript);
+		await Promise.all([scripts.loadScript(libraries.katexAutoRender), scripts.loadScript(libraries.prettify)]);
+	}
+	async function loadEditorial(link, { site, page }) {
+		const response = await site.send({ url: link.href });
+		if (response.status !== 200) throw new Error(`Failed to load ${link.href}`);
+		const parsed = new DOMParser().parseFromString(response.text, "text/html");
+		const content = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(1)`);
+		if (!content) throw new Error(`Editorial was not found in ${link.href}`);
+		const history = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(2)`);
+		const container = h("div", { className: "cp-editorial" }, content);
+		if (history) container.append(history);
+		link.parentElement?.append(container);
+		page.renderMath(container);
+		page.highlightCode();
+	}
+	var editorialList = defineFeature({
+		id: "editorial-list",
+		title: "editorialList.title",
+		description: "editorialList.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:editorial"],
+		phase: "ready",
+		options: {},
+		async start(context) {
+			const links = [...document.querySelectorAll("a")].filter((link) => {
+				return EDITORIAL_LINK_PATTERN.test(link.href) && !link.classList.contains("spoiler");
+			});
+			if (links.length === 0) return;
+			injectStyle(css);
+			await loadLibraries(context);
+			const queue = new Set();
+			let timer;
+			const loadNext = () => {
+				const [link] = queue;
+				if (!link) {
+					clearInterval(timer);
+					timer = undefined;
+					return;
+				}
+				queue.delete(link);
+				observer.unobserve(link);
+				loadEditorial(link, context).catch((error) => console.warn(error));
+			};
+			const observer = new IntersectionObserver((entries) => {
+				for (const { target, isIntersecting } of entries) {
+					if (isIntersecting) queue.add(target);
+					else queue.delete(target);
+				}
+				timer ??= setInterval(loadNext, LOAD_INTERVAL_MS);
+			});
+			for (const link of links) observer.observe(link);
+		},
+	});
+
+	// CpToolkit/src/features/efficient-layout/efficient-layout.css
+	var efficient_layout_default = `.io-style {
+	display: flex;
+	justify-content: space-between;
+}
+
+.io-style > * {
+	width: 100%;
+}
+
+.cp-samples-container {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.cp-samples-row {
+	display: flex;
+}
+
+.cp-samples-row > * {
+	width: var(--cp-sample-width);
+	margin: 0 1em;
+}
+`;
+
+	// CpToolkit/src/features/efficient-layout/index.ts
+	function createDetails(summary) {
+		return h("details", { open: true }, h("summary", { textContent: summary }));
+	}
+	function createSampleRow(parent, translate) {
+		const existing = parent.querySelector(".cp-samples-row");
+		if (existing) return existing;
+		const container = createDetails(translate("efficientLayout.samples"));
+		container.className = "cp-samples-container";
+		const row = h("div", { className: "cp-samples-row" });
+		container.append(row);
+		parent.append(container);
+		return row;
+	}
+	function arrangeSamples(ioStyle, translate) {
+		const parent = ioStyle.parentElement;
+		if (!parent) return;
+		const siblings = [...parent.children];
+		const following = siblings.slice(siblings.indexOf(ioStyle) + 1);
+		for (const element of following) {
+			if (element.tagName === "HR") element.remove();
+		}
+		const samples = following.filter((element) => element.classList.contains("part"));
+		const groupSize = samples.length % 2 === 0 ? 2 : 1;
+		for (let index = 0; index < samples.length; index += groupSize) {
+			const group = samples.slice(index, index + groupSize);
+			createSampleRow(parent, translate).append(...(groupSize === 2 ? [h("div", {}, ...group)] : group));
+		}
+	}
+	var efficientLayout = defineFeature({
+		id: "efficient-layout",
+		title: "efficientLayout.title",
+		description: "efficientLayout.description",
+		category: "category.statement",
+		defaultEnabled: false,
+		routes: ["atcoder:task", "atcoder:tasksPrint"],
+		phase: "ready",
+		options: {
+			sampleWidth: option.number(60, "efficientLayout.sampleWidth", { min: 10, max: 100 }),
+		},
+		start({ options, translate }) {
+			for (const ioStyle of document.querySelectorAll(".io-style")) {
+				arrangeSamples(ioStyle, translate);
+				const details = createDetails(translate("efficientLayout.ioFormat"));
+				ioStyle.before(details);
+				details.append(ioStyle);
+			}
+			injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw;}
+${efficient_layout_default}`);
+			for (const row of document.querySelectorAll(".cp-samples-row")) {
+				row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
+			}
+		},
+	});
+
+	// CpToolkit/src/features/history-colors/index.ts
+	var PERFORMANCE_COLUMN = 3;
+	var RATING_COLUMN = 4;
+	var modeChoices = [
+		{ value: "none", label: "historyColors.modeNone" },
+		{ value: "text", label: "historyColors.modeText" },
+		{ value: "background", label: "historyColors.modeBackground" },
+	];
+	function colorizeText(cell2, value) {
+		const crown = crownImageOf(ratingScale, value);
+		cell2.replaceChildren();
+		if (crown) cell2.append(h("img", { src: crown }), " ");
+		cell2.append(h("span", { className: tierOf(ratingScale, value).className, textContent: String(value) }));
+	}
+	function colorizeCell(cell2, mode) {
+		const value = Number(cell2?.textContent?.trim() || Number.NaN);
+		if (!cell2 || Number.isNaN(value)) return;
+		if (mode === "text") colorizeText(cell2, value);
+		if (mode === "background") cell2.style.background = backgroundOf(ratingScale, value);
+	}
+	var historyColors = defineFeature({
+		id: "history-colors",
+		title: "historyColors.title",
+		description: "historyColors.description",
+		category: "category.rating",
+		defaultEnabled: true,
+		routes: ["atcoder:userHistory"],
+		phase: "ready",
+		options: {
+			performanceMode: option.select("background", "historyColors.performanceMode", modeChoices),
+			ratingMode: option.select("background", "historyColors.ratingMode", modeChoices),
+		},
+		start({ options }) {
+			for (const row of document.querySelectorAll("#history tbody tr")) {
+				const cells = row.querySelectorAll("td");
+				colorizeCell(cells[PERFORMANCE_COLUMN], options.performanceMode);
+				colorizeCell(cells[RATING_COLUMN], options.ratingMode);
+			}
+		},
+	});
+
+	// CpToolkit/src/features/hover-menu/index.ts
+	var OPEN_CLASS = "open";
+	var hoverMenu = defineFeature({
+		id: "hover-menu",
+		title: "hoverMenu.title",
+		description: "hoverMenu.description",
+		category: "category.layout",
+		defaultEnabled: true,
+		routes: ["atcoder:page"],
+		phase: "ready",
+		options: {
+			openStatementDetails: option.boolean(true, "hoverMenu.openStatementDetails"),
+		},
+		live: true,
+		start({ options }) {
+			const controller = new AbortController();
+			const { signal } = controller;
+			for (const item of document.querySelectorAll(".nav > li:not(.pull-right)")) {
+				item.addEventListener("mouseenter", () => item.classList.add(OPEN_CLASS), { signal });
+				item.addEventListener("mouseleave", () => item.classList.remove(OPEN_CLASS), { signal });
+			}
+			if (options.openStatementDetails) {
+				for (const details of document.querySelectorAll("#task-statement details")) {
+					details.open = true;
+				}
+			}
+			return () => controller.abort();
+		},
+	});
+
+	// CpToolkit/src/domain/source/fold-lines.ts
+	var FOLDABLE_TYPE_PATTERN =
+		/^\s*(?:(?:public|protected|private|abstract|final|static|sealed|non-sealed|strictfp)\s+)*(?:class|interface|enum|record|@interface)\b/;
+	var BLOCK_COMMENT_PATTERN = /^\s*\/\*/;
+	function findFoldStartLines(source) {
+		return source
+			.split(
+				`
+`,
+			)
+			.flatMap((line, index) => {
+				return FOLDABLE_TYPE_PATTERN.test(line) || BLOCK_COMMENT_PATTERN.test(line) ? [index] : [];
+			});
+	}
+
+	// CpToolkit/src/application/source/transform-java.ts
+	async function transformJava(code, localRunner2, options) {
+		if (localRunner2.isAvailable()) {
+			try {
+				const transformed = await localRunner2.transform(code, options.header);
+				if (transformed.status === "success") return transformed.sourceCode;
+			} catch {}
+		}
+		return modifyJavaCode(code, options).modified;
+	}
+
+	// CpToolkit/src/features/java-submit/index.ts
+	var FOLD_SHORTCUT = "Ctrl+Shift+M";
+	var MIN_SOURCE_LENGTH = 30;
+	var FOLD_DELAY_MS = 100;
+	function findSubmitButton({ submitButtons, labeledSubmit }) {
+		for (const selector of submitButtons) {
+			const button = document.querySelector(selector);
+			if (button) return button;
+		}
+		if (!labeledSubmit) return null;
+		const candidates = [...document.querySelectorAll(labeledSubmit.selector)];
+		for (const label of labeledSubmit.labels) {
+			const button = candidates.find((candidate) => {
+				const text = candidate instanceof HTMLInputElement ? candidate.value : candidate.textContent;
+				return text?.trim().toLowerCase().includes(label);
+			});
+			if (button) return button;
+		}
+		return null;
+	}
+	var javaSubmit = defineFeature({
+		id: "java-submit",
+		title: "javaSubmit.title",
+		description: "javaSubmit.description",
+		category: "category.execution",
+		defaultEnabled: true,
+		routes: ["atcoder:contest", "codeforces:page", "aoj:page", "libraryChecker:page", "paiza:page"],
+		phase: "ready",
+		options: {
+			removePackage: option.boolean(true, "javaSubmit.removePackage"),
+			renameClass: option.boolean(true, "javaSubmit.renameClass"),
+			fixDebug: option.boolean(true, "javaSubmit.fixDebug"),
+			addHeader: option.boolean(true, "javaSubmit.addHeader"),
+			headerName: option.text("", "javaSubmit.headerName"),
+			foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
+		},
+		start({ options, judge, editors, localRunner: localRunner2 }) {
+			const target = judge?.submission;
+			if (!target) return;
+			registerShortcut(target.shortcut, () => {
+				const button = findSubmitButton(target);
+				button?.click();
+				return button !== null;
+			});
+			const header = options.addHeader ? options.headerName || true : false;
+			editors.locate(target).then((editor) => {
+				if (!editor) return;
+				const fold = () => editor.foldLines(findFoldStartLines(editor.getValue()));
+				registerShortcut(FOLD_SHORTCUT, () => {
+					fold();
+					return true;
+				});
+				editor.onPaste(() => {
+					const code = editor.getValue();
+					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return;
+					transformJava(code, localRunner2, { ...options, header }).then((transformed) => {
+						if (transformed === code || editor.getValue() !== code) return;
+						editor.setValue(transformed);
+						if (options.foldOnPaste) setTimeout(fold, FOLD_DELAY_MS);
+					});
+				});
+			});
+		},
+	});
+
+	// CpToolkit/src/features/paiza-language/index.ts
+	var RETRY_COUNT = 30;
+	var RETRY_INTERVAL_MS = 150;
+	var AFTER_SELECTION_DELAY_MS = 600;
+	var EDITOR_TIMEOUT_MS = 8000;
+	var UNLOCK_DURATION_MS = 4000;
+	var UNLOCK_INTERVAL_MS = 120;
+	var OBSERVE_DURATION_MS = 5000;
+	var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+	function findLanguageSelect() {
+		for (const selector of paizaLanguageSelect.selects) {
+			const select = document.querySelector(selector);
+			if (select) return select;
+		}
+		return null;
+	}
+	function applyOption(select, value, page) {
+		select.value = value;
+		page.triggerChange(select);
+		for (const id of paizaLanguageSelect.hiddenFields) {
+			const field = document.getElementById(id);
+			if (!(field instanceof HTMLInputElement)) continue;
+			field.value = value;
+			field.dispatchEvent(new Event("change", { bubbles: true }));
+		}
+	}
+	function selectLanguage(target, page) {
+		const select = findLanguageSelect();
+		if (!select || select.disabled) return false;
+		const option2 = [...select.options].find(({ text }) => isLanguageOption(text, target));
+		if (!option2) return false;
+		const placeholder = [...select.options].find(({ value }) => value === "");
+		if (placeholder) applyOption(select, placeholder.value, page);
+		applyOption(select, option2.value, page);
+		return select.value === option2.value;
+	}
+	function unlockTextInputs() {
+		for (const input of document.querySelectorAll(".ace_text-input")) {
+			input.removeAttribute("readonly");
+			input.disabled = false;
+			if (input.tabIndex < 0) input.tabIndex = 0;
+		}
+	}
+	async function unlockEditor({ editors, judge }) {
+		const target = judge?.submission;
+		const editor = target ? await editors.locate(target, EDITOR_TIMEOUT_MS) : null;
+		const deadline = Date.now() + UNLOCK_DURATION_MS;
+		while (editor?.isReadOnly() && Date.now() < deadline) {
+			editor.setWritable();
+			unlockTextInputs();
+			await sleep2(UNLOCK_INTERVAL_MS);
+		}
+	}
+	var paizaLanguage = defineFeature({
+		id: "paiza-language",
+		title: "paizaLanguage.title",
+		description: "paizaLanguage.description",
+		category: "category.execution",
+		defaultEnabled: true,
+		routes: ["paiza:page"],
+		phase: "ready",
+		options: {
+			language: option.text("c++", "paizaLanguage.language"),
+		},
+		async start(context) {
+			const target = context.options.language.toLowerCase();
+			for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
+				if (selectLanguage(target, context.page)) break;
+				await sleep2(RETRY_INTERVAL_MS);
+			}
+			await sleep2(AFTER_SELECTION_DELAY_MS);
+			await unlockEditor(context);
+			const observer = new MutationObserver(() => {
+				if (!selectLanguage(target, context.page)) return;
+				observer.disconnect();
+				sleep2(AFTER_SELECTION_DELAY_MS).then(() => unlockEditor(context));
+			});
+			observer.observe(document.body, { childList: true, subtree: true });
+			setTimeout(() => observer.disconnect(), OBSERVE_DURATION_MS);
+		},
+	});
+
+	// CpToolkit/src/features/rating-graph/index.ts
+	var ratingGraph = defineFeature({
+		id: "rating-graph",
+		title: "ratingGraph.title",
+		description: "ratingGraph.description",
+		category: "category.rating",
+		defaultEnabled: true,
+		routes: ["atcoder:user"],
+		phase: "load",
+		options: {
+			recentByDefault: option.boolean(true, "ratingGraph.recentByDefault"),
+		},
+		async start({ options, ratingGraph: graph, site, translate }) {
+			const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
+			const buttonGroups = document.querySelectorAll(".btn-text-group");
+			const buttonGroup = buttonGroups[buttonGroups.length - 1];
+			if (!userName || !buttonGroup) return;
+			const heuristic = new URLSearchParams(location.search).get("contestType") === "heuristic";
+			const url = `/users/${userName}/history/json${heuristic ? "?contestType=heuristic" : ""}`;
+			const response = await site.send({ url });
+			const history = safeJsonParse(response.text, []);
+			if (!(await graph.prepare(ratedPerformances(history)))) return;
+			const view = { showPerformance: true, recentOnly: options.recentByDefault };
+			const periodButton = h("button", { className: "btn btn-default btn-sm", type: "button" });
+			const redraw = () => {
+				periodButton.textContent = translate(
+					view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent",
+				);
+				graph.draw(view);
+			};
+			periodButton.addEventListener("click", () => {
+				view.recentOnly = !view.recentOnly;
+				redraw();
+			});
+			const performanceButton = h("button", {
+				className: "btn btn-default btn-sm",
+				type: "button",
+				textContent: translate("ratingGraph.togglePerformance"),
+				onclick() {
+					view.showPerformance = !view.showPerformance;
+					redraw();
+				},
+			});
+			performanceButton.style.marginLeft = "20px";
+			periodButton.style.marginLeft = "10px";
+			buttonGroup.append(performanceButton, periodButton);
+			redraw();
+		},
+	});
+
+	// CpToolkit/src/application/submission/pending-submissions.ts
+	var PENDING_KEY = "result-notifier:pending";
+	var LAST_POLL_KEY = "result-notifier:lastPoll";
+	var LAST_FOCUS_KEY = "result-notifier:lastFocus";
+	var PENDING_LIFETIME_MS = 10 * 60 * 1000;
+	var INACTIVE_LIMIT_MS = 5 * 60 * 1000;
+
+	class PendingSubmissions {
+		state;
+		constructor(state) {
+			this.state = state;
+		}
+		list(now) {
+			const pending = this.state.get(PENDING_KEY) ?? [];
+			return pending.filter(({ addedAt }) => now - addedAt < PENDING_LIFETIME_MS);
+		}
+		add(submissions, now) {
+			const current = this.list(now);
+			const known = new Set(current.map(({ id }) => id));
+			this.state.set(PENDING_KEY, [...current, ...submissions.filter(({ id }) => !known.has(id))]);
+		}
+		remove(ids, now) {
+			this.state.set(
+				PENDING_KEY,
+				this.list(now).filter(({ id }) => !ids.includes(id)),
+			);
+		}
+		markFocused(now) {
+			this.state.set(LAST_FOCUS_KEY, now);
+		}
+		claimPoll(now, intervalMs) {
+			const lastFocus = Number(this.state.get(LAST_FOCUS_KEY) ?? 0);
+			const lastPoll = Number(this.state.get(LAST_POLL_KEY) ?? 0);
+			if (now - lastFocus > INACTIVE_LIMIT_MS || now - lastPoll < intervalMs) return false;
+			this.state.set(LAST_POLL_KEY, now);
+			return true;
+		}
+	}
+
+	// CpToolkit/src/ui/toast/toast.css
+	var toast_default = `.toasts {
+	position: fixed;
+	top: 120px;
+	left: 20px;
+	z-index: 2147483000;
+	display: grid;
+	gap: 8px;
+	width: min(360px, calc(100vw - 40px));
+}
+
+.toast {
+	padding: 8px 12px;
+	border: 1px solid var(--cp-border);
+	border-left-width: 4px;
+	border-radius: 8px;
+	background: var(--cp-surface);
+	box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+	color: var(--cp-text);
+	cursor: pointer;
+	animation: toast-in 150ms ease-out;
+}
+
+.toast[data-tone="success"] {
+	border-left-color: var(--cp-success);
+}
+
+.toast[data-tone="warning"] {
+	border-left-color: var(--cp-danger);
+}
+
+.toast-title {
+	font-weight: 600;
+}
+
+.toast-detail {
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.toast a {
+	color: var(--cp-accent);
+}
+
+@keyframes toast-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+`;
+
+	// CpToolkit/src/ui/toast/toast.ts
+	var container = null;
+	function ensureContainer() {
+		if (container?.isConnected) return container;
+		const list = h("div", { className: "toasts" });
+		const host = h("div");
+		host.attachShadow({ mode: "open" }).append(
+			h("style", {
+				textContent: `${theme_default}
+${toast_default}`,
+			}),
+			list,
+		);
+		document.body.append(host);
+		container = list;
+		return list;
+	}
+	function showToast({ title, detail, tone, href, durationMs }) {
+		const heading = href ? h("a", { href, target: "_blank", rel: "noopener", textContent: title }) : title;
+		const toast = h(
+			"div",
+			{ className: "toast" },
+			h("div", { className: "toast-title" }, heading),
+			h("div", { className: "toast-detail", textContent: detail }),
+		);
+		toast.dataset.tone = tone;
+		toast.addEventListener("click", () => toast.remove());
+		setTimeout(() => toast.remove(), durationMs);
+		ensureContainer().append(toast);
+	}
+
+	// CpToolkit/src/features/result-notifier/index.ts
+	var POLL_INTERVAL_MS2 = 5000;
+	var TOAST_DURATION_MS = 1e4;
+	var SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
+	function parseResult(html) {
+		const page = new DOMParser().parseFromString(`<table><tr>${html}</tr></table>`, "text/html");
+		const status = page.querySelector(".label")?.textContent?.trim() ?? "";
+		const detail = [...page.querySelectorAll("td")]
+			.slice(1)
+			.map((cell2) => cell2.textContent?.trim())
+			.join("  ");
+		return { status, detail };
+	}
+	function collectPending(contestId, now) {
+		return [...document.querySelectorAll(".table-responsive > table > tbody > tr")].flatMap((row) => {
+			const status = row.querySelector(".label")?.textContent?.trim() ?? "";
+			const id = [...row.querySelectorAll("a")]
+				.map((link) => SUBMISSION_ID_PATTERN.exec(link.href)?.[1])
+				.find(Boolean);
+			if (!id || !isJudging(status)) return [];
+			return [
+				{ id, contestId, taskName: row.querySelectorAll("td")[1]?.textContent?.trim() ?? "", addedAt: now },
+			];
+		});
+	}
+	var resultNotifier = defineFeature({
+		id: "result-notifier",
+		title: "resultNotifier.title",
+		description: "resultNotifier.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:page"],
+		phase: "ready",
+		options: {
+			desktop: option.boolean(true, "resultNotifier.desktop"),
+		},
+		live: true,
+		start({ options, isOnRoute, notifier, site, state }) {
+			const pending = new PendingSubmissions(state);
+			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+			if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
+				pending.add(collectPending(contestId, Date.now()), Date.now());
+			}
+			const notify = (submission, { status, detail }) => {
+				const url = buildAtCoderSubmissionUrl(submission.contestId, submission.id);
+				const title = `${status}: ${submission.taskName}`;
+				showToast({
+					title,
+					detail,
+					tone: status === "AC" ? "success" : "warning",
+					href: url,
+					durationMs: TOAST_DURATION_MS,
+				});
+				if (options.desktop && document.hidden) notifier.notify({ title, text: detail, url });
+			};
+			const checkContest = async (id, submissions) => {
+				const url = buildAtCoderSubmissionStatusJsonUrl(
+					id,
+					submissions.map((submission) => submission.id),
+				);
+				const response = await site.send({ url });
+				if (response.status !== 200) return;
+				const results = safeJsonParse(response.text, {}).Result ?? {};
+				const finished = submissions.flatMap((submission) => {
+					const html = results[submission.id]?.Html;
+					const result = html === undefined ? null : parseResult(html);
+					if (!result || isJudging(result.status)) return [];
+					notify(submission, result);
+					return [submission.id];
+				});
+				pending.remove(finished, Date.now());
+			};
+			const poll = () => {
+				const now = Date.now();
+				if (document.hasFocus()) pending.markFocused(now);
+				const submissions = pending.list(now);
+				if (submissions.length === 0 || !pending.claimPoll(now, POLL_INTERVAL_MS2)) return;
+				const contests = new Set(submissions.map((submission) => submission.contestId));
+				for (const id of contests) {
+					checkContest(
+						id,
+						submissions.filter((submission) => submission.contestId === id),
+					).catch(() => {
+						return;
+					});
+				}
+			};
+			pending.markFocused(Date.now());
+			const timer = setInterval(poll, POLL_INTERVAL_MS2);
+			return () => clearInterval(timer);
+		},
+	});
+
+	// CpToolkit/src/features/statement-copy/index.ts
+	var COPIED_LABEL_MS = 1500;
+	var EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right";
+	function isSampleHeading(section) {
+		const title = section.querySelector("h3")?.textContent ?? "";
+		return statementCatalog.sampleHeadings.some((heading) => title.includes(heading));
+	}
+	function withoutControls(element) {
+		const clone = element.cloneNode(true);
+		for (const control of clone.querySelectorAll(EXCLUDED_FROM_COPY)) control.remove();
+		return clone;
+	}
+	function findVisibleStatement(container2) {
+		const languages = [...container2.querySelectorAll(".lang-ja, .lang-en")];
+		return languages.find((element) => getComputedStyle(element).display !== "none") ?? container2;
+	}
+	var statementCopy = defineFeature({
+		id: "statement-copy",
+		title: "statementCopy.title",
+		description: "statementCopy.description",
+		category: "category.statement",
+		defaultEnabled: true,
+		routes: ["atcoder:task"],
+		phase: "ready",
+		options: {
+			format: option.select("markdown", "statementCopy.format", [
+				{ value: "markdown", label: "statementCopy.formatMarkdown" },
+				{ value: "plain", label: "statementCopy.formatPlain" },
+			]),
+		},
+		live: true,
+		start({ options, clipboard, statementConverter, translate }) {
+			const added = [];
+			const container2 = document.getElementById("task-statement");
+			if (!container2)
+				return () => {
+					return;
+				};
+			const convert = (element) => {
+				const html = withoutControls(element).innerHTML;
+				return options.format === "plain"
+					? statementConverter.toPlainText(html)
+					: statementConverter.toMarkdown(html);
+			};
+			const createButton = (label, getText) => {
+				const button = h("button", { type: "button", className: "btn btn-default btn-sm", textContent: label });
+				button.style.marginLeft = "10px";
+				button.addEventListener("click", (event) => {
+					event.preventDefault();
+					clipboard.write(getText());
+					button.textContent = translate("statementCopy.copied");
+					setTimeout(() => {
+						button.textContent = label;
+					}, COPIED_LABEL_MS);
+				});
+				added.push(button);
+				return button;
+			};
+			for (const section of container2.querySelectorAll(".part section")) {
+				if (isSampleHeading(section)) continue;
+				section
+					.querySelector("h3")
+					?.append(createButton(translate("statementCopy.copy"), () => convert(section)));
+			}
+			const title = document.querySelector(".h2") ?? document.querySelector("h2");
+			if (title) {
+				const copyAll = () => {
+					const sections = [...findVisibleStatement(container2).querySelectorAll(".part section")];
+					const heading =
+						withoutControls(title).textContent?.trim() || translate("statementCopy.defaultTitle");
+					const firstSample = sections.findIndex(isSampleHeading);
+					const body = (firstSample < 0 ? sections : sections.slice(0, firstSample)).map(convert).join(`
+
+`);
+					const prefix = options.format === "plain" ? heading : `# ${heading}`;
+					return `${prefix}
+
+URL: ${location.href}
+
+${body}`.trim();
+				};
+				const wrapper = h(
+					"span",
+					{ className: "pull-right" },
+					createButton(translate("statementCopy.copyAll"), copyAll),
+				);
+				wrapper.style.fontSize = "14px";
+				title.append(wrapper);
+				added.push(wrapper);
+			}
+			return () => {
+				for (const element of added) element.remove();
+			};
+		},
+	});
+
+	// CpToolkit/src/domain/statement/tokens.ts
+	var NUMBER_PATTERN = /(^|\W)([+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[+-]?\d+)?)/gi;
+	var PURE_NUMBER_PATTERN = /^[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[+-]?\d+)?$/i;
+	function isPureNumber(text) {
+		return PURE_NUMBER_PATTERN.test(text.trim());
+	}
+	function splitNumbers(text) {
+		const segments = [];
+		let position = 0;
+		for (const match of text.matchAll(NUMBER_PATTERN)) {
+			const prefix = match[1] ?? "";
+			const value = match[2] ?? "";
+			const start = match.index + prefix.length;
+			if (start > position) segments.push({ text: text.slice(position, start), emphasized: false });
+			segments.push({ text: value, emphasized: true });
+			position = start + value.length;
+		}
+		if (position < text.length) segments.push({ text: text.slice(position), emphasized: false });
+		return segments;
+	}
+	function splitLimitValue(text, keyword) {
+		const pattern = new RegExp(`${keyword}\\s*[:：]\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)`, "g");
+		const segments = [];
+		let position = 0;
+		for (const match of text.matchAll(pattern)) {
+			const value = match[1] ?? "";
+			const valueStart = match.index + match[0].length - value.length;
+			segments.push({ text: text.slice(position, valueStart), emphasized: false });
+			segments.push({ text: value, emphasized: true });
+			position = valueStart + value.length;
+		}
+		if (position === 0) return null;
+		if (position < text.length) segments.push({ text: text.slice(position), emphasized: false });
+		return segments;
+	}
+
+	// CpToolkit/src/features/statement-highlight/statement-highlight.css
+	var statement_highlight_default = `.cp-statement-target .katex .mathnormal,
+.cp-statement-target .cp-number {
+	font-weight: 800 !important;
+}
+
+.cp-statement-target .katex .mathnormal {
+	color: var(--cp-variable-color) !important;
+}
+
+.cp-statement-target .cp-number {
+	color: var(--cp-number-color) !important;
+}
+
+.cp-time-limit {
+	color: var(--cp-time-color);
+	font-size: 2em;
+}
+
+.cp-memory-limit {
+	color: var(--cp-memory-color);
+	font-size: 2em;
+}
+`;
+
+	// CpToolkit/src/features/statement-highlight/index.ts
+	var NUMBER_CLASS = "cp-number";
+	var TARGET_CLASS = "cp-statement-target";
+	var TIME_CLASS = "cp-time-limit";
+	var MEMORY_CLASS = "cp-memory-limit";
+	var SKIPPED_ANCESTORS = `.katex, var, .${NUMBER_CLASS}, .${TIME_CLASS}, .${MEMORY_CLASS}`;
+	var HIGHLIGHT_DELAY_MS = 100;
+	function collectTextNodes(root2, accepts) {
+		const walker = document.createTreeWalker(root2, NodeFilter.SHOW_TEXT, {
+			acceptNode(node) {
+				const parent = node.parentElement;
+				if (!parent || statementCatalog.skipTags.includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+				return parent.closest(SKIPPED_ANCESTORS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+			},
+		});
+		const nodes = [];
+		while (walker.nextNode()) {
+			const node = walker.currentNode;
+			if (accepts(node.data)) nodes.push(node);
+		}
+		return nodes;
+	}
+	function replaceWithSegments(node, segments, className) {
+		node.replaceWith(
+			...segments.map(({ text, emphasized }) =>
+				emphasized ? h("span", { className, textContent: text }) : text,
+			),
+		);
+	}
+	function markTargetSections() {
+		for (const section of document.querySelectorAll("#task-statement section")) {
+			const title = section.querySelector("h3")?.textContent ?? "";
+			if (statementCatalog.targetHeadings.some((heading) => title.includes(heading)))
+				section.classList.add(TARGET_CLASS);
+		}
+	}
+	function highlightNumbers() {
+		for (const scope of document.querySelectorAll(`.${TARGET_CLASS}`)) {
+			for (const element of scope.querySelectorAll(".katex .mord, .katex .text")) {
+				if (!element.classList.contains("mathnormal") && isPureNumber(element.textContent ?? "")) {
+					element.classList.add(NUMBER_CLASS);
+				}
+			}
+			for (const node of collectTextNodes(scope, (text) => /\d/.test(text))) {
+				replaceWithSegments(node, splitNumbers(node.data), NUMBER_CLASS);
+			}
+		}
+	}
+	function emphasizeLimit(root2, keywords, className) {
+		for (const keyword of keywords) {
+			for (const node of collectTextNodes(root2, (text) => text.includes(keyword))) {
+				const segments = splitLimitValue(node.data, keyword);
+				if (segments) replaceWithSegments(node, segments, className);
+			}
+		}
+	}
+	function emphasizeLimits() {
+		const root2 = document.getElementById("main-container");
+		if (!root2) return;
+		emphasizeLimit(root2, statementCatalog.timeLimitKeywords, TIME_CLASS);
+		emphasizeLimit(root2, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
+	}
+	var statementHighlight = defineFeature({
+		id: "statement-highlight",
+		title: "statementHighlight.title",
+		description: "statementHighlight.description",
+		category: "category.statement",
+		defaultEnabled: true,
+		routes: ["atcoder:task"],
+		phase: "ready",
+		options: {
+			numberColor: option.color("#0033b3", "statementHighlight.numberColor"),
+			variableColor: option.color("#9e2927", "statementHighlight.variableColor"),
+			timeColor: option.color("#b3542a", "statementHighlight.timeColor"),
+			memoryColor: option.color("#1d643b", "statementHighlight.memoryColor"),
+		},
+		live: true,
+		start({ options }) {
+			const style = injectStyle(`:root {
+	--cp-number-color: ${options.numberColor};
+	--cp-variable-color: ${options.variableColor};
+	--cp-time-color: ${options.timeColor};
+	--cp-memory-color: ${options.memoryColor};
+}
+${statement_highlight_default}`);
+			let timer;
+			const schedule = () => {
+				if (timer !== undefined) return;
+				timer = setTimeout(() => {
+					timer = undefined;
+					markTargetSections();
+					highlightNumbers();
+					emphasizeLimits();
+				}, HIGHLIGHT_DELAY_MS);
+			};
+			schedule();
+			const observer = new MutationObserver(schedule);
+			observer.observe(document.getElementById("task-statement") ?? document.body, {
+				childList: true,
+				subtree: true,
+				characterData: true,
+			});
+			return () => {
+				observer.disconnect();
+				clearTimeout(timer);
+				style.remove();
+			};
+		},
+	});
+
+	// CpToolkit/src/features/submission-defaults/index.ts
+	var SUBMISSION_PATH_PATTERN = /\/submissions(?:\/me)?\/?$/;
+	var SUBMISSION_PAGE_TABS = "#main-container > div.row > div:nth-child(2) > ul > li > a";
+	function applyDefaultQuery(query2) {
+		for (const link of document.querySelectorAll("#contest-nav-tabs a")) {
+			const href = link.getAttribute("href");
+			if (!href) continue;
+			const url = new URL(href, location.origin);
+			if (!SUBMISSION_PATH_PATTERN.test(url.pathname)) continue;
+			url.search = query2;
+			link.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+		}
+	}
+	function keepSearchQuery() {
+		for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
+			const url = new URL(tab.getAttribute("href") ?? "", location.origin);
+			url.search = location.search;
+			tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+		}
+	}
+	var submissionDefaults = defineFeature({
+		id: "submission-defaults",
+		title: "submissionDefaults.title",
+		description: "submissionDefaults.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {
+			language: option.text("Java", "submissionDefaults.language"),
+			status: option.text("AC", "submissionDefaults.status"),
+			orderBy: option.select("time_consumption", "submissionDefaults.orderBy", [
+				{ value: "time_consumption", label: "submissionDefaults.orderTime" },
+				{ value: "memory_consumption", label: "submissionDefaults.orderMemory" },
+				{ value: "source_length", label: "submissionDefaults.orderLength" },
+				{ value: "score", label: "submissionDefaults.orderScore" },
+			]),
+			taskFilter: option.boolean(true, "submissionDefaults.taskFilter"),
+			keepQuery: option.boolean(true, "submissionDefaults.keepQuery"),
+		},
+		start({ options, isOnRoute }) {
+			const task = options.taskFilter ? parseAtCoderTaskUrl(location.href)?.taskId : undefined;
+			applyDefaultQuery(
+				buildAtCoderSubmissionsQuery({
+					language: options.language,
+					status: options.status,
+					orderBy: options.orderBy,
+					task,
+				}),
+			);
+			if (options.keepQuery && isOnRoute("atcoder:submissions")) keepSearchQuery();
+		},
+	});
+
+	// CpToolkit/src/features/submission-shortcuts/index.ts
+	var submissionShortcuts = defineFeature({
+		id: "submission-shortcuts",
+		title: "submissionShortcuts.title",
+		description: "submissionShortcuts.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:task"],
+		phase: "ready",
+		options: {
+			language: option.text("", "submissionShortcuts.language"),
+		},
+		live: true,
+		start({ options, translate }) {
+			const task = parseAtCoderTaskUrl(location.href);
+			const title = document.querySelector(".h2");
+			if (!task || !title)
+				return () => {
+					return;
+				};
+			const createLink = (label, orderBy) => {
+				const query2 = buildAtCoderSubmissionsQuery({
+					language: options.language || undefined,
+					status: "AC",
+					orderBy,
+					task: task.taskId,
+				});
+				const link = h("a", {
+					className: "btn btn-default btn-sm",
+					href: `/contests/${task.contestId}/submissions?${query2}`,
+					textContent: label,
+				});
+				link.style.marginLeft = "10px";
+				return link;
+			};
+			const wrapper = h(
+				"span",
+				{},
+				createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
+				createLink(translate("submissionShortcuts.shortest"), "source_length"),
+			);
+			title.append(wrapper);
+			return () => wrapper.remove();
+		},
+	});
+
+	// CpToolkit/src/features/submission-timer/index.ts
+	var MINUTE_MS = 60000;
+	var submissionTimer = defineFeature({
+		id: "submission-timer",
+		title: "submissionTimer.title",
+		description: "submissionTimer.description",
+		category: "category.submission",
+		defaultEnabled: false,
+		routes: ["atcoder:task"],
+		phase: "ready",
+		options: {},
+		start({ translate }) {
+			const submitButton = document.querySelector("#submit");
+			if (!submitButton) return;
+			let timer;
+			const modal = createModal({
+				title: translate("submissionTimer.title"),
+				closeLabel: translate("settings.close"),
+				css: form_default,
+			});
+			const minutes = h("input", { type: "number", min: "1" });
+			const info = h("p");
+			const cancel = () => {
+				clearTimeout(timer);
+				timer = undefined;
+				info.textContent = translate("submissionTimer.canceled");
+			};
+			const schedule = () => {
+				const value = minutes.valueAsNumber;
+				clearTimeout(timer);
+				if (!(value > 0)) {
+					cancel();
+					return;
+				}
+				timer = setTimeout(() => submitButton.click(), value * MINUTE_MS);
+				const at = new Date(Date.now() + value * MINUTE_MS).toLocaleTimeString();
+				info.textContent = translate("submissionTimer.scheduled").replace("{time}", at);
+			};
+			modal.body.append(
+				h(
+					"label",
+					{ className: "field" },
+					h("span", { className: "field-label", textContent: translate("submissionTimer.minutes") }),
+					minutes,
+				),
+				info,
+			);
+			modal.footer.append(
+				h("button", { type: "button", textContent: translate("submissionTimer.set"), onclick: schedule }),
+				h("button", { type: "button", textContent: translate("submissionTimer.cancel"), onclick: cancel }),
+			);
+			const openButton = h("button", {
+				type: "button",
+				className: "btn btn-default",
+				textContent: translate("submissionTimer.title"),
+				onclick: () => modal.open(),
+			});
+			openButton.style.marginLeft = "5px";
+			submitButton.after(openButton);
+		},
+	});
+
+	// CpToolkit/src/domain/contest/category.ts
+	function contestCategory(catalog, contestId, taskCount) {
+		const regular = catalog.regularPrefixes.find((prefix) => contestId.startsWith(prefix));
+		if (regular) return `${regular}-${taskCount}`;
+		return catalog.permanentPrefixes.find((prefix) => contestId.startsWith(prefix)) ?? "other";
+	}
+	function defaultRange(taskCount, maxTabs) {
+		return { begin: 0, end: Math.min(maxTabs, taskCount) - 1 };
+	}
+	function adjustRange(range, changed, maxTabs) {
+		const { begin, end } = range;
+		if (changed === "begin") {
+			if (end < begin) return { begin, end: begin };
+			return { begin, end: Math.min(end, begin + maxTabs - 1) };
+		}
+		if (begin > end) return { begin: end, end };
+		return { begin: Math.max(begin, end - maxTabs + 1), end };
+	}
+	function rangeIndices({ begin, end }, reverse) {
+		const indices = Array.from({ length: end - begin + 1 }, (_, index) => begin + index);
+		return reverse ? indices.reverse() : indices;
+	}
+
+	// CpToolkit/src/application/contest/task-list.ts
+	var CACHE_KEY2 = "task-dropdown:tasks";
+	var DAY_MS = 24 * 60 * 60 * 1000;
+	async function loadContestTasks(contestId, { site, state, parse, cacheDays }) {
+		const cache = state.get(CACHE_KEY2) ?? {};
+		const now = Date.now();
+		const fresh = Object.entries(cache).filter(([, entry]) => now - entry.lastAccess < cacheDays * DAY_MS);
+		let tasks = cache[contestId]?.tasks ?? null;
+		if (!tasks) {
+			const response = await site.send({ url: `/contests/${contestId}/tasks` });
+			if (response.status !== 200) return null;
+			tasks = parse(response.text);
+		}
+		state.set(CACHE_KEY2, { ...Object.fromEntries(fresh), [contestId]: { tasks, lastAccess: now } });
+		return tasks;
+	}
+
+	// CpToolkit/src/features/task-dropdown/open-tasks-modal.css
+	var open_tasks_modal_default = `.open-tasks-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.open-tasks-row select {
+	min-width: 120px;
+	padding: 4px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.open-tasks-caution {
+	color: var(--cp-danger);
+	font-size: 13px;
+}
+
+.open-tasks-info {
+	margin: 0;
+	color: var(--cp-text-muted);
+}
+
+.open-tasks-spacer {
+	margin-left: auto;
+}
+
+button.primary {
+	border-color: var(--cp-accent);
+	background: var(--cp-accent);
+	color: var(--cp-on-accent);
+}
+`;
+
+	// CpToolkit/src/features/task-dropdown/open-tasks-modal.ts
+	function isValidRange(range, taskCount, maxTabs) {
+		if (!range) return false;
+		return (
+			range.begin >= 0 && range.begin <= range.end && range.end < taskCount && range.end - range.begin < maxTabs
+		);
+	}
+	function createTaskSelect(tasks) {
+		return h(
+			"select",
+			{},
+			...tasks.map((task, index) => {
+				return h("option", { value: String(index), textContent: `${task.label} - ${task.name}` });
+			}),
+		);
+	}
+	function createOpenTasksModal(params) {
+		const { tasks, maxTabs, savedRange, savedReverse, translate, onOpen } = params;
+		const canOpenAll = tasks.length <= maxTabs;
+		const initial = isValidRange(savedRange, tasks.length, maxTabs)
+			? savedRange
+			: defaultRange(tasks.length, maxTabs);
+		let range = initial;
+		const modal = createModal({
+			title: translate("taskDropdown.openAtOnce"),
+			closeLabel: translate("settings.close"),
+			css: open_tasks_modal_default,
+		});
+		const allRadio = h("input", { type: "radio", name: "open-type", disabled: !canOpenAll });
+		const rangeRadio = h("input", { type: "radio", name: "open-type" });
+		const beginSelect = createTaskSelect(tasks);
+		const endSelect = createTaskSelect(tasks);
+		const reverse = h("input", { type: "checkbox", checked: savedReverse });
+		const info = h("p", { className: "open-tasks-info" });
+		const isAll = () => allRadio.checked;
+		const selectedRange = () => (isAll() ? { begin: 0, end: tasks.length - 1 } : range);
+		const refresh = () => {
+			beginSelect.value = String(range.begin);
+			endSelect.value = String(range.end);
+			beginSelect.disabled = endSelect.disabled = isAll();
+			const { begin, end } = selectedRange();
+			info.textContent = translate("taskDropdown.tabCount").replace("{count}", String(end - begin + 1));
+		};
+		const changeRange = (changed) => {
+			range = adjustRange({ begin: Number(beginSelect.value), end: Number(endSelect.value) }, changed, maxTabs);
+			refresh();
+		};
+		allRadio.checked = canOpenAll && initial.begin === 0 && initial.end === tasks.length - 1;
+		rangeRadio.checked = !allRadio.checked;
+		allRadio.addEventListener("change", refresh);
+		rangeRadio.addEventListener("change", refresh);
+		beginSelect.addEventListener("change", () => changeRange("begin"));
+		endSelect.addEventListener("change", () => changeRange("end"));
+		modal.body.append(
+			h(
+				"div",
+				{ className: "open-tasks-row" },
+				h("label", {}, allRadio, ` ${translate("taskDropdown.all")}`),
+				canOpenAll
+					? ""
+					: h("span", {
+							className: "open-tasks-caution",
+							textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
+						}),
+			),
+			h(
+				"div",
+				{ className: "open-tasks-row" },
+				h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`),
+				beginSelect,
+				"-",
+				endSelect,
+			),
+			h("div", { className: "open-tasks-row" }, h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
+			info,
+		);
+		modal.footer.append(
+			h("span", { className: "open-tasks-spacer" }),
+			h("button", {
+				type: "button",
+				textContent: translate("taskDropdown.cancel"),
+				onclick: () => modal.close(),
+			}),
+			h("button", {
+				type: "button",
+				className: "primary",
+				textContent: translate("taskDropdown.openAtOnce"),
+				onclick() {
+					onOpen(selectedRange(), reverse.checked);
+					const placeholder = window.open("about:blank");
+					for (const index of rangeIndices(selectedRange(), reverse.checked)) {
+						const task = tasks[index];
+						if (task) window.open(task.url, "_blank", "noopener,noreferrer");
+					}
+					placeholder?.close();
+					modal.close();
+				},
+			}),
+		);
+		return {
+			open() {
+				refresh();
+				modal.open();
+			},
+		};
+	}
+
+	// CpToolkit/src/features/task-dropdown/task-dropdown.css
+	var task_dropdown_default = `.cp-task-menu {
+	max-height: 70vh;
+	overflow: visible auto;
+}
+
+.cp-task-menu label {
+	width: 100%;
+	margin: 0;
+	padding: 3px 20px;
+	font-weight: normal;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.cp-task-menu label:hover {
+	background-color: #f5f5f5;
+}
+
+.cp-task-menu input {
+	margin: 0 4px 0 0;
+	vertical-align: middle;
+}
+`;
+
+	// CpToolkit/src/features/task-dropdown/index.ts
+	var NEW_TAB_KEY = "task-dropdown:newTab";
+	var REVERSE_KEY = "task-dropdown:reverse";
+	var RANGES_KEY = "task-dropdown:ranges";
+	function parseTaskPage(html) {
+		const page = new DOMParser().parseFromString(html, "text/html");
+		return [...page.querySelectorAll("#contest-nav-tabs + .col-sm-12 tbody tr")].flatMap((row) => {
+			const [labelCell, nameCell] = row.querySelectorAll("td");
+			const link = labelCell?.querySelector("a");
+			const url = link?.getAttribute("href");
+			if (!link || !url) return [];
+			return [{ url, label: link.textContent ?? "", name: nameCell?.textContent?.trim() ?? "" }];
+		});
+	}
+	function turnIntoDropdown(tab) {
+		tab.className = "dropdown-toggle";
+		tab.href = "#";
+		tab.setAttribute("data-toggle", "dropdown");
+		tab.setAttribute("role", "button");
+		tab.setAttribute("aria-haspopup", "true");
+		tab.setAttribute("aria-expanded", "false");
+		tab.append(h("span", { className: "caret" }));
+		const menu = h("ul", { className: "dropdown-menu cp-task-menu" });
+		const item = tab.parentElement;
+		item?.classList.add("dropdown");
+		item?.append(menu);
+		item?.addEventListener("mouseenter", () => item.classList.add("open"));
+		item?.addEventListener("mouseleave", () => item.classList.remove("open"));
+		return menu;
+	}
+	function createNewTabToggle(state, translate) {
+		const checkbox = h("input", { type: "checkbox", checked: state.get(NEW_TAB_KEY) === true });
+		checkbox.addEventListener("change", () => state.set(NEW_TAB_KEY, checkbox.checked));
+		const label = h("label", {}, checkbox, translate("taskDropdown.newTab"));
+		label.addEventListener("click", (event) => event.stopPropagation());
+		return h("li", {}, label);
+	}
+	function createTaskLink(href, text, state) {
+		const link = h("a", { href, textContent: text });
+		link.addEventListener("click", () => {
+			const newTab = state.get(NEW_TAB_KEY) === true;
+			link.target = newTab ? "_blank" : "_self";
+			link.rel = newTab ? "noopener noreferrer" : "";
+		});
+		return h("li", {}, link);
+	}
+	var taskDropdown = defineFeature({
+		id: "task-dropdown",
+		title: "taskDropdown.title",
+		description: "taskDropdown.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {},
+		async start({ site, state, translate }) {
+			const tab = document.querySelector('#contest-nav-tabs a[href$="tasks"]');
+			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+			if (!tab || !contestId) return;
+			injectStyle(task_dropdown_default);
+			const taskTableUrl = tab.href;
+			const menu = turnIntoDropdown(tab);
+			menu.append(
+				createNewTabToggle(state, translate),
+				createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state),
+			);
+			const tasks = await loadContestTasks(contestId, {
+				site,
+				state,
+				parse: parseTaskPage,
+				cacheDays: contestCatalog.taskCacheDays,
+			}).catch(() => null);
+			if (!tasks) {
+				menu.append(
+					h("li", { className: "divider" }),
+					h("li", {}, h("a", { textContent: translate("taskDropdown.loadFailed") })),
+				);
+				return;
+			}
+			const category = contestCategory(contestCatalog, contestId, tasks.length);
+			const ranges = state.get(RANGES_KEY) ?? {};
+			const modal = createOpenTasksModal({
+				tasks,
+				maxTabs: contestCatalog.maxTabsAtOnce,
+				savedRange: ranges[category] ?? null,
+				savedReverse: state.get(REVERSE_KEY) === true,
+				translate,
+				onOpen(range, reverse) {
+					state.set(REVERSE_KEY, reverse);
+					if (category !== "other") state.set(RANGES_KEY, { ...ranges, [category]: range });
+				},
+			});
+			const openAtOnce = h("a", { href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...` });
+			openAtOnce.addEventListener("click", (event) => {
+				event.preventDefault();
+				modal.open();
+			});
+			menu.append(h("li", {}, openAtOnce), h("li", { className: "divider" }));
+			menu.append(...tasks.map((task) => createTaskLink(task.url, `${task.label} - ${task.name}`, state)));
+		},
+	});
+
+	// CpToolkit/src/features/tessoku-difficulty/index.ts
+	var TASK_LIST = "#main-container > div.row > div:nth-child(2)";
+	var taskIdOf = (row) => row.querySelector("td")?.textContent?.trim() ?? "";
+	var difficultyOf = (row) => tessokuDifficulties[taskIdOf(row)] ?? Number.POSITIVE_INFINITY;
+	var tessokuDifficulty = defineFeature({
+		id: "tessoku-difficulty",
+		title: "tessokuDifficulty.title",
+		description: "tessokuDifficulty.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:tessokuTasks"],
+		phase: "ready",
+		options: {},
+		start({ translate }) {
+			const body = document.querySelector(`${TASK_LIST} > div > table > tbody`);
+			const heading = document.querySelector(`${TASK_LIST} > h2`);
+			if (!body || !heading) return;
+			const rows = [...body.querySelectorAll("tr")];
+			for (const row of rows) {
+				const difficulty = tessokuDifficulties[taskIdOf(row)];
+				const link = row.querySelector("td:nth-child(2) a");
+				if (difficulty !== undefined && link) link.prepend(`【☆${difficulty}】 `);
+			}
+			let sortedByDifficulty = false;
+			const button = h("button", {
+				type: "button",
+				className: "btn btn-default",
+				textContent: translate("tessokuDifficulty.sortByDifficulty"),
+				onclick() {
+					sortedByDifficulty = !sortedByDifficulty;
+					const sorted = [...rows].sort((a, b) => {
+						return sortedByDifficulty
+							? difficultyOf(a) - difficultyOf(b)
+							: taskIdOf(a).localeCompare(taskIdOf(b));
+					});
+					body.append(...sorted);
+					button.textContent = translate(
+						sortedByDifficulty ? "tessokuDifficulty.sortById" : "tessokuDifficulty.sortByDifficulty",
+					);
+				},
+			});
+			heading.after(button);
+		},
+	});
+
+	// CpToolkit/src/features/top-links/index.ts
+	function createLink({ title, subtitle, label, labelClass, description, href }) {
+		const heading = h("h4", { className: "list-group-item-heading clearfix" }, h("b", { textContent: title }));
+		if (subtitle) heading.append(" ", h("small", { className: "no-break", textContent: `(${subtitle})` }));
+		if (label) heading.append(h("span", { className: `label ${labelClass ?? ""} pull-right`, textContent: label }));
+		return h(
+			"a",
+			{ href, className: "list-group-item" },
+			heading,
+			h("p", { className: "list-group-item-text text-muted", textContent: description }),
+		);
+	}
+	var topLinks = defineFeature({
+		id: "top-links",
+		title: "topLinks.title",
+		description: "topLinks.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:home"],
+		phase: "ready",
+		options: {},
+		start() {
+			const lists = document.querySelectorAll(".list-group.contest-list");
+			lists.forEach((list, index) => {
+				const links = contestLinks[index];
+				if (links) list.replaceChildren(...links.map(createLink));
+			});
+		},
+	});
 
 	// CpToolkit/src/features/wide-layout/wide-layout.css
 	var wide_layout_default = `#main-container {
@@ -1111,7 +7679,28 @@ ${wide_layout_default}`);
 	});
 
 	// CpToolkit/src/app/registry.ts
-	var features = [wideLayout];
+	var features = [
+		wideLayout,
+		hoverMenu,
+		statementHighlight,
+		statementCopy,
+		efficientLayout,
+		submissionDefaults,
+		submissionShortcuts,
+		resultNotifier,
+		averageResult,
+		submissionTimer,
+		taskDropdown,
+		editorialList,
+		topLinks,
+		tessokuDifficulty,
+		ratingGraph,
+		historyColors,
+		localRunner,
+		javaSubmit,
+		easyTest,
+		paizaLanguage,
+	];
 
 	// CpToolkit/src/app/bootstrap.ts
 	function bootstrap() {
@@ -1119,17 +7708,19 @@ ${wide_layout_default}`);
 		document.documentElement.dataset.cpToolkit = host.version;
 		const lifecycle = new DocumentLifecycle();
 		const settings = new SettingsService(new GmKeyValueStore());
-		const translate = createTranslator(detectLocale);
+		importLegacySettings(new LocalStorageLegacyInbox(), settings);
 		const page = matchPage(judges, location.href);
+		const services = createServices(page, settings);
 		const runtime = new FeatureRuntime({
 			features,
 			page,
 			lifecycle,
 			settings,
-			services: { translate },
+			services,
 			logger: new ConsoleLogger(host.name),
 		});
 		runtime.start();
+		const { translate } = services;
 		const panel = createSettingsPanel({ features, settings, runtime, translate, version: host.version });
 		lifecycle.reach("ready").then(() => {
 			host.registerCommand(translate("settings.open"), () => panel.open());

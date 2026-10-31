@@ -21,7 +21,151 @@ status.reloadRequired: 再読み込みで反映
 status.failed: 起動に失敗
 
 category.layout: 表示
+category.statement: 問題文
+category.submission: 提出
+category.contest: コンテスト
+category.rating: 成績
+category.execution: 実行環境
 
 wideLayout.title: ページ幅の拡張
 wideLayout.description: ページ中央の幅を広げます。
 wideLayout.width: "幅(例: 50%, 1200px)"
+
+hoverMenu.title: メニューのホバー表示
+hoverMenu.description: マウスを重ねるだけでメニューを開きます。
+hoverMenu.openStatementDetails: 問題文の折りたたみを最初から開く
+
+statementHighlight.title: 問題文の強調表示
+statementHighlight.description: 問題文中の数字と変数、実行時間とメモリの制限を強調します。
+statementHighlight.numberColor: 数字の色
+statementHighlight.variableColor: 変数の色
+statementHighlight.timeColor: 実行時間制限の色
+statementHighlight.memoryColor: メモリ制限の色
+
+statementCopy.title: 問題文のコピー
+statementCopy.description: 問題文の各項目と全体をコピーするボタンを追加します。
+statementCopy.format: コピーする形式
+statementCopy.formatMarkdown: Markdown
+statementCopy.formatPlain: プレーンテキスト
+statementCopy.copy: コピー
+statementCopy.copyAll: すべてコピー
+statementCopy.copied: コピーしました
+statementCopy.defaultTitle: 問題
+
+efficientLayout.title: サンプルの横並び
+efficientLayout.description: 入出力の形式とサンプルを横に並べて表示します。
+efficientLayout.sampleWidth: サンプル1組の幅(画面幅に対する %)
+efficientLayout.samples: 入出力例
+efficientLayout.ioFormat: 入出力形式
+
+submissionDefaults.title: 提出一覧の既定の絞り込み
+submissionDefaults.description: 提出タブのリンクに、言語や結果の絞り込みと並び順を設定します。
+submissionDefaults.language: "言語(例: Java, C++, Python)"
+submissionDefaults.status: "結果(例: AC。空欄ならすべて)"
+submissionDefaults.orderBy: 並び順
+submissionDefaults.orderTime: 実行時間
+submissionDefaults.orderMemory: メモリ
+submissionDefaults.orderLength: コード長
+submissionDefaults.orderScore: 得点
+submissionDefaults.taskFilter: 問題ページでは問題でも絞り込む
+submissionDefaults.keepQuery: 「すべての提出」と「自分の提出」の間で検索条件を保持する
+
+submissionShortcuts.title: AC 提出への近道
+submissionShortcuts.description: 問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。
+submissionShortcuts.language: 言語(空欄ならすべて)
+submissionShortcuts.fastest: 実行時間順
+submissionShortcuts.shortest: コード長順
+
+resultNotifier.title: 提出結果の通知
+resultNotifier.description: 判定が終わると、どのページにいても結果を通知します。
+resultNotifier.desktop: 別のタブを見ているときはデスクトップ通知も出す
+
+averageResult.title: 実行結果の平均
+averageResult.description: 提出の詳細に、実行時間とメモリの平均を表示します。
+averageResult.average: 平均
+
+submissionTimer.title: 時間指定の提出
+submissionTimer.description: 指定した時間が経ったらコードを提出します。
+submissionTimer.minutes: 何分後に提出するか
+submissionTimer.set: セットする
+submissionTimer.cancel: 取り消す
+submissionTimer.canceled: タイマーを取り消しました。
+submissionTimer.scheduled: "{time} ごろに提出します。"
+
+taskDropdown.title: 問題のドロップダウン
+taskDropdown.description: 「問題」タブから各問題へ移動でき、複数の問題をまとめて開けます。
+taskDropdown.newTab: 新しいタブで開く
+taskDropdown.taskTable: 問題一覧
+taskDropdown.openAtOnce: まとめて開く
+taskDropdown.loadFailed: (読み込み失敗)
+taskDropdown.all: すべて
+taskDropdown.range: 範囲を指定
+taskDropdown.reverse: 逆順で開く
+taskDropdown.cancel: キャンセル
+taskDropdown.tabCount: "{count} 個のタブが開きます。ブロックされた場合はポップアップを許可してください。"
+taskDropdown.tabLimit: "※一度に開けるタブは {count} 個までです。"
+
+editorialList.title: 解説の一覧表示
+editorialList.description: 解説ページで、すべての問題の解説をまとめて表示します。
+
+topLinks.title: トップページのコンテスト一覧
+topLinks.description: トップページの一覧を、種類ごとの過去問へのリンクに置き換えます。
+
+tessokuDifficulty.title: 鉄則本の難易度表示
+tessokuDifficulty.description: 「競技プログラミングの鉄則」の問題一覧に、書籍の難易度を表示します。
+tessokuDifficulty.sortByDifficulty: 難易度順で並べ替え
+tessokuDifficulty.sortById: 問題番号順で並べ替え
+
+ratingGraph.title: パフォーマンスのグラフ
+ratingGraph.description: レーティンググラフにパフォーマンスを重ねて表示します。
+ratingGraph.recentByDefault: 最初は最近の結果だけを表示する
+ratingGraph.togglePerformance: パフォーマンス ON/OFF
+ratingGraph.showAll: すべて表示
+ratingGraph.showRecent: 最近のみ表示
+
+historyColors.title: 成績表の色付け
+historyColors.description: 成績表のパフォーマンスとレーティングに色を付けます。
+historyColors.performanceMode: パフォーマンスの色付け
+historyColors.ratingMode: レーティングの色付け
+historyColors.modeNone: なし
+historyColors.modeText: 文字
+historyColors.modeBackground: 背景
+
+localRunner.title: Local Runner
+localRunner.description: Java の変換と実行に使う、手元のサーバーへ接続します。
+localRunner.url: 接続先の URL
+
+javaSubmit.title: Java の提出補助
+javaSubmit.description: 貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。
+javaSubmit.removePackage: Local Runner がないときにパッケージ宣言を削除する
+javaSubmit.renameClass: Local Runner がないときにクラス名を Main にする
+javaSubmit.fixDebug: Local Runner がないときに DEBUG を false にする
+javaSubmit.addHeader: 提出用のヘッダーを付ける
+javaSubmit.headerName: ヘッダーの名前(空欄なら既定)
+javaSubmit.foldOnPaste: 貼り付け後にクラスとコメントを折りたたむ
+
+easyTest.title: Easy Test
+easyTest.description: 問題ページからサンプルを実行し、結果を確認します。
+easyTest.precompile: Local Runner で編集中のコードを事前にコンパイルする
+easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)
+easyTest.savedCodeLimit: 保存するコードの数
+easyTest.allowableError: 許容誤差
+easyTest.running: "実行中..."
+easyTest.run: 実行
+easyTest.testAndSubmit: Test & Submit
+easyTest.testAll: Test All Samples
+easyTest.restore: Restore Last Play
+easyTest.environment: 実行環境
+easyTest.standardInput: 標準入力
+easyTest.standardOutput: 標準出力
+easyTest.standardError: 標準エラー出力
+easyTest.expectedOutput: 期待する出力
+easyTest.exitCode: 終了コード
+easyTest.execTime: 実行時間
+easyTest.memory: メモリ
+easyTest.noSavedCode: この問題の保存済みコードはありません。
+easyTest.restoreConfirm: 現在のコードを置き換えます。よろしいですか?
+
+paizaLanguage.title: paiza の言語選択
+paizaLanguage.description: paiza の提出ページで、指定した言語を自動で選びます。
+paizaLanguage.language: "言語(例: c++, java, python3)"

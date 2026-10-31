@@ -4,6 +4,6 @@
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"types": ["tampermonkey"]
 	},
-	"include": ["./**/*.ts"],
-	"references": [{"path": "../domain"}, {"path": "../catalog"}, {"path": "../application"}]
+	"include": ["./**/*.ts", "../../types/turndown-plugin-gfm.d.ts"],
+	"references": [{"path": "../../../../shared"}, {"path": "../domain"}, {"path": "../catalog"}, {"path": "../application"}]
 }

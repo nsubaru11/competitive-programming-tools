@@ -1,0 +1,39 @@
+# 言語の種類と、サイトの表記から種類を判定する正規表現。上から順に判定する
+# 版や ID はサイトの選択肢から取得するので、ここには書かない
+families:
+  - {id: cpp, name: C++, match: ['^C\+\+', 'G\+\+', 'Clang\+\+', 'Visual C\+\+', '^cLay']}
+  - {id: csharp, name: 'C#', match: ['^C#']}
+  - {id: c, name: C, match: ['^C\d*(\s|\(|$)', 'GCC C\d']}
+  - {id: python2, name: Python2, match: ['^Python ?2', '^PyPy ?2']}
+  - {id: python3, name: Python3, match: ['^Python', '^PyPy', '^CPython']}
+  - {id: java, name: Java, match: ['^Java(?!Script)']}
+  - {id: javascript, name: JavaScript, match: ['^JavaScript', '^Node\.js']}
+  - {id: typescript, name: TypeScript, match: ['^TypeScript']}
+  - {id: kotlin, name: Kotlin, match: ['^Kotlin']}
+  - {id: rust, name: Rust, match: ['^Rust']}
+  - {id: go, name: Go, match: ['^Go\b']}
+  - {id: ruby, name: Ruby, match: ['^Ruby']}
+  - {id: haskell, name: Haskell, match: ['^Haskell']}
+  - {id: d, name: D, match: ['^D(\s|\(|$)']}
+  - {id: scala, name: Scala, match: ['^Scala']}
+  - {id: swift, name: Swift, match: ['^Swift']}
+  - {id: php, name: PHP, match: ['^PHP']}
+  - {id: perl, name: Perl, match: ['^Perl']}
+  - {id: bash, name: Bash, match: ['^Bash']}
+  - {id: lua, name: Lua, match: ['^Lua']}
+  - {id: nim, name: Nim, match: ['^Nim']}
+  - {id: ocaml, name: OCaml, match: ['^OCaml']}
+  - {id: crystal, name: Crystal, match: ['^Crystal']}
+  - {id: julia, name: Julia, match: ['^Julia']}
+  - {id: elixir, name: Elixir, match: ['^Elixir']}
+  - {id: erlang, name: Erlang, match: ['^Erlang']}
+  - {id: clojure, name: Clojure, match: ['^Clojure']}
+  - {id: fsharp, name: 'F#', match: ['^F#']}
+  - {id: scheme, name: Scheme, match: ['^Scheme']}
+  - {id: lisp, name: Lisp, match: ['Lisp']}
+  - {id: pascal, name: Pascal, match: ['Pascal', '^Delphi']}
+  - {id: fortran, name: Fortran, match: ['^Fortran', '^FORTRAN']}
+  - {id: cobol, name: COBOL, match: ['^COBOL']}
+  - {id: objective-c, name: Objective-C, match: ['^Objective-C']}
+  - {id: basic, name: Visual Basic, match: ['^Visual Basic', '^Basic']}
+  - {id: text, name: Text, match: ['^Text']}

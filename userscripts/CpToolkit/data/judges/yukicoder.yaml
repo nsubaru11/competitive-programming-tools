@@ -1,0 +1,10 @@
+id: yukicoder
+name: yukicoder
+
+matches:
+  - https://yukicoder.me/problems/*
+
+routes:
+  problem: '^/problems/'
+
+navigationLists: []

@@ -1,0 +1,218 @@
+import {afterEach, beforeEach, describe, expect, mock, test} from "bun:test";
+import type {Feature} from "@application/feature/definition";
+import {TurndownStatementConverter} from "@adapters/statement/statement-converter";
+import {averageResult} from "@features/average-result/index";
+import {efficientLayout} from "@features/efficient-layout/index";
+import {historyColors} from "@features/history-colors/index";
+import {statementCopy} from "@features/statement-copy/index";
+import {statementHighlight} from "@features/statement-highlight/index";
+import {submissionDefaults} from "@features/submission-defaults/index";
+import {tessokuDifficulty} from "@features/tessoku-difficulty/index";
+import {topLinks} from "@features/top-links/index";
+import {createFakeServices} from "../support/fakes";
+
+const run = (feature: Feature, options?: unknown, overrides = {}) => feature.run(options, createFakeServices(overrides));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+beforeEach(() => {
+	document.head.replaceChildren();
+	document.body.replaceChildren();
+});
+
+afterEach(() => {
+	document.body.replaceChildren();
+});
+
+describe("statementHighlight", () => {
+	test("対象の見出しの数字と、実行時間の値を強調する", async () => {
+		document.body.innerHTML = `
+			<div id="main-container">
+				<p>Time Limit: 2 sec / Memory Limit: 1024 MiB</p>
+				<div id="task-statement">
+					<section><h3>制約</h3><p>1 以上 100 以下</p></section>
+					<section><h3>入力例 1</h3><p>42</p></section>
+				</div>
+			</div>`;
+		const dispose = await run(statementHighlight);
+		await wait(150);
+
+		expect([...document.querySelectorAll(".cp-number")].map((element) => element.textContent)).toEqual(["1", "100"]);
+		expect(document.querySelector(".cp-time-limit")?.textContent).toBe("2");
+		expect(document.querySelector(".cp-memory-limit")?.textContent).toBe("1024");
+		expect(document.querySelector("#main-container p")?.textContent).toBe("Time Limit: 2 sec / Memory Limit: 1024 MiB");
+		dispose?.();
+		expect(document.querySelector("style")).toBeNull();
+	});
+
+	test("設定した色を反映する", async () => {
+		document.body.innerHTML = '<div id="task-statement"></div>';
+		const dispose = await run(statementHighlight, {numberColor: "#112233"});
+		expect(document.querySelector("style")?.textContent).toContain("--cp-number-color: #112233;");
+		dispose?.();
+	});
+});
+
+describe("statementCopy", () => {
+	function renderStatement(): void {
+		document.body.innerHTML = `
+			<h2 class="h2">A - Sample</h2>
+			<div id="task-statement">
+				<span class="lang-ja">
+					<div class="part"><section><h3>問題文</h3><p><var>N</var> を出力してください。</p><ul><li>a</li></ul></section></div>
+					<div class="part"><section><h3>入力例 1</h3><pre>1</pre></section></div>
+				</span>
+			</div>`;
+	}
+
+	const clipboard = () => {
+		const write = mock((_text: string) => undefined);
+		return {write};
+	};
+
+	test("Markdown で全体をコピーし、サンプルを含めない", async () => {
+		renderStatement();
+		const target = clipboard();
+		await run(statementCopy, undefined, {clipboard: target, statementConverter: new TurndownStatementConverter()});
+		document.querySelector<HTMLElement>(".pull-right button")?.click();
+
+		const text = target.write.mock.calls[0]?.[0] ?? "";
+		expect(text).toStartWith("# A - Sample");
+		expect(text).toContain("### 問題文");
+		expect(text).toContain("$N$");
+		expect(text).toContain("- a");
+		expect(text).not.toContain("入力例");
+	});
+
+	test("プレーンテキストでもコピーできる", async () => {
+		renderStatement();
+		const target = clipboard();
+		await run(statementCopy, {format: "plain"}, {clipboard: target, statementConverter: new TurndownStatementConverter()});
+		document.querySelector<HTMLElement>("h3 button")?.click();
+
+		const text = target.write.mock.calls[0]?.[0] ?? "";
+		expect(text).toContain("【問題文】");
+		expect(text).toContain("$N$ を出力してください。");
+		expect(text).toContain("- a");
+	});
+
+	test("サンプルの見出しにはボタンを追加せず、後始末で取り除く", async () => {
+		renderStatement();
+		const dispose = await run(statementCopy, undefined, {clipboard: clipboard(), statementConverter: new TurndownStatementConverter()});
+		expect(document.querySelectorAll("h3 button")).toHaveLength(1);
+		dispose?.();
+		expect(document.querySelectorAll("button")).toHaveLength(0);
+	});
+});
+
+describe("submissionDefaults", () => {
+	test("提出タブのリンクに絞り込みを設定する", async () => {
+		document.body.innerHTML = `<ul id="contest-nav-tabs">
+			<li><a href="/contests/abc420/submissions/me">自分の提出</a></li>
+			<li><a href="/contests/abc420/standings">順位表</a></li>
+		</ul>`;
+		await run(submissionDefaults, {language: "Rust", status: "", taskFilter: false});
+
+		const href = document.querySelector("a")?.getAttribute("href") ?? "";
+		expect(href).toContain("f.LanguageName=Rust");
+		expect(href).toContain("orderBy=time_consumption");
+		expect(document.querySelectorAll("a")[1]?.getAttribute("href")).toBe("/contests/abc420/standings");
+	});
+});
+
+describe("averageResult", () => {
+	const table = (rows: string) => `<table></table><table></table><table></table><table></table>
+		<table><tbody>${rows}</tbody></table>`;
+
+	test("テストケースの平均を先頭の行に追加する", async () => {
+		document.body.innerHTML = table(`
+			<tr><td>01</td><td>AC</td><td>10 ms</td><td>100 KB</td></tr>
+			<tr><td>02</td><td>TLE</td><td>2000 ms</td><td>300 KB</td></tr>`);
+		const dispose = await run(averageResult);
+
+		const cells = document.querySelector("tbody tr")?.querySelectorAll("td");
+		expect(cells?.[1]?.textContent).toBe("1/2");
+		expect(cells?.[2]?.textContent).toBe("1005+ ms");
+		expect(cells?.[3]?.textContent).toBe("200 KB");
+		dispose?.();
+		expect(document.querySelectorAll("tbody tr")).toHaveLength(2);
+	});
+
+	test("テストケースの表がなければ何もしない", async () => {
+		document.body.innerHTML = "<table><tbody><tr><td>1</td></tr></tbody></table>";
+		await run(averageResult);
+		expect(document.querySelectorAll("tr")).toHaveLength(1);
+	});
+});
+
+describe("historyColors", () => {
+	const row = "<tr><td>a</td><td>b</td><td>c</td><td>1600</td><td>3300</td></tr>";
+
+	test("背景に色を付ける", async () => {
+		document.body.innerHTML = `<table id="history"><tbody>${row}</tbody></table>`;
+		await run(historyColors);
+		const cells = document.querySelectorAll("td");
+		expect(cells[3]?.getAttribute("style")).toContain("background");
+		expect(cells[4]?.getAttribute("style")).toContain("linear-gradient");
+	});
+
+	test("文字に色を付け、王冠を表示する", async () => {
+		document.body.innerHTML = `<table id="history"><tbody>${row}</tbody></table>`;
+		await run(historyColors, {performanceMode: "text", ratingMode: "text"});
+		expect(document.querySelector(".user-blue")?.textContent).toBe("1600");
+		expect(document.querySelector("img")?.getAttribute("src")).toContain("crown3200");
+	});
+
+	test("数値でないセルは変更しない", async () => {
+		document.body.innerHTML = '<table id="history"><tbody><tr><td></td><td></td><td></td><td>-</td><td>-</td></tr></tbody></table>';
+		await run(historyColors);
+		expect(document.querySelectorAll("td")[3]?.getAttribute("style")).toBeNull();
+	});
+});
+
+describe("efficientLayout", () => {
+	test("サンプルを2個ずつ横に並べ、入出力形式を折りたためるようにする", async () => {
+		document.body.innerHTML = `<span class="lang">
+			<div class="io-style"><div class="part">入力</div><div class="part">出力</div></div>
+			<hr>
+			<div class="part">入力例</div><div class="part">出力例</div>
+		</span>`;
+		await run(efficientLayout);
+
+		expect(document.querySelector(".cp-samples-row")?.children).toHaveLength(1);
+		expect(document.querySelector(".cp-samples-row > div")?.children).toHaveLength(2);
+		expect(document.querySelector("details > .io-style")).not.toBeNull();
+		expect(document.querySelector("hr")).toBeNull();
+	});
+});
+
+describe("tessokuDifficulty", () => {
+	const page = (rows: string) => `<div id="main-container"><div class="row"><div></div><div>
+		<h2>問題</h2><div><table><tbody>${rows}</tbody></table></div>
+	</div></div></div>`;
+
+	test("難易度を表示し、並べ替えられる", async () => {
+		document.body.innerHTML = page(`
+			<tr><td>A08</td><td><a href="#">二次元累積和</a></td></tr>
+			<tr><td>A01</td><td><a href="#">正方形</a></td></tr>
+			<tr><td>A47</td><td><a href="#">表にない問題</a></td></tr>`);
+		await run(tessokuDifficulty);
+
+		const links = () => [...document.querySelectorAll("tbody a")].map((link) => link.textContent);
+		expect(links()).toEqual(["【☆4】 二次元累積和", "【☆1】 正方形", "表にない問題"]);
+
+		document.querySelector("button")?.click();
+		expect(links()[0]).toBe("【☆1】 正方形");
+		document.querySelector("button")?.click();
+		expect(links()[0]).toBe("【☆1】 正方形");
+		expect(links()[1]).toBe("【☆4】 二次元累積和");
+	});
+});
+
+describe("topLinks", () => {
+	test("一覧をリンクに置き換える", async () => {
+		document.body.innerHTML = '<div class="list-group contest-list"></div><div class="list-group contest-list"></div>';
+		await run(topLinks);
+		expect(document.querySelectorAll(".contest-list a")).toHaveLength(5);
+		expect(document.querySelector(".contest-list a")?.getAttribute("href")).toBe("https://atcoder.jp/contests");
+	});
+});

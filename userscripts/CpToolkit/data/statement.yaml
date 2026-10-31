@@ -1,0 +1,8 @@
+# 問題文の見出しと制限の表記。日本語と英語の両方を持つ
+targetHeadings: [問題文, Problem Statement, 制約, Constraints]
+sampleHeadings: [入力例, 出力例, Sample Input, Sample Output]
+timeLimitKeywords: [Time Limit, 実行時間制限]
+memoryLimitKeywords: [Memory Limit, メモリ制限]
+
+# 数字の強調から除外するタグ
+skipTags: [SCRIPT, STYLE, CODE, PRE, VAR, KBD, SAMP]

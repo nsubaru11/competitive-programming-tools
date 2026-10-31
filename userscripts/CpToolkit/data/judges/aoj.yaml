@@ -1,0 +1,18 @@
+id: aoj
+name: AIZU ONLINE JUDGE
+
+matches:
+  - https://onlinejudge.u-aizu.ac.jp/*
+
+routes:
+  page: '^/'
+
+navigationLists: []
+
+submission:
+  editor: ace
+  editorElements: ['#editor', '#editor-div']
+  shortcut: Ctrl+Enter
+  submitButtons:
+    - '.editorFooter .submitBtn'
+    - '#submit_button'

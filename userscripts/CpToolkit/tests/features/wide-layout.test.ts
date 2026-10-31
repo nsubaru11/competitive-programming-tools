@@ -1,8 +1,8 @@
 import {afterEach, describe, expect, test} from "bun:test";
-import {createTranslator} from "@catalog/messages";
+import {createFakeServices} from "../support/fakes";
 import {wideLayout} from "@features/wide-layout/index";
 
-const services = {translate: createTranslator(() => "ja" as const)};
+const services = createFakeServices();
 
 function injectedStyles(): string[] {
 	return [...document.querySelectorAll("style")].map((style) => style.textContent ?? "");

@@ -9,6 +9,8 @@ const userscriptsDir = join(dirname(Bun.main), "..");
 async function toDeclaration(path: string): Promise<string> {
 	try {
 		const data: unknown = Bun.YAML.parse(await Bun.file(path).text());
+		// Bun は行末の「...」を文書の終わりと解釈する。値を引用符で囲めば防げる
+		if (Array.isArray(data)) throw new Error("expected a single document; quote any value ending with '...'");
 		return `declare const data: ${JSON.stringify(data)};\nexport default data;\n`;
 	} catch (e) {
 		throw new Error(`${path}: ${e instanceof Error ? e.message : String(e)}`);

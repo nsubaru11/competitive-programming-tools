@@ -1,0 +1,18 @@
+# レーティングの色区分。min 以上の最大の行を使う
+tiers:
+  - {min: 0, color: '#808080', alpha: 0.15, background: '#D9D9D9', className: user-gray}
+  - {min: 400, color: '#804000', alpha: 0.15, background: '#D9C5B2', className: user-brown}
+  - {min: 800, color: '#008000', alpha: 0.15, background: '#B2D9B2', className: user-green}
+  - {min: 1200, color: '#00C0C0', alpha: 0.2, background: '#B2ECEC', className: user-cyan}
+  - {min: 1600, color: '#0000FF', alpha: 0.1, background: '#B2B2FF', className: user-blue}
+  - {min: 2000, color: '#C0C000', alpha: 0.25, background: '#ECECB2', className: user-yellow}
+  - {min: 2400, color: '#FF8000', alpha: 0.2, background: '#FFD9B2', className: user-orange}
+  - {min: 2800, color: '#FF0000', alpha: 0.1, background: '#FFB2B2', className: user-red}
+
+# 王冠を付ける下限と、銀と金の背景
+crownMin: 3200
+crownStep: 400
+crownImage: https://img.atcoder.jp/assets/icon/crown{value}.gif
+silverMax: 3600
+silverBackground: 'linear-gradient(135deg, #E4E4E4, #EEEEEE, #E4E4E4, #CCCCCC, #C4C4C4)'
+goldBackground: 'linear-gradient(135deg, #FFD325, #FDEBA6, #FFE065, #FFCC00, #F0BE00)'

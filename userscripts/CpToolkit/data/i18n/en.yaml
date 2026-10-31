@@ -20,7 +20,151 @@ status.reloadRequired: Reload to apply
 status.failed: Failed to start
 
 category.layout: Layout
+category.statement: Statement
+category.submission: Submissions
+category.contest: Contest
+category.rating: Results
+category.execution: Execution
 
 wideLayout.title: Wider page
 wideLayout.description: Widens the central column of the page.
 wideLayout.width: "Width (e.g. 50%, 1200px)"
+
+hoverMenu.title: Open menus on hover
+hoverMenu.description: Opens menus when the pointer moves over them.
+hoverMenu.openStatementDetails: Expand collapsed sections in statements
+
+statementHighlight.title: Statement highlighting
+statementHighlight.description: Highlights numbers, variables, and the time and memory limits.
+statementHighlight.numberColor: Number color
+statementHighlight.variableColor: Variable color
+statementHighlight.timeColor: Time limit color
+statementHighlight.memoryColor: Memory limit color
+
+statementCopy.title: Copy statement
+statementCopy.description: Adds buttons that copy each section or the whole statement.
+statementCopy.format: Copy format
+statementCopy.formatMarkdown: Markdown
+statementCopy.formatPlain: Plain text
+statementCopy.copy: Copy
+statementCopy.copyAll: Copy all
+statementCopy.copied: Copied
+statementCopy.defaultTitle: Task
+
+efficientLayout.title: Side-by-side samples
+efficientLayout.description: Places the input and output formats and samples side by side.
+efficientLayout.sampleWidth: Width of each sample pair (% of the screen)
+efficientLayout.samples: Samples
+efficientLayout.ioFormat: Input and output
+
+submissionDefaults.title: Default submission filters
+submissionDefaults.description: Applies language, status, and sort defaults to the submission tabs.
+submissionDefaults.language: "Language (e.g. Java, C++, Python)"
+submissionDefaults.status: "Status (e.g. AC, or empty for all)"
+submissionDefaults.orderBy: Sort by
+submissionDefaults.orderTime: Execution time
+submissionDefaults.orderMemory: Memory
+submissionDefaults.orderLength: Code size
+submissionDefaults.orderScore: Score
+submissionDefaults.taskFilter: Also filter by task on task pages
+submissionDefaults.keepQuery: Keep search filters between All and My submissions
+
+submissionShortcuts.title: Shortcuts to AC submissions
+submissionShortcuts.description: Adds links to AC submissions sorted by time and by code size.
+submissionShortcuts.language: Language (empty for all)
+submissionShortcuts.fastest: Fastest
+submissionShortcuts.shortest: Shortest
+
+resultNotifier.title: Submission notifications
+resultNotifier.description: Shows the verdict on any page when judging finishes.
+resultNotifier.desktop: Use desktop notifications while another tab is active
+
+averageResult.title: Average results
+averageResult.description: Shows average time and memory on the submission page.
+averageResult.average: avg.
+
+submissionTimer.title: Timed submission
+submissionTimer.description: Submits your code after the specified time.
+submissionTimer.minutes: Minutes until submission
+submissionTimer.set: Set
+submissionTimer.cancel: Cancel
+submissionTimer.canceled: The timer was canceled.
+submissionTimer.scheduled: "Your code will be submitted around {time}."
+
+taskDropdown.title: Task dropdown
+taskDropdown.description: Opens tasks from the Tasks tab and opens several tasks at once.
+taskDropdown.newTab: Open in a new tab
+taskDropdown.taskTable: Task table
+taskDropdown.openAtOnce: Open at once
+taskDropdown.loadFailed: (Loading failed)
+taskDropdown.all: All
+taskDropdown.range: Specify the range
+taskDropdown.reverse: Open in reverse order
+taskDropdown.cancel: Cancel
+taskDropdown.tabCount: "{count} tabs will open. If pop-ups are blocked, please allow them."
+taskDropdown.tabLimit: "*Up to {count} tabs can be opened at once."
+
+editorialList.title: All editorials
+editorialList.description: Shows the editorials of every task on the editorial page.
+
+topLinks.title: Contest links on the top page
+topLinks.description: Replaces the top page list with links to past contests by type.
+
+tessokuDifficulty.title: Tessoku difficulty
+tessokuDifficulty.description: Shows the difficulty from the book on the Tessoku task list.
+tessokuDifficulty.sortByDifficulty: Sort by difficulty
+tessokuDifficulty.sortById: Sort by task number
+
+ratingGraph.title: Performance graph
+ratingGraph.description: Overlays performance on the rating graph.
+ratingGraph.recentByDefault: Show only recent results at first
+ratingGraph.togglePerformance: Toggle performance
+ratingGraph.showAll: Show all
+ratingGraph.showRecent: Show recent
+
+historyColors.title: Colored contest history
+historyColors.description: Colors performance and rating values in the contest history.
+historyColors.performanceMode: Performance coloring
+historyColors.ratingMode: Rating coloring
+historyColors.modeNone: None
+historyColors.modeText: Text
+historyColors.modeBackground: Background
+
+localRunner.title: Local Runner
+localRunner.description: Connects to the local server used to transform and run Java code.
+localRunner.url: Server URL
+
+javaSubmit.title: Java submission helper
+javaSubmit.description: Transforms pasted code for submission and adds submit shortcuts.
+javaSubmit.removePackage: Remove package declarations without Local Runner
+javaSubmit.renameClass: Rename the class to Main without Local Runner
+javaSubmit.fixDebug: Set DEBUG to false without Local Runner
+javaSubmit.addHeader: Add the submission header
+javaSubmit.headerName: Header name (empty for the default)
+javaSubmit.foldOnPaste: Fold classes and comments after pasting
+
+easyTest.title: Easy Test
+easyTest.description: Runs samples from the task page and shows the results.
+easyTest.precompile: Precompile edited code with Local Runner
+easyTest.keyboardShortcuts: "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)"
+easyTest.savedCodeLimit: Number of saved codes
+easyTest.allowableError: Allowable error
+easyTest.running: "Running..."
+easyTest.run: Run
+easyTest.testAndSubmit: Test & Submit
+easyTest.testAll: Test All Samples
+easyTest.restore: Restore Last Play
+easyTest.environment: Environment
+easyTest.standardInput: Standard input
+easyTest.standardOutput: Standard output
+easyTest.standardError: Standard error
+easyTest.expectedOutput: Expected output
+easyTest.exitCode: Exit code
+easyTest.execTime: Time
+easyTest.memory: Memory
+easyTest.noSavedCode: No saved code was found for this task.
+easyTest.restoreConfirm: Your current code will be replaced. Continue?
+
+paizaLanguage.title: paiza language selection
+paizaLanguage.description: Selects the specified language on paiza submission pages.
+paizaLanguage.language: "Language (e.g. c++, java, python3)"

@@ -295,17 +295,28 @@ async function discoverScripts(explicitNames: string[]): Promise<string[]> {
 // endregion
 
 // region メタ読み込み
-/** data/judges/*.yaml の matches から @match を生成する。meta.json と二重に管理しないため。 */
-async function loadJudgeMatches(name: string): Promise<string[]> {
+/** data/ の YAML から @match と @connect を生成する。meta.json と二重に管理しないため。 */
+async function loadDataMeta(name: string): Promise<ScriptMeta> {
 	const judgesDir = join(scriptDir, name, "data", "judges");
-	if (!(await pathExists(judgesDir))) return [];
+	if (!(await pathExists(judgesDir))) return {};
 	const fileNames = (await readdir(judgesDir)).filter((fileName) => fileName.endsWith(".yaml")).sort();
-	const matches: string[] = [];
+	const match: string[] = [];
 	for (const fileName of fileNames) {
 		const judge = Bun.YAML.parse(await readFile(join(judgesDir, fileName), "utf8")) as {matches?: string[]};
-		matches.push(...(judge.matches ?? []));
+		match.push(...(judge.matches ?? []));
 	}
-	return unique(matches);
+	const runnersPath = join(scriptDir, name, "data", "runners.yaml");
+	const runners = Bun.YAML.parse(await readFile(runnersPath, "utf8")) as {connect?: string[]};
+	return {match: unique(match), connect: runners.connect ?? []};
+}
+
+/** 配布物に含める第三者の表記。1ファイルで配布するので、ライセンスの全文も含める。 */
+async function loadNotices(name: string): Promise<string> {
+	const noticesPath = join(scriptDir, name, "NOTICES.txt");
+	if (!(await pathExists(noticesPath))) return "";
+	const notices = await readFile(noticesPath, "utf8");
+	const apacheLicense = await readFile(join(scriptDir, "..", "LICENSES", "Apache-2.0.txt"), "utf8");
+	return `/*!\n${notices}\n${apacheLicense.replace(/\r\n/g, "\n")}\n*/\n\n`;
 }
 
 async function loadMeta(name: string): Promise<ScriptMeta> {
@@ -317,20 +328,41 @@ async function loadMeta(name: string): Promise<ScriptMeta> {
 	} catch (e) {
 		throw new Error(`${basename(metaPath)} for ${name}: invalid JSON — ${errorMessage(e)}`);
 	}
-	const meta = validateMeta(parsed, name);
-	const match = await loadJudgeMatches(name);
-	return match.length > 0 ? {...meta, match} : meta;
+	return {...validateMeta(parsed, name), ...(await loadDataMeta(name))};
 }
 
 // endregion
 
 // region ビルド
-async function formatUserscriptOutput(outfile: string, banner: string): Promise<void> {
+/** CP Toolkit へ統合したスクリプトと、新版へ引き継ぐ GM の設定キー。 */
+const RETIRED_SCRIPTS: Readonly<Record<string, readonly string[]>> = {
+	AtCoderCustomDefaultSubmissions: ["config"],
+	AtCoderEasyTestForJava: ["config"],
+	AtCoderHighlighter: ["numColor", "varColor", "timeLimitColor", "memoryLimitColor"],
+	AtCoderListingTasks: [],
+	AtCoderMarkdownCopier: [],
+	AtCoderPerformanceOverlay: [],
+	AtCoderWidenContainer: ["containerWidth"],
+	JavaCodeSubmitter: [],
+};
+
+/** 更新を終了したスクリプトは、CP Toolkit が動いていれば本体を実行しない。 */
+async function wrapRetiredScript(name: string, body: string): Promise<string> {
+	const settingKeys = RETIRED_SCRIPTS[name];
+	if (!settingKeys) return body;
+	const template = await readFile(join(scriptDir, "retirement.js"), "utf8");
+	const retirement = template
+		.replaceAll("__SCRIPT_ID__", name)
+		.replaceAll("__SETTING_KEYS__", JSON.stringify(settingKeys));
+	return `${retirement}\nif (!cpToolkitRetirement.replaced) {\n${body}\n}\n`;
+}
+
+async function formatUserscriptOutput(outfile: string, banner: string, notices: string, name: string): Promise<void> {
 	const raw = await readFile(outfile, "utf8");
 	if (!raw.startsWith(banner)) {
 		throw new Error(`Generated output does not start with the expected UserScript metadata: ${outfile}`);
 	}
-	const body = raw.slice(banner.length).trimStart();
+	const body = await wrapRetiredScript(name, raw.slice(banner.length).trimStart());
 	const formattedBody = await format(body, {
 		parser: "babel",
 		useTabs: true,
@@ -339,7 +371,7 @@ async function formatUserscriptOutput(outfile: string, banner: string): Promise<
 		endOfLine: "lf",
 		embeddedLanguageFormatting: "off",
 	});
-	await writeFile(outfile, `${banner}\n${formattedBody}`, "utf8");
+	await writeFile(outfile, `${banner}\n${notices}${formattedBody}`, "utf8");
 }
 
 async function buildOne(name: string): Promise<void> {
@@ -365,7 +397,7 @@ async function buildOne(name: string): Promise<void> {
 		throw new Error(`Build failed: ${name}`);
 	}
 
-	await formatUserscriptOutput(outfile, banner);
+	await formatUserscriptOutput(outfile, banner, await loadNotices(name), name);
 
 	const output = await stat(outfile);
 	console.log(`  -> ${name}/dist/${name}.user.js (${output.size} bytes)`);

@@ -1,9 +1,42 @@
 {
 	"extends": "../tsconfig.layer.json",
 	"compilerOptions": {
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
-		"types": ["bun-types"]
+		"lib": [
+			"ES2022",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"types": [
+			"bun-types",
+			"tampermonkey"
+		]
 	},
-	"include": ["./**/*.ts", "../types/assets.d.ts"],
-	"references": [{"path": "../src/domain"}, {"path": "../src/catalog"}, {"path": "../src/application"}, {"path": "../src/ui"}, {"path": "../src/adapters"}, {"path": "../src/features"}, {"path": "../src/app"}]
+	"include": [
+		"./**/*.ts",
+		"../types/assets.d.ts",
+		"../types/turndown-plugin-gfm.d.ts"
+	],
+	"references": [
+		{
+			"path": "../src/domain"
+		},
+		{
+			"path": "../src/catalog"
+		},
+		{
+			"path": "../src/application"
+		},
+		{
+			"path": "../src/ui"
+		},
+		{
+			"path": "../src/adapters"
+		},
+		{
+			"path": "../src/features"
+		},
+		{
+			"path": "../src/app"
+		}
+	]
 }

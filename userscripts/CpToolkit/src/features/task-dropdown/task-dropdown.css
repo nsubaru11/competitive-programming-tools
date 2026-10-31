@@ -1,0 +1,22 @@
+.cp-task-menu {
+	max-height: 70vh;
+	overflow: visible auto;
+}
+
+.cp-task-menu label {
+	width: 100%;
+	margin: 0;
+	padding: 3px 20px;
+	font-weight: normal;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.cp-task-menu label:hover {
+	background-color: #f5f5f5;
+}
+
+.cp-task-menu input {
+	margin: 0 4px 0 0;
+	vertical-align: middle;
+}

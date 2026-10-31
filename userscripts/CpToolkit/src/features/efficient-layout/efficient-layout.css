@@ -1,0 +1,22 @@
+.io-style {
+	display: flex;
+	justify-content: space-between;
+}
+
+.io-style > * {
+	width: 100%;
+}
+
+.cp-samples-container {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.cp-samples-row {
+	display: flex;
+}
+
+.cp-samples-row > * {
+	width: var(--cp-sample-width);
+	margin: 0 1em;
+}

@@ -1,0 +1,24 @@
+id: codeforces
+name: Codeforces
+
+matches:
+  - https://codeforces.com/*
+  - https://*.contest.codeforces.com/*
+  - https://m1.codeforces.com/*
+  - https://m2.codeforces.com/*
+  - https://m3.codeforces.com/*
+
+routes:
+  page: '^/'
+  problem: '^/(contest/[^/]+/problem|gym/[^/]+/problem|problemset/problem|group/[^/]+/contest/[^/]+/problem)/'
+
+navigationLists: []
+
+submission:
+  editor: ace
+  editorElements: ['#editor']
+  shortcut: Ctrl+Shift+Enter
+  submitButtons:
+    - '.submit-form .submit'
+    - '.submitForm .submit'
+    - 'input[type="submit"].submit'

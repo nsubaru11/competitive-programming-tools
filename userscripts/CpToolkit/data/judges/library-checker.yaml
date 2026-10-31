@@ -1,0 +1,19 @@
+id: libraryChecker
+name: Library Checker
+
+matches:
+  - https://judge.yosupo.jp/problem/*
+
+routes:
+  page: '^/problem/'
+
+navigationLists: []
+
+submission:
+  editor: monaco
+  editorElements: []
+  shortcut: Ctrl+Shift+Alt+Enter
+  submitButtons: []
+  labeledSubmit:
+    selector: 'form button[type="submit"], form input[type="submit"]'
+    labels: ['提出', 'submit']

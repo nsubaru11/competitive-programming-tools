@@ -8,8 +8,36 @@ matches:
 # パスとクエリに対する正規表現
 routes:
   page: '^/[^?]'  # トップページ以外
+  home: '^/(\?|$)'
+  contest: '^/contests/(?!archive)[^/?#]+'
+  task: '^/contests/[^/]+/tasks/[^/?#]+'
+  tasksPrint: '^/contests/[^/]+/tasks_print'
+  tessokuTasks: '^/contests/tessoku-book/tasks/?(\?|$)'
+  submit: '^/contests/[^/]+/submit'
+  submissions: '^/contests/[^/]+/submissions(/me)?/?(\?|$)'
+  submissionDetail: '^/contests/[^/]+/submissions/\d+'
+  editorial: '^/contests/[^/]+/editorial/?(\?|$)'
+  user: '^/users/[^/?#]+/?(\?(?!.*graph=(rank|dist)).*)?$'
+  userHistory: '^/users/[^/]+/history'
 
 # 設定画面へのリンクを追加するメニュー。ヘッダーの形が2種類あるため上から順に探す
 navigationLists:
   - '#navbar-collapse .navbar-right'  # コンテストのページ
   - '#header .header-page'            # それ以外のページ
+
+submission:
+  editor: ace
+  editorElements: ['#editor']
+  shortcut: Ctrl+Shift+Enter
+  submitButtons: ['#submit']
+
+# サンプルの場所。コンテストにより問題文の書式が違うので、見つかるまで順に試す
+samples:
+  - {selector: '#task-statement p+pre.literal-block', container: .section}
+  - {selector: '#task-statement pre.source-code-for-copy', container: .part}
+  - {selector: '#task-statement .lang>*:nth-child(1) .div-btn-copy+pre', container: .part}
+  - {selector: '#task-statement .div-btn-copy+pre', container: .part}
+  - {selector: '#task-statement>.part pre.linenums', container: .part}
+  - {selector: '#task-statement>.part section>pre', container: .part}
+  - {selector: '#task-statement>.part:not(.io-style)>h3+section>pre', container: .part}
+  - {selector: '#task-statement pre', container: .part}

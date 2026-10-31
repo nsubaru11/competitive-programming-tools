@@ -1,3 +1,16 @@
+/** Java の提出を補助するための、サイトごとの情報。 */
+export type SubmissionTarget = {
+	readonly editor: "ace" | "monaco";
+	readonly editorElements: readonly string[];
+	readonly shortcut: string;
+	readonly submitButtons: readonly string[];
+	/** セレクタだけでは特定できない場合に、表示文言で探す。 */
+	readonly labeledSubmit?: {
+		readonly selector: string;
+		readonly labels: readonly string[];
+	};
+};
+
 export type JudgeDefinition = {
 	readonly id: string;
 	readonly name: string;
@@ -7,6 +20,7 @@ export type JudgeDefinition = {
 	readonly routes: Readonly<Record<string, string>>;
 	/** 設定画面へのリンクを追加するメニューのセレクタ。上から順に探す。 */
 	readonly navigationLists: readonly string[];
+	readonly submission?: SubmissionTarget;
 };
 
 export type PageMatch = {

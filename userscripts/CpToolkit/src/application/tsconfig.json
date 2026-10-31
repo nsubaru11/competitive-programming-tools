@@ -5,5 +5,5 @@
 		"types": []
 	},
 	"include": ["./**/*.ts"],
-	"references": [{"path": "../domain"}, {"path": "../catalog"}]
+	"references": [{"path": "../../../../shared"}, {"path": "../domain"}, {"path": "../catalog"}]
 }

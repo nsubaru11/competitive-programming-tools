@@ -1,0 +1,45 @@
+CP Toolkit includes code derived from the following projects.
+The toolkit's own code is available under the 0BSD license.
+
+AtCoder Custom Default Submissions by ktnyori (MIT)
+https://greasyfork.org/scripts/393705-atcoder-custom-default-submissions
+
+AtCoder Easy Test v2 by magurofly (MIT)
+https://greasyfork.org/scripts/433152-atcoder-easy-test-v2
+
+AtCoder Perf Graph by nzm_ort (MIT)
+https://greasyfork.org/scripts/476103-atcoder-perf-graph
+
+AtCoder Listing Tasks by luuguas (Apache-2.0), modified by nsubaru
+https://github.com/luuguas/AtCoderListingTasks
+
+turndown 7.2.4 by Dom Christie (MIT)
+https://github.com/mixmark-io/turndown
+
+turndown-plugin-gfm 1.0.2 by Dom Christie (MIT)
+https://github.com/mixmark-io/turndown-plugin-gfm
+
+Copyright (c) ktnyori
+Copyright (c) magurofly
+Copyright (c) nzm_ort
+Copyright (c) 2017 Dom Christie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The Apache License 2.0 below applies to the parts derived from AtCoder Listing Tasks.

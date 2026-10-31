@@ -8,7 +8,7 @@ import {FeatureRuntime} from "@application/feature/runtime";
 import {SettingsService} from "@application/settings/settings-service";
 import {createSettingsPanel} from "@features/settings-panel/index";
 import {addNavigationEntry} from "@features/settings-panel/navigation-entry";
-import {immediateLifecycle, MemoryStore, RecordingLogger} from "../support/fakes";
+import {createFakeServices, immediateLifecycle, MemoryStore, RecordingLogger} from "../support/fakes";
 
 const translate = createTranslator(() => "ja");
 
@@ -60,7 +60,7 @@ describe("設定画面", () => {
 			page: matchPage(judges, "https://atcoder.jp/home"),
 			lifecycle: immediateLifecycle,
 			settings,
-			services: {translate},
+			services: createFakeServices(),
 			logger: new RecordingLogger(),
 		});
 		runtime.start();

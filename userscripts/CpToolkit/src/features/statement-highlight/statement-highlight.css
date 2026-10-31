@@ -1,0 +1,22 @@
+.cp-statement-target .katex .mathnormal,
+.cp-statement-target .cp-number {
+	font-weight: 800 !important;
+}
+
+.cp-statement-target .katex .mathnormal {
+	color: var(--cp-variable-color) !important;
+}
+
+.cp-statement-target .cp-number {
+	color: var(--cp-number-color) !important;
+}
+
+.cp-time-limit {
+	color: var(--cp-time-color);
+	font-size: 2em;
+}
+
+.cp-memory-limit {
+	color: var(--cp-memory-color);
+	font-size: 2em;
+}

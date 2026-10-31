@@ -1,0 +1,9 @@
+# まとめて開く範囲を、コンテストの種類ごとに記憶するための分類
+regularPrefixes: [abc, arc, agc, ahc, past, joi, jag]
+permanentPrefixes: [practice, APG4b, abs, practice2, typical90, math-and-algorithm, tessoku-book]
+
+# 一度に開けるタブの上限
+maxTabsAtOnce: 20
+
+# 問題一覧のキャッシュの保持期間(日)
+taskCacheDays: 10

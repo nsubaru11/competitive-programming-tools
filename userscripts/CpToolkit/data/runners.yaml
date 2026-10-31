@@ -1,0 +1,48 @@
+# 実行環境の候補を並べる順番
+order: [local, judge, browser, paiza, wandbox]
+
+# 実行環境が内部エラーを返したときに、次の候補へ切り替える回数
+maxRetry: 3
+
+# Tampermonkey の @connect に出力する
+connect:
+  - localhost
+  - 127.0.0.1
+  - api.paiza.io
+  - wandbox.org
+  - cdn.jsdelivr.net
+
+paiza:
+  apiBase: https://api.paiza.io/runners
+  languages:
+    - {family: c, language: c, label: C (C17 / Clang)}
+    - {family: python3, language: python3, label: Python3}
+    - {family: bash, language: bash, label: Bash}
+    - {family: clojure, language: clojure, label: Clojure}
+    - {family: d, language: d, label: D (LDC)}
+    - {family: erlang, language: erlang, label: Erlang}
+    - {family: elixir, language: elixir, label: Elixir}
+    - {family: fsharp, language: fsharp, label: 'F# (Interactive)'}
+    - {family: haskell, language: haskell, label: Haskell}
+    - {family: javascript, language: javascript, label: JavaScript}
+    - {family: kotlin, language: kotlin, label: Kotlin}
+    - {family: objective-c, language: objective-c, label: Objective-C}
+    - {family: perl, language: perl, label: Perl}
+    - {family: php, language: php, label: PHP}
+    - {family: ruby, language: ruby, label: Ruby}
+    - {family: rust, language: rust, label: Rust}
+    - {family: scala, language: scala, label: Scala}
+    - {family: scheme, language: scheme, label: Scheme}
+    - {family: swift, language: swift, label: Swift}
+    - {family: basic, language: vb, label: Visual Basic}
+    - {family: cobol, language: cobol, label: COBOL - Free}
+
+wandbox:
+  listUrl: https://wandbox.org/api/list.json
+  compileUrl: https://wandbox.org/api/compile.json
+  cacheHours: 24
+  # C++ の提出で使う AtCoder Library の取得元
+  aclBaseUrl: https://cdn.jsdelivr.net/gh/atcoder/ac-library/
+
+pyodide:
+  baseUrl: https://cdn.jsdelivr.net/pyodide/v0.24.0/full/
