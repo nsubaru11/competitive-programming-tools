@@ -2,7 +2,7 @@
 // @name           AtCoder Highlighter
 // @name:en        AtCoder Highlighter
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.3.7
+// @version        1.3.8
 // @description    AtCoder の問題文中の数字と変数、実行時間/メモリ制限を自動で強調表示させます
 // @description:en Automatically highlights numbers, variables, and time/memory limits in AtCoder task statements
 // @description:ja AtCoder の問題文中の数字と変数、実行時間/メモリ制限を自動で強調表示させます

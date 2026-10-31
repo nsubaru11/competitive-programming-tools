@@ -2,7 +2,7 @@
 // @name           AtCoder Performance Overlay
 // @name:en        AtCoder Performance Overlay
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.9
+// @version        1.1.10
 // @description    レーティンググラフにパフォーマンスのグラフを重ねて表示します。
 // @description:en Overlays performance charts on the AtCoder rating graph.
 // @description:ja レーティンググラフにパフォーマンスのグラフを重ねて表示します。

@@ -2,7 +2,7 @@
 // @name           AtCoder Listing Tasks
 // @name:en        AtCoder Listing Tasks
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.5.9
+// @version        1.5.10
 // @description    「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Hover on the "Tasks" tab to open a drop-down list that takes you to the page for each problem in the contest.
 // @description:ja 「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。

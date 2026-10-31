@@ -2,7 +2,7 @@
 // @name           AtCoder Easy Test for Java
 // @name:en        AtCoder Easy Test for Java
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.8.0
+// @version        1.8.1
 // @description    AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。
 // @description:en Automates sample testing on AtCoder, yukicoder, and Codeforces. Optimized for Java.
 // @description:ja AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。

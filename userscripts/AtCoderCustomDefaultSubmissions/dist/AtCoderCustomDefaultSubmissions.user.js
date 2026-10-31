@@ -2,7 +2,7 @@
 // @name           AtCoder Custom Default Submissions
 // @name:en        AtCoder Custom Default Submissions
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.6.6
+// @version        1.6.7
 // @description    AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
 // @description:en Sets default filters and sorting for AtCoder submission lists. Settings can be changed from the menu.
 // @description:ja AtCoderのすべての提出・自分の提出の絞り込み、並び替え設定のデフォルトを設定します。メニューから設定を変更できます。
