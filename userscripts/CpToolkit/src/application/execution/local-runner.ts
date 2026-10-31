@@ -52,7 +52,8 @@ export class LocalRunnerClient {
 	prepare(sourceCode: string): Promise<LocalRunnerPrepareResponse> {
 		const endpoint = this.endpoint() ?? "";
 		if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode) return this.prepared.response;
-		const response = this.post<LocalRunnerPrepareResponse>(buildLocalRunnerPrepareRequest(sourceCode, true, true, false));
+		const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false);
+		const response = this.post<LocalRunnerPrepareResponse>(request);
 		this.prepared = {endpoint, sourceCode, response};
 		response.catch(() => {
 			if (this.prepared?.response === response) this.prepared = null;
@@ -61,7 +62,11 @@ export class LocalRunnerClient {
 	}
 
 	/** コンパイル済みのプログラムを実行する。古いサーバーには、ソースをそのまま渡す。 */
-	async run(sourceCode: string, input: string, compilerName: string): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
+	async run(
+		sourceCode: string,
+		input: string,
+		compilerName: string,
+	): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
 		let prepared: LocalRunnerPrepareResponse;
 		try {
 			prepared = await this.prepare(sourceCode);

@@ -1,6 +1,7 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
+		"target": "ES2024",
 		"composite": true,
 		"noEmit": false,
 		"emitDeclarationOnly": true,
@@ -9,6 +10,12 @@
 		"allowArbitraryExtensions": true,
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"exactOptionalPropertyTypes": true,
+		"verbatimModuleSyntax": true,
 		"paths": {
 			"@data/*": ["./data/*"],
 			"@domain/*": ["./src/domain/*"],

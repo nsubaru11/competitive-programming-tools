@@ -1,17 +1,15 @@
 import {atcoderSampleSelectors} from "@catalog/judges";
-import type {JudgeLanguage} from "@domain/execution/result";
-import type {JudgeMounts, JudgeSite, SampleCase} from "@application/ports/judge-site";
+import type {JudgeMounts, SampleCase} from "@application/ports/judge-site";
 import type {PageBridge} from "@application/ports/page-bridge";
 import type {HttpClient} from "@application/ports/services";
 import {pageGlobals} from "@adapters/page/globals";
-import {languagesOf} from "./languages";
+import {JudgeSiteBase} from "./site-base";
 
 function pairs<T>(items: readonly T[]): Array<[T, T]> {
-	const result: Array<[T, T]> = [];
-	for (let index = 0; index + 1 < items.length; index += 2) {
-		result.push([items[index] as T, items[index + 1] as T]);
-	}
-	return result;
+	return items.flatMap((item, index): Array<[T, T]> => {
+		const next = items[index + 1];
+		return index % 2 === 0 && next !== undefined ? [[item, next]] : [];
+	});
 }
 
 /** コンテストにより書式が違うので、サンプルが見つかるセレクタまで順に試す。 */
@@ -35,11 +33,12 @@ function parseSamples(page: Document): SampleCase[] {
 	return [];
 }
 
-export class AtCoderSite implements JudgeSite {
+export class AtCoderSite extends JudgeSiteBase {
 	readonly id = "atcoder";
 	private readonly samplesByTask = new Map<string, Promise<readonly SampleCase[]>>();
 
-	constructor(private readonly bridge: PageBridge, private readonly site: HttpClient) {
+	constructor(bridge: PageBridge, private readonly site: HttpClient) {
+		super(bridge);
 	}
 
 	get mounts(): JudgeMounts {
@@ -54,30 +53,21 @@ export class AtCoderSite implements JudgeSite {
 		return document.querySelector("#select-task");
 	}
 
-	private get languageSelect(): HTMLSelectElement | null {
+	protected get languageSelect(): HTMLSelectElement | null {
 		return document.querySelector("#select-lang select.current");
 	}
 
-	taskUri(): string {
+	override taskUri(): string {
 		const task = this.taskSelect?.value;
 		if (!task) return `${location.origin}${location.pathname}`;
 		return `${location.origin}/contests/${pageGlobals().contestScreenName}/tasks/${task}`;
 	}
 
-	languages(): readonly JudgeLanguage[] {
-		return languagesOf(this.languageSelect);
-	}
-
-	language(): JudgeLanguage | null {
-		const id = this.languageSelect?.value;
-		return this.languages().find((language) => language.id === id) ?? null;
-	}
-
-	onLanguageChange(listener: () => void): void {
+	override onLanguageChange(listener: () => void): void {
 		for (const select of document.querySelectorAll("#select-lang select")) this.bridge.onChange(select, listener);
 	}
 
-	onSourceChange(listener: () => void): void {
+	override onSourceChange(listener: () => void): void {
 		const element = document.querySelector("#editor");
 		const ace = pageGlobals().ace;
 		if (ace && element) ace.edit(element).getSession().on("change", listener);

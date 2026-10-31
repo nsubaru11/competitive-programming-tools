@@ -1,8 +1,11 @@
+import type {MessageKey} from "@catalog/messages";
 import type {RunOptions, RunResult, TestCase} from "@domain/execution/result";
 import {option} from "@domain/settings/option";
+import {isRecordOf, isString} from "@domain/validation/guards";
 import type {CodeRunner} from "@application/execution/runner-catalog";
 import {defineFeature, type FeatureContext} from "@application/feature/definition";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
+import {readStored} from "@application/ports/key-value-store";
 import {createDock, type Dock, type DockTab} from "@ui/dock/dock";
 import {h, injectStyle} from "@ui/element";
 import {registerShortcut} from "@ui/shortcuts";
@@ -66,15 +69,15 @@ class EasyTest {
 			type: "button",
 			className: `btn ${className}`,
 			textContent: label,
-			onclick: onClick
+			onclick: onClick,
 		});
 		button.classList.toggle("disabled", !this.runnable);
 		this.buttons.push(button);
 		return button;
 	}
 
-	private createTestButton(label: string, className: string, shortcut: string, onClick: () => void): HTMLButtonElement {
-		const button = this.createButton(label, className, onClick);
+	private createTestButton(label: MessageKey, className: string, shortcut: string, onClick: () => void): HTMLElement {
+		const button = this.createButton(this.context.translate(label), className, onClick);
 		button.title = shortcut;
 		button.style.marginLeft = "1rem";
 		return button;
@@ -85,15 +88,15 @@ class EasyTest {
 		const {testButtons, sideButtons, results} = this.site.mounts;
 		if (testButtons instanceof Element) {
 			testButtons.append(
-				this.createTestButton(translate("easyTest.testAndSubmit"), "btn-info", TEST_AND_SUBMIT_KEY, () => void this.testAndSubmit()),
-				this.createTestButton(translate("easyTest.testAll"), "btn-default btn-sm", TEST_ALL_KEY, () => void this.testAll()),
+				this.createTestButton("easyTest.testAndSubmit", "btn-info", TEST_AND_SUBMIT_KEY, () => void this.testAndSubmit()),
+				this.createTestButton("easyTest.testAll", "btn-default btn-sm", TEST_ALL_KEY, () => void this.testAll()),
 			);
 		}
 		if (sideButtons instanceof Element) {
 			sideButtons.append(h("a", {
 				className: "btn btn-danger btn-sm",
 				textContent: translate("easyTest.restore"),
-				onclick: () => this.restore()
+				onclick: () => this.restore(),
 			}));
 		}
 		if (results instanceof Element) results.append(this.resultList);
@@ -101,9 +104,10 @@ class EasyTest {
 
 	private placeSampleButtons(): void {
 		void this.site.samples().then((samples) => {
+			const label = this.context.translate("easyTest.run");
 			for (const sample of samples) {
 				if (!(sample.anchor instanceof Element)) continue;
-				const button = this.createButton(this.context.translate("easyTest.run"), "btn-primary btn-sm", () => void this.runSample(sample));
+				const button = this.createButton(label, "btn-primary btn-sm", () => void this.runSample(sample));
 				button.style.verticalAlign = "top";
 				button.style.marginLeft = "0.5em";
 				sample.anchor.after(button);
@@ -136,7 +140,7 @@ class EasyTest {
 	}
 
 	private selections(): Readonly<Record<string, string>> {
-		return (this.context.state.get(RUNNER_SELECTION_KEY) ?? {}) as Readonly<Record<string, string>>;
+		return readStored(this.context.state, RUNNER_SELECTION_KEY, isRecordOf(isString), {});
 	}
 
 	private rememberRunner(): void {
@@ -167,7 +171,7 @@ class EasyTest {
 			environment.dataset.signature = signature;
 			environment.replaceChildren(...candidates.map(({id, label}) => h("option", {
 				value: id,
-				textContent: label
+				textContent: label,
 			})));
 			if (candidates.length === 0) environment.append(h("option", {textContent: translate("easyTest.noEnvironment")}));
 		}
@@ -199,10 +203,11 @@ class EasyTest {
 		const tab = this.dock.addTab(`#${++this.runCount} ${testCase.title}`, view.element, {closable: true});
 		this.running++;
 		this.setRunnable(false);
-		const result = runners.test(this.candidates, this.panel.environment.value, code, testCase, this.runOptions(options));
+		const firstRunnerId = this.panel.environment.value;
+		const result = runners.test(this.candidates, firstRunnerId, code, testCase, this.runOptions(options));
 		void result.then((value) => {
 			view.show(value);
-			const tone = toneOf(value);
+			const tone = toneOf(value.status);
 			if (tone) tab.setTone(tone);
 		}).finally(() => {
 			if (--this.running === 0) this.setRunnable(this.candidates.length > 0);

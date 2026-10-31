@@ -1,8 +1,9 @@
 import {languageCatalog, runnerCatalog} from "@catalog/tables";
 import {resolveFamily} from "@domain/execution/language";
 import type {JudgeLanguage, RunOptions, RunResult} from "@domain/execution/result";
+import {type Guard, isArrayOf, isNumber, isObjectOf, isString} from "@domain/validation/guards";
 import type {CodeRunner, RunnerProvider} from "@application/execution/runner-catalog";
-import type {KeyValueStore} from "@application/ports/key-value-store";
+import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 import type {HttpClient} from "@application/ports/services";
 
 type WandboxCompiler = {
@@ -25,6 +26,19 @@ type CompilerCache = {
 	readonly compilers: readonly WandboxCompiler[];
 	readonly fetchedAt: number;
 };
+
+type CompilerSwitches = WandboxCompiler["switches"];
+
+const isSwitches: Guard<CompilerSwitches> = (value): value is CompilerSwitches => Array.isArray(value);
+const isCompilerCache = isObjectOf<CompilerCache>({
+	compilers: isArrayOf(isObjectOf<WandboxCompiler>({
+		name: isString,
+		language: isString,
+		version: isString,
+		switches: isSwitches,
+	})),
+	fetchedAt: isNumber,
+});
 
 const CACHE_KEY = "easy-test:wandbox-compilers";
 const HOUR_MS = 60 * 60 * 1000;
@@ -58,7 +72,7 @@ class WandboxRunner implements CodeRunner {
 				options: this.optimization,
 				...(usesAcl ? {
 					"compiler-option-raw": "-I.",
-					codes: [...files].map(([file, code]) => ({file, code}))
+					codes: [...files].map(([file, code]) => ({file, code})),
 				} : {}),
 			}),
 		});
@@ -103,7 +117,7 @@ export class WandboxRunnerProvider implements RunnerProvider {
 	}
 
 	private async compilers(): Promise<readonly WandboxCompiler[]> {
-		const cached = this.state.get(CACHE_KEY) as CompilerCache | undefined;
+		const cached = readStored(this.state, CACHE_KEY, isCompilerCache, null);
 		if (cached && Date.now() - cached.fetchedAt < runnerCatalog.wandbox.cacheHours * HOUR_MS) return cached.compilers;
 		const response = await this.http.send({url: runnerCatalog.wandbox.listUrl});
 		const compilers = JSON.parse(response.text) as readonly WandboxCompiler[];

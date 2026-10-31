@@ -1,8 +1,7 @@
-import type {JudgeLanguage} from "@domain/execution/result";
-import type {JudgeMounts, JudgeSite, SampleCase} from "@application/ports/judge-site";
+import type {JudgeMounts, SampleCase} from "@application/ports/judge-site";
 import type {PageBridge} from "@application/ports/page-bridge";
 import {pageGlobals} from "@adapters/page/globals";
-import {languagesOf} from "./languages";
+import {JudgeSiteBase} from "./site-base";
 
 const LANGUAGE_SELECT = "select[name='programTypeId']";
 
@@ -15,46 +14,9 @@ function readSampleBlock(pre: Element): string {
 	}).join("");
 }
 
-abstract class CodeforcesSiteBase implements JudgeSite {
-	readonly id = "codeforces";
-	abstract readonly mounts: JudgeMounts;
-
-	constructor(private readonly bridge: PageBridge) {
-	}
-
-	protected abstract get languageSelect(): HTMLSelectElement | null;
-
-	abstract sourceCode(): string;
-
-	abstract setSourceCode(code: string): void;
-
-	abstract submit(): void;
-
-	abstract samples(): Promise<readonly SampleCase[]>;
-
-	taskUri(): string {
-		return location.href;
-	}
-
-	languages(): readonly JudgeLanguage[] {
-		return languagesOf(this.languageSelect);
-	}
-
-	language(): JudgeLanguage | null {
-		const id = this.languageSelect?.value;
-		return this.languages().find((language) => language.id === id) ?? null;
-	}
-
-	onLanguageChange(listener: () => void): void {
-		if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
-	}
-
-	onSourceChange(_listener: () => void): void {
-	}
-}
-
 /** 問題ページの提出欄はファイルしか受け付けないので、入力欄を用意する。 */
-export class CodeforcesSite extends CodeforcesSiteBase {
+export class CodeforcesSite extends JudgeSiteBase {
+	readonly id = "codeforces";
 	private readonly buttons = document.createElement("span");
 	private readonly textarea = document.createElement("textarea");
 
@@ -128,7 +90,9 @@ export class CodeforcesSite extends CodeforcesSiteBase {
 }
 
 /** モバイル版には提出欄がないので、提出ページのフォームを問題ページへ移す。 */
-export class CodeforcesMobileSite extends CodeforcesSiteBase {
+export class CodeforcesMobileSite extends JudgeSiteBase {
+	readonly id = "codeforces";
+
 	private constructor(bridge: PageBridge, private readonly main: Element, private readonly form: HTMLFormElement) {
 		super(bridge);
 	}

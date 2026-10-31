@@ -13,21 +13,27 @@ const MATH_OPTIONS = {
 	throwOnError: false,
 };
 
+function toElement(target: object): Element {
+	if (target instanceof Element) return target;
+	throw new TypeError("A page element is required.");
+}
+
 export class UnsafeWindowPageBridge implements PageBridge {
 	onChange(element: object, listener: () => void): void {
 		const jQuery = pageGlobals().jQuery;
 		if (jQuery) jQuery(element).on("change", listener);
-		else (element as Element).addEventListener("change", listener);
+		else toElement(element).addEventListener("change", listener);
 	}
 
 	triggerChange(element: object): void {
-		(element as Element).dispatchEvent(new Event("input", {bubbles: true}));
-		(element as Element).dispatchEvent(new Event("change", {bubbles: true}));
+		const target = toElement(element);
+		target.dispatchEvent(new Event("input", {bubbles: true}));
+		target.dispatchEvent(new Event("change", {bubbles: true}));
 		pageGlobals().jQuery?.(element).trigger("change");
 	}
 
 	renderMath(target: object): void {
-		pageGlobals().renderMathInElement?.(target as Element, MATH_OPTIONS);
+		pageGlobals().renderMathInElement?.(toElement(target), MATH_OPTIONS);
 	}
 
 	highlightCode(): void {

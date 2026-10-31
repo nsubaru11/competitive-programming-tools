@@ -4,9 +4,6 @@ import {h} from "@ui/element";
 
 const TASK_LIST = "#main-container > div.row > div:nth-child(2)";
 
-const taskIdOf = (row: Element): string => row.querySelector("td")?.textContent?.trim() ?? "";
-const difficultyOf = (row: Element): number => tessokuDifficulties[taskIdOf(row)] ?? Number.POSITIVE_INFINITY;
-
 export const tessokuDifficulty = defineFeature({
 	id: "tessoku-difficulty",
 	title: "tessokuDifficulty.title",
@@ -21,9 +18,11 @@ export const tessokuDifficulty = defineFeature({
 		const heading = document.querySelector(`${TASK_LIST} > h2`);
 		if (!body || !heading) return;
 
-		const rows = [...body.querySelectorAll("tr")];
-		for (const row of rows) {
-			const difficulty = tessokuDifficulties[taskIdOf(row)];
+		const tasks = [...body.querySelectorAll("tr")].map((row) => {
+			const id = row.querySelector("td")?.textContent?.trim() ?? "";
+			return {row, id, difficulty: tessokuDifficulties[id]};
+		});
+		for (const {row, difficulty} of tasks) {
 			const link = row.querySelector("td:nth-child(2) a");
 			if (difficulty !== undefined && link) link.prepend(`【☆${difficulty}】 `);
 		}
@@ -35,11 +34,13 @@ export const tessokuDifficulty = defineFeature({
 			textContent: translate("tessokuDifficulty.sortByDifficulty"),
 			onclick() {
 				sortedByDifficulty = !sortedByDifficulty;
-				const sorted = [...rows].sort((a, b) => {
-					return sortedByDifficulty ? difficultyOf(a) - difficultyOf(b) : taskIdOf(a).localeCompare(taskIdOf(b));
+				const sorted = tasks.toSorted((a, b) => {
+					if (!sortedByDifficulty) return a.id.localeCompare(b.id);
+					return (a.difficulty ?? Number.POSITIVE_INFINITY) - (b.difficulty ?? Number.POSITIVE_INFINITY);
 				});
-				body.append(...sorted);
-				button.textContent = translate(sortedByDifficulty ? "tessokuDifficulty.sortById" : "tessokuDifficulty.sortByDifficulty");
+				body.append(...sorted.map(({row}) => row));
+				const nextOrder = sortedByDifficulty ? "tessokuDifficulty.sortById" : "tessokuDifficulty.sortByDifficulty";
+				button.textContent = translate(nextOrder);
 			},
 		});
 		heading.after(button);

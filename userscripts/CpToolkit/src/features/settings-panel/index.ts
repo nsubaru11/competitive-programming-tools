@@ -20,14 +20,6 @@ export type SettingsPanel = {
 	open(): void;
 };
 
-function groupByCategory(features: readonly Feature[]): Map<MessageKey, Feature[]> {
-	const groups = new Map<MessageKey, Feature[]>();
-	for (const feature of features) {
-		groups.set(feature.category, [...(groups.get(feature.category) ?? []), feature]);
-	}
-	return groups;
-}
-
 function downloadText(fileName: string, text: string): void {
 	const url = URL.createObjectURL(new Blob([text], {type: "application/json"}));
 	h("a", {href: url, download: fileName}).click();
@@ -54,7 +46,7 @@ export function createSettingsPanel(dependencies: SettingsPanelDependencies): Se
 
 	const render = (): void => {
 		rows = [];
-		const sections = [...groupByCategory(features)].map(([category, members]) => {
+		const sections = [...Map.groupBy(features, ({category}) => category)].map(([category, members]) => {
 			const memberRows = members.map((feature) => createFeatureRow({feature, settings, runtime, translate}));
 			rows.push(...memberRows);
 			return h(

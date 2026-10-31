@@ -7,14 +7,19 @@ import {YukicoderSite} from "./yukicoder";
 
 const CODEFORCES_MOBILE_HOST = /^m[1-3]\.codeforces\.com$/;
 
-export async function createJudgeSite(judgeId: string | undefined, bridge: PageBridge, site: HttpClient): Promise<JudgeSite | null> {
+export async function createJudgeSite(
+	judgeId: string | undefined,
+	bridge: PageBridge,
+	site: HttpClient,
+): Promise<JudgeSite | null> {
 	switch (judgeId) {
 		case "atcoder":
 			return new AtCoderSite(bridge, site);
 		case "yukicoder":
 			return new YukicoderSite(bridge);
 		case "codeforces":
-			return CODEFORCES_MOBILE_HOST.test(location.host) ? CodeforcesMobileSite.create(bridge) : new CodeforcesSite(bridge);
+			if (CODEFORCES_MOBILE_HOST.test(location.host)) return CodeforcesMobileSite.create(bridge);
+			return new CodeforcesSite(bridge);
 		default:
 			return null;
 	}

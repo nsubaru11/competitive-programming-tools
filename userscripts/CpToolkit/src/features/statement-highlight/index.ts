@@ -11,19 +11,20 @@ const TIME_CLASS = "cp-time-limit";
 const MEMORY_CLASS = "cp-memory-limit";
 const SKIPPED_ANCESTORS = `.katex, var, .${NUMBER_CLASS}, .${TIME_CLASS}, .${MEMORY_CLASS}`;
 const HIGHLIGHT_DELAY_MS = 100;
+const SKIPPED_TAGS: ReadonlySet<string> = new Set(statementCatalog.skipTags);
 
 function collectTextNodes(root: Node, accepts: (text: string) => boolean): Text[] {
 	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
 		acceptNode(node) {
 			const parent = node.parentElement;
-			if (!parent || statementCatalog.skipTags.includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+			if (!parent || SKIPPED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
 			return parent.closest(SKIPPED_ANCESTORS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
 		},
 	});
 	const nodes: Text[] = [];
 	while (walker.nextNode()) {
-		const node = walker.currentNode as Text;
-		if (accepts(node.data)) nodes.push(node);
+		const node = walker.currentNode;
+		if (node instanceof Text && accepts(node.data)) nodes.push(node);
 	}
 	return nodes;
 }
@@ -31,14 +32,15 @@ function collectTextNodes(root: Node, accepts: (text: string) => boolean): Text[
 function replaceWithSegments(node: Text, segments: readonly TextSegment[], className: string): void {
 	node.replaceWith(...segments.map(({text, emphasized}) => (emphasized ? h("span", {
 		className,
-		textContent: text
+		textContent: text,
 	}) : text)));
 }
 
 function markTargetSections(): void {
 	for (const section of document.querySelectorAll("#task-statement section")) {
 		const title = section.querySelector("h3")?.textContent ?? "";
-		if (statementCatalog.targetHeadings.some((heading) => title.includes(heading))) section.classList.add(TARGET_CLASS);
+		const isTarget = statementCatalog.targetHeadings.some((heading) => title.includes(heading));
+		if (isTarget) section.classList.add(TARGET_CLASS);
 	}
 }
 

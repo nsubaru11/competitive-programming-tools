@@ -27,7 +27,7 @@ export function createField(label: string, control: HTMLElement, errorMessage: s
 	return {
 		element: h("label", {className: "field"}, h("span", {
 			className: "field-label",
-			textContent: label
+			textContent: label,
 		}), control, error),
 		setInvalid(invalid) {
 			control.setAttribute("aria-invalid", String(invalid));

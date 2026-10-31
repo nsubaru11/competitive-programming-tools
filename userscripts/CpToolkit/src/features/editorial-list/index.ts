@@ -64,8 +64,9 @@ export const editorialList = defineFeature({
 		};
 		const observer = new IntersectionObserver((entries) => {
 			for (const {target, isIntersecting} of entries) {
-				if (isIntersecting) queue.add(target as HTMLAnchorElement);
-				else queue.delete(target as HTMLAnchorElement);
+				if (!(target instanceof HTMLAnchorElement)) continue;
+				if (isIntersecting) queue.add(target);
+				else queue.delete(target);
 			}
 			timer ??= setInterval(loadNext, LOAD_INTERVAL_MS);
 		});

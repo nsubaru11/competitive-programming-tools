@@ -4,6 +4,7 @@ import type {CodeRunner, RunnerProvider} from "@application/execution/runner-cat
 import type {JudgeSite} from "@application/ports/judge-site";
 import type {HttpClient} from "@application/ports/services";
 import {pageGlobals} from "@adapters/page/globals";
+import {SerialQueue} from "./serial-queue";
 
 type CustomTestResponse = {
 	Interval?: number;
@@ -17,7 +18,7 @@ const POLL_INTERVAL_MS = 1000;
 
 /** サイトのコードテストは同時に1件しか実行できないので、順番に実行する。 */
 class CustomTestQueue {
-	private last: Promise<unknown> = Promise.resolve();
+	private readonly queue = new SerialQueue();
 	private readonly failedGroups = new Set<string>();
 
 	constructor(private readonly site: HttpClient) {
@@ -28,9 +29,7 @@ class CustomTestQueue {
 	}
 
 	run(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
-		const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
-		this.last = result.catch(() => undefined);
-		return result;
+		return this.queue.run(() => this.execute(languageId, sourceCode, input, groupId));
 	}
 
 	private async execute(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
@@ -66,8 +65,8 @@ class CustomTestQueue {
 				execTime: Number.parseInt(String(result.TimeConsumption), 10),
 				memory: Number.parseInt(String(result.MemoryConsumption), 10),
 				input,
-				output: data.Stdout,
-				error: data.Stderr,
+				output: data.Stdout ?? "",
+				error: data.Stderr ?? "",
 			};
 		}
 		return {status: "TLE", input, error: "Custom test timed out"};

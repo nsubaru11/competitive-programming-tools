@@ -1,3 +1,5 @@
+import type {CreateJs} from "@adapters/atcoder/createjs";
+
 // ページの文脈にある値の型。サイト側のライブラリなので、使う範囲だけを宣言する。
 
 export type AceSession = {
@@ -42,18 +44,31 @@ type JQueryObject = {
 };
 
 export type PyodideApi = {
-	globals: {set(name: string, value: unknown): void; get(name: string): any};
+	globals: {
+		set(name: string, value: unknown): void;
+		get(name: "__code"): unknown;
+		get(name: "__stdout" | "__stderr"): {getvalue(): string};
+	};
 	loadPackagesFromImports(code: string): Promise<void>;
 	runPythonAsync(code: string): Promise<void>;
 	runPython(code: string): void;
+};
+
+export type RatingEntry = {
+	readonly ContestName: string;
+	readonly EndTime: number;
+	readonly NewRating: number;
+	readonly OldRating: number;
+	readonly Place: number;
+	readonly StandingsUrl: string;
 };
 
 export type PageGlobals = {
 	ace?: {edit(target: Element | string): AceEditor};
 	monaco?: {editor: {getEditors(): MonacoEditor[]}};
 	jQuery?: (target: unknown) => JQueryObject;
-	createjs?: any;
-	rating_history?: unknown[];
+	createjs?: CreateJs;
+	rating_history?: readonly RatingEntry[];
 	csrfToken?: string;
 	contestScreenName?: string;
 	getSourceCode?: () => string;

@@ -3,6 +3,7 @@ import type {JudgeLanguage, RunResult} from "@domain/execution/result";
 import type {CodeRunner, RunnerProvider} from "@application/execution/runner-catalog";
 import type {ScriptLoader} from "@application/ports/services";
 import {pageGlobals, type PyodideApi} from "@adapters/page/globals";
+import {SerialQueue} from "./serial-queue";
 
 const SETUP_CODE = `
 import contextlib, io, platform
@@ -31,15 +32,13 @@ class PyodideRunner implements CodeRunner {
 	readonly id = "browser:pyodide";
 	readonly label = "Python3 Pyodide [Browser]";
 	private pyodide: Promise<PyodideApi> | null = null;
-	private queue: Promise<unknown> = Promise.resolve();
+	private readonly queue = new SerialQueue();
 
 	constructor(private readonly scripts: ScriptLoader) {
 	}
 
 	run(sourceCode: string, input: string): Promise<RunResult> {
-		const result = this.queue.then(() => this.execute(sourceCode, input));
-		this.queue = result.catch(() => undefined);
-		return result;
+		return this.queue.run(() => this.execute(sourceCode, input));
 	}
 
 	private async load(): Promise<PyodideApi> {

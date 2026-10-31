@@ -1,13 +1,13 @@
-import type {JudgeLanguage} from "@domain/execution/result";
-import type {JudgeMounts, JudgeSite, SampleCase} from "@application/ports/judge-site";
+import type {JudgeMounts, SampleCase} from "@application/ports/judge-site";
 import type {PageBridge} from "@application/ports/page-bridge";
 import {pageGlobals} from "@adapters/page/globals";
-import {languagesOf} from "./languages";
+import {JudgeSiteBase} from "./site-base";
 
-export class YukicoderSite implements JudgeSite {
+export class YukicoderSite extends JudgeSiteBase {
 	readonly id = "yukicoder";
 
-	constructor(private readonly bridge: PageBridge) {
+	constructor(bridge: PageBridge) {
+		super(bridge);
 	}
 
 	get mounts(): JudgeMounts {
@@ -18,7 +18,7 @@ export class YukicoderSite implements JudgeSite {
 		};
 	}
 
-	private get languageSelect(): HTMLSelectElement | null {
+	protected get languageSelect(): HTMLSelectElement | null {
 		return document.querySelector("#lang");
 	}
 
@@ -30,24 +30,7 @@ export class YukicoderSite implements JudgeSite {
 		return pageGlobals().ace?.edit("rich_source");
 	}
 
-	taskUri(): string {
-		return location.href;
-	}
-
-	languages(): readonly JudgeLanguage[] {
-		return languagesOf(this.languageSelect);
-	}
-
-	language(): JudgeLanguage | null {
-		const id = this.languageSelect?.value;
-		return this.languages().find((language) => language.id === id) ?? null;
-	}
-
-	onLanguageChange(listener: () => void): void {
-		if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
-	}
-
-	onSourceChange(listener: () => void): void {
+	override onSourceChange(listener: () => void): void {
 		this.editor?.getSession().on("change", listener);
 	}
 

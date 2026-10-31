@@ -15,7 +15,7 @@ const bridge = {
 	onChange: () => undefined,
 	triggerChange: () => undefined,
 	renderMath: () => undefined,
-	highlightCode: () => undefined
+	highlightCode: () => undefined,
 };
 const noHttp = new FakeHttpClient(() => ({status: 500, text: ""}));
 const java = {id: "1", label: "Java 21", family: "java"};
@@ -135,7 +135,7 @@ describe("実行環境", () => {
 			status: "OK",
 			output: "ok",
 			execTime: 10,
-			memory: 2.048
+			memory: 2.048,
 		});
 	});
 
@@ -149,7 +149,7 @@ describe("実行環境", () => {
 					build_exit_code: 1,
 					build_stderr: "error",
 					time: "0",
-					memory: "0"
+					memory: "0",
 				})
 			};
 		});
@@ -173,11 +173,11 @@ describe("実行環境", () => {
 		const list = [{language: "Java", compilerName: "jdk24", label: "Java 24"}, {
 			language: "C++",
 			compilerName: "gcc",
-			label: "G++"
+			label: "G++",
 		}];
 		const client = new LocalRunnerClient(new FakeHttpClient(() => ({
 			status: 200,
-			text: JSON.stringify(list)
+			text: JSON.stringify(list),
 		})), () => "http://localhost:8080");
 		expect((await new LocalRunnerProvider(client).runnersFor(java)).map(({label}) => label)).toEqual(["Java 24 [Local]"]);
 	});
@@ -200,7 +200,7 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 		write("AtCoderEasyTestForJava", {
 			config: JSON.stringify({
 				"codeRunner.localRunnerURL": "http://localhost:9000",
-				"ui.useKeyboardShortcut": "false"
+				"ui.useKeyboardShortcut": "false",
 			}),
 		});
 		const settings = new SettingsService(new MemoryStore());

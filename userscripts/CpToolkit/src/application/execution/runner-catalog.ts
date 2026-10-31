@@ -32,10 +32,14 @@ export class RunnerCatalogService {
 
 	async candidates(language: JudgeLanguage): Promise<readonly CodeRunner[]> {
 		const results = await Promise.allSettled(this.providers().map((provider) => provider.runnersFor(language)));
-		const runners = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
-		const rank = (runner: CodeRunner): number => this.order.indexOf(runner.kind);
-		const distance = (runner: CodeRunner): number => labelDistance(runner.label, language.label);
-		return [...runners].sort((a, b) => rank(a) - rank(b) || distance(a) - distance(b));
+		const ranked = results
+			.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+			.map((runner) => ({
+				runner,
+				rank: this.order.indexOf(runner.kind),
+				distance: labelDistance(runner.label, language.label),
+			}));
+		return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
 	}
 
 	/** 内部エラーのときは、次の候補で実行し直す。 */

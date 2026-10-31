@@ -22,7 +22,9 @@ export type JudgeCaseSummary = {
 
 export function summarizeJudgeCases(cases: readonly JudgeCase[]): JudgeCaseSummary {
 	const total = cases.length;
-	const sum = (select: (judgeCase: JudgeCase) => number): number => cases.reduce((value, item) => value + select(item), 0);
+	const sum = (select: (judgeCase: JudgeCase) => number): number => {
+		return cases.reduce((value, item) => value + select(item), 0);
+	};
 	return {
 		accepted: cases.filter(({status}) => status === "AC").length,
 		total,

@@ -31,8 +31,7 @@ export const ratingGraph = defineFeature({
 	},
 	async start({options, ratingGraph: graph, site, translate}) {
 		const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
-		const buttonGroups = document.querySelectorAll(".btn-text-group");
-		const buttonGroup = buttonGroups[buttonGroups.length - 1];
+		const buttonGroup = [...document.querySelectorAll(".btn-text-group")].at(-1);
 		if (!userName || !buttonGroup) return;
 
 		const heuristic = new URLSearchParams(location.search).get("contestType") === "heuristic";

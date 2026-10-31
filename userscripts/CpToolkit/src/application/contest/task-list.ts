@@ -1,4 +1,5 @@
-import type {KeyValueStore} from "@application/ports/key-value-store";
+import {type Guard, isArrayOf, isNumber, isObjectOf, isRecordOf, isString} from "@domain/validation/guards";
+import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 import type {HttpClient} from "@application/ports/services";
 
 export type ContestTask = {
@@ -12,7 +13,10 @@ type CacheEntry = {
 	readonly lastAccess: number;
 };
 
-type TaskCache = Readonly<Record<string, CacheEntry>>;
+const isCacheEntry: Guard<CacheEntry> = isObjectOf<CacheEntry>({
+	tasks: isArrayOf(isObjectOf<ContestTask>({url: isString, label: isString, name: isString})),
+	lastAccess: isNumber,
+});
 
 const CACHE_KEY = "task-dropdown:tasks";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -29,7 +33,7 @@ export async function loadContestTasks(
 		cacheDays: number;
 	},
 ): Promise<readonly ContestTask[] | null> {
-	const cache = (state.get(CACHE_KEY) ?? {}) as TaskCache;
+	const cache = readStored(state, CACHE_KEY, isRecordOf(isCacheEntry), {});
 	const now = Date.now();
 	const fresh = Object.entries(cache).filter(([, entry]) => now - entry.lastAccess < cacheDays * DAY_MS);
 	let tasks = cache[contestId]?.tasks ?? null;

@@ -5,9 +5,9 @@ export class SameOriginHttpClient implements HttpClient {
 	async send({url, method = "GET", headers, body}: HttpRequest): Promise<HttpResponse> {
 		const response = await fetch(url, {
 			method,
-			headers: headers ? {...headers} : undefined,
-			body,
-			credentials: "include"
+			credentials: "include",
+			...(headers && {headers: {...headers}}),
+			...(body !== undefined && {body}),
 		});
 		return {status: response.status, text: await response.text()};
 	}

@@ -21,11 +21,11 @@ const UNRATED_TIER: RatingTier = {
 	color: "#000000",
 	alpha: 0.1,
 	background: "#FFFFFF",
-	className: "user-unrated"
+	className: "user-unrated",
 };
 
 export function tierOf(scale: RatingScale, value: number): RatingTier {
-	return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;
+	return scale.tiers.findLast((tier) => value >= tier.min) ?? UNRATED_TIER;
 }
 
 /** 王冠の対象なら画像の URL を返す。 */

@@ -1,4 +1,5 @@
 import {buildAtCoderSubmissionStatusJsonUrl, buildAtCoderSubmissionUrl, safeJsonParse} from "@atcoder-tools/shared";
+import {contestIdOf} from "@domain/page/route";
 import {isJudging} from "@domain/submission/status";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
@@ -49,7 +50,7 @@ export const resultNotifier = defineFeature({
 	live: true,
 	start({options, isOnRoute, notifier, site, state}) {
 		const pending = new PendingSubmissions(state);
-		const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+		const contestId = contestIdOf(location.pathname);
 		if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
 			pending.add(collectPending(contestId, Date.now()), Date.now());
 		}
@@ -62,7 +63,7 @@ export const resultNotifier = defineFeature({
 				detail,
 				tone: status === "AC" ? "success" : "warning",
 				href: url,
-				durationMs: TOAST_DURATION_MS
+				durationMs: TOAST_DURATION_MS,
 			});
 			if (options.desktop && document.hidden) notifier.notify({title, text: detail, url});
 		};
@@ -87,9 +88,8 @@ export const resultNotifier = defineFeature({
 			if (document.hasFocus()) pending.markFocused(now);
 			const submissions = pending.list(now);
 			if (submissions.length === 0 || !pending.claimPoll(now, POLL_INTERVAL_MS)) return;
-			const contests = new Set(submissions.map((submission) => submission.contestId));
-			for (const id of contests) {
-				void checkContest(id, submissions.filter((submission) => submission.contestId === id)).catch(() => undefined);
+			for (const [id, contestSubmissions] of Map.groupBy(submissions, ({contestId: contest}) => contest)) {
+				void checkContest(id, contestSubmissions).catch(() => undefined);
 			}
 		};
 

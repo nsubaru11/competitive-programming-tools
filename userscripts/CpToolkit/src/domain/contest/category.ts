@@ -1,3 +1,5 @@
+import {type Guard, isNumber, isObjectOf} from "@domain/validation/guards";
+
 export type ContestCatalog = {
 	readonly regularPrefixes: readonly string[];
 	readonly permanentPrefixes: readonly string[];
@@ -9,6 +11,8 @@ export type TaskRange = {
 	readonly begin: number;
 	readonly end: number;
 };
+
+export const isTaskRange: Guard<TaskRange> = isObjectOf<TaskRange>({begin: isNumber, end: isNumber});
 
 /** 同じ種類のコンテストで範囲の設定を共有するための分類を返す。 */
 export function contestCategory(catalog: ContestCatalog, contestId: string, taskCount: number): string {
@@ -34,5 +38,5 @@ export function adjustRange(range: TaskRange, changed: "begin" | "end", maxTabs:
 
 export function rangeIndices({begin, end}: TaskRange, reverse: boolean): number[] {
 	const indices = Array.from({length: end - begin + 1}, (_, index) => begin + index);
-	return reverse ? indices.reverse() : indices;
+	return reverse ? indices.toReversed() : indices;
 }

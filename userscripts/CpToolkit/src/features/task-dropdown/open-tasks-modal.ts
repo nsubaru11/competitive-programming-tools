@@ -65,13 +65,14 @@ export function createOpenTasksModal(params: OpenTasksParams): {open(): void} {
 	beginSelect.addEventListener("change", () => changeRange("begin"));
 	endSelect.addEventListener("change", () => changeRange("end"));
 
+	const row = (...children: Array<Node | string>): HTMLElement => h("div", {className: "open-tasks-row"}, ...children);
 	modal.body.append(
-		h("div", {className: "open-tasks-row"}, h("label", {}, allRadio, ` ${translate("taskDropdown.all")}`), canOpenAll ? "" : h("span", {
+		row(h("label", {}, allRadio, ` ${translate("taskDropdown.all")}`), canOpenAll ? "" : h("span", {
 			className: "open-tasks-caution",
 			textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
 		})),
-		h("div", {className: "open-tasks-row"}, h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`), beginSelect, "-", endSelect),
-		h("div", {className: "open-tasks-row"}, h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
+		row(h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`), beginSelect, "-", endSelect),
+		row(h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
 		info,
 	);
 	modal.footer.append(

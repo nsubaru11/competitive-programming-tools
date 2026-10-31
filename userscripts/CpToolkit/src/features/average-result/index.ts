@@ -26,18 +26,19 @@ export const averageResult = defineFeature({
 	options: {},
 	live: true,
 	start({translate}) {
-		const tables = document.querySelectorAll("table");
-		const body = tables[tables.length - 1]?.querySelector("tbody");
+		const tables = [...document.querySelectorAll("table")];
+		const body = tables.at(-1)?.querySelector("tbody");
 		const rows = [...(body?.querySelectorAll("tr") ?? [])];
 		const isCaseTable = rows.every((row) => row.querySelectorAll("td").length === COLUMN_COUNT);
-		if (tables.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable) return () => undefined;
+		const hasCases = tables.length >= MIN_TABLES_WITH_CASES && rows.length >= MIN_CASES && isCaseTable;
+		if (!body || !hasCases) return () => undefined;
 
 		const {
 			accepted,
 			total,
 			averageTimeMs,
 			averageMemoryKb,
-			timeIsLowerBound
+			timeIsLowerBound,
 		} = summarizeJudgeCases(rows.map(readCase));
 		const allAccepted = accepted === total;
 		const row = h(

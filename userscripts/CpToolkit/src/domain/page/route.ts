@@ -29,6 +29,12 @@ export type PageMatch = {
 };
 
 const PATH_AND_QUERY_PATTERN = /^[a-z]+:\/\/[^/?#]+([^#]*)/i;
+const CONTEST_PATH_PATTERN = /^\/contests\/([^/?#]+)/;
+
+/** AtCoder のコンテストのページなら、コンテストの ID を返す。 */
+export function contestIdOf(pathname: string): string | undefined {
+	return CONTEST_PATH_PATTERN.exec(pathname)?.[1];
+}
 
 function matchPatternToRegExp(pattern: string): RegExp {
 	const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");

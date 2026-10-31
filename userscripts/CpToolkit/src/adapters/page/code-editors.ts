@@ -1,6 +1,6 @@
 import {sleep} from "@atcoder-tools/shared";
 import type {SubmissionTarget} from "@domain/page/route";
-import type {CodeEditor, CodeEditorLocator} from "@application/ports/code-editor";
+import type {CodeEditor, CodeEditorLocator, EditorLookup} from "@application/ports/code-editor";
 import {type AceEditor, type MonacoEditor, pageGlobals} from "./globals";
 
 const JAVA_MODE_PATTERN = /(^|\/)java$/i;
@@ -134,23 +134,22 @@ function findEditor(target: SubmissionTarget): CodeEditor | null {
 export class PageCodeEditorLocator implements CodeEditorLocator {
 	async locate(
 		target: SubmissionTarget,
-		{timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: {timeoutMs?: number; delayMs?: number} = {},
+		{timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: EditorLookup = {},
 	): Promise<CodeEditor | null> {
 		if (delayMs > 0) await sleep(delayMs);
 		const editor = findEditor(target);
 		if (editor) return editor;
-		return new Promise((resolve) => {
-			const finish = (found: CodeEditor | null): void => {
-				observer.disconnect();
-				clearTimeout(timer);
-				resolve(found);
-			};
-			const observer = new MutationObserver(() => {
-				const found = findEditor(target);
-				if (found) finish(found);
-			});
-			const timer = setTimeout(() => finish(null), timeoutMs);
-			observer.observe(document.body, {childList: true, subtree: true});
+
+		const {promise, resolve} = Promise.withResolvers<CodeEditor | null>();
+		const observer = new MutationObserver(() => {
+			const found = findEditor(target);
+			if (found) resolve(found);
 		});
+		observer.observe(document.body, {childList: true, subtree: true});
+		const timer = setTimeout(() => resolve(null), timeoutMs);
+		const found = await promise;
+		observer.disconnect();
+		clearTimeout(timer);
+		return found;
 	}
 }

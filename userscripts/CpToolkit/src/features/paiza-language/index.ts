@@ -1,3 +1,4 @@
+import {sleep} from "@atcoder-tools/shared";
 import {paizaLanguageSelect} from "@catalog/judges";
 import {isLanguageOption} from "@domain/execution/language";
 import {option} from "@domain/settings/option";
@@ -10,8 +11,6 @@ const EDITOR_TIMEOUT_MS = 8000;
 const UNLOCK_DURATION_MS = 4000;
 const UNLOCK_INTERVAL_MS = 120;
 const OBSERVE_DURATION_MS = 5000;
-
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 function findLanguageSelect(): HTMLSelectElement | null {
 	for (const selector of paizaLanguageSelect.selects) {

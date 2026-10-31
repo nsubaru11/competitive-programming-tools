@@ -1,9 +1,11 @@
 import type {Translate} from "@catalog/messages";
 import {contestCatalog} from "@catalog/tables";
-import {contestCategory, type TaskRange} from "@domain/contest/category";
+import {contestCategory, isTaskRange} from "@domain/contest/category";
+import {contestIdOf} from "@domain/page/route";
+import {isRecordOf} from "@domain/validation/guards";
 import {type ContestTask, loadContestTasks} from "@application/contest/task-list";
 import {defineFeature} from "@application/feature/definition";
-import type {KeyValueStore} from "@application/ports/key-value-store";
+import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 import {h, injectStyle} from "@ui/element";
 import {createOpenTasksModal} from "./open-tasks-modal";
 import css from "./task-dropdown.css" with {type: "text"};
@@ -76,13 +78,16 @@ export const taskDropdown = defineFeature({
 	options: {},
 	async start({site, state, translate}) {
 		const tab = document.querySelector<HTMLAnchorElement>('#contest-nav-tabs a[href$="tasks"]');
-		const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+		const contestId = contestIdOf(location.pathname);
 		if (!tab || !contestId) return;
 
 		injectStyle(css);
 		const taskTableUrl = tab.href;
 		const menu = turnIntoDropdown(tab);
-		menu.append(createNewTabToggle(state, translate), createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state, "glyphicon-list"));
+		menu.append(
+			createNewTabToggle(state, translate),
+			createTaskLink(taskTableUrl, translate("taskDropdown.taskTable"), state, "glyphicon-list"),
+		);
 
 		const tasks = await loadContestTasks(contestId, {
 			site,
@@ -91,12 +96,13 @@ export const taskDropdown = defineFeature({
 			cacheDays: contestCatalog.taskCacheDays,
 		}).catch(() => null);
 		if (!tasks) {
-			menu.append(h("li", {className: "divider"}), h("li", {}, h("a", {textContent: translate("taskDropdown.loadFailed")})));
+			const failure = h("a", {textContent: translate("taskDropdown.loadFailed")});
+			menu.append(h("li", {className: "divider"}), h("li", {}, failure));
 			return;
 		}
 
 		const category = contestCategory(contestCatalog, contestId, tasks.length);
-		const ranges = (state.get(RANGES_KEY) ?? {}) as Readonly<Record<string, TaskRange>>;
+		const ranges = readStored(state, RANGES_KEY, isRecordOf(isTaskRange), {});
 		const modal = createOpenTasksModal({
 			tasks,
 			maxTabs: contestCatalog.maxTabsAtOnce,
@@ -110,7 +116,7 @@ export const taskDropdown = defineFeature({
 		});
 		const openAtOnce = withIcon(h("a", {
 			href: "#",
-			textContent: `${translate("taskDropdown.openAtOnce")}...`
+			textContent: `${translate("taskDropdown.openAtOnce")}...`,
 		}), "glyphicon-sort-by-attributes-alt");
 		openAtOnce.addEventListener("click", (event) => {
 			event.preventDefault();

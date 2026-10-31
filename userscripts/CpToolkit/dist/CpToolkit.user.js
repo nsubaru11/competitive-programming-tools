@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.1
+// @version        1.0.2
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -268,6 +268,11 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 (() => {
 	// CpToolkit/src/domain/page/route.ts
 	var PATH_AND_QUERY_PATTERN = /^[a-z]+:\/\/[^/?#]+([^#]*)/i;
+	var CONTEST_PATH_PATTERN = /^\/contests\/([^/?#]+)/;
+
+	function contestIdOf(pathname) {
+		return CONTEST_PATH_PATTERN.exec(pathname)?.[1];
+	}
 
 	function matchPatternToRegExp(pattern) {
 		const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
@@ -1027,7 +1032,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		async reach(phase) {
 			if (phase === "ready" && document.readyState === "loading") {
 				await waitForEvent(document, "DOMContentLoaded");
-				await new Promise((resolve) => setTimeout(resolve));
+				await sleep(0);
 			}
 			if (phase === "load" && document.readyState !== "complete") {
 				await waitForEvent(window, "load");
@@ -1638,14 +1643,6 @@ ${css}`,
 `;
 
 	// CpToolkit/src/features/settings-panel/index.ts
-	function groupByCategory(features) {
-		const groups = new Map();
-		for (const feature of features) {
-			groups.set(feature.category, [...(groups.get(feature.category) ?? []), feature]);
-		}
-		return groups;
-	}
-
 	function downloadText(fileName, text) {
 		const url = URL.createObjectURL(new Blob([text], {type: "application/json"}));
 		h("a", {href: url, download: fileName}).click();
@@ -1670,7 +1667,7 @@ ${css}`,
 		};
 		const render = () => {
 			rows = [];
-			const sections = [...groupByCategory(features)].map(([category, members]) => {
+			const sections = [...Map.groupBy(features, ({category}) => category)].map(([category, members]) => {
 				const memberRows = members.map((feature) => createFeatureRow({feature, settings, runtime, translate}));
 				rows.push(...memberRows);
 				return h(
@@ -2891,7 +2888,8 @@ ${settings_panel_default}`,
 			const endpoint = this.endpoint() ?? "";
 			if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode)
 				return this.prepared.response;
-			const response = this.post(buildLocalRunnerPrepareRequest(sourceCode, true, true, false));
+			const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false);
+			const response = this.post(request);
 			this.prepared = {endpoint, sourceCode, response};
 			response.catch(() => {
 				if (this.prepared?.response === response) this.prepared = null;
@@ -2941,9 +2939,20 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/domain/execution/language.ts
+	var compiledCatalogs = new WeakMap();
+
+	function compile(catalog) {
+		const cached = compiledCatalogs.get(catalog);
+		if (cached) return cached;
+		const compiled = catalog.families.map(({id, match}) => {
+			return {id, patterns: match.map((pattern) => new RegExp(pattern))};
+		});
+		compiledCatalogs.set(catalog, compiled);
+		return compiled;
+	}
+
 	function resolveFamily(catalog, label) {
-		const family = catalog.families.find(({match}) => match.some((pattern) => new RegExp(pattern).test(label)));
-		return family?.id ?? null;
+		return compile(catalog).find(({patterns}) => patterns.some((pattern) => pattern.test(label)))?.id ?? null;
 	}
 
 	function labelDistance(a, b) {
@@ -2995,10 +3004,14 @@ ${settings_panel_default}`,
 
 		async candidates(language) {
 			const results = await Promise.allSettled(this.providers().map((provider) => provider.runnersFor(language)));
-			const runners = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
-			const rank = (runner) => this.order.indexOf(runner.kind);
-			const distance = (runner) => labelDistance(runner.label, language.label);
-			return [...runners].sort((a, b) => rank(a) - rank(b) || distance(a) - distance(b));
+			const ranked = results
+				.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+				.map((runner) => ({
+					runner,
+					rank: this.order.indexOf(runner.kind),
+					distance: labelDistance(runner.label, language.label),
+				}));
+			return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
 		}
 
 		async test(candidates, firstRunnerId, sourceCode, testCase, options) {
@@ -3042,7 +3055,7 @@ ${settings_panel_default}`,
 	};
 
 	function tierOf(scale, value) {
-		return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;
+		return scale.tiers.findLast((tier) => value >= tier.min) ?? UNRATED_TIER;
 	}
 
 	function crownImageOf(scale, value) {
@@ -3083,6 +3096,7 @@ ${settings_panel_default}`,
 	var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	var YEAR_SECONDS = 86400 * 365;
 	var STEP_SIZE = 400;
+	var VERTEX_STROKE_WIDTH = 0.5;
 	var PARTICLE_MIN = 3;
 	var PARTICLE_MAX = 20;
 	var PARTICLE_LIFE = 30;
@@ -3098,6 +3112,12 @@ ${settings_panel_default}`,
 
 	function signed(value) {
 		return `${value === 0 ? "±" : value < 0 ? "-" : "+"}${Math.abs(value)}`;
+	}
+
+	function findDependencies() {
+		const {createjs: cj, rating_history: history} = pageGlobals();
+		const hasCanvases = document.getElementById("ratingGraph") && document.getElementById("ratingStatus");
+		return cj && Array.isArray(history) && hasCanvases ? {cj, history} : null;
 	}
 
 	function replaceCanvas(id) {
@@ -3127,45 +3147,36 @@ ${settings_panel_default}`,
 	}
 
 	class CreateJsRatingGraph {
-		history = [];
-		performances = [];
-		graphCanvas = null;
-		statusCanvas = null;
+		prepared = null;
 
 		async prepare(performances) {
 			const deadline = Date.now() + READY_TIMEOUT_MS;
-			const isReady = () => {
-				const page = pageGlobals();
-				return (
-					Array.isArray(page.rating_history) &&
-					page.createjs !== undefined &&
-					document.getElementById("ratingGraph") !== null &&
-					document.getElementById("ratingStatus") !== null
-				);
-			};
-			while (!isReady()) {
+			let dependencies = findDependencies();
+			while (!dependencies) {
 				if (Date.now() > deadline) return false;
-				await new Promise((resolve) => setTimeout(resolve, READY_INTERVAL_MS));
+				await sleep(READY_INTERVAL_MS);
+				dependencies = findDependencies();
 			}
-			this.history = pageGlobals().rating_history ?? [];
-			this.performances = performances;
-			pageGlobals().createjs.Ticker.removeAllEventListeners("tick");
-			this.graphCanvas = replaceCanvas("ratingGraph");
-			this.statusCanvas = replaceCanvas("ratingStatus");
-			return this.history.length > 0;
+			const {cj, history} = dependencies;
+			cj.Ticker.removeAllEventListeners("tick");
+			const graphCanvas = replaceCanvas("ratingGraph");
+			const statusCanvas = replaceCanvas("ratingStatus");
+			if (!graphCanvas || !statusCanvas) return false;
+			this.prepared = {cj, history, performances, graphCanvas, statusCanvas};
+			return history.length > 0;
 		}
 
 		draw({showPerformance, recentOnly}) {
-			if (!this.graphCanvas || !this.statusCanvas) return;
-			const history = recentOnly ? dropOldest(this.history) : this.history;
-			const performances = recentOnly ? dropOldest(this.performances) : this.performances;
+			if (!this.prepared) return;
+			const {cj, graphCanvas, statusCanvas} = this.prepared;
+			const history = recentOnly ? dropOldest(this.prepared.history) : this.prepared.history;
+			const performances = recentOnly ? dropOldest(this.prepared.performances) : this.prepared.performances;
 			const count = history.length;
 			if (count === 0) return;
-			const cj = pageGlobals().createjs;
-			const stageGraph = new cj.Stage(this.graphCanvas);
-			const stageStatus = new cj.Stage(this.statusCanvas);
-			const graphSize = scaleStage(stageGraph, this.graphCanvas);
-			const statusSize = scaleStage(stageStatus, this.statusCanvas);
+			const stageGraph = new cj.Stage(graphCanvas);
+			const stageStatus = new cj.Stage(statusCanvas);
+			const graphSize = scaleStage(stageGraph, graphCanvas);
+			const statusSize = scaleStage(stageStatus, statusCanvas);
 			const panelWidth = graphSize.width - OFFSET_X - 10;
 			const panelHeight = graphSize.height - OFFSET_Y - 30;
 			const statusWidth = statusSize.width - OFFSET_X - 10;
@@ -3192,15 +3203,15 @@ ${settings_panel_default}`,
 			const drawBackground = () => {
 				const panel = newShape(stageGraph);
 				Object.assign(panel, {x: OFFSET_X, y: OFFSET_Y, alpha: 0.3});
-				const border = newShape(stageGraph);
-				Object.assign(border, {x: OFFSET_X, y: OFFSET_Y});
-				const addLabel = (text, x, y, textAlign, textBaseline) => {
+				const border2 = newShape(stageGraph);
+				Object.assign(border2, {x: OFFSET_X, y: OFFSET_Y});
+				const addLabel = (text, x, y, align) => {
 					const label = new cj.Text(text, LABEL_FONT, "#000");
-					Object.assign(label, {x, y, textAlign, textBaseline});
+					Object.assign(label, {x, y, ...align});
 					stageGraph.addChild(label);
 				};
 				let top = 0;
-				for (const tier of [...ratingScale.tiers].reverse()) {
+				for (const tier of ratingScale.tiers.toReversed()) {
 					const bottom = panelHeight - panelHeight * ratio(tier.min, yMin, yMax);
 					if (bottom > 0 && top < panelHeight) {
 						top = Math.max(top, 0);
@@ -3213,15 +3224,16 @@ ${settings_panel_default}`,
 				for (let value = 0; value <= yMax; value += STEP_SIZE) {
 					if (value < yMin) continue;
 					const y = panelHeight - panelHeight * ratio(value, yMin, yMax);
-					addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, "right", "middle");
-					border.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
-					border.graphics.moveTo(0, y).lineTo(panelWidth, y);
+					addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, {textAlign: "right", textBaseline: "middle"});
+					border2.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
+					border2.graphics.moveTo(0, y).lineTo(panelWidth, y);
 				}
-				border.graphics.beginStroke("#FFF").setStrokeStyle(0.5);
+				border2.graphics.beginStroke("#FFF").setStrokeStyle(0.5);
 				let monthStep = 6;
 				for (let years = 3; years >= 1; years--) {
 					if (xMax - xMin <= YEAR_SECONDS * years + MARGIN_X * 2) monthStep = years;
 				}
+				const axisLabel = {textAlign: "center", textBaseline: "top"};
 				let isFirst = true;
 				for (let year = START_YEAR; year < 3000; year++) {
 					let finished = false;
@@ -3230,18 +3242,12 @@ ${settings_panel_default}`,
 						const unix = Date.parse(`${year}-${paddedMonth}-01T00:00:00`) / 1000;
 						if (xMin < unix && unix < xMax) {
 							const x = panelWidth * ratio(unix, xMin, xMax);
-							addLabel(
-								MONTH_NAMES[month] ?? "",
-								OFFSET_X + x,
-								OFFSET_Y + panelHeight + 2,
-								"center",
-								"top",
-							);
+							addLabel(MONTH_NAMES[month] ?? "", OFFSET_X + x, OFFSET_Y + panelHeight + 2, axisLabel);
 							if (month === 0 || isFirst) {
-								addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, "center", "top");
+								addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, axisLabel);
 								isFirst = false;
 							}
-							border.graphics.mt(x, 0).lt(x, panelHeight);
+							border2.graphics.mt(x, 0).lt(x, panelHeight);
 						}
 						if (unix > xMax) {
 							finished = true;
@@ -3250,28 +3256,49 @@ ${settings_panel_default}`,
 					}
 					if (finished) break;
 				}
-				border.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
+				border2.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
 			};
-			const particles = [];
-			let status = {};
-			const setParticles = (rating, color, alpha) => {
+			const middle = OFFSET_Y + statusHeight / 2;
+			const border = newShape(stageStatus);
+			const ratingText = newText(stageStatus, OFFSET_X + 75, middle, "48px 'Squada One'");
+			const performanceText = newText(stageStatus, OFFSET_X + 75, middle + 25, "16px 'Squada One'");
+			const placeText = newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 2.7, "16px Lato");
+			const diffText = newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 1.5, "11px Lato");
+			const dateText = newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 4, "14px Lato");
+			const contestText = newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 1.6, "20px Lato");
+			const contestWidth = statusWidth - 200 - 10;
+			let standingsUrl = "";
+			diffText.color = "#888";
+			dateText.textAlign = contestText.textAlign = "left";
+			contestText.maxWidth = contestWidth;
+			const contestHitArea = new cj.Shape();
+			contestHitArea.graphics.f("#000").r(0, -12, contestWidth, 24);
+			contestText.hitArea = contestHitArea;
+			contestText.cursor = "pointer";
+			contestText.addEventListener("click", () => {
+				location.href = standingsUrl;
+			});
+			const particles = Array.from({length: PARTICLE_MAX}, () => {
+				const text = newText(stageStatus, 0, 0, "64px Lato");
+				text.visible = false;
+				return {text, vx: 0, vy: 0, rotationSpeed: 0, life: 0};
+			});
+			const burstParticles = (rating, color, alpha) => {
 				const progress = tierProgress(ratingScale, rating);
 				const active = Math.floor(progress ** 2 * (PARTICLE_MAX - PARTICLE_MIN) + PARTICLE_MIN);
 				particles.forEach((particle, index) => {
-					if (index >= active) {
-						Object.assign(particle, {life: 0, visible: false});
-						return;
-					}
+					const isActive = index < active;
+					particle.text.visible = isActive;
+					particle.life = isActive ? PARTICLE_LIFE : 0;
+					if (!isActive) return;
 					const angle = Math.random() * Math.PI * 2;
 					const speed = Math.random() * 4 + 4;
-					Object.assign(particle, {
-						x: status.rating.x,
-						y: status.rating.y,
-						vx: Math.cos(angle) * speed,
-						vy: Math.sin(angle) * speed,
-						rotationSpeed: Math.random() * 20 + 10,
-						life: PARTICLE_LIFE,
-						visible: true,
+					particle.vx = Math.cos(angle) * speed;
+					particle.vy = Math.sin(angle) * speed;
+					particle.rotationSpeed = Math.random() * 20 + 10;
+					Object.assign(particle.text, {
+						x: ratingText.x,
+						y: ratingText.y,
 						color,
 						text: rating >= ratingScale.crownMin ? "★" : "@",
 						alpha,
@@ -3282,134 +3309,101 @@ ${settings_panel_default}`,
 				const entry = history[index];
 				if (!entry) return;
 				const {color, alpha} = tierOf(ratingScale, entry.NewRating);
-				status.border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
-				status.rating.text = entry.NewRating;
-				status.rating.color = color;
-				status.performance.text = showPerformance ? `perf: ${performances[index] ?? "-"}` : "";
-				status.place.text = ordinal(entry.Place);
-				status.diff.text = signed(entry.NewRating - entry.OldRating);
-				status.date.text = new Date(entry.EndTime * 1000).toLocaleDateString();
-				status.contest.text = entry.ContestName;
-				status.standingsUrl = entry.StandingsUrl;
-				if (withParticles) setParticles(entry.NewRating, color, alpha);
+				border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
+				ratingText.text = entry.NewRating;
+				ratingText.color = color;
+				performanceText.text = showPerformance ? `perf: ${performances[index] ?? "-"}` : "";
+				placeText.text = ordinal(entry.Place);
+				diffText.text = signed(entry.NewRating - entry.OldRating);
+				dateText.text = new Date(entry.EndTime * 1000).toLocaleDateString();
+				contestText.text = entry.ContestName;
+				standingsUrl = entry.StandingsUrl;
+				if (withParticles) burstParticles(entry.NewRating, color, alpha);
 				stageGraph.update();
 			};
-			const drawSeries = (
-				values,
-				lineColor,
-				highestLabel,
-				radius,
-				highestVertex = {radius, strokeWidth: 0.5},
-			) => {
+			const drawSeries = (values, style) => {
+				const {lineColor, highestLabel, radius, highestVertex} = style;
 				const container = new cj.Container();
 				stageGraph.addChild(container);
 				container.shadow = new cj.Shadow("rgba(0,0,0,0.3)", 1, 2, 3);
 				const line = newShape(container);
 				const highestShape = newShape(container);
 				const highestIndex = values.indexOf(Math.max(...values));
-				const onHover = (event) => {
-					const vertex = vertices[event.target.index];
-					vertex.scaleX = vertex.scaleY = 1.2;
-					stageGraph.update();
-					updateStatus(event.target.index, true);
-				};
-				const onLeave = (event) => {
-					const vertex = vertices[event.target.index];
-					vertex.scaleX = vertex.scaleY = 1;
-					stageGraph.update();
+				const emphasizeOnHover = (target, vertex, index) => {
+					target.addEventListener("mouseover", () => {
+						vertex.scaleX = vertex.scaleY = 1.2;
+						stageGraph.update();
+						updateStatus(index, true);
+					});
+					target.addEventListener("mouseout", () => {
+						vertex.scaleX = vertex.scaleY = 1;
+						stageGraph.update();
+					});
 				};
 				const vertices = values.map((value, index) => {
-					const vertex = newShape(container);
 					const isHighest = index === highestIndex;
+					const vertex = newShape(container);
 					vertex.graphics.beginStroke(isHighest ? "#000" : "#FFF");
-					vertex.graphics.setStrokeStyle(isHighest ? highestVertex.strokeWidth : 0.5);
-					vertex.graphics
-						.beginFill(tierOf(ratingScale, value).color)
-						.dc(0, 0, isHighest ? highestVertex.radius : radius);
+					vertex.graphics.setStrokeStyle((isHighest && highestVertex?.strokeWidth) || VERTEX_STROKE_WIDTH);
+					vertex.graphics.beginFill(tierOf(ratingScale, value).color);
+					vertex.graphics.dc(0, 0, (isHighest && highestVertex?.radius) || radius);
 					vertex.x = pointX(history[index]?.EndTime ?? 0);
 					vertex.y = pointY(value);
-					vertex.index = index;
 					const hitArea = new cj.Shape();
 					hitArea.graphics.f("#000").dc(1.5, 1.5, 6);
 					vertex.hitArea = hitArea;
-					vertex.addEventListener("mouseover", onHover);
-					vertex.addEventListener("mouseout", onLeave);
+					emphasizeOnHover(vertex, vertex, index);
 					return vertex;
 				});
 				const highest = vertices[highestIndex];
+				const first = vertices[0];
+				if (!highest || !first) return;
 				const x = highest.x + ((xMin + xMax) / 2 < (history[highestIndex]?.EndTime ?? 0) ? -80 : 80);
 				const y = highest.y - 16;
 				highestShape.graphics.s("#FFF").mt(highest.x, highest.y).lt(x, y);
-				highestShape.graphics
-					.s("#888")
-					.f("#FFF")
-					.rr(x - HIGHEST_WIDTH / 2, y - HIGHEST_HEIGHT / 2, HIGHEST_WIDTH, HIGHEST_HEIGHT, 2);
-				highestShape.index = highestIndex;
+				const [boxX, boxY] = [x - HIGHEST_WIDTH / 2, y - HIGHEST_HEIGHT / 2];
+				highestShape.graphics.s("#888").f("#FFF").rr(boxX, boxY, HIGHEST_WIDTH, HIGHEST_HEIGHT, 2);
 				newText(stageGraph, x, y, LABEL_FONT).text = `${highestLabel}: ${values[highestIndex]}`;
-				highestShape.addEventListener("mouseover", onHover);
-				highestShape.addEventListener("mouseout", onLeave);
-				line.graphics.s("#AAA").ss(2).mt(vertices[0].x, vertices[0].y);
+				emphasizeOnHover(highestShape, highest, highestIndex);
+				line.graphics.s("#AAA").ss(2).mt(first.x, first.y);
 				for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
-				line.graphics.s(lineColor).ss(0.5).mt(vertices[0].x, vertices[0].y);
+				line.graphics.s(lineColor).ss(0.5).mt(first.x, first.y);
 				for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
-			};
-			const createStatus = () => {
-				const middle = OFFSET_Y + statusHeight / 2;
-				status = {
-					border: newShape(stageStatus),
-					rating: newText(stageStatus, OFFSET_X + 75, middle, "48px 'Squada One'"),
-					performance: newText(stageStatus, OFFSET_X + 75, middle + 25, "16px 'Squada One'"),
-					place: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 2.7, "16px Lato"),
-					diff: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 1.5, "11px Lato"),
-					date: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 4, "14px Lato"),
-					contest: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 1.6, "20px Lato"),
-					standingsUrl: "",
-				};
-				status.diff.color = "#888";
-				status.date.textAlign = status.contest.textAlign = "left";
-				status.contest.maxWidth = statusWidth - 200 - 10;
-				const hitArea = new cj.Shape();
-				hitArea.graphics.f("#000").r(0, -12, status.contest.maxWidth, 24);
-				status.contest.hitArea = hitArea;
-				status.contest.cursor = "pointer";
-				status.contest.addEventListener("click", () => {
-					location.href = status.standingsUrl;
-				});
-				for (let index = 0; index < PARTICLE_MAX; index++) {
-					const particle = newText(stageStatus, 0, 0, "64px Lato");
-					particle.visible = false;
-					particles.push(particle);
-				}
 			};
 			const onTick = () => {
 				for (const particle of particles) {
+					const {text} = particle;
 					if (particle.life <= 0) {
-						particle.visible = false;
+						text.visible = false;
 						continue;
 					}
-					particle.x += particle.vx;
+					text.x += particle.vx;
 					particle.vx *= 0.9;
-					particle.y += particle.vy;
+					text.y += particle.vy;
 					particle.vy *= 0.9;
 					particle.life--;
-					particle.scaleX = particle.scaleY = particle.life / PARTICLE_LIFE;
-					particle.rotation += particle.rotationSpeed;
+					text.scaleX = text.scaleY = particle.life / PARTICLE_LIFE;
+					text.rotation += particle.rotationSpeed;
 				}
 				stageStatus.update();
 			};
 			drawBackground();
-			createStatus();
 			drawSeries(
 				history.map((entry) => entry.NewRating),
-				"#000",
-				"Highest(Rate)",
-				3.5,
+				{
+					lineColor: "#000",
+					highestLabel: "Highest(Rate)",
+					radius: 3.5,
+				},
 			);
-			if (showPerformance && performances.length > 0)
-				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {
-					radius: 2.5,
-					strokeWidth: 1,
+			if (showPerformance && performances.length > 0) {
+				drawSeries(performances, {
+					lineColor: "#F00",
+					highestLabel: "Highest(Perf)",
+					radius: 2.8,
+					highestVertex: {radius: 2.5, strokeWidth: 1},
 				});
+			}
 			updateStatus(count - 1, false);
 			stageGraph.update();
 			stageStatus.update();
@@ -3420,22 +3414,54 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/adapters/judges/languages.ts
+	function toLanguage({value, text}) {
+		const label = text.trim();
+		return {id: value, label, family: resolveFamily(languageCatalog, label)};
+	}
+
 	function languagesOf(select) {
-		return [...(select?.options ?? [])]
-			.filter(({value}) => value !== "")
-			.map(({value, text}) => {
-				const label = text.trim();
-				return {id: value, label, family: resolveFamily(languageCatalog, label)};
-			});
+		return [...(select?.options ?? [])].filter(({value}) => value !== "").map(toLanguage);
+	}
+
+	function selectedLanguageOf(select) {
+		const option2 = select?.selectedOptions[0];
+		return option2?.value ? toLanguage(option2) : null;
+	}
+
+	// CpToolkit/src/adapters/judges/site-base.ts
+	class JudgeSiteBase {
+		bridge;
+
+		constructor(bridge) {
+			this.bridge = bridge;
+		}
+
+		taskUri() {
+			return location.href;
+		}
+
+		languages() {
+			return languagesOf(this.languageSelect);
+		}
+
+		language() {
+			return selectedLanguageOf(this.languageSelect);
+		}
+
+		onLanguageChange(listener) {
+			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
+		}
+
+		onSourceChange(_listener) {
+		}
 	}
 
 	// CpToolkit/src/adapters/judges/atcoder.ts
 	function pairs(items) {
-		const result = [];
-		for (let index = 0; index + 1 < items.length; index += 2) {
-			result.push([items[index], items[index + 1]]);
-		}
-		return result;
+		return items.flatMap((item, index) => {
+			const next = items[index + 1];
+			return index % 2 === 0 && next !== undefined ? [[item, next]] : [];
+		});
 	}
 
 	function parseSamples(page) {
@@ -3458,14 +3484,13 @@ ${settings_panel_default}`,
 		return [];
 	}
 
-	class AtCoderSite {
-		bridge;
+	class AtCoderSite extends JudgeSiteBase {
 		site;
 		id = "atcoder";
 		samplesByTask = new Map();
 
 		constructor(bridge, site) {
-			this.bridge = bridge;
+			super(bridge);
 			this.site = site;
 		}
 
@@ -3489,15 +3514,6 @@ ${settings_panel_default}`,
 			const task = this.taskSelect?.value;
 			if (!task) return `${location.origin}${location.pathname}`;
 			return `${location.origin}/contests/${pageGlobals().contestScreenName}/tasks/${task}`;
-		}
-
-		languages() {
-			return languagesOf(this.languageSelect);
-		}
-
-		language() {
-			const id = this.languageSelect?.value;
-			return this.languages().find((language) => language.id === id) ?? null;
 		}
 
 		onLanguageChange(listener) {
@@ -3572,36 +3588,8 @@ ${settings_panel_default}`,
 			.join("");
 	}
 
-	class CodeforcesSiteBase {
-		bridge;
+	class CodeforcesSite extends JudgeSiteBase {
 		id = "codeforces";
-
-		constructor(bridge) {
-			this.bridge = bridge;
-		}
-
-		taskUri() {
-			return location.href;
-		}
-
-		languages() {
-			return languagesOf(this.languageSelect);
-		}
-
-		language() {
-			const id = this.languageSelect?.value;
-			return this.languages().find((language) => language.id === id) ?? null;
-		}
-
-		onLanguageChange(listener) {
-			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
-		}
-
-		onSourceChange(_listener) {
-		}
-	}
-
-	class CodeforcesSite extends CodeforcesSiteBase {
 		buttons = document.createElement("span");
 		textarea = document.createElement("textarea");
 
@@ -3677,9 +3665,10 @@ ${settings_panel_default}`,
 		}
 	}
 
-	class CodeforcesMobileSite extends CodeforcesSiteBase {
+	class CodeforcesMobileSite extends JudgeSiteBase {
 		main;
 		form;
+		id = "codeforces";
 
 		constructor(bridge, main, form) {
 			super(bridge);
@@ -3742,12 +3731,11 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/adapters/judges/yukicoder.ts
-	class YukicoderSite {
-		bridge;
+	class YukicoderSite extends JudgeSiteBase {
 		id = "yukicoder";
 
 		constructor(bridge) {
-			this.bridge = bridge;
+			super(bridge);
 		}
 
 		get mounts() {
@@ -3768,23 +3756,6 @@ ${settings_panel_default}`,
 
 		get editor() {
 			return pageGlobals().ace?.edit("rich_source");
-		}
-
-		taskUri() {
-			return location.href;
-		}
-
-		languages() {
-			return languagesOf(this.languageSelect);
-		}
-
-		language() {
-			const id = this.languageSelect?.value;
-			return this.languages().find((language) => language.id === id) ?? null;
-		}
-
-		onLanguageChange(listener) {
-			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
 		}
 
 		onSourceChange(listener) {
@@ -3832,9 +3803,8 @@ ${settings_panel_default}`,
 			case "yukicoder":
 				return new YukicoderSite(bridge);
 			case "codeforces":
-				return CODEFORCES_MOBILE_HOST.test(location.host)
-					? CodeforcesMobileSite.create(bridge)
-					: new CodeforcesSite(bridge);
+				if (CODEFORCES_MOBILE_HOST.test(location.host)) return CodeforcesMobileSite.create(bridge);
+				return new CodeforcesSite(bridge);
 			default:
 				return null;
 		}
@@ -3983,19 +3953,17 @@ ${settings_panel_default}`,
 			if (delayMs > 0) await sleep(delayMs);
 			const editor = findEditor(target);
 			if (editor) return editor;
-			return new Promise((resolve) => {
-				const finish = (found) => {
-					observer.disconnect();
-					clearTimeout(timer);
-					resolve(found);
-				};
-				const observer = new MutationObserver(() => {
-					const found = findEditor(target);
-					if (found) finish(found);
-				});
-				const timer = setTimeout(() => finish(null), timeoutMs);
-				observer.observe(document.body, {childList: true, subtree: true});
+			const {promise, resolve} = Promise.withResolvers();
+			const observer = new MutationObserver(() => {
+				const found2 = findEditor(target);
+				if (found2) resolve(found2);
 			});
+			observer.observe(document.body, {childList: true, subtree: true});
+			const timer = setTimeout(() => resolve(null), timeoutMs);
+			const found = await promise;
+			observer.disconnect();
+			clearTimeout(timer);
+			return found;
 		}
 	}
 
@@ -4037,21 +4005,27 @@ ${settings_panel_default}`,
 		throwOnError: false,
 	};
 
+	function toElement(target) {
+		if (target instanceof Element) return target;
+		throw new TypeError("A page element is required.");
+	}
+
 	class UnsafeWindowPageBridge {
 		onChange(element, listener) {
 			const jQuery = pageGlobals().jQuery;
 			if (jQuery) jQuery(element).on("change", listener);
-			else element.addEventListener("change", listener);
+			else toElement(element).addEventListener("change", listener);
 		}
 
 		triggerChange(element) {
-			element.dispatchEvent(new Event("input", {bubbles: true}));
-			element.dispatchEvent(new Event("change", {bubbles: true}));
+			const target = toElement(element);
+			target.dispatchEvent(new Event("input", {bubbles: true}));
+			target.dispatchEvent(new Event("change", {bubbles: true}));
 			pageGlobals().jQuery?.(element).trigger("change");
 		}
 
 		renderMath(target) {
-			pageGlobals().renderMathInElement?.(target, MATH_OPTIONS);
+			pageGlobals().renderMathInElement?.(toElement(target), MATH_OPTIONS);
 		}
 
 		highlightCode() {
@@ -4064,11 +4038,24 @@ ${settings_panel_default}`,
 		async send({url, method = "GET", headers, body}) {
 			const response = await fetch(url, {
 				method,
-				headers: headers ? {...headers} : undefined,
-				body,
 				credentials: "include",
+				...(headers && {headers: {...headers}}),
+				...(body !== undefined && {body}),
 			});
 			return {status: response.status, text: await response.text()};
+		}
+	}
+
+	// CpToolkit/src/adapters/runners/serial-queue.ts
+	class SerialQueue {
+		last = Promise.resolve();
+
+		run(task) {
+			const result = this.last.then(task);
+			this.last = result.catch(() => {
+				return;
+			});
+			return result;
 		}
 	}
 
@@ -4078,7 +4065,7 @@ ${settings_panel_default}`,
 
 	class CustomTestQueue {
 		site;
-		last = Promise.resolve();
+		queue = new SerialQueue();
 		failedGroups = new Set();
 
 		constructor(site) {
@@ -4090,11 +4077,7 @@ ${settings_panel_default}`,
 		}
 
 		run(languageId, sourceCode, input, groupId) {
-			const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
-			this.last = result.catch(() => {
-				return;
-			});
-			return result;
+			return this.queue.run(() => this.execute(languageId, sourceCode, input, groupId));
 		}
 
 		async execute(languageId, sourceCode, input, groupId) {
@@ -4129,8 +4112,8 @@ ${settings_panel_default}`,
 					execTime: Number.parseInt(String(result.TimeConsumption), 10),
 					memory: Number.parseInt(String(result.MemoryConsumption), 10),
 					input,
-					output: data.Stdout,
-					error: data.Stderr,
+					output: data.Stdout ?? "",
+					error: data.Stderr ?? "",
 				};
 			}
 			return {status: "TLE", input, error: "Custom test timed out"};
@@ -4210,18 +4193,14 @@ ${body}
 		id = "browser:pyodide";
 		label = "Python3 Pyodide [Browser]";
 		pyodide = null;
-		queue = Promise.resolve();
+		queue = new SerialQueue();
 
 		constructor(scripts) {
 			this.scripts = scripts;
 		}
 
 		run(sourceCode, input) {
-			const result = this.queue.then(() => this.execute(sourceCode, input));
-			this.queue = result.catch(() => {
-				return;
-			});
-			return result;
+			return this.queue.run(() => this.execute(sourceCode, input));
 		}
 
 		async load() {
@@ -4411,7 +4390,46 @@ ${body}
 		}
 	}
 
+	// CpToolkit/src/domain/validation/guards.ts
+	var isString = (value) => typeof value === "string";
+	var isNumber = (value) => typeof value === "number";
+
+	function isPlainObject(value) {
+		return typeof value === "object" && value !== null && !Array.isArray(value);
+	}
+
+	function isArrayOf(isItem) {
+		return (value) => Array.isArray(value) && value.every(isItem);
+	}
+
+	function isRecordOf(isItem) {
+		return (value) => isPlainObject(value) && Object.values(value).every(isItem);
+	}
+
+	function isObjectOf(fields) {
+		const entries = Object.entries(fields);
+		return (value) => isPlainObject(value) && entries.every(([key, isField]) => isField(value[key]));
+	}
+
+	// CpToolkit/src/application/ports/key-value-store.ts
+	function readStored(store, key, isValid, fallback) {
+		const value = store.get(key);
+		return isValid(value) ? value : fallback;
+	}
+
 	// CpToolkit/src/adapters/runners/wandbox.ts
+	var isSwitches = (value) => Array.isArray(value);
+	var isCompilerCache = isObjectOf({
+		compilers: isArrayOf(
+			isObjectOf({
+				name: isString,
+				language: isString,
+				version: isString,
+				switches: isSwitches,
+			}),
+		),
+		fetchedAt: isNumber,
+	});
 	var CACHE_KEY = "easy-test:wandbox-compilers";
 	var HOUR_MS = 60 * 60 * 1000;
 	var ACL_INCLUDE_PATTERN = /^#\s*include\s*[<"]atcoder\/([^>"]+)[>"]/gm;
@@ -4501,7 +4519,7 @@ ${body}
 		}
 
 		async compilers() {
-			const cached = this.state.get(CACHE_KEY);
+			const cached = readStored(this.state, CACHE_KEY, isCompilerCache, null);
 			if (cached && Date.now() - cached.fetchedAt < runnerCatalog.wandbox.cacheHours * HOUR_MS)
 				return cached.compilers;
 			const response = await this.http.send({url: runnerCatalog.wandbox.listUrl});
@@ -5600,13 +5618,12 @@ ${body}
 	}
 
 	// CpToolkit/src/adapters/statement/statement-converter.ts
+	var isElement = (node) => node.nodeType === Node.ELEMENT_NODE;
+
 	function texOf(element, fallback) {
 		const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
-		const tex =
-			annotation?.textContent ??
-			element.getAttribute("data-tex") ??
-			element.getAttribute("aria-label") ??
-			fallback;
+		const attribute = element.getAttribute("data-tex") ?? element.getAttribute("aria-label");
+		const tex = annotation?.textContent ?? attribute ?? fallback;
 		return `$${tex.trim()}$`;
 	}
 
@@ -5615,7 +5632,7 @@ ${body}
 		service.use(gfm);
 		service.addRule("math", {
 			filter: "var",
-			replacement: (content, node) => texOf(node, content),
+			replacement: (content, node) => (isElement(node) ? texOf(node, content) : content),
 		});
 		service.addRule("pre", {
 			filter: "pre",
@@ -5640,17 +5657,16 @@ ${content.trim()}
 						`
   `,
 					);
-				const item = node;
-				const parent = item.parentElement;
+				const parent = node.parentElement;
 				let prefix = `${options.bulletListMarker} `;
-				if (parent?.nodeName === "OL") {
+				if (parent?.nodeName === "OL" && isElement(node)) {
 					const start = Number(parent.getAttribute("start") ?? 1);
-					prefix = `${start + [...parent.children].indexOf(item)}. `;
+					prefix = `${start + [...parent.children].indexOf(node)}. `;
 				}
 				return (
 					prefix +
 					body +
-					(item.nextSibling &&
+					(node.nextSibling &&
 					!body.endsWith(`
 `)
 						? `
@@ -5667,20 +5683,19 @@ ${content.trim()}
 
 	function plainTextOf(node) {
 		if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
-		if (node.nodeType !== Node.ELEMENT_NODE) return "";
-		const element = node;
-		const tag = element.tagName;
+		if (!isElement(node)) return "";
+		const tag = node.tagName;
 		if (IGNORED_TAGS.has(tag)) return "";
 		if (tag === "BR")
 			return `
 `;
-		if (tag === "VAR") return texOf(element, element.textContent ?? "");
-		if (tag === "CODE") return `\`${element.textContent ?? ""}\``;
+		if (tag === "VAR") return texOf(node, node.textContent ?? "");
+		if (tag === "CODE") return `\`${node.textContent ?? ""}\``;
 		if (tag === "PRE")
 			return `
-${(element.textContent ?? "").trim()}
+${(node.textContent ?? "").trim()}
 `;
-		const inner = [...element.childNodes].map(plainTextOf).join("");
+		const inner = [...node.childNodes].map(plainTextOf).join("");
 		if (tag === "H3")
 			return `【${inner.trim()}】
 `;
@@ -5727,7 +5742,7 @@ ${inner}
 
 	class GmNotifier {
 		notify({title, text, url}) {
-			GM_notification({title, text, onclick: url ? () => window.open(url, "_blank") : undefined});
+			GM_notification({title, text, ...(url !== undefined && {onclick: () => window.open(url, "_blank")})});
 		}
 	}
 
@@ -5737,9 +5752,9 @@ ${inner}
 				GM_xmlhttpRequest({
 					url,
 					method,
-					headers: headers ? {...headers} : undefined,
-					data: body,
-					timeout: timeoutMs,
+					...(headers && {headers: {...headers}}),
+					...(body !== undefined && {data: body}),
+					...(timeoutMs !== undefined && {timeout: timeoutMs}),
 					onload: ({status, responseText}) => resolve({status, text: responseText}),
 					onerror: () => reject(new Error(`Request failed: ${url}`)),
 					ontimeout: () => reject(new Error(`Request timed out: ${url}`)),
@@ -5867,7 +5882,9 @@ ${inner}
 
 	function summarizeJudgeCases(cases) {
 		const total = cases.length;
-		const sum = (select) => cases.reduce((value, item) => value + select(item), 0);
+		const sum = (select) => {
+			return cases.reduce((value, item) => value + select(item), 0);
+		};
 		return {
 			accepted: cases.filter(({status}) => status === "AC").length,
 			total,
@@ -5902,11 +5919,12 @@ ${inner}
 		options: {},
 		live: true,
 		start({translate}) {
-			const tables2 = document.querySelectorAll("table");
-			const body = tables2[tables2.length - 1]?.querySelector("tbody");
+			const tables2 = [...document.querySelectorAll("table")];
+			const body = tables2.at(-1)?.querySelector("tbody");
 			const rows = [...(body?.querySelectorAll("tr") ?? [])];
 			const isCaseTable = rows.every((row2) => row2.querySelectorAll("td").length === COLUMN_COUNT);
-			if (tables2.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable)
+			const hasCases = tables2.length >= MIN_TABLES_WITH_CASES && rows.length >= MIN_CASES && isCaseTable;
+			if (!body || !hasCases)
 				return () => {
 					return;
 				};
@@ -6080,23 +6098,29 @@ ${css}`,
 			tabs.addEventListener("pointermove", onMove);
 			tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), {once: true});
 		});
-		const activate = (tab, pane) => {
-			for (const other of tabs.children) other.dataset.active = String(other === tab);
-			for (const other of content.children) other.hidden = other !== pane;
+		const entries = new Set();
+		let active;
+		const activate = (next2) => {
+			active = next2;
+			for (const entry of entries) {
+				entry.tab.dataset.active = String(entry === next2);
+				entry.pane.hidden = entry !== next2;
+			}
 		};
 		return {
 			addTab(label, pane, {closable = false} = {}) {
 				const tab = h("div", {className: "dock-tab", textContent: label});
-				const select = () => activate(tab, pane);
+				const entry = {tab, pane};
+				const select = () => activate(entry);
 				const show = () => {
 					setOpen(true);
 					select();
 				};
 				const close = () => {
-					const wasActive = !pane.hidden;
+					entries.delete(entry);
 					tab.remove();
 					pane.remove();
-					if (wasActive) activate(tabs.firstElementChild, content.firstElementChild);
+					if (active === entry) activate(entries.values().next().value);
 				};
 				tab.addEventListener("click", show);
 				if (closable) {
@@ -6113,10 +6137,11 @@ ${css}`,
 						}),
 					);
 				}
-				pane.hidden = content.children.length > 0;
+				entries.add(entry);
+				pane.hidden = active !== undefined;
 				tabs.append(tab);
 				content.append(pane);
-				if (tabs.children.length === 1) select();
+				if (!active) select();
 				return {
 					select,
 					show,
@@ -6455,6 +6480,7 @@ summary {
 
 	// CpToolkit/src/features/easy-test/saved-code.ts
 	var SAVED_CODE_KEY = "easy-test:saved-code";
+	var isSavedCodes = isArrayOf(isObjectOf({path: isString, code: isString}));
 
 	class SavedCodes {
 		state;
@@ -6475,12 +6501,12 @@ summary {
 		}
 
 		list() {
-			return this.state.get(SAVED_CODE_KEY) ?? [];
+			return readStored(this.state, SAVED_CODE_KEY, isSavedCodes, []);
 		}
 	}
 
 	// CpToolkit/src/features/easy-test/views.ts
-	function toneOf({status}) {
+	function toneOf(status) {
 		if (status === "AC") return "success";
 		return status === "OK" ? null : "warning";
 	}
@@ -6525,7 +6551,7 @@ summary {
 		return {
 			element,
 			show(result) {
-				const tone = toneOf(result);
+				const tone = toneOf(result.status);
 				if (tone) output.textarea.dataset.tone = tone;
 				input.textarea.value = result.input;
 				output.textarea.value = result.output ?? "";
@@ -6572,9 +6598,8 @@ summary {
 				element.append(label);
 				result.then(({status}) => {
 					label.textContent = status;
-					if (status === "IE") label.dataset.tone = "danger";
-					else if (status === "AC") label.dataset.tone = "success";
-					else if (status !== "OK") label.dataset.tone = "warning";
+					const tone = status === "IE" ? "danger" : toneOf(status);
+					if (tone) label.dataset.tone = tone;
 					finished++;
 					if (status === "AC") accepted++;
 					bar.textContent = `${finished} / ${total}`;
@@ -6729,7 +6754,7 @@ summary {
 		}
 
 		createTestButton(label, className, shortcut, onClick) {
-			const button = this.createButton(label, className, onClick);
+			const button = this.createButton(this.context.translate(label), className, onClick);
 			button.title = shortcut;
 			button.style.marginLeft = "1rem";
 			return button;
@@ -6741,13 +6766,13 @@ summary {
 			if (testButtons instanceof Element) {
 				testButtons.append(
 					this.createTestButton(
-						translate("easyTest.testAndSubmit"),
+						"easyTest.testAndSubmit",
 						"btn-info",
 						TEST_AND_SUBMIT_KEY,
 						() => void this.testAndSubmit(),
 					),
 					this.createTestButton(
-						translate("easyTest.testAll"),
+						"easyTest.testAll",
 						"btn-default btn-sm",
 						TEST_ALL_KEY,
 						() => void this.testAll(),
@@ -6768,13 +6793,10 @@ summary {
 
 		placeSampleButtons() {
 			this.site.samples().then((samples) => {
+				const label = this.context.translate("easyTest.run");
 				for (const sample of samples) {
 					if (!(sample.anchor instanceof Element)) continue;
-					const button = this.createButton(
-						this.context.translate("easyTest.run"),
-						"btn-primary btn-sm",
-						() => void this.runSample(sample),
-					);
+					const button = this.createButton(label, "btn-primary btn-sm", () => void this.runSample(sample));
 					button.style.verticalAlign = "top";
 					button.style.marginLeft = "0.5em";
 					sample.anchor.after(button);
@@ -6822,7 +6844,7 @@ summary {
 		}
 
 		selections() {
-			return this.context.state.get(RUNNER_SELECTION_KEY) ?? {};
+			return readStored(this.context.state, RUNNER_SELECTION_KEY, isRecordOf(isString), {});
 		}
 
 		rememberRunner() {
@@ -6891,17 +6913,12 @@ ${label}`,
 			const tab = this.dock.addTab(`#${++this.runCount} ${testCase.title}`, view.element, {closable: true});
 			this.running++;
 			this.setRunnable(false);
-			const result = runners.test(
-				this.candidates,
-				this.panel.environment.value,
-				code,
-				testCase,
-				this.runOptions(options),
-			);
+			const firstRunnerId = this.panel.environment.value;
+			const result = runners.test(this.candidates, firstRunnerId, code, testCase, this.runOptions(options));
 			result
 				.then((value) => {
 					view.show(value);
-					const tone = toneOf(value);
+					const tone = toneOf(value.status);
 					if (tone) tab.setTone(tone);
 				})
 				.finally(() => {
@@ -7031,6 +7048,7 @@ pre code {tab-size: 4;}`;
 			};
 			const observer = new IntersectionObserver((entries) => {
 				for (const {target, isIntersecting} of entries) {
+					if (!(target instanceof HTMLAnchorElement)) continue;
 					if (isIntersecting) queue.add(target);
 					else queue.delete(target);
 				}
@@ -7301,7 +7319,6 @@ ${efficient_layout_default}`);
 	var UNLOCK_DURATION_MS = 4000;
 	var UNLOCK_INTERVAL_MS = 120;
 	var OBSERVE_DURATION_MS = 5000;
-	var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	function findLanguageSelect() {
 		for (const selector of paizaLanguageSelect.selects) {
@@ -7348,7 +7365,7 @@ ${efficient_layout_default}`);
 		while (editor?.isReadOnly() && Date.now() < deadline) {
 			editor.setWritable();
 			unlockTextInputs();
-			await sleep2(UNLOCK_INTERVAL_MS);
+			await sleep(UNLOCK_INTERVAL_MS);
 		}
 	}
 
@@ -7367,14 +7384,14 @@ ${efficient_layout_default}`);
 			const target = context.options.language.toLowerCase();
 			for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
 				if (selectLanguage(target, context.page)) break;
-				await sleep2(RETRY_INTERVAL_MS);
+				await sleep(RETRY_INTERVAL_MS);
 			}
-			await sleep2(AFTER_SELECTION_DELAY_MS);
+			await sleep(AFTER_SELECTION_DELAY_MS);
 			await unlockEditor(context);
 			const observer = new MutationObserver(() => {
 				if (!selectLanguage(target, context.page)) return;
 				observer.disconnect();
-				sleep2(AFTER_SELECTION_DELAY_MS).then(() => unlockEditor(context));
+				sleep(AFTER_SELECTION_DELAY_MS).then(() => unlockEditor(context));
 			});
 			observer.observe(document.body, {childList: true, subtree: true});
 			setTimeout(() => observer.disconnect(), OBSERVE_DURATION_MS);
@@ -7409,8 +7426,7 @@ ${efficient_layout_default}`);
 		},
 		async start({options, ratingGraph: graph, site, translate}) {
 			const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
-			const buttonGroups = document.querySelectorAll(".btn-text-group");
-			const buttonGroup = buttonGroups[buttonGroups.length - 1];
+			const buttonGroup = [...document.querySelectorAll(".btn-text-group")].at(-1);
 			if (!userName || !buttonGroup) return;
 			const heuristic = new URLSearchParams(location.search).get("contestType") === "heuristic";
 			const url = `/users/${userName}/history/json${heuristic ? "?contestType=heuristic" : ""}`;
@@ -7439,6 +7455,14 @@ ${efficient_layout_default}`);
 	});
 
 	// CpToolkit/src/application/submission/pending-submissions.ts
+	var isPendingList = isArrayOf(
+		isObjectOf({
+			id: isString,
+			contestId: isString,
+			taskName: isString,
+			addedAt: isNumber,
+		}),
+	);
 	var PENDING_KEY = "result-notifier:pending";
 	var LAST_POLL_KEY = "result-notifier:lastPoll";
 	var LAST_FOCUS_KEY = "result-notifier:lastFocus";
@@ -7453,7 +7477,7 @@ ${efficient_layout_default}`);
 		}
 
 		list(now) {
-			const pending = this.state.get(PENDING_KEY) ?? [];
+			const pending = readStored(this.state, PENDING_KEY, isPendingList, []);
 			return pending.filter(({addedAt}) => now - addedAt < PENDING_LIFETIME_MS);
 		}
 
@@ -7464,9 +7488,10 @@ ${efficient_layout_default}`);
 		}
 
 		remove(ids, now) {
+			const removed = new Set(ids);
 			this.state.set(
 				PENDING_KEY,
-				this.list(now).filter(({id}) => !ids.includes(id)),
+				this.list(now).filter(({id}) => !removed.has(id)),
 			);
 		}
 
@@ -7608,7 +7633,7 @@ ${toast_default}`,
 		live: true,
 		start({options, isOnRoute, notifier, site, state}) {
 			const pending = new PendingSubmissions(state);
-			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+			const contestId = contestIdOf(location.pathname);
 			if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
 				pending.add(collectPending(contestId, Date.now()), Date.now());
 			}
@@ -7646,12 +7671,8 @@ ${toast_default}`,
 				if (document.hasFocus()) pending.markFocused(now);
 				const submissions = pending.list(now);
 				if (submissions.length === 0 || !pending.claimPoll(now, POLL_INTERVAL_MS2)) return;
-				const contests = new Set(submissions.map((submission) => submission.contestId));
-				for (const id of contests) {
-					checkContest(
-						id,
-						submissions.filter((submission) => submission.contestId === id),
-					).catch(() => {
+				for (const [id, contestSubmissions] of Map.groupBy(submissions, ({contestId: contest}) => contest)) {
+					checkContest(id, contestSubmissions).catch(() => {
 						return;
 					});
 				}
@@ -7833,19 +7854,20 @@ ${body}`.trim();
 	var MEMORY_CLASS = "cp-memory-limit";
 	var SKIPPED_ANCESTORS = `.katex, var, .${NUMBER_CLASS}, .${TIME_CLASS}, .${MEMORY_CLASS}`;
 	var HIGHLIGHT_DELAY_MS = 100;
+	var SKIPPED_TAGS = new Set(statementCatalog.skipTags);
 
 	function collectTextNodes(root2, accepts) {
 		const walker = document.createTreeWalker(root2, NodeFilter.SHOW_TEXT, {
 			acceptNode(node) {
 				const parent = node.parentElement;
-				if (!parent || statementCatalog.skipTags.includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+				if (!parent || SKIPPED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
 				return parent.closest(SKIPPED_ANCESTORS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
 			},
 		});
 		const nodes = [];
 		while (walker.nextNode()) {
 			const node = walker.currentNode;
-			if (accepts(node.data)) nodes.push(node);
+			if (node instanceof Text && accepts(node.data)) nodes.push(node);
 		}
 		return nodes;
 	}
@@ -7866,8 +7888,8 @@ ${body}`.trim();
 	function markTargetSections() {
 		for (const section of document.querySelectorAll("#task-statement section")) {
 			const title = section.querySelector("h3")?.textContent ?? "";
-			if (statementCatalog.targetHeadings.some((heading) => title.includes(heading)))
-				section.classList.add(TARGET_CLASS);
+			const isTarget = statementCatalog.targetHeadings.some((heading) => title.includes(heading));
+			if (isTarget) section.classList.add(TARGET_CLASS);
 		}
 	}
 
@@ -8117,6 +8139,8 @@ ${statement_highlight_default}`);
 	});
 
 	// CpToolkit/src/domain/contest/category.ts
+	var isTaskRange = isObjectOf({begin: isNumber, end: isNumber});
+
 	function contestCategory(catalog, contestId, taskCount) {
 		const regular = catalog.regularPrefixes.find((prefix) => contestId.startsWith(prefix));
 		if (regular) return `${regular}-${taskCount}`;
@@ -8139,15 +8163,19 @@ ${statement_highlight_default}`);
 
 	function rangeIndices({begin, end}, reverse) {
 		const indices = Array.from({length: end - begin + 1}, (_, index) => begin + index);
-		return reverse ? indices.reverse() : indices;
+		return reverse ? indices.toReversed() : indices;
 	}
 
 	// CpToolkit/src/application/contest/task-list.ts
+	var isCacheEntry = isObjectOf({
+		tasks: isArrayOf(isObjectOf({url: isString, label: isString, name: isString})),
+		lastAccess: isNumber,
+	});
 	var CACHE_KEY2 = "task-dropdown:tasks";
 	var DAY_MS = 24 * 60 * 60 * 1000;
 
 	async function loadContestTasks(contestId, {site, state, parse, cacheDays}) {
-		const cache = state.get(CACHE_KEY2) ?? {};
+		const cache = readStored(state, CACHE_KEY2, isRecordOf(isCacheEntry), {});
 		const now = Date.now();
 		const fresh = Object.entries(cache).filter(([, entry]) => now - entry.lastAccess < cacheDays * DAY_MS);
 		let tasks = cache[contestId]?.tasks ?? null;
@@ -8255,10 +8283,9 @@ button.primary {
 		rangeRadio.addEventListener("change", refresh);
 		beginSelect.addEventListener("change", () => changeRange("begin"));
 		endSelect.addEventListener("change", () => changeRange("end"));
+		const row = (...children) => h("div", {className: "open-tasks-row"}, ...children);
 		modal.body.append(
-			h(
-				"div",
-				{className: "open-tasks-row"},
+			row(
 				h("label", {}, allRadio, ` ${translate("taskDropdown.all")}`),
 				canOpenAll
 					? ""
@@ -8267,15 +8294,8 @@ button.primary {
 							textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
 						}),
 			),
-			h(
-				"div",
-				{className: "open-tasks-row"},
-				h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`),
-				beginSelect,
-				"-",
-				endSelect,
-			),
-			h("div", {className: "open-tasks-row"}, h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
+			row(h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`), beginSelect, "-", endSelect),
+			row(h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
 			info,
 		);
 		modal.footer.append(
@@ -8398,7 +8418,7 @@ button.primary {
 		options: {},
 		async start({site, state, translate}) {
 			const tab = document.querySelector('#contest-nav-tabs a[href$="tasks"]');
-			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
+			const contestId = contestIdOf(location.pathname);
 			if (!tab || !contestId) return;
 			injectStyle(task_dropdown_default);
 			const taskTableUrl = tab.href;
@@ -8414,14 +8434,12 @@ button.primary {
 				cacheDays: contestCatalog.taskCacheDays,
 			}).catch(() => null);
 			if (!tasks) {
-				menu.append(
-					h("li", {className: "divider"}),
-					h("li", {}, h("a", {textContent: translate("taskDropdown.loadFailed")})),
-				);
+				const failure = h("a", {textContent: translate("taskDropdown.loadFailed")});
+				menu.append(h("li", {className: "divider"}), h("li", {}, failure));
 				return;
 			}
 			const category = contestCategory(contestCatalog, contestId, tasks.length);
-			const ranges = state.get(RANGES_KEY) ?? {};
+			const ranges = readStored(state, RANGES_KEY, isRecordOf(isTaskRange), {});
 			const modal = createOpenTasksModal({
 				tasks,
 				maxTabs: contestCatalog.maxTabsAtOnce,
@@ -8451,8 +8469,6 @@ button.primary {
 
 	// CpToolkit/src/features/tessoku-difficulty/index.ts
 	var TASK_LIST = "#main-container > div.row > div:nth-child(2)";
-	var taskIdOf = (row) => row.querySelector("td")?.textContent?.trim() ?? "";
-	var difficultyOf = (row) => tessokuDifficulties[taskIdOf(row)] ?? Number.POSITIVE_INFINITY;
 	var tessokuDifficulty = defineFeature({
 		id: "tessoku-difficulty",
 		title: "tessokuDifficulty.title",
@@ -8466,9 +8482,11 @@ button.primary {
 			const body = document.querySelector(`${TASK_LIST} > div > table > tbody`);
 			const heading = document.querySelector(`${TASK_LIST} > h2`);
 			if (!body || !heading) return;
-			const rows = [...body.querySelectorAll("tr")];
-			for (const row of rows) {
-				const difficulty = tessokuDifficulties[taskIdOf(row)];
+			const tasks = [...body.querySelectorAll("tr")].map((row) => {
+				const id = row.querySelector("td")?.textContent?.trim() ?? "";
+				return {row, id, difficulty: tessokuDifficulties[id]};
+			});
+			for (const {row, difficulty} of tasks) {
 				const link = row.querySelector("td:nth-child(2) a");
 				if (difficulty !== undefined && link) link.prepend(`【☆${difficulty}】 `);
 			}
@@ -8479,15 +8497,15 @@ button.primary {
 				textContent: translate("tessokuDifficulty.sortByDifficulty"),
 				onclick() {
 					sortedByDifficulty = !sortedByDifficulty;
-					const sorted = [...rows].sort((a, b) => {
-						return sortedByDifficulty
-							? difficultyOf(a) - difficultyOf(b)
-							: taskIdOf(a).localeCompare(taskIdOf(b));
+					const sorted = tasks.toSorted((a, b) => {
+						if (!sortedByDifficulty) return a.id.localeCompare(b.id);
+						return (a.difficulty ?? Number.POSITIVE_INFINITY) - (b.difficulty ?? Number.POSITIVE_INFINITY);
 					});
-					body.append(...sorted);
-					button.textContent = translate(
-						sortedByDifficulty ? "tessokuDifficulty.sortById" : "tessokuDifficulty.sortByDifficulty",
-					);
+					body.append(...sorted.map(({row}) => row));
+					const nextOrder = sortedByDifficulty
+						? "tessokuDifficulty.sortById"
+						: "tessokuDifficulty.sortByDifficulty";
+					button.textContent = translate(nextOrder);
 				},
 			});
 			heading.after(button);

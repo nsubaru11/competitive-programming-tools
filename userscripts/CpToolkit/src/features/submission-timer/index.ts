@@ -22,7 +22,7 @@ export const submissionTimer = defineFeature({
 		const modal = createModal({
 			title: translate("submissionTimer.title"),
 			closeLabel: translate("settings.close"),
-			css: formCss
+			css: formCss,
 		});
 		const minutes = h("input", {type: "number", min: "1"});
 		const info = h("p");
@@ -45,7 +45,7 @@ export const submissionTimer = defineFeature({
 		modal.body.append(
 			h("label", {className: "field"}, h("span", {
 				className: "field-label",
-				textContent: translate("submissionTimer.minutes")
+				textContent: translate("submissionTimer.minutes"),
 			}), minutes),
 			info,
 		);

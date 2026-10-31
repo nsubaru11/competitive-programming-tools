@@ -1,20 +1,34 @@
+import {sleep} from "@atcoder-tools/shared";
 import {ratingScale} from "@catalog/tables";
 import {dropOldest} from "@domain/rating/history";
 import {tierOf, tierProgress} from "@domain/rating/scale";
 import type {RatingGraph, RatingGraphView} from "@application/ports/rating-graph";
-import {pageGlobals} from "@adapters/page/globals";
+import {pageGlobals, type RatingEntry} from "@adapters/page/globals";
+import type {Container, CreateJs, Shape, Stage, Text} from "./createjs";
 
-type RatingEntry = {
-	readonly ContestName: string;
-	readonly EndTime: number;
-	readonly NewRating: number;
-	readonly OldRating: number;
-	readonly Place: number;
-	readonly StandingsUrl: string;
+type Prepared = {
+	readonly cj: CreateJs;
+	readonly history: readonly RatingEntry[];
+	readonly performances: readonly number[];
+	readonly graphCanvas: HTMLCanvasElement;
+	readonly statusCanvas: HTMLCanvasElement;
 };
 
-/** createjs の表示オブジェクト。サイト側のライブラリなので型を持たない。 */
-type Easel = any;
+type Particle = {
+	readonly text: Text;
+	vx: number;
+	vy: number;
+	rotationSpeed: number;
+	life: number;
+};
+
+type SeriesStyle = {
+	readonly lineColor: string;
+	readonly highestLabel: string;
+	readonly radius: number;
+	/** 最高値の点だけ描き方を変えるときに指定する。 */
+	readonly highestVertex?: {readonly radius: number; readonly strokeWidth: number};
+};
 
 const MARGIN_X = 86400 * 30;
 const MARGIN_Y_LOW = 100;
@@ -29,6 +43,7 @@ const START_YEAR = 2010;
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const YEAR_SECONDS = 86400 * 365;
 const STEP_SIZE = 400;
+const VERTEX_STROKE_WIDTH = 0.5;
 const PARTICLE_MIN = 3;
 const PARTICLE_MAX = 20;
 const PARTICLE_LIFE = 30;
@@ -47,6 +62,13 @@ function signed(value: number): string {
 	return `${value === 0 ? "±" : value < 0 ? "-" : "+"}${Math.abs(value)}`;
 }
 
+/** グラフの描画に必要なものが揃っていれば返す。 */
+function findDependencies(): {cj: CreateJs; history: readonly RatingEntry[]} | null {
+	const {createjs: cj, rating_history: history} = pageGlobals();
+	const hasCanvases = document.getElementById("ratingGraph") && document.getElementById("ratingStatus");
+	return cj && Array.isArray(history) && hasCanvases ? {cj, history} : null;
+}
+
 /** サイトの描画を止めるため、リスナーを持たない複製に置き換える。 */
 function replaceCanvas(id: string): HTMLCanvasElement | null {
 	const canvas = document.getElementById(id);
@@ -56,7 +78,7 @@ function replaceCanvas(id: string): HTMLCanvasElement | null {
 	return clone;
 }
 
-function scaleStage(stage: Easel, canvas: HTMLCanvasElement): {width: number; height: number} {
+function scaleStage(stage: Stage, canvas: HTMLCanvasElement): {width: number; height: number} {
 	const rect = canvas.getBoundingClientRect();
 	const width = Math.round(rect.width || canvas.clientWidth || canvas.width || DEFAULT_WIDTH);
 	const height = Math.round(rect.height || canvas.clientHeight || canvas.height);
@@ -76,44 +98,37 @@ function scaleStage(stage: Easel, canvas: HTMLCanvasElement): {width: number; he
 
 /** サイトのレーティンググラフを、パフォーマンスを重ねて描き直す。 */
 export class CreateJsRatingGraph implements RatingGraph {
-	private history: readonly RatingEntry[] = [];
-	private performances: readonly number[] = [];
-	private graphCanvas: HTMLCanvasElement | null = null;
-	private statusCanvas: HTMLCanvasElement | null = null;
+	private prepared: Prepared | null = null;
 
 	async prepare(performances: readonly number[]): Promise<boolean> {
 		const deadline = Date.now() + READY_TIMEOUT_MS;
-		const isReady = (): boolean => {
-			const page = pageGlobals();
-			return Array.isArray(page.rating_history)
-				&& page.createjs !== undefined
-				&& document.getElementById("ratingGraph") !== null
-				&& document.getElementById("ratingStatus") !== null;
-		};
-		while (!isReady()) {
+		let dependencies = findDependencies();
+		while (!dependencies) {
 			if (Date.now() > deadline) return false;
-			await new Promise((resolve) => setTimeout(resolve, READY_INTERVAL_MS));
+			await sleep(READY_INTERVAL_MS);
+			dependencies = findDependencies();
 		}
-		this.history = (pageGlobals().rating_history ?? []) as readonly RatingEntry[];
-		this.performances = performances;
-		pageGlobals().createjs.Ticker.removeAllEventListeners("tick");
-		this.graphCanvas = replaceCanvas("ratingGraph");
-		this.statusCanvas = replaceCanvas("ratingStatus");
-		return this.history.length > 0;
+		const {cj, history} = dependencies;
+		cj.Ticker.removeAllEventListeners("tick");
+		const graphCanvas = replaceCanvas("ratingGraph");
+		const statusCanvas = replaceCanvas("ratingStatus");
+		if (!graphCanvas || !statusCanvas) return false;
+		this.prepared = {cj, history, performances, graphCanvas, statusCanvas};
+		return history.length > 0;
 	}
 
 	draw({showPerformance, recentOnly}: RatingGraphView): void {
-		if (!this.graphCanvas || !this.statusCanvas) return;
-		const history = recentOnly ? dropOldest(this.history) : this.history;
-		const performances = recentOnly ? dropOldest(this.performances) : this.performances;
+		if (!this.prepared) return;
+		const {cj, graphCanvas, statusCanvas} = this.prepared;
+		const history = recentOnly ? dropOldest(this.prepared.history) : this.prepared.history;
+		const performances = recentOnly ? dropOldest(this.prepared.performances) : this.prepared.performances;
 		const count = history.length;
 		if (count === 0) return;
 
-		const cj: Easel = pageGlobals().createjs;
-		const stageGraph: Easel = new cj.Stage(this.graphCanvas);
-		const stageStatus: Easel = new cj.Stage(this.statusCanvas);
-		const graphSize = scaleStage(stageGraph, this.graphCanvas);
-		const statusSize = scaleStage(stageStatus, this.statusCanvas);
+		const stageGraph = new cj.Stage(graphCanvas);
+		const stageStatus = new cj.Stage(statusCanvas);
+		const graphSize = scaleStage(stageGraph, graphCanvas);
+		const statusSize = scaleStage(stageStatus, statusCanvas);
 		const panelWidth = graphSize.width - OFFSET_X - 10;
 		const panelHeight = graphSize.height - OFFSET_Y - 30;
 		const statusWidth = statusSize.width - OFFSET_X - 10;
@@ -128,12 +143,12 @@ export class CreateJsRatingGraph implements RatingGraph {
 		const pointX = (time: number): number => OFFSET_X + panelWidth * ratio(time, xMin, xMax);
 		const pointY = (value: number): number => OFFSET_Y + (panelHeight - panelHeight * ratio(value, yMin, yMax));
 
-		const newShape = (parent: Easel): Easel => {
+		const newShape = (parent: Container): Shape => {
 			const shape = new cj.Shape();
 			parent.addChild(shape);
 			return shape;
 		};
-		const newText = (parent: Easel, x: number, y: number, font: string): Easel => {
+		const newText = (parent: Container, x: number, y: number, font: string): Text => {
 			const text = new cj.Text("", font, "#000");
 			Object.assign(text, {x, y, textAlign: "center", textBaseline: "middle"});
 			parent.addChild(text);
@@ -145,14 +160,14 @@ export class CreateJsRatingGraph implements RatingGraph {
 			Object.assign(panel, {x: OFFSET_X, y: OFFSET_Y, alpha: 0.3});
 			const border = newShape(stageGraph);
 			Object.assign(border, {x: OFFSET_X, y: OFFSET_Y});
-			const addLabel = (text: string, x: number, y: number, textAlign: string, textBaseline: string): void => {
+			const addLabel = (text: string, x: number, y: number, align: Pick<Text, "textAlign" | "textBaseline">): void => {
 				const label = new cj.Text(text, LABEL_FONT, "#000");
-				Object.assign(label, {x, y, textAlign, textBaseline});
+				Object.assign(label, {x, y, ...align});
 				stageGraph.addChild(label);
 			};
 
 			let top = 0;
-			for (const tier of [...ratingScale.tiers].reverse()) {
+			for (const tier of ratingScale.tiers.toReversed()) {
 				const bottom = panelHeight - panelHeight * ratio(tier.min, yMin, yMax);
 				if (bottom > 0 && top < panelHeight) {
 					top = Math.max(top, 0);
@@ -164,7 +179,7 @@ export class CreateJsRatingGraph implements RatingGraph {
 			for (let value = 0; value <= yMax; value += STEP_SIZE) {
 				if (value < yMin) continue;
 				const y = panelHeight - panelHeight * ratio(value, yMin, yMax);
-				addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, "right", "middle");
+				addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, {textAlign: "right", textBaseline: "middle"});
 				border.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
 				border.graphics.moveTo(0, y).lineTo(panelWidth, y);
 			}
@@ -174,6 +189,7 @@ export class CreateJsRatingGraph implements RatingGraph {
 			for (let years = 3; years >= 1; years--) {
 				if (xMax - xMin <= YEAR_SECONDS * years + MARGIN_X * 2) monthStep = years;
 			}
+			const axisLabel = {textAlign: "center", textBaseline: "top"} as const;
 			let isFirst = true;
 			for (let year = START_YEAR; year < 3000; year++) {
 				let finished = false;
@@ -182,9 +198,9 @@ export class CreateJsRatingGraph implements RatingGraph {
 					const unix = Date.parse(`${year}-${paddedMonth}-01T00:00:00`) / 1000;
 					if (xMin < unix && unix < xMax) {
 						const x = panelWidth * ratio(unix, xMin, xMax);
-						addLabel(MONTH_NAMES[month] ?? "", OFFSET_X + x, OFFSET_Y + panelHeight + 2, "center", "top");
+						addLabel(MONTH_NAMES[month] ?? "", OFFSET_X + x, OFFSET_Y + panelHeight + 2, axisLabel);
 						if (month === 0 || isFirst) {
-							addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, "center", "top");
+							addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, axisLabel);
 							isFirst = false;
 						}
 						border.graphics.mt(x, 0).lt(x, panelHeight);
@@ -199,27 +215,50 @@ export class CreateJsRatingGraph implements RatingGraph {
 			border.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
 		};
 
-		const particles: Easel[] = [];
-		let status: Easel = {};
+		const middle = OFFSET_Y + statusHeight / 2;
+		const border = newShape(stageStatus);
+		const ratingText = newText(stageStatus, OFFSET_X + 75, middle, "48px 'Squada One'");
+		const performanceText = newText(stageStatus, OFFSET_X + 75, middle + 25, "16px 'Squada One'");
+		const placeText = newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 2.7, "16px Lato");
+		const diffText = newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 1.5, "11px Lato");
+		const dateText = newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 4, "14px Lato");
+		const contestText = newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 1.6, "20px Lato");
+		const contestWidth = statusWidth - 200 - 10;
+		let standingsUrl = "";
 
-		const setParticles = (rating: number, color: string, alpha: number): void => {
+		diffText.color = "#888";
+		dateText.textAlign = contestText.textAlign = "left";
+		contestText.maxWidth = contestWidth;
+		const contestHitArea = new cj.Shape();
+		contestHitArea.graphics.f("#000").r(0, -12, contestWidth, 24);
+		contestText.hitArea = contestHitArea;
+		contestText.cursor = "pointer";
+		contestText.addEventListener("click", () => {
+			location.href = standingsUrl;
+		});
+
+		const particles = Array.from({length: PARTICLE_MAX}, (): Particle => {
+			const text = newText(stageStatus, 0, 0, "64px Lato");
+			text.visible = false;
+			return {text, vx: 0, vy: 0, rotationSpeed: 0, life: 0};
+		});
+
+		const burstParticles = (rating: number, color: string, alpha: number): void => {
 			const progress = tierProgress(ratingScale, rating);
 			const active = Math.floor(progress ** 2 * (PARTICLE_MAX - PARTICLE_MIN) + PARTICLE_MIN);
 			particles.forEach((particle, index) => {
-				if (index >= active) {
-					Object.assign(particle, {life: 0, visible: false});
-					return;
-				}
+				const isActive = index < active;
+				particle.text.visible = isActive;
+				particle.life = isActive ? PARTICLE_LIFE : 0;
+				if (!isActive) return;
 				const angle = Math.random() * Math.PI * 2;
 				const speed = Math.random() * 4 + 4;
-				Object.assign(particle, {
-					x: status.rating.x,
-					y: status.rating.y,
-					vx: Math.cos(angle) * speed,
-					vy: Math.sin(angle) * speed,
-					rotationSpeed: Math.random() * 20 + 10,
-					life: PARTICLE_LIFE,
-					visible: true,
+				particle.vx = Math.cos(angle) * speed;
+				particle.vy = Math.sin(angle) * speed;
+				particle.rotationSpeed = Math.random() * 20 + 10;
+				Object.assign(particle.text, {
+					x: ratingText.x,
+					y: ratingText.y,
 					color,
 					text: rating >= ratingScale.crownMin ? "★" : "@",
 					alpha,
@@ -231,26 +270,21 @@ export class CreateJsRatingGraph implements RatingGraph {
 			const entry = history[index];
 			if (!entry) return;
 			const {color, alpha} = tierOf(ratingScale, entry.NewRating);
-			status.border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
-			status.rating.text = entry.NewRating;
-			status.rating.color = color;
-			status.performance.text = showPerformance ? `perf: ${performances[index] ?? "-"}` : "";
-			status.place.text = ordinal(entry.Place);
-			status.diff.text = signed(entry.NewRating - entry.OldRating);
-			status.date.text = new Date(entry.EndTime * 1000).toLocaleDateString();
-			status.contest.text = entry.ContestName;
-			status.standingsUrl = entry.StandingsUrl;
-			if (withParticles) setParticles(entry.NewRating, color, alpha);
+			border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
+			ratingText.text = entry.NewRating;
+			ratingText.color = color;
+			performanceText.text = showPerformance ? `perf: ${performances[index] ?? "-"}` : "";
+			placeText.text = ordinal(entry.Place);
+			diffText.text = signed(entry.NewRating - entry.OldRating);
+			dateText.text = new Date(entry.EndTime * 1000).toLocaleDateString();
+			contestText.text = entry.ContestName;
+			standingsUrl = entry.StandingsUrl;
+			if (withParticles) burstParticles(entry.NewRating, color, alpha);
 			stageGraph.update();
 		};
 
-		const drawSeries = (
-			values: readonly number[],
-			lineColor: string,
-			highestLabel: string,
-			radius: number,
-			highestVertex = {radius, strokeWidth: 0.5},
-		): void => {
+		const drawSeries = (values: readonly number[], style: SeriesStyle): void => {
+			const {lineColor, highestLabel, radius, highestVertex} = style;
 			const container = new cj.Container();
 			stageGraph.addChild(container);
 			container.shadow = new cj.Shadow("rgba(0,0,0,0.3)", 1, 2, 3);
@@ -258,104 +292,83 @@ export class CreateJsRatingGraph implements RatingGraph {
 			const highestShape = newShape(container);
 			const highestIndex = values.indexOf(Math.max(...values));
 
-			const onHover = (event: Easel): void => {
-				const vertex = vertices[event.target.index];
-				vertex.scaleX = vertex.scaleY = 1.2;
-				stageGraph.update();
-				updateStatus(event.target.index, true);
-			};
-			const onLeave = (event: Easel): void => {
-				const vertex = vertices[event.target.index];
-				vertex.scaleX = vertex.scaleY = 1;
-				stageGraph.update();
+			const emphasizeOnHover = (target: Shape, vertex: Shape, index: number): void => {
+				target.addEventListener("mouseover", () => {
+					vertex.scaleX = vertex.scaleY = 1.2;
+					stageGraph.update();
+					updateStatus(index, true);
+				});
+				target.addEventListener("mouseout", () => {
+					vertex.scaleX = vertex.scaleY = 1;
+					stageGraph.update();
+				});
 			};
 
-			const vertices: Easel[] = values.map((value, index) => {
-				const vertex = newShape(container);
+			const vertices = values.map((value, index) => {
 				const isHighest = index === highestIndex;
+				const vertex = newShape(container);
 				vertex.graphics.beginStroke(isHighest ? "#000" : "#FFF");
-				vertex.graphics.setStrokeStyle(isHighest ? highestVertex.strokeWidth : 0.5);
-				vertex.graphics.beginFill(tierOf(ratingScale, value).color).dc(0, 0, isHighest ? highestVertex.radius : radius);
+				vertex.graphics.setStrokeStyle((isHighest && highestVertex?.strokeWidth) || VERTEX_STROKE_WIDTH);
+				vertex.graphics.beginFill(tierOf(ratingScale, value).color);
+				vertex.graphics.dc(0, 0, (isHighest && highestVertex?.radius) || radius);
 				vertex.x = pointX(history[index]?.EndTime ?? 0);
 				vertex.y = pointY(value);
-				vertex.index = index;
 				const hitArea = new cj.Shape();
 				hitArea.graphics.f("#000").dc(1.5, 1.5, 6);
 				vertex.hitArea = hitArea;
-				vertex.addEventListener("mouseover", onHover);
-				vertex.addEventListener("mouseout", onLeave);
+				emphasizeOnHover(vertex, vertex, index);
 				return vertex;
 			});
 
 			const highest = vertices[highestIndex];
+			const first = vertices[0];
+			if (!highest || !first) return;
 			const x = highest.x + ((xMin + xMax) / 2 < (history[highestIndex]?.EndTime ?? 0) ? -80 : 80);
 			const y = highest.y - 16;
 			highestShape.graphics.s("#FFF").mt(highest.x, highest.y).lt(x, y);
-			highestShape.graphics.s("#888").f("#FFF").rr(x - HIGHEST_WIDTH / 2, y - HIGHEST_HEIGHT / 2, HIGHEST_WIDTH, HIGHEST_HEIGHT, 2);
-			highestShape.index = highestIndex;
+			const [boxX, boxY] = [x - HIGHEST_WIDTH / 2, y - HIGHEST_HEIGHT / 2];
+			highestShape.graphics.s("#888").f("#FFF").rr(boxX, boxY, HIGHEST_WIDTH, HIGHEST_HEIGHT, 2);
 			newText(stageGraph, x, y, LABEL_FONT).text = `${highestLabel}: ${values[highestIndex]}`;
-			highestShape.addEventListener("mouseover", onHover);
-			highestShape.addEventListener("mouseout", onLeave);
+			emphasizeOnHover(highestShape, highest, highestIndex);
 
-			line.graphics.s("#AAA").ss(2).mt(vertices[0].x, vertices[0].y);
+			line.graphics.s("#AAA").ss(2).mt(first.x, first.y);
 			for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
-			line.graphics.s(lineColor).ss(0.5).mt(vertices[0].x, vertices[0].y);
+			line.graphics.s(lineColor).ss(0.5).mt(first.x, first.y);
 			for (const vertex of vertices) line.graphics.lt(vertex.x, vertex.y);
-		};
-
-		const createStatus = (): void => {
-			const middle = OFFSET_Y + statusHeight / 2;
-			status = {
-				border: newShape(stageStatus),
-				rating: newText(stageStatus, OFFSET_X + 75, middle, "48px 'Squada One'"),
-				performance: newText(stageStatus, OFFSET_X + 75, middle + 25, "16px 'Squada One'"),
-				place: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 2.7, "16px Lato"),
-				diff: newText(stageStatus, OFFSET_X + 160, OFFSET_Y + statusHeight / 1.5, "11px Lato"),
-				date: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 4, "14px Lato"),
-				contest: newText(stageStatus, OFFSET_X + 200, OFFSET_Y + statusHeight / 1.6, "20px Lato"),
-				standingsUrl: "",
-			};
-			status.diff.color = "#888";
-			status.date.textAlign = status.contest.textAlign = "left";
-			status.contest.maxWidth = statusWidth - 200 - 10;
-			const hitArea = new cj.Shape();
-			hitArea.graphics.f("#000").r(0, -12, status.contest.maxWidth, 24);
-			status.contest.hitArea = hitArea;
-			status.contest.cursor = "pointer";
-			status.contest.addEventListener("click", () => {
-				location.href = status.standingsUrl;
-			});
-			for (let index = 0; index < PARTICLE_MAX; index++) {
-				const particle = newText(stageStatus, 0, 0, "64px Lato");
-				particle.visible = false;
-				particles.push(particle);
-			}
 		};
 
 		const onTick = (): void => {
 			for (const particle of particles) {
+				const {text} = particle;
 				if (particle.life <= 0) {
-					particle.visible = false;
+					text.visible = false;
 					continue;
 				}
-				particle.x += particle.vx;
+				text.x += particle.vx;
 				particle.vx *= 0.9;
-				particle.y += particle.vy;
+				text.y += particle.vy;
 				particle.vy *= 0.9;
 				particle.life--;
-				particle.scaleX = particle.scaleY = particle.life / PARTICLE_LIFE;
-				particle.rotation += particle.rotationSpeed;
+				text.scaleX = text.scaleY = particle.life / PARTICLE_LIFE;
+				text.rotation += particle.rotationSpeed;
 			}
 			stageStatus.update();
 		};
 
 		drawBackground();
-		createStatus();
-		drawSeries(history.map((entry) => entry.NewRating), "#000", "Highest(Rate)", 3.5);
-		if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {
-			radius: 2.5,
-			strokeWidth: 1
+		drawSeries(history.map((entry) => entry.NewRating), {
+			lineColor: "#000",
+			highestLabel: "Highest(Rate)",
+			radius: 3.5,
 		});
+		if (showPerformance && performances.length > 0) {
+			drawSeries(performances, {
+				lineColor: "#F00",
+				highestLabel: "Highest(Perf)",
+				radius: 2.8,
+				highestVertex: {radius: 2.5, strokeWidth: 1},
+			});
+		}
 		updateStatus(count - 1, false);
 		stageGraph.update();
 		stageStatus.update();

@@ -1,4 +1,5 @@
-import type {KeyValueStore} from "@application/ports/key-value-store";
+import {isArrayOf, isObjectOf, isString} from "@domain/validation/guards";
+import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 
 type SavedCode = {
 	readonly path: string;
@@ -6,6 +7,7 @@ type SavedCode = {
 };
 
 const SAVED_CODE_KEY = "easy-test:saved-code";
+const isSavedCodes = isArrayOf(isObjectOf<SavedCode>({path: isString, code: isString}));
 
 /** 実行したコードを問題ごとに記憶する。古いものから上限を超えた分を捨てる。 */
 export class SavedCodes {
@@ -22,6 +24,6 @@ export class SavedCodes {
 	}
 
 	private list(): readonly SavedCode[] {
-		return (this.state.get(SAVED_CODE_KEY) ?? []) as readonly SavedCode[];
+		return readStored(this.state, SAVED_CODE_KEY, isSavedCodes, []);
 	}
 }

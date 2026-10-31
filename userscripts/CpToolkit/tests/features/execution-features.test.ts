@@ -268,7 +268,7 @@ describe("javaSubmit", () => {
 		editor: "ace",
 		editorElements: ["#editor"],
 		shortcut: "Ctrl+Shift+Enter",
-		submitButtons: ["#submit"]
+		submitButtons: ["#submit"],
 	} as const;
 	const judge = {id: "atcoder", name: "AtCoder", matches: [], routes: {}, navigationLists: [], submission: target};
 
@@ -313,7 +313,7 @@ describe("javaSubmit", () => {
 		const {editor, paste} = createEditor(source);
 		const http = new FakeHttpClient(() => ({
 			status: 200,
-			text: JSON.stringify({status: "success", sourceCode: "// transformed\n"})
+			text: JSON.stringify({status: "success", sourceCode: "// transformed\n"}),
 		}));
 		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
 			judge,
@@ -331,7 +331,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run(undefined, createFakeServices({
 			judge,
 			localRunner: offline,
-			editors: {locate: async () => editor}
+			editors: {locate: async () => editor},
 		}));
 		await wait();
 		paste();
@@ -346,7 +346,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run(undefined, createFakeServices({
 			judge,
 			localRunner: offline,
-			editors: {locate: async () => null}
+			editors: {locate: async () => null},
 		}));
 
 		pressKey("Enter", {ctrlKey: true});
@@ -366,9 +366,9 @@ describe("paizaLanguage", () => {
 			onChange: () => undefined,
 			triggerChange,
 			renderMath: () => undefined,
-			highlightCode: () => undefined
+			highlightCode: () => undefined,
 		};
-		void paizaLanguage.run({language: "Java"}, createFakeServices({page, judge: null}));
+		void paizaLanguage.run({language: "Java"}, createFakeServices({page, judge: null, editors: {locate: async () => null}}));
 		await wait();
 
 		expect(document.querySelector<HTMLSelectElement>("#language_id")?.value).toBe("2");
@@ -390,7 +390,7 @@ describe("taskDropdown", () => {
 		await taskDropdown.run(undefined, createFakeServices({
 			site: new FakeHttpClient(() => ({
 				status: 200,
-				text: tasksPage
+				text: tasksPage,
 			}))
 		}));
 
@@ -404,7 +404,7 @@ describe("taskDropdown", () => {
 		await taskDropdown.run(undefined, createFakeServices({
 			site: new FakeHttpClient(() => ({
 				status: 500,
-				text: ""
+				text: "",
 			}))
 		}));
 		expect(document.querySelector(".cp-task-menu")?.textContent).toContain("読み込み失敗");

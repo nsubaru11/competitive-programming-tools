@@ -4,6 +4,12 @@ import dockCss from "./dock.css" with {type: "text"};
 
 export type DockTone = "success" | "warning";
 
+export type DockOptions = {
+	readonly css: string;
+	readonly toggleLabel: string;
+	readonly closeLabel: string;
+};
+
 export type DockTab = {
 	/** 開閉の状態は変えずに、このタブを選ぶ。 */
 	select(): void;
@@ -18,12 +24,13 @@ export type Dock = {
 	remove(): void;
 };
 
+type DockEntry = {
+	readonly tab: HTMLElement;
+	readonly pane: HTMLElement;
+};
+
 /** 画面下部の開閉できるパネル。サイトの CSS に左右されないよう Shadow DOM に作る。 */
-export function createDock({css, toggleLabel, closeLabel}: {
-	css: string;
-	toggleLabel: string;
-	closeLabel: string
-}): Dock {
+export function createDock({css, toggleLabel, closeLabel}: DockOptions): Dock {
 	const tabs = h("div", {className: "dock-tabs"});
 	const content = h("div", {className: "dock-content"});
 	const panel = h("div", {className: "dock-panel", hidden: true}, tabs, content);
@@ -57,24 +64,30 @@ export function createDock({css, toggleLabel, closeLabel}: {
 		tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), {once: true});
 	});
 
-	const activate = (tab: HTMLElement | undefined, pane: HTMLElement | undefined): void => {
-		for (const other of tabs.children) (other as HTMLElement).dataset.active = String(other === tab);
-		for (const other of content.children) (other as HTMLElement).hidden = other !== pane;
+	const entries = new Set<DockEntry>();
+	let active: DockEntry | undefined;
+	const activate = (next: DockEntry | undefined): void => {
+		active = next;
+		for (const entry of entries) {
+			entry.tab.dataset.active = String(entry === next);
+			entry.pane.hidden = entry !== next;
+		}
 	};
 
 	return {
 		addTab(label, pane, {closable = false} = {}) {
 			const tab = h("div", {className: "dock-tab", textContent: label});
-			const select = (): void => activate(tab, pane);
+			const entry = {tab, pane};
+			const select = (): void => activate(entry);
 			const show = (): void => {
 				setOpen(true);
 				select();
 			};
 			const close = (): void => {
-				const wasActive = !pane.hidden;
+				entries.delete(entry);
 				tab.remove();
 				pane.remove();
-				if (wasActive) activate(tabs.firstElementChild as HTMLElement, content.firstElementChild as HTMLElement);
+				if (active === entry) activate(entries.values().next().value);
 			};
 			tab.addEventListener("click", show);
 			if (closable) {
@@ -89,10 +102,11 @@ export function createDock({css, toggleLabel, closeLabel}: {
 					},
 				}));
 			}
-			pane.hidden = content.children.length > 0;
+			entries.add(entry);
+			pane.hidden = active !== undefined;
 			tabs.append(tab);
 			content.append(pane);
-			if (tabs.children.length === 1) select();
+			if (!active) select();
 			return {
 				select,
 				show,

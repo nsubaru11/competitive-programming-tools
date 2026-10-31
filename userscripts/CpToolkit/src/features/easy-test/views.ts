@@ -3,7 +3,7 @@ import type {RunResult} from "@domain/execution/result";
 import type {DockTone} from "@ui/dock/dock";
 import {h} from "@ui/element";
 
-export function toneOf({status}: RunResult): DockTone | null {
+export function toneOf(status: string): DockTone | null {
 	if (status === "AC") return "success";
 	return status === "OK" ? null : "warning";
 }
@@ -49,7 +49,7 @@ export function createResultView(translate: Translate): {element: HTMLElement; s
 	return {
 		element,
 		show(result) {
-			const tone = toneOf(result);
+			const tone = toneOf(result.status);
 			if (tone) output.textarea.dataset.tone = tone;
 			input.textarea.value = result.input;
 			output.textarea.value = result.output ?? "";
@@ -103,9 +103,8 @@ export function createResultRow(total: number, closeLabel: string, onClose: () =
 			element.append(label);
 			void result.then(({status}) => {
 				label.textContent = status;
-				if (status === "IE") label.dataset.tone = "danger";
-				else if (status === "AC") label.dataset.tone = "success";
-				else if (status !== "OK") label.dataset.tone = "warning";
+				const tone = status === "IE" ? "danger" : toneOf(status);
+				if (tone) label.dataset.tone = tone;
 				finished++;
 				if (status === "AC") accepted++;
 				bar.textContent = `${finished} / ${total}`;
@@ -151,7 +150,7 @@ export function createTestPanel(
 		type: "button",
 		className: "run-button",
 		textContent: translate("easyTest.run"),
-		onclick: onRun
+		onclick: onRun,
 	});
 	const element = h(
 		"div",

@@ -8,10 +8,27 @@ export type LanguageCatalog = {
 	readonly families: readonly LanguageFamily[];
 };
 
+type CompiledFamily = {
+	readonly id: string;
+	readonly patterns: readonly RegExp[];
+};
+
+/** 判定は選択肢の数だけ繰り返すので、正規表現は一覧ごとに一度だけ作る。 */
+const compiledCatalogs = new WeakMap<LanguageCatalog, readonly CompiledFamily[]>();
+
+function compile(catalog: LanguageCatalog): readonly CompiledFamily[] {
+	const cached = compiledCatalogs.get(catalog);
+	if (cached) return cached;
+	const compiled = catalog.families.map(({id, match}) => {
+		return {id, patterns: match.map((pattern) => new RegExp(pattern))};
+	});
+	compiledCatalogs.set(catalog, compiled);
+	return compiled;
+}
+
 /** サイトの言語の表記から、言語の種類を判定する。 */
 export function resolveFamily(catalog: LanguageCatalog, label: string): string | null {
-	const family = catalog.families.find(({match}) => match.some((pattern) => new RegExp(pattern).test(label)));
-	return family?.id ?? null;
+	return compile(catalog).find(({patterns}) => patterns.some((pattern) => pattern.test(label)))?.id ?? null;
 }
 
 /** 表記の違いの大きさを返す。小さいほど似ている。 */

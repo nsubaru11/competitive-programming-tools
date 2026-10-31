@@ -17,7 +17,7 @@ export type HttpRequest = {
 	readonly method?: "GET" | "POST";
 	readonly headers?: Readonly<Record<string, string>>;
 	readonly body?: string;
-	readonly timeoutMs?: number;
+	readonly timeoutMs?: number | undefined;
 };
 
 export type HttpResponse = {

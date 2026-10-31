@@ -38,10 +38,10 @@ export function buildAtCoderSubmitPostUrl(contestId: string): string {
 }
 
 export type AtCoderSubmissionsFilter = {
-	language?: string;
-	status?: string;
-	orderBy?: string;
-	task?: string;
+	language?: string | undefined;
+	status?: string | undefined;
+	orderBy?: string | undefined;
+	task?: string | undefined;
 };
 
 export function buildAtCoderSubmissionsQuery(filter: AtCoderSubmissionsFilter): string {

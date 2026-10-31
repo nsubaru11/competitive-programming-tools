@@ -13,6 +13,8 @@ const modeChoices = [
 	{value: "background", label: "historyColors.modeBackground"},
 ] as const;
 
+type ColorMode = (typeof modeChoices)[number]["value"];
+
 function colorizeText(cell: HTMLElement, value: number): void {
 	const crown = crownImageOf(ratingScale, value);
 	cell.replaceChildren();
@@ -20,7 +22,7 @@ function colorizeText(cell: HTMLElement, value: number): void {
 	cell.append(h("span", {className: tierOf(ratingScale, value).className, textContent: String(value)}));
 }
 
-function colorizeCell(cell: HTMLElement | undefined, mode: string): void {
+function colorizeCell(cell: HTMLElement | undefined, mode: ColorMode): void {
 	const value = Number(cell?.textContent?.trim() || Number.NaN);
 	if (!cell || Number.isNaN(value)) return;
 	if (mode === "text") colorizeText(cell, value);

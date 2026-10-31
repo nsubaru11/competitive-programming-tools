@@ -88,7 +88,7 @@ describe("statementCopy", () => {
 		const target = clipboard();
 		await run(statementCopy, {format: "plain"}, {
 			clipboard: target,
-			statementConverter: new TurndownStatementConverter()
+			statementConverter: new TurndownStatementConverter(),
 		});
 		document.querySelector<HTMLElement>("h3 button")?.click();
 
@@ -102,7 +102,7 @@ describe("statementCopy", () => {
 		renderStatement();
 		const dispose = await run(statementCopy, undefined, {
 			clipboard: clipboard(),
-			statementConverter: new TurndownStatementConverter()
+			statementConverter: new TurndownStatementConverter(),
 		});
 		expect(document.querySelectorAll("h3 button")).toHaveLength(1);
 		dispose?.();

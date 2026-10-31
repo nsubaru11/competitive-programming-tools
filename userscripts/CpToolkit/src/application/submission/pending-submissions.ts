@@ -1,4 +1,5 @@
-import type {KeyValueStore} from "@application/ports/key-value-store";
+import {isArrayOf, isNumber, isObjectOf, isString} from "@domain/validation/guards";
+import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 
 export type PendingSubmission = {
 	readonly id: string;
@@ -6,6 +7,13 @@ export type PendingSubmission = {
 	readonly taskName: string;
 	readonly addedAt: number;
 };
+
+const isPendingList = isArrayOf(isObjectOf<PendingSubmission>({
+	id: isString,
+	contestId: isString,
+	taskName: isString,
+	addedAt: isNumber,
+}));
 
 const PENDING_KEY = "result-notifier:pending";
 const LAST_POLL_KEY = "result-notifier:lastPoll";
@@ -19,7 +27,7 @@ export class PendingSubmissions {
 	}
 
 	list(now: number): readonly PendingSubmission[] {
-		const pending = (this.state.get(PENDING_KEY) ?? []) as readonly PendingSubmission[];
+		const pending = readStored(this.state, PENDING_KEY, isPendingList, []);
 		return pending.filter(({addedAt}) => now - addedAt < PENDING_LIFETIME_MS);
 	}
 
@@ -30,7 +38,8 @@ export class PendingSubmissions {
 	}
 
 	remove(ids: readonly string[], now: number): void {
-		this.state.set(PENDING_KEY, this.list(now).filter(({id}) => !ids.includes(id)));
+		const removed = new Set(ids);
+		this.state.set(PENDING_KEY, this.list(now).filter(({id}) => !removed.has(id)));
 	}
 
 	markFocused(now: number): void {
