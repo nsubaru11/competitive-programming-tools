@@ -15,3 +15,12 @@ Thumbs.db
 /.idea
 /.claude
 *.iml
+
+# サイトごとの秘密情報
+.atcoder/
+.aoj/
+.codeforces/
+.icpc/
+.env
+.env.*
+session.txt
