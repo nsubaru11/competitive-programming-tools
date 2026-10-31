@@ -1,8 +1,6 @@
 # local-runner/java — 常駐 Dispatcher（Java 側）
 
-Local Runner の**実行バックエンド**です。
-JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/src/daemon`）から標準入出力経由でコマンドを受け、**インプロセス javac でのコンパイル**と**コンパイル済みクラスの実行**を代行します。
-毎回 `javac`/`java` を起動するコストを無くすのが目的です。
+Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/src/daemon`）から標準入出力経由でコマンドを受け、 **インプロセス javac でのコンパイル**と **コンパイル済みクラスの実行**を代行します。 毎回 `javac`/`java` を起動するコストを無くすのが目的です。
 
 通信プロトコルの正典は [`src/PROTOCOL.md`](./src/PROTOCOL.md) です（ワイヤ形式・各メッセージ・メモリ/隔離フラグの意味）。
 
@@ -28,8 +26,8 @@ JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/sr
 
 ## 設計上の要点
 
-- **1 プロセス・1 スレッド・逐次**: 受信ループは次のコマンドが来るまでブロックし、1 件を最後まで処理してから次へ。提出コードの `main` はディスパッチャのメインスレッド上で**同期**実行されます。無限ループはこのスレッドごと止まるため、タイムアウト時は TS 側が JVM ごと SIGKILL します。
-- **隔離（`requiresIsolation`）**: `System.exit`/`Runtime.halt`/`FileDescriptor.in,out,err`/`System.setIn,setOut,setErr`/グローバル状態変更/シャットダウンフック/外部プロセス起動を参照するコードは、共有 JVM を壊す/汚すため TS 側で使い捨て外部 JVM に振り分けます。**スレッド生成は除外**（競プロの大スタック再帰イディオムは join 済みで安全なため）。詳細は `src/PROTOCOL.md` 6.2。
+- **1 プロセス・1 スレッド・逐次**: 受信ループは次のコマンドが来るまでブロックし、1 件を最後まで処理してから次へ。提出コードの `main` はディスパッチャのメインスレッド上で **同期**実行されます。無限ループはこのスレッドごと止まるため、タイムアウト時は TS 側が JVM ごと SIGKILL します。
+- **隔離（`requiresIsolation`）**: `System.exit`/`Runtime.halt`/`FileDescriptor.in,out,err`/`System.setIn,setOut,setErr`/グローバル状態変更/シャットダウンフック/外部プロセス起動を参照するコードは、共有 JVM を壊す/汚すため TS 側で使い捨て外部 JVM に振り分けます。 **スレッド生成は除外**（競プロの大スタック再帰イディオムは join 済みで安全なため）。詳細は `src/PROTOCOL.md` 6.2。
 - **メモリは近似**: `RESULT` の `memory` は実行スレッドの累積アロケーション量（`com.sun.management.ThreadMXBean`）で、ピーク RSS ではありません。詳細は `src/PROTOCOL.md` 6.1。
 - **出力上限**: 既定 2 MiB（`LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`）。超過分は破棄し切り詰めフラグを立てます。
 

@@ -58,9 +58,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -69,15 +69,18 @@ if (!cpToolkitRetirement.replaced) {
 		// AtCoderWidenContainer/src/main.ts
 		var STORAGE_KEY = "containerWidth";
 		var DEFAULT_WIDTH = "50%";
+
 		function isValidWidth(value) {
 			if (typeof value !== "string") return false;
 			const trimmed = value.trim();
 			return trimmed !== "" && CSS.supports("width", trimmed);
 		}
+
 		function readWidth() {
 			const storedWidth = GM_getValue(STORAGE_KEY, DEFAULT_WIDTH);
 			return isValidWidth(storedWidth) ? storedWidth.trim() : DEFAULT_WIDTH;
 		}
+
 		var currentWidth = readWidth();
 		var hideStyle = document.createElement("style");
 		hideStyle.textContent = `html { display: none !important; }`;

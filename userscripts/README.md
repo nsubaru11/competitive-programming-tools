@@ -40,7 +40,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 ## 型定義
 
 - `types/userscript.d.ts` … `GM_*`、`unsafeWindow`、AtCoder ページ向け Window 拡張
-- `tsconfig.json` … `**/src/**/*.ts` と `build.ts` を型チェック(`CpToolkit` は層ごとの `tsconfig.json` で検査)
+- `tsconfig.json` … `**/src/**/*.ts` と `build.ts` を型チェック (`CpToolkit` は層ごとの `tsconfig.json` で検査)
 
 ## スクリプト一覧
 
@@ -55,16 +55,16 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 次の8本は CP Toolkit へ統合しました。今後は更新しません。
 
-| スクリプト | CP Toolkit の機能 |
-|---|---|
+| スクリプト                         | CP Toolkit の機能        |
+|------------------------------------|--------------------------|
 | AtCoder Custom Default Submissions | 提出一覧の既定の絞り込み |
-| AtCoder Easy Test for Java | Easy Test、Local Runner |
-| AtCoder Highlighter | 問題文の強調表示 |
-| AtCoder Listing Tasks | 問題のドロップダウン |
-| AtCoder Markdown Copier | 問題文のコピー |
-| AtCoder Performance Overlay | パフォーマンスのグラフ |
-| AtCoder Widen Container | ページ幅の拡張 |
-| Java Code Submitter | Java の提出補助 |
+| AtCoder Easy Test for Java         | Easy Test、Local Runner  |
+| AtCoder Highlighter                | 問題文の強調表示         |
+| AtCoder Listing Tasks              | 問題のドロップダウン     |
+| AtCoder Markdown Copier            | 問題文のコピー           |
+| AtCoder Performance Overlay        | パフォーマンスのグラフ   |
+| AtCoder Widen Container            | ページ幅の拡張           |
+| Java Code Submitter                | Java の提出補助          |
 
 利用中の環境へ最終版が届くまでの間だけフォルダを残し、その後に削除します。
 

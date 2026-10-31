@@ -29,7 +29,10 @@ function collectTextNodes(root: Node, accepts: (text: string) => boolean): Text[
 }
 
 function replaceWithSegments(node: Text, segments: readonly TextSegment[], className: string): void {
-	node.replaceWith(...segments.map(({text, emphasized}) => (emphasized ? h("span", {className, textContent: text}) : text)));
+	node.replaceWith(...segments.map(({text, emphasized}) => (emphasized ? h("span", {
+		className,
+		textContent: text
+	}) : text)));
 }
 
 function markTargetSections(): void {

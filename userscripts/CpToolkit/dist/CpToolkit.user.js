@@ -267,18 +267,20 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 (() => {
 	// CpToolkit/src/domain/page/route.ts
 	var PATH_AND_QUERY_PATTERN = /^[a-z]+:\/\/[^/?#]+([^#]*)/i;
+
 	function matchPatternToRegExp(pattern) {
 		const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
 		return new RegExp(`^${escaped}$`);
 	}
+
 	function matchPage(judges, href) {
-		const judge = judges.find(({ matches }) => matches.some((pattern) => matchPatternToRegExp(pattern).test(href)));
+		const judge = judges.find(({matches}) => matches.some((pattern) => matchPatternToRegExp(pattern).test(href)));
 		if (!judge) return null;
 		const pathAndQuery = PATH_AND_QUERY_PATTERN.exec(href)?.[1] || "/";
 		const routeIds = Object.entries(judge.routes)
 			.filter(([, pattern]) => new RegExp(pattern).test(pathAndQuery))
 			.map(([name]) => `${judge.id}:${name}`);
-		return { judge, routeIds: new Set(routeIds) };
+		return {judge, routeIds: new Set(routeIds)};
 	}
 
 	// CpToolkit/src/application/feature/runtime.ts
@@ -286,11 +288,12 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		dependencies;
 		entries;
 		listeners = new Set();
+
 		constructor(dependencies) {
 			this.dependencies = dependencies;
 			this.entries = dependencies.features.map((feature) => ({
 				feature,
-				status: { state: "pending" },
+				status: {state: "pending"},
 				active: false,
 				dispose: undefined,
 				appliedKey: "",
@@ -298,6 +301,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				queue: Promise.resolve(),
 			}));
 		}
+
 		start() {
 			for (const entry of this.entries) {
 				entry.appliedKey = this.settingsKey(entry.feature);
@@ -305,29 +309,37 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			}
 			this.dependencies.settings.subscribe(() => this.applyChanges());
 		}
+
 		async settled() {
 			await Promise.all(this.entries.map((entry) => entry.queue));
 		}
+
 		statusOf(featureId) {
-			return this.entries.find(({ feature }) => feature.id === featureId)?.status ?? { state: "outOfScope" };
+			return this.entries.find(({feature}) => feature.id === featureId)?.status ?? {state: "outOfScope"};
 		}
+
 		subscribe(listener) {
 			this.listeners.add(listener);
 		}
-		settingsKey({ id, defaultEnabled }) {
-			const { settings } = this.dependencies;
+
+		settingsKey({id, defaultEnabled}) {
+			const {settings} = this.dependencies;
 			return JSON.stringify([settings.isEnabled(id, defaultEnabled), settings.storedOptions(id)]);
 		}
-		isEnabled({ id, defaultEnabled }) {
+
+		isEnabled({id, defaultEnabled}) {
 			return this.dependencies.settings.isEnabled(id, defaultEnabled);
 		}
-		isInScope({ routes }) {
+
+		isInScope({routes}) {
 			const routeIds = this.dependencies.page?.routeIds;
 			return routeIds !== undefined && routes.some((route) => routeIds.has(route));
 		}
+
 		enqueue(entry, task) {
 			entry.queue = entry.queue.then(task);
 		}
+
 		applyChanges() {
 			for (const entry of this.entries) {
 				const key = this.settingsKey(entry.feature);
@@ -336,19 +348,21 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				this.enqueue(entry, () => this.applyChange(entry, key));
 			}
 		}
+
 		async applyInitial(entry) {
-			const { feature } = entry;
+			const {feature} = entry;
 			if (!this.isInScope(feature)) {
-				this.setStatus(entry, { state: "outOfScope" });
+				this.setStatus(entry, {state: "outOfScope"});
 			} else if (this.isEnabled(feature)) {
 				await this.activate(entry);
 			} else {
-				this.setStatus(entry, { state: "disabled" });
+				this.setStatus(entry, {state: "disabled"});
 			}
-			entry.baseline = { key: entry.appliedKey, status: entry.status };
+			entry.baseline = {key: entry.appliedKey, status: entry.status};
 		}
+
 		async applyChange(entry, key) {
-			const { feature } = entry;
+			const {feature} = entry;
 			if (key !== entry.appliedKey || !this.isInScope(feature)) return;
 			if (!feature.live) {
 				this.setStatus(entry, this.statusBeforeReload(entry, key));
@@ -356,27 +370,30 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			}
 			this.deactivate(entry);
 			if (this.isEnabled(feature)) await this.activate(entry);
-			else this.setStatus(entry, { state: "disabled" });
+			else this.setStatus(entry, {state: "disabled"});
 		}
-		statusBeforeReload({ feature, baseline }, key) {
+
+		statusBeforeReload({feature, baseline}, key) {
 			if (baseline?.key === key) return baseline.status;
 			const remainsDisabled = baseline?.status.state === "disabled" && !this.isEnabled(feature);
-			return remainsDisabled ? { state: "disabled" } : { state: "reloadRequired" };
+			return remainsDisabled ? {state: "disabled"} : {state: "reloadRequired"};
 		}
+
 		async activate(entry) {
-			const { feature } = entry;
-			const { lifecycle, logger, services, settings } = this.dependencies;
-			this.setStatus(entry, { state: "pending" });
+			const {feature} = entry;
+			const {lifecycle, logger, services, settings} = this.dependencies;
+			this.setStatus(entry, {state: "pending"});
 			try {
 				await lifecycle.reach(feature.phase);
 				entry.dispose = await feature.run(settings.storedOptions(feature.id), services);
 				entry.active = true;
-				this.setStatus(entry, { state: "running" });
+				this.setStatus(entry, {state: "running"});
 			} catch (error) {
 				logger.error(`Failed to start ${feature.id}`, error);
-				this.setStatus(entry, { state: "failed", message: String(error) });
+				this.setStatus(entry, {state: "failed", message: String(error)});
 			}
 		}
+
 		deactivate(entry) {
 			if (!entry.active) return;
 			try {
@@ -387,6 +404,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			entry.active = false;
 			entry.dispose = undefined;
 		}
+
 		setStatus(entry, status) {
 			entry.status = status;
 			for (const listener of this.listeners) listener();
@@ -397,6 +415,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	function sleep(ms) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
+
 	// ../shared/src/query.ts
 	function buildQueryString(data) {
 		const params = new URLSearchParams();
@@ -409,6 +428,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 
 	// ../shared/src/atcoder-url.ts
 	var ATCODER_TASK_URL_PATTERN = /^https:\/\/atcoder\.jp\/contests\/([^/?#]+)\/tasks\/([^/?#]+)/;
+
 	function parseAtCoderTaskUrl(url) {
 		const match = url.match(ATCODER_TASK_URL_PATTERN);
 		if (!match) return null;
@@ -417,6 +437,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			taskId: match[2],
 		};
 	}
+
 	function buildAtCoderSubmissionsQuery(filter) {
 		const params = {};
 		if (filter.language !== undefined) params["f.LanguageName"] = filter.language;
@@ -425,9 +446,11 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		if (filter.task) params["f.Task"] = filter.task;
 		return buildQueryString(params);
 	}
+
 	function buildAtCoderSubmissionUrl(contestId, submissionId) {
 		return `https://atcoder.jp/contests/${contestId}/submissions/${submissionId}`;
 	}
+
 	function buildAtCoderSubmissionStatusJsonUrl(contestId, submissionIds) {
 		const base = `https://atcoder.jp/contests/${contestId}/submissions/me/status/json`;
 		const params = new URLSearchParams();
@@ -437,12 +460,14 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		return `${base}?${params.toString()}`;
 	}
+
 	// ../shared/src/easy-test-judge.ts
 	var FLOAT_PATTERN = /^[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?$/;
-	function evaluateEasyTestOutput(runResult, expectedOutput, options = { trim: true, split: true }) {
+
+	function evaluateEasyTestOutput(runResult, expectedOutput, options = {trim: true, split: true}) {
 		const status = runResult.status;
 		if (status !== "OK" || typeof expectedOutput !== "string") {
-			return { status, output: runResult.output || "", expectedOutput };
+			return {status, output: runResult.output || "", expectedOutput};
 		}
 		let output = runResult.output || "";
 		let expected = expectedOutput;
@@ -476,8 +501,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			};
 		}
 		const judgedStatus = equals(output, expected) ? "AC" : "WA";
-		return { status: judgedStatus, output, expectedOutput: expected };
+		return {status: judgedStatus, output, expectedOutput: expected};
 	}
+
 	// ../shared/src/utils.ts
 	function normalizeNewlines(text) {
 		return text.replace(
@@ -562,6 +588,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		return out.join("");
 	}
+
 	function findMatchingBrace(maskedText, openBraceIdx) {
 		let depth = 1;
 		for (let i = openBraceIdx + 1; i < maskedText.length; i++) {
@@ -570,6 +597,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		return -1;
 	}
+
 	function isPublicClass(maskedText, classKeywordIndex) {
 		const lineStart =
 			maskedText.lastIndexOf(
@@ -579,6 +607,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			) + 1;
 		return /\bpublic\b/.test(maskedText.slice(lineStart, classKeywordIndex));
 	}
+
 	function buildClassInfo(maskedText, m) {
 		const name = m[1];
 		const classStart = m.index;
@@ -595,6 +624,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			isPublic: isPublicClass(maskedText, classStart),
 		};
 	}
+
 	function findMainClassInfo(maskedText) {
 		const mainIndex =
 			/(?:\bpublic\s+static|\bstatic\s+public)\s+void\s+main\s*\(\s*String\s*(?:\[]|\.\.\.)/.exec(maskedText)
@@ -617,9 +647,10 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		return candidates.find((c) => c.isPublic) ?? candidates[0] ?? null;
 	}
+
 	function removePackageDeclaration(maskedCode, currentCode) {
 		const m = /\bpackage\s+[A-Za-z_][A-Za-z0-9_.]*\s*;/.exec(maskedCode);
-		if (!m) return { code: currentCode, modified: false };
+		if (!m) return {code: currentCode, modified: false};
 		let end = m.index + m[0].length;
 		if (
 			currentCode[end] ===
@@ -632,55 +663,59 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			modified: true,
 		};
 	}
+
 	function renameClassToMain(maskedCode, currentCode) {
 		const info = findMainClassInfo(maskedCode);
-		if (!info || info.name === "Main") return { code: currentCode, modified: false };
+		if (!info || info.name === "Main") return {code: currentCode, modified: false};
 		const escapedName = info.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const refRegex = new RegExp(`\\b${escapedName}\\b`, "g");
 		const replacements = [];
 		let rm;
 		while ((rm = refRegex.exec(maskedCode)) !== null) {
-			replacements.push({ start: rm.index, end: rm.index + info.name.length });
+			replacements.push({start: rm.index, end: rm.index + info.name.length});
 		}
 		replacements.sort((a, b) => b.start - a.start);
 		let code = currentCode;
-		for (const { start, end } of replacements) {
+		for (const {start, end} of replacements) {
 			code = code.slice(0, start) + "Main" + code.slice(end);
 		}
-		return { code, modified: true };
+		return {code, modified: true};
 	}
+
 	function disableDebugStatements(maskedCode, currentCode) {
 		const debugRegex = /\bDEBUG\b\s*=\s*true\b/g;
 		const replacements = [];
 		let dm;
 		while ((dm = debugRegex.exec(maskedCode)) !== null) {
 			const trueIdx = dm.index + dm[0].lastIndexOf("true");
-			replacements.push({ start: trueIdx, end: trueIdx + 4 });
+			replacements.push({start: trueIdx, end: trueIdx + 4});
 		}
-		if (!replacements.length) return { code: currentCode, modified: false };
+		if (!replacements.length) return {code: currentCode, modified: false};
 		replacements.sort((a, b) => b.start - a.start);
 		let code = currentCode;
-		for (const { start, end } of replacements) {
+		for (const {start, end} of replacements) {
 			code = code.slice(0, start) + "false" + code.slice(end);
 		}
-		return { code, modified: true };
+		return {code, modified: true};
 	}
+
 	function enableDebugStatements(maskedCode, currentCode) {
 		const debugRegex = /\bDEBUG\b\s*=\s*false\b/g;
 		const replacements = [];
 		let dm;
 		while ((dm = debugRegex.exec(maskedCode)) !== null) {
 			const falseIdx = dm.index + dm[0].lastIndexOf("false");
-			replacements.push({ start: falseIdx, end: falseIdx + 5 });
+			replacements.push({start: falseIdx, end: falseIdx + 5});
 		}
-		if (!replacements.length) return { code: currentCode, modified: false };
+		if (!replacements.length) return {code: currentCode, modified: false};
 		replacements.sort((a, b) => b.start - a.start);
 		let code = currentCode;
-		for (const { start, end } of replacements) {
+		for (const {start, end} of replacements) {
 			code = code.slice(0, start) + "true" + code.slice(end);
 		}
-		return { code, modified: true };
+		return {code, modified: true};
 	}
+
 	function modifyJavaCode(originalCode, options) {
 		let currentCode = normalizeNewlines(originalCode);
 		let packageRemoved = false;
@@ -707,8 +742,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			debugReplaced = result.modified;
 		}
 		currentCode = currentCode.replace(/^(?:[\t ]*\n)+/, "");
-		return { modified: currentCode, packageRemoved, classReplaced, debugReplaced };
+		return {modified: currentCode, packageRemoved, classReplaced, debugReplaced};
 	}
+
 	// ../shared/src/json.ts
 	function safeJsonParse(text, fallback) {
 		if (typeof text !== "string") return fallback;
@@ -718,6 +754,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			return fallback;
 		}
 	}
+
 	function parseStoredObject(raw) {
 		if (raw == null) return {};
 		if (typeof raw === "string") {
@@ -732,13 +769,16 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		return {};
 	}
+
 	// ../shared/src/local-runner.ts
 	function isHttpUrl(value) {
 		return /^https?:\/\//.test(value);
 	}
+
 	function buildLocalRunnerListRequest() {
-		return { mode: "list" };
+		return {mode: "list"};
 	}
+
 	function buildLocalRunnerTransformRequest(
 		sourceCode,
 		debug = false,
@@ -746,8 +786,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		validate = true,
 		header = true,
 	) {
-		return { mode: "transform", sourceCode, debug, autoImport, validate, header };
+		return {mode: "transform", sourceCode, debug, autoImport, validate, header};
 	}
+
 	function buildLocalRunnerPrepareRequest(
 		sourceCode,
 		debug = false,
@@ -755,8 +796,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		validate = false,
 		header = false,
 	) {
-		return { mode: "prepare", sourceCode, debug, autoImport, validate, header };
+		return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
 	}
+
 	function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
 		return {
 			mode: "run",
@@ -766,6 +808,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			prepared,
 		};
 	}
+
 	function buildLocalRunnerProgramRunRequest(programId, stdin, compilerName) {
 		return {
 			mode: "run",
@@ -774,6 +817,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			stdin,
 		};
 	}
+
 	function toEasyTestStatus(status, exitCode = 0) {
 		switch (status) {
 			case "success":
@@ -790,13 +834,16 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				return "IE";
 		}
 	}
+
 	// CpToolkit/src/domain/settings/legacy.ts
 	function defined(options) {
 		return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined && value !== null));
 	}
+
 	function parseFlag(value) {
 		return value === "true" ? true : value === "false" ? false : undefined;
 	}
+
 	var LEGACY_SCRIPTS = {
 		AtCoderHighlighter: (stored) => [
 			{
@@ -812,7 +859,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		AtCoderWidenContainer: (stored) => [
 			{
 				featureId: "wide-layout",
-				options: defined({ width: stored.containerWidth }),
+				options: defined({width: stored.containerWidth}),
 			},
 		],
 		AtCoderCustomDefaultSubmissions: (stored) => {
@@ -834,7 +881,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			return [
 				{
 					featureId: "local-runner",
-					options: defined({ url: config["codeRunner.localRunnerURL"] || undefined }),
+					options: defined({url: config["codeRunner.localRunnerURL"] || undefined}),
 				},
 				{
 					featureId: "easy-test",
@@ -852,7 +899,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		for (const [scriptId, migrate] of Object.entries(LEGACY_SCRIPTS)) {
 			const stored = inbox.take(scriptId);
 			if (stored === undefined) continue;
-			for (const { featureId, options } of migrate(parseStoredObject(stored))) {
+			for (const {featureId, options} of migrate(parseStoredObject(stored))) {
 				if (Object.keys(parseStoredObject(settings.storedOptions(featureId))).length > 0) continue;
 				for (const [key, value] of Object.entries(options)) settings.setOption(featureId, key, value);
 			}
@@ -862,18 +909,21 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	// CpToolkit/src/domain/settings/settings.ts
 	var CURRENT_SETTINGS_VERSION = 1;
 	var MIGRATIONS = {};
+
 	function createDefaultSettings() {
-		return { version: CURRENT_SETTINGS_VERSION, features: {} };
+		return {version: CURRENT_SETTINGS_VERSION, features: {}};
 	}
+
 	function parseFeatureSettings(raw) {
-		const { enabled, options } = parseStoredObject(raw);
+		const {enabled, options} = parseStoredObject(raw);
 		return {
-			...(typeof enabled === "boolean" ? { enabled } : {}),
+			...(typeof enabled === "boolean" ? {enabled} : {}),
 			options: parseStoredObject(options),
 		};
 	}
+
 	function parseSettings(raw) {
-		const { version, features } = parseStoredObject(raw);
+		const {version, features} = parseStoredObject(raw);
 		const entries = Object.entries(parseStoredObject(features));
 		let settings = {
 			version: typeof version === "number" ? version : CURRENT_SETTINGS_VERSION,
@@ -881,14 +931,15 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		};
 		while (settings.version < CURRENT_SETTINGS_VERSION) {
 			const migrated = MIGRATIONS[settings.version]?.(settings) ?? settings;
-			settings = { ...migrated, version: settings.version + 1 };
+			settings = {...migrated, version: settings.version + 1};
 		}
 		return settings;
 	}
+
 	function updateFeatureSettings(settings, featureId, patch) {
 		const current = settings.features[featureId];
-		const next = { ...current, ...patch, options: { ...current?.options, ...patch.options } };
-		return { ...settings, features: { ...settings.features, [featureId]: next } };
+		const next = {...current, ...patch, options: {...current?.options, ...patch.options}};
+		return {...settings, features: {...settings.features, [featureId]: next}};
 	}
 
 	// CpToolkit/src/application/settings/settings-service.ts
@@ -898,29 +949,37 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		store;
 		settings;
 		listeners = new Set();
+
 		constructor(store) {
 			this.store = store;
 			this.settings = parseSettings(store.get(STORAGE_KEY));
 			store.subscribeRemote(STORAGE_KEY, (value) => this.replace(parseSettings(value)));
 		}
+
 		isEnabled(featureId, defaultEnabled) {
 			return this.settings.features[featureId]?.enabled ?? defaultEnabled;
 		}
+
 		storedOptions(featureId) {
 			return this.settings.features[featureId]?.options;
 		}
+
 		setEnabled(featureId, enabled) {
-			this.commit(updateFeatureSettings(this.settings, featureId, { enabled }));
+			this.commit(updateFeatureSettings(this.settings, featureId, {enabled}));
 		}
+
 		setOption(featureId, key, value) {
-			this.commit(updateFeatureSettings(this.settings, featureId, { options: { [key]: value } }));
+			this.commit(updateFeatureSettings(this.settings, featureId, {options: {[key]: value}}));
 		}
+
 		reset() {
 			this.commit(createDefaultSettings());
 		}
+
 		exportJson() {
 			return JSON.stringify(this.settings, null, "\t");
 		}
+
 		importJson(text) {
 			let parsed;
 			try {
@@ -932,13 +991,16 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			this.commit(parseSettings(parsed));
 			return true;
 		}
+
 		subscribe(listener) {
 			this.listeners.add(listener);
 		}
+
 		commit(settings) {
 			this.store.set(STORAGE_KEY, settings);
 			this.replace(settings);
 		}
+
 		replace(settings) {
 			this.settings = settings;
 			for (const listener of this.listeners) listener();
@@ -948,9 +1010,11 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	// CpToolkit/src/adapters/console-logger.ts
 	class ConsoleLogger {
 		prefix;
+
 		constructor(prefix) {
 			this.prefix = prefix;
 		}
+
 		error(message, cause) {
 			console.error(`[${this.prefix}] ${message}`, cause);
 		}
@@ -958,7 +1022,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 
 	// CpToolkit/src/adapters/page/document-lifecycle.ts
 	function waitForEvent(target, eventName) {
-		return new Promise((resolve) => target.addEventListener(eventName, () => resolve(), { once: true }));
+		return new Promise((resolve) => target.addEventListener(eventName, () => resolve(), {once: true}));
 	}
 
 	class DocumentLifecycle {
@@ -991,9 +1055,11 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		get(key) {
 			return GM_getValue(key);
 		}
+
 		set(key, value) {
 			GM_setValue(key, value);
 		}
+
 		subscribeRemote(key, listener) {
 			GM_addValueChangeListener(key, (_name, _oldValue, newValue, remote) => {
 				if (remote) listener(newValue);
@@ -1005,6 +1071,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	class GmScriptHost {
 		name = GM_info.script.name;
 		version = GM_info.script.version;
+
 		registerCommand(label, action) {
 			GM_registerMenuCommand(label, action);
 		}
@@ -1017,8 +1084,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		element.append(...children);
 		return element;
 	}
+
 	function injectStyle(css) {
-		const style = h("style", { textContent: css });
+		const style = h("style", {textContent: css});
 		(document.head ?? document.documentElement).append(style);
 		return style;
 	}
@@ -1139,14 +1207,14 @@ dialog::backdrop {
 `;
 
 	// CpToolkit/src/ui/dialog/modal.ts
-	function createModal({ title, closeLabel, css }) {
-		const body = h("div", { className: "modal-body" });
-		const footer = h("footer", { className: "modal-footer" });
-		const closeButton = h("button", { type: "button", textContent: closeLabel });
+	function createModal({title, closeLabel, css}) {
+		const body = h("div", {className: "modal-body"});
+		const footer = h("footer", {className: "modal-footer"});
+		const closeButton = h("button", {type: "button", textContent: closeLabel});
 		const dialog = h(
 			"dialog",
 			{},
-			h("header", { className: "modal-header" }, h("h2", { textContent: title }), closeButton),
+			h("header", {className: "modal-header"}, h("h2", {textContent: title}), closeButton),
 			body,
 			footer,
 		);
@@ -1155,7 +1223,7 @@ dialog::backdrop {
 			if (event.target === dialog) dialog.close();
 		});
 		const host = h("div");
-		host.attachShadow({ mode: "open" }).append(
+		host.attachShadow({mode: "open"}).append(
 			h("style", {
 				textContent: `${theme_default}
 ${modal_default}
@@ -1257,6 +1325,7 @@ ${css}`,
 	// CpToolkit/src/domain/settings/option.ts
 	var SHORT_HEX_COLOR_PATTERN = /^#[0-9a-f]{3}$/;
 	var HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/;
+
 	function normalizeColor(value) {
 		if (typeof value !== "string") return;
 		const color = value.trim().toLowerCase();
@@ -1264,6 +1333,7 @@ ${css}`,
 		if (!SHORT_HEX_COLOR_PATTERN.test(color)) return;
 		return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
 	}
+
 	var option = {
 		boolean(defaultValue, label) {
 			return {
@@ -1273,7 +1343,7 @@ ${css}`,
 				normalize: (value) => (typeof value === "boolean" ? value : undefined),
 			};
 		},
-		text(defaultValue, label, { validate } = {}) {
+		text(defaultValue, label, {validate} = {}) {
 			return {
 				kind: "text",
 				defaultValue,
@@ -1286,9 +1356,9 @@ ${css}`,
 			};
 		},
 		color(defaultValue, label) {
-			return { kind: "color", defaultValue, label, normalize: normalizeColor };
+			return {kind: "color", defaultValue, label, normalize: normalizeColor};
 		},
-		number(defaultValue, label, { min = -Infinity, max = Infinity } = {}) {
+		number(defaultValue, label, {min = -Infinity, max = Infinity} = {}) {
 			return {
 				kind: "number",
 				defaultValue,
@@ -1308,6 +1378,7 @@ ${css}`,
 			};
 		},
 	};
+
 	function normalizeOptions(schema, stored) {
 		const source = parseStoredObject(stored);
 		const entries = Object.entries(schema).map(([key, definition]) => {
@@ -1318,23 +1389,24 @@ ${css}`,
 
 	// CpToolkit/src/ui/form/controls.ts
 	function createSwitch(accessibleName, onChange) {
-		const input = h("input", { type: "checkbox", ariaLabel: accessibleName });
+		const input = h("input", {type: "checkbox", ariaLabel: accessibleName});
 		input.setAttribute("role", "switch");
 		input.addEventListener("change", () => onChange(input.checked));
 		return {
-			element: h("label", { className: "switch" }, input, h("span")),
+			element: h("label", {className: "switch"}, input, h("span")),
 			setChecked(checked) {
 				input.checked = checked;
 			},
 		};
 	}
+
 	function createField(label, control, errorMessage) {
-		const error = h("span", { className: "field-error", textContent: errorMessage, hidden: true });
+		const error = h("span", {className: "field-error", textContent: errorMessage, hidden: true});
 		return {
 			element: h(
 				"label",
-				{ className: "field" },
-				h("span", { className: "field-label", textContent: label }),
+				{className: "field"},
+				h("span", {className: "field-label", textContent: label}),
 				control,
 				error,
 			),
@@ -1349,12 +1421,12 @@ ${css}`,
 	function createControl(definition, value, translate, commit) {
 		switch (definition.kind) {
 			case "boolean": {
-				const input = h("input", { type: "checkbox", checked: value === true });
+				const input = h("input", {type: "checkbox", checked: value === true});
 				input.addEventListener("change", () => commit(input.checked));
 				return input;
 			}
 			case "number": {
-				const input = h("input", { type: "number", value: String(value) });
+				const input = h("input", {type: "number", value: String(value)});
 				if (definition.min !== undefined) input.min = String(definition.min);
 				if (definition.max !== undefined) input.max = String(definition.max);
 				input.addEventListener("change", () => commit(input.valueAsNumber));
@@ -1365,7 +1437,7 @@ ${css}`,
 					"select",
 					{},
 					...definition.choices.map((choice) => {
-						return h("option", { value: choice.value, textContent: translate(choice.label) });
+						return h("option", {value: choice.value, textContent: translate(choice.label)});
 					}),
 				);
 				select.value = String(value);
@@ -1374,13 +1446,14 @@ ${css}`,
 			}
 			case "color":
 			case "text": {
-				const input = h("input", { type: definition.kind, value: String(value) });
+				const input = h("input", {type: definition.kind, value: String(value)});
 				input.addEventListener("change", () => commit(input.value));
 				return input;
 			}
 		}
 	}
-	function createOptionField({ definition, value, translate, onChange }) {
+
+	function createOptionField({definition, value, translate, onChange}) {
 		const commit = (rawValue) => {
 			const normalized = definition.normalize(rawValue);
 			field.setInvalid(normalized === undefined);
@@ -1400,7 +1473,8 @@ ${css}`,
 		reloadRequired: "status.reloadRequired",
 		failed: "status.failed",
 	};
-	function createOptionsSection({ feature, settings, translate }) {
+
+	function createOptionsSection({feature, settings, translate}) {
 		const definitions = Object.entries(feature.options);
 		if (definitions.length === 0) return null;
 		const values = normalizeOptions(feature.options, settings.storedOptions(feature.id));
@@ -1414,23 +1488,24 @@ ${css}`,
 		);
 		return h(
 			"details",
-			{ className: "feature-options" },
-			h("summary", { textContent: translate("settings.options") }),
-			h("div", { className: "feature-fields" }, ...fields),
+			{className: "feature-options"},
+			h("summary", {textContent: translate("settings.options")}),
+			h("div", {className: "feature-fields"}, ...fields),
 		);
 	}
+
 	function createFeatureRow(params) {
-		const { feature, settings, runtime, translate } = params;
+		const {feature, settings, runtime, translate} = params;
 		const title = translate(feature.title);
 		const toggle = createSwitch(title, (enabled) => settings.setEnabled(feature.id, enabled));
-		const statusLabel = h("span", { className: "status" });
+		const statusLabel = h("span", {className: "status"});
 		const summary = h(
 			"div",
-			{ className: "feature-summary" },
+			{className: "feature-summary"},
 			h(
 				"div",
-				{ className: "feature-text" },
-				h("div", { className: "feature-title", textContent: title }),
+				{className: "feature-text"},
+				h("div", {className: "feature-title", textContent: title}),
 				h("div", {
 					className: "feature-description",
 					textContent: translate(feature.description),
@@ -1440,7 +1515,7 @@ ${css}`,
 			toggle.element,
 		);
 		const optionsSection = createOptionsSection(params);
-		const element = h("article", { className: "feature" }, summary);
+		const element = h("article", {className: "feature"}, summary);
 		if (optionsSection) element.append(optionsSection);
 		const status = () => runtime.statusOf(feature.id);
 		return {
@@ -1569,17 +1644,19 @@ ${css}`,
 		}
 		return groups;
 	}
+
 	function downloadText(fileName, text) {
-		const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-		h("a", { href: url, download: fileName }).click();
+		const url = URL.createObjectURL(new Blob([text], {type: "application/json"}));
+		h("a", {href: url, download: fileName}).click();
 		URL.revokeObjectURL(url);
 	}
+
 	function createSettingsPanel(dependencies) {
-		const { features, settings, runtime, translate, version } = dependencies;
+		const {features, settings, runtime, translate, version} = dependencies;
 		const notice = h(
 			"div",
-			{ className: "notice", hidden: true },
-			h("span", { textContent: translate("settings.reloadNotice") }),
+			{className: "notice", hidden: true},
+			h("span", {textContent: translate("settings.reloadNotice")}),
 			h("button", {
 				type: "button",
 				textContent: translate("settings.reload"),
@@ -1602,19 +1679,19 @@ ${css}`,
 			rows = [];
 			const sections = [...groupByCategory(features)].map(([category, members]) => {
 				const memberRows = members.map((feature) =>
-					createFeatureRow({ feature, settings, runtime, translate }),
+					createFeatureRow({feature, settings, runtime, translate}),
 				);
 				rows.push(...memberRows);
 				return h(
 					"section",
-					{ className: "category" },
-					h("h3", { textContent: translate(category) }),
+					{className: "category"},
+					h("h3", {textContent: translate(category)}),
 					...memberRows.map((row) => row.element),
 				);
 			});
 			content.replaceChildren(...sections);
 			if (features.length === 0) {
-				content.append(h("p", { className: "empty", textContent: translate("settings.empty") }));
+				content.append(h("p", {className: "empty", textContent: translate("settings.empty")}));
 			}
 			refresh();
 		};
@@ -1624,14 +1701,14 @@ ${css}`,
 			if (imported) render();
 		};
 		const createFooter = () => {
-			const fileInput = h("input", { type: "file", accept: "application/json,.json", hidden: true });
+			const fileInput = h("input", {type: "file", accept: "application/json,.json", hidden: true});
 			fileInput.addEventListener("change", () => {
 				const file = fileInput.files?.[0];
 				fileInput.value = "";
 				if (file) importFile(file);
 			});
 			const button = (label, onclick) => {
-				return h("button", { type: "button", textContent: translate(label), onclick });
+				return h("button", {type: "button", textContent: translate(label), onclick});
 			};
 			return [
 				button("settings.export", () => downloadText("cp-toolkit-settings.json", settings.exportJson())),
@@ -1643,7 +1720,7 @@ ${css}`,
 					render();
 				}),
 				fileInput,
-				h("span", { className: "footer-version", textContent: `v${version}` }),
+				h("span", {className: "footer-version", textContent: `v${version}`}),
 			];
 		};
 		const createPanelModal = () => {
@@ -1673,13 +1750,14 @@ ${settings_panel_default}`,
 		const list = listSelectors
 			.map((selector) => document.querySelector(selector))
 			.find((element) => element !== null);
-		const link = h("a", { href: "#", textContent: label });
+		const link = h("a", {href: "#", textContent: label});
 		link.addEventListener("click", (event) => {
 			event.preventDefault();
 			onOpen();
 		});
 		list?.append(h("li", {}, link));
 	}
+
 	// CpToolkit/data/judges/aoj.yaml
 	var aoj_default = {
 		id: "aoj",
@@ -2160,10 +2238,12 @@ ${settings_panel_default}`,
 	};
 
 	// CpToolkit/src/catalog/messages.ts
-	var MESSAGES = { ja: ja_default, en: en_default };
+	var MESSAGES = {ja: ja_default, en: en_default};
+
 	function createTranslator(getLocale) {
 		return (key) => MESSAGES[getLocale()][key];
 	}
+
 	// CpToolkit/data/contest-links.yaml
 	var contest_links_default = {
 		lists: [
@@ -2784,6 +2864,7 @@ ${settings_panel_default}`,
 
 	class LocalRunnerError extends Error {
 		status;
+
 		constructor(message, status) {
 			super(message);
 			this.status = status;
@@ -2794,33 +2875,39 @@ ${settings_panel_default}`,
 		http;
 		endpoint;
 		prepared = null;
+
 		constructor(http, endpoint) {
 			this.http = http;
 			this.endpoint = endpoint;
 		}
+
 		isAvailable() {
 			return this.endpoint() !== null;
 		}
+
 		list() {
 			return this.post(buildLocalRunnerListRequest());
 		}
+
 		transform(sourceCode, header) {
 			return this.post(
 				buildLocalRunnerTransformRequest(sourceCode, false, true, false, header),
 				TRANSFORM_TIMEOUT_MS,
 			);
 		}
+
 		prepare(sourceCode) {
 			const endpoint = this.endpoint() ?? "";
 			if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode)
 				return this.prepared.response;
 			const response = this.post(buildLocalRunnerPrepareRequest(sourceCode, true, true, false));
-			this.prepared = { endpoint, sourceCode, response };
+			this.prepared = {endpoint, sourceCode, response};
 			response.catch(() => {
 				if (this.prepared?.response === response) this.prepared = null;
 			});
 			return response;
 		}
+
 		async run(sourceCode, input, compilerName) {
 			let prepared;
 			try {
@@ -2840,16 +2927,18 @@ ${settings_panel_default}`,
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
 			return this.runProgram(prepared.programId, input, compilerName);
 		}
+
 		runProgram(programId, input, compilerName) {
 			return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
 		}
+
 		async post(request, timeoutMs) {
 			const url = this.endpoint();
 			if (url === null) throw new LocalRunnerError("Local Runner is not configured.", 0);
 			const response = await this.http.send({
 				url,
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				headers: {"Content-Type": "application/json"},
 				body: JSON.stringify(request),
 				timeoutMs,
 			});
@@ -2862,9 +2951,10 @@ ${settings_panel_default}`,
 
 	// CpToolkit/src/domain/execution/language.ts
 	function resolveFamily(catalog, label) {
-		const family = catalog.families.find(({ match }) => match.some((pattern) => new RegExp(pattern).test(label)));
+		const family = catalog.families.find(({match}) => match.some((pattern) => new RegExp(pattern).test(label)));
 		return family?.id ?? null;
 	}
+
 	function labelDistance(a, b) {
 		let previous = new Float64Array(b.length + 1);
 		let current = new Float64Array(b.length + 1);
@@ -2883,7 +2973,9 @@ ${settings_panel_default}`,
 		}
 		return previous[b.length] ?? 0;
 	}
+
 	var JAVASCRIPT_PREFIX = "javascript";
+
 	function isLanguageOption(optionLabel, target) {
 		const label = optionLabel.trim().replace(/\s+/g, " ").toLowerCase();
 		if (!label || (label.startsWith(JAVASCRIPT_PREFIX) && target !== JAVASCRIPT_PREFIX)) return false;
@@ -2893,13 +2985,13 @@ ${settings_panel_default}`,
 	// CpToolkit/src/domain/execution/result.ts
 	function judgeResult(result, expected, options) {
 		if (expected === null) return result;
-		if (result.status !== "OK") return { ...result, expectedOutput: expected };
+		if (result.status !== "OK") return {...result, expectedOutput: expected};
 		const judged = evaluateEasyTestOutput(
-			{ status: result.status, output: result.output ?? "" },
+			{status: result.status, output: result.output ?? ""},
 			expected,
 			options,
 		);
-		return { ...result, ...judged };
+		return {...result, ...judged};
 	}
 
 	// CpToolkit/src/application/execution/runner-catalog.ts
@@ -2907,11 +2999,13 @@ ${settings_panel_default}`,
 		providers;
 		order;
 		maxRetry;
+
 		constructor(providers, order, maxRetry) {
 			this.providers = providers;
 			this.order = order;
 			this.maxRetry = maxRetry;
 		}
+
 		async candidates(language) {
 			const results = await Promise.allSettled(this.providers().map((provider) => provider.runnersFor(language)));
 			const runners = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
@@ -2919,19 +3013,20 @@ ${settings_panel_default}`,
 			const distance = (runner) => labelDistance(runner.label, language.label);
 			return [...runners].sort((a, b) => rank(a) - rank(b) || distance(a) - distance(b));
 		}
+
 		async test(candidates, firstRunnerId, sourceCode, testCase, options) {
 			const start = Math.max(
 				0,
-				candidates.findIndex(({ id }) => id === firstRunnerId),
+				candidates.findIndex(({id}) => id === firstRunnerId),
 			);
-			let result = { status: "IE", input: testCase.input };
+			let result = {status: "IE", input: testCase.input};
 			for (let retry = 0; retry < this.maxRetry; retry++) {
 				const runner = candidates[(start + retry) % candidates.length];
 				if (!runner) break;
 				try {
 					result = await runner.run(sourceCode, testCase.input, options);
 				} catch (error) {
-					result = { status: "IE", input: testCase.input, error: String(error) };
+					result = {status: "IE", input: testCase.input, error: String(error)};
 				}
 				if (result.status !== "IE") return judgeResult(result, testCase.output, options);
 			}
@@ -2941,27 +3036,33 @@ ${settings_panel_default}`,
 
 	// CpToolkit/src/domain/rating/history.ts
 	var HIDDEN_ENTRIES = 3;
+
 	function dropOldest(entries) {
 		return entries.length > HIDDEN_ENTRIES ? entries.slice(HIDDEN_ENTRIES) : entries;
 	}
+
 	function ratedPerformances(history) {
 		return history.filter((entry) => entry.IsRated).map((entry) => Math.max(0, entry.Performance ?? 0));
 	}
 
 	// CpToolkit/src/domain/rating/scale.ts
-	var UNRATED_TIER = { min: -1, color: "#000000", alpha: 0.1, background: "#FFFFFF", className: "user-unrated" };
+	var UNRATED_TIER = {min: -1, color: "#000000", alpha: 0.1, background: "#FFFFFF", className: "user-unrated"};
+
 	function tierOf(scale, value) {
 		return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;
 	}
+
 	function crownImageOf(scale, value) {
 		if (value < scale.crownMin) return null;
 		const step = Math.floor(value / scale.crownStep) * scale.crownStep;
 		return scale.crownImage.replace("{value}", String(step));
 	}
+
 	function backgroundOf(scale, value) {
 		if (value < scale.crownMin) return tierOf(scale, value).background;
 		return value < scale.silverMax ? scale.silverBackground : scale.goldBackground;
 	}
+
 	function tierProgress(scale, value) {
 		const step = scale.tiers[1]?.min ?? 400;
 		const current = tierOf(scale, value);
@@ -2996,13 +3097,16 @@ ${settings_panel_default}`,
 	var READY_INTERVAL_MS = 50;
 	var ORDINAL_SUFFIXES = ["th", "st", "nd", "rd"];
 	var ratio = (value, low, high) => (value - low) / (high - low);
+
 	function ordinal(value) {
 		const tail = value % 100;
 		return `${value}${ORDINAL_SUFFIXES[(tail - 20) % 10] ?? ORDINAL_SUFFIXES[tail] ?? ORDINAL_SUFFIXES[0]}`;
 	}
+
 	function signed(value) {
 		return `${value === 0 ? "±" : value < 0 ? "-" : "+"}${Math.abs(value)}`;
 	}
+
 	function replaceCanvas(id) {
 		const canvas = document.getElementById(id);
 		if (!(canvas instanceof HTMLCanvasElement)) return null;
@@ -3010,6 +3114,7 @@ ${settings_panel_default}`,
 		canvas.replaceWith(clone);
 		return clone;
 	}
+
 	function scaleStage(stage, canvas) {
 		const rect = canvas.getBoundingClientRect();
 		const width = Math.round(rect.width || canvas.clientWidth || canvas.width || DEFAULT_WIDTH);
@@ -3025,7 +3130,7 @@ ${settings_panel_default}`,
 			maxHeight: `${height}px`,
 		});
 		stage.enableMouseOver();
-		return { width, height };
+		return {width, height};
 	}
 
 	class CreateJsRatingGraph {
@@ -3033,6 +3138,7 @@ ${settings_panel_default}`,
 		performances = [];
 		graphCanvas = null;
 		statusCanvas = null;
+
 		async prepare(performances) {
 			const deadline = Date.now() + READY_TIMEOUT_MS;
 			const isReady = () => {
@@ -3055,7 +3161,8 @@ ${settings_panel_default}`,
 			this.statusCanvas = replaceCanvas("ratingStatus");
 			return this.history.length > 0;
 		}
-		draw({ showPerformance, recentOnly }) {
+
+		draw({showPerformance, recentOnly}) {
 			if (!this.graphCanvas || !this.statusCanvas) return;
 			const history = recentOnly ? dropOldest(this.history) : this.history;
 			const performances = recentOnly ? dropOldest(this.performances) : this.performances;
@@ -3085,18 +3192,18 @@ ${settings_panel_default}`,
 			};
 			const newText = (parent, x, y, font) => {
 				const text = new cj.Text("", font, "#000");
-				Object.assign(text, { x, y, textAlign: "center", textBaseline: "middle" });
+				Object.assign(text, {x, y, textAlign: "center", textBaseline: "middle"});
 				parent.addChild(text);
 				return text;
 			};
 			const drawBackground = () => {
 				const panel = newShape(stageGraph);
-				Object.assign(panel, { x: OFFSET_X, y: OFFSET_Y, alpha: 0.3 });
+				Object.assign(panel, {x: OFFSET_X, y: OFFSET_Y, alpha: 0.3});
 				const border = newShape(stageGraph);
-				Object.assign(border, { x: OFFSET_X, y: OFFSET_Y });
+				Object.assign(border, {x: OFFSET_X, y: OFFSET_Y});
 				const addLabel = (text, x, y, textAlign, textBaseline) => {
 					const label = new cj.Text(text, LABEL_FONT, "#000");
-					Object.assign(label, { x, y, textAlign, textBaseline });
+					Object.assign(label, {x, y, textAlign, textBaseline});
 					stageGraph.addChild(label);
 				};
 				let top = 0;
@@ -3159,7 +3266,7 @@ ${settings_panel_default}`,
 				const active = Math.floor(progress ** 2 * (PARTICLE_MAX - PARTICLE_MIN) + PARTICLE_MIN);
 				particles.forEach((particle, index) => {
 					if (index >= active) {
-						Object.assign(particle, { life: 0, visible: false });
+						Object.assign(particle, {life: 0, visible: false});
 						return;
 					}
 					const angle = Math.random() * Math.PI * 2;
@@ -3181,7 +3288,7 @@ ${settings_panel_default}`,
 			const updateStatus = (index, withParticles) => {
 				const entry = history[index];
 				if (!entry) return;
-				const { color, alpha } = tierOf(ratingScale, entry.NewRating);
+				const {color, alpha} = tierOf(ratingScale, entry.NewRating);
 				status.border.graphics.c().s(color).ss(1).rr(OFFSET_X, OFFSET_Y, statusWidth, statusHeight, 2);
 				status.rating.text = entry.NewRating;
 				status.rating.color = color;
@@ -3199,7 +3306,7 @@ ${settings_panel_default}`,
 				lineColor,
 				highestLabel,
 				radius,
-				highestVertex = { radius, strokeWidth: 0.5 },
+				highestVertex = {radius, strokeWidth: 0.5},
 			) => {
 				const container = new cj.Container();
 				stageGraph.addChild(container);
@@ -3306,7 +3413,7 @@ ${settings_panel_default}`,
 				3.5,
 			);
 			if (showPerformance && performances.length > 0)
-				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, { radius: 2.5, strokeWidth: 1 });
+				drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {radius: 2.5, strokeWidth: 1});
 			updateStatus(count - 1, false);
 			stageGraph.update();
 			stageStatus.update();
@@ -3319,10 +3426,10 @@ ${settings_panel_default}`,
 	// CpToolkit/src/adapters/judges/languages.ts
 	function languagesOf(select) {
 		return [...(select?.options ?? [])]
-			.filter(({ value }) => value !== "")
-			.map(({ value, text }) => {
+			.filter(({value}) => value !== "")
+			.map(({value, text}) => {
 				const label = text.trim();
-				return { id: value, label, family: resolveFamily(languageCatalog, label) };
+				return {id: value, label, family: resolveFamily(languageCatalog, label)};
 			});
 	}
 
@@ -3334,8 +3441,9 @@ ${settings_panel_default}`,
 		}
 		return result;
 	}
+
 	function parseSamples(page) {
-		for (const { selector, container, insideIoStyle } of atcoderSampleSelectors) {
+		for (const {selector, container, insideIoStyle} of atcoderSampleSelectors) {
 			const elements = [...page.querySelectorAll(selector)].filter((element) => {
 				if (insideIoStyle) return element.childElementCount === 0;
 				return !element.closest(".io-style") && !element.querySelector("var");
@@ -3359,10 +3467,12 @@ ${settings_panel_default}`,
 		site;
 		id = "atcoder";
 		samplesByTask = new Map();
+
 		constructor(bridge, site) {
 			this.bridge = bridge;
 			this.site = site;
 		}
+
 		get mounts() {
 			return {
 				testButtons: document.querySelector("#submit")?.parentElement ?? null,
@@ -3370,33 +3480,41 @@ ${settings_panel_default}`,
 				results: document.querySelector(".form-code-submit"),
 			};
 		}
+
 		get taskSelect() {
 			return document.querySelector("#select-task");
 		}
+
 		get languageSelect() {
 			return document.querySelector("#select-lang select.current");
 		}
+
 		taskUri() {
 			const task = this.taskSelect?.value;
 			if (!task) return `${location.origin}${location.pathname}`;
 			return `${location.origin}/contests/${pageGlobals().contestScreenName}/tasks/${task}`;
 		}
+
 		languages() {
 			return languagesOf(this.languageSelect);
 		}
+
 		language() {
 			const id = this.languageSelect?.value;
 			return this.languages().find((language) => language.id === id) ?? null;
 		}
+
 		onLanguageChange(listener) {
 			for (const select of document.querySelectorAll("#select-lang select"))
 				this.bridge.onChange(select, listener);
 		}
+
 		onSourceChange(listener) {
 			const element = document.querySelector("#editor");
 			const ace = pageGlobals().ace;
 			if (ace && element) ace.edit(element).getSession().on("change", listener);
 		}
+
 		sourceCode() {
 			const page = pageGlobals();
 			const element = document.querySelector("#editor");
@@ -3405,15 +3523,18 @@ ${settings_panel_default}`,
 			if (isPlainText) return document.querySelector("#plain-textarea")?.value ?? "";
 			return page.ace.edit(element).getValue();
 		}
+
 		setSourceCode(code) {
 			const element = document.querySelector("#editor");
 			if (element) pageGlobals().ace?.edit(element).setValue(code);
 			const textarea = document.querySelector("#plain-textarea");
 			if (textarea) textarea.value = code;
 		}
+
 		submit() {
 			document.querySelector("#submit")?.click();
 		}
+
 		samples() {
 			const taskUri = this.taskUri();
 			const cached = this.samplesByTask.get(taskUri);
@@ -3424,16 +3545,18 @@ ${settings_panel_default}`,
 			samples.catch(() => this.samplesByTask.delete(taskUri));
 			return samples;
 		}
+
 		async fetchSamples(taskUri) {
-			const response = await this.site.send({ url: taskUri });
+			const response = await this.site.send({url: taskUri});
 			if (response.status !== 200) throw new Error(`Failed to fetch ${taskUri}: ${response.status}`);
 			const samples = parseSamples(new DOMParser().parseFromString(response.text, "text/html"));
-			return samples.map((sample) => ({ ...sample, anchor: null }));
+			return samples.map((sample) => ({...sample, anchor: null}));
 		}
 	}
 
 	// CpToolkit/src/adapters/judges/codeforces.ts
 	var LANGUAGE_SELECT = "select[name='programTypeId']";
+
 	function readSampleBlock(pre) {
 		const lines = pre.querySelectorAll(".test-example-line");
 		if (lines.length > 0)
@@ -3456,31 +3579,39 @@ ${settings_panel_default}`,
 	class CodeforcesSiteBase {
 		bridge;
 		id = "codeforces";
+
 		constructor(bridge) {
 			this.bridge = bridge;
 		}
+
 		taskUri() {
 			return location.href;
 		}
+
 		languages() {
 			return languagesOf(this.languageSelect);
 		}
+
 		language() {
 			const id = this.languageSelect?.value;
 			return this.languages().find((language) => language.id === id) ?? null;
 		}
+
 		onLanguageChange(listener) {
 			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
 		}
-		onSourceChange(_listener) {}
+
+		onSourceChange(_listener) {
+		}
 	}
 
 	class CodeforcesSite extends CodeforcesSiteBase {
 		buttons = document.createElement("span");
 		textarea = document.createElement("textarea");
+
 		constructor(bridge) {
 			super(bridge);
-			Object.assign(this.textarea.style, { fontFamily: "monospace", width: "100%", minHeight: "5em" });
+			Object.assign(this.textarea.style, {fontFamily: "monospace", width: "100%", minHeight: "5em"});
 			document.querySelector(".submitForm")?.append(this.buttons);
 			document.getElementById("pageContent")?.append(this.textarea);
 			this.fileInput?.addEventListener("change", () => {
@@ -3489,6 +3620,7 @@ ${settings_panel_default}`,
 				});
 			});
 		}
+
 		get mounts() {
 			return {
 				testButtons: this.buttons,
@@ -3496,30 +3628,37 @@ ${settings_panel_default}`,
 				results: document.getElementById("pageContent"),
 			};
 		}
+
 		get languageSelect() {
 			return document.querySelector(LANGUAGE_SELECT);
 		}
+
 		get fileInput() {
 			return document.querySelector('.submitForm input[name="sourceFile"]');
 		}
+
 		get fastSubmitEditor() {
 			const element = document.getElementById("editor");
 			return element ? pageGlobals().ace?.edit(element) : undefined;
 		}
+
 		sourceCode() {
 			return this.fastSubmitEditor?.getValue() ?? this.textarea.value;
 		}
+
 		setSourceCode(code) {
 			this.textarea.value = code;
 			this.fastSubmitEditor?.setValue(code);
 			const files = new DataTransfer();
-			files.items.add(new File([code], "prog.txt", { type: "text/plain" }));
+			files.items.add(new File([code], "prog.txt", {type: "text/plain"}));
 			if (this.fileInput) this.fileInput.files = files.files;
 		}
+
 		submit() {
 			this.setSourceCode(this.sourceCode());
 			document.querySelector(".submitForm .submit")?.click();
 		}
+
 		async samples() {
 			const samples = [];
 			for (const block of document.querySelectorAll(".sample-test")) {
@@ -3545,11 +3684,25 @@ ${settings_panel_default}`,
 	class CodeforcesMobileSite extends CodeforcesSiteBase {
 		main;
 		form;
+
 		constructor(bridge, main, form) {
 			super(bridge);
 			this.main = main;
 			this.form = form;
 		}
+
+		get mounts() {
+			return {testButtons: this.main, sideButtons: this.main, results: this.main};
+		}
+
+		get languageSelect() {
+			return this.form.elements.namedItem("programTypeId");
+		}
+
+		get source() {
+			return this.form.elements.namedItem("source");
+		}
+
 		static async create(bridge) {
 			const main = document.querySelector("main");
 			const url = /\/contest\/(\d+)\/problem\/([^/]+)/.exec(location.pathname);
@@ -3558,7 +3711,7 @@ ${settings_panel_default}`,
 			frame.src = `/contest/${url[1]}/submit`;
 			frame.style.display = "none";
 			document.body.append(frame);
-			await new Promise((resolve) => frame.addEventListener("load", resolve, { once: true }));
+			await new Promise((resolve) => frame.addEventListener("load", resolve, {once: true}));
 			const form = frame.contentDocument?.querySelector("._SubmitPage_submitForm");
 			if (!form) return null;
 			const problem = form.elements.namedItem("problemIndex");
@@ -3569,24 +3722,19 @@ ${settings_panel_default}`,
 			main.append(form);
 			return new CodeforcesMobileSite(bridge, main, form);
 		}
-		get mounts() {
-			return { testButtons: this.main, sideButtons: this.main, results: this.main };
-		}
-		get languageSelect() {
-			return this.form.elements.namedItem("programTypeId");
-		}
-		get source() {
-			return this.form.elements.namedItem("source");
-		}
+
 		sourceCode() {
 			return this.source?.value ?? "";
 		}
+
 		setSourceCode(code) {
 			if (this.source) this.source.value = code;
 		}
+
 		submit() {
 			this.form.submit();
 		}
+
 		async samples() {
 			return [...document.querySelectorAll(".sample-test")].map((block, index) => ({
 				title: `Sample ${index + 1}`,
@@ -3601,9 +3749,11 @@ ${settings_panel_default}`,
 	class YukicoderSite {
 		bridge;
 		id = "yukicoder";
+
 		constructor(bridge) {
 			this.bridge = bridge;
 		}
+
 		get mounts() {
 			return {
 				testButtons: document.querySelector("#submit_form"),
@@ -3611,43 +3761,55 @@ ${settings_panel_default}`,
 				results: document.querySelector("#content"),
 			};
 		}
+
 		get languageSelect() {
 			return document.querySelector("#lang");
 		}
+
 		get textarea() {
 			return document.querySelector("#source");
 		}
+
 		get editor() {
 			return pageGlobals().ace?.edit("rich_source");
 		}
+
 		taskUri() {
 			return location.href;
 		}
+
 		languages() {
 			return languagesOf(this.languageSelect);
 		}
+
 		language() {
 			const id = this.languageSelect?.value;
 			return this.languages().find((language) => language.id === id) ?? null;
 		}
+
 		onLanguageChange(listener) {
 			if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
 		}
+
 		onSourceChange(listener) {
 			this.editor?.getSession().on("change", listener);
 		}
+
 		sourceCode() {
 			const textarea = this.textarea;
 			if (textarea && textarea.offsetParent !== null) return textarea.value;
 			return this.editor?.getSession().getValue() ?? "";
 		}
+
 		setSourceCode(code) {
 			if (this.textarea) this.textarea.value = code;
 			this.editor?.getSession().setValue(code);
 		}
+
 		submit() {
 			document.querySelector('#submit_form input[type="submit"]')?.click();
 		}
+
 		async samples() {
 			return [...document.querySelectorAll(".sample")].flatMap((sample, index) => {
 				const [input, output] = sample.querySelectorAll("pre");
@@ -3666,6 +3828,7 @@ ${settings_panel_default}`,
 
 	// CpToolkit/src/adapters/judges/index.ts
 	var CODEFORCES_MOBILE_HOST = /^m[1-3]\.codeforces\.com$/;
+
 	async function createJudgeSite(judgeId, bridge, site) {
 		switch (judgeId) {
 			case "atcoder":
@@ -3688,31 +3851,40 @@ ${settings_panel_default}`,
 
 	class AceCodeEditor {
 		editor;
+
 		constructor(editor) {
 			this.editor = editor;
 		}
+
 		getValue() {
 			return this.editor.getValue();
 		}
+
 		setValue(value) {
 			this.editor.getSession().setValue(value);
 		}
+
 		isJava() {
 			const mode = this.editor.getSession().getMode().$id ?? "";
 			return mode === "" || JAVA_MODE_PATTERN.test(mode);
 		}
+
 		isReadOnly() {
 			return this.editor.getReadOnly();
 		}
+
 		setWritable() {
 			this.editor.setReadOnly(false);
 		}
+
 		onPaste(listener) {
 			this.editor.on("paste", () => setTimeout(listener));
 		}
+
 		onChange(listener) {
 			this.editor.getSession().on("change", listener);
 		}
+
 		foldLines(lines) {
 			const session = this.editor.getSession();
 			const folded = new Set(session.getAllFolds().map((fold) => fold.start.row));
@@ -3721,47 +3893,59 @@ ${settings_panel_default}`,
 				try {
 					const range = session.getFoldWidget(line) ? session.getFoldWidgetRange(line) : null;
 					if (range) session.addFold("...", range);
-				} catch {}
+				} catch {
+				}
 			}
 		}
 	}
 
 	class MonacoCodeEditor {
 		editor;
+
 		constructor(editor) {
 			this.editor = editor;
 		}
+
 		get model() {
 			const model = this.editor.getModel();
 			if (!model) throw new Error("Monaco model is not available.");
 			return model;
 		}
+
 		getValue() {
 			return this.model.getValue();
 		}
+
 		setValue(value) {
 			this.model.setValue(value);
 		}
+
 		isJava() {
 			return this.model.getLanguageId() === "java";
 		}
+
 		isReadOnly() {
 			return false;
 		}
-		setWritable() {}
+
+		setWritable() {
+		}
+
 		onPaste(listener) {
 			try {
 				this.editor.onDidPaste(listener);
 			} catch {
-				this.model.onDidChangeContent(({ isFlush, changes }) => {
+				this.model.onDidChangeContent(({isFlush, changes}) => {
 					if (!isFlush && changes.length === 1 && (changes[0]?.text.length ?? 0) >= MIN_PASTED_LENGTH)
 						listener();
 				});
 			}
 		}
+
 		onChange(listener) {
 			this.model.onDidChangeContent(listener);
 		}
+
 		foldLines(lines) {
 			const action = this.editor.getAction("editor.fold");
 			if (!action) return;
@@ -3769,17 +3953,18 @@ ${settings_panel_default}`,
 			(async () => {
 				try {
 					for (const line of lines) {
-						this.editor.setPosition({ lineNumber: line + 1, column: 1 });
+						this.editor.setPosition({lineNumber: line + 1, column: 1});
 						await action.run();
 					}
 				} finally {
 					this.editor.setPosition(position);
 				}
 			})().catch(() => {
-				return;
+
 			});
 		}
 	}
+
 	function findEditor(target) {
 		const page = pageGlobals();
 		if (target.editor === "monaco") {
@@ -3798,7 +3983,7 @@ ${settings_panel_default}`,
 	}
 
 	class PageCodeEditorLocator {
-		async locate(target, { timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0 } = {}) {
+		async locate(target, {timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0} = {}) {
 			if (delayMs > 0) await sleep(delayMs);
 			const editor = findEditor(target);
 			if (editor) return editor;
@@ -3813,7 +3998,7 @@ ${settings_panel_default}`,
 					if (found) finish(found);
 				});
 				const timer = setTimeout(() => finish(null), timeoutMs);
-				observer.observe(document.body, { childList: true, subtree: true });
+				observer.observe(document.body, {childList: true, subtree: true});
 			});
 		}
 	}
@@ -3821,18 +4006,19 @@ ${settings_panel_default}`,
 	// CpToolkit/src/adapters/page/element-script-loader.ts
 	function waitForLoad(element, url) {
 		return new Promise((resolve, reject) => {
-			element.addEventListener("load", () => resolve(), { once: true });
-			element.addEventListener("error", () => reject(new Error(`Failed to load ${url}`)), { once: true });
+			element.addEventListener("load", () => resolve(), {once: true});
+			element.addEventListener("error", () => reject(new Error(`Failed to load ${url}`)), {once: true});
 			document.head.append(element);
 		});
 	}
 
 	class ElementScriptLoader {
 		loadScript(url) {
-			return waitForLoad(Object.assign(document.createElement("script"), { src: url }), url);
+			return waitForLoad(Object.assign(document.createElement("script"), {src: url}), url);
 		}
+
 		loadStylesheet(url) {
-			return waitForLoad(Object.assign(document.createElement("link"), { rel: "stylesheet", href: url }), url);
+			return waitForLoad(Object.assign(document.createElement("link"), {rel: "stylesheet", href: url}), url);
 		}
 	}
 
@@ -3845,10 +4031,10 @@ ${settings_panel_default}`,
 	// CpToolkit/src/adapters/page/page-bridge.ts
 	var MATH_OPTIONS = {
 		delimiters: [
-			{ left: "$$", right: "$$", display: true },
-			{ left: "$", right: "$", display: false },
-			{ left: "\\(", right: "\\)", display: false },
-			{ left: "\\[", right: "\\]", display: true },
+			{left: "$$", right: "$$", display: true},
+			{left: "$", right: "$", display: false},
+			{left: "\\(", right: "\\)", display: false},
+			{left: "\\[", right: "\\]", display: true},
 		],
 		ignoredTags: ["script", "noscript", "style", "textarea", "code", "option"],
 		ignoredClasses: ["prettyprint", "source-code-for-copy"],
@@ -3861,14 +4047,17 @@ ${settings_panel_default}`,
 			if (jQuery) jQuery(element).on("change", listener);
 			else element.addEventListener("change", listener);
 		}
+
 		triggerChange(element) {
-			element.dispatchEvent(new Event("input", { bubbles: true }));
-			element.dispatchEvent(new Event("change", { bubbles: true }));
+			element.dispatchEvent(new Event("input", {bubbles: true}));
+			element.dispatchEvent(new Event("change", {bubbles: true}));
 			pageGlobals().jQuery?.(element).trigger("change");
 		}
+
 		renderMath(target) {
 			pageGlobals().renderMathInElement?.(target, MATH_OPTIONS);
 		}
+
 		highlightCode() {
 			pageGlobals().PR?.prettyPrint();
 		}
@@ -3876,14 +4065,14 @@ ${settings_panel_default}`,
 
 	// CpToolkit/src/adapters/page/same-origin-http-client.ts
 	class SameOriginHttpClient {
-		async send({ url, method = "GET", headers, body }) {
+		async send({url, method = "GET", headers, body}) {
 			const response = await fetch(url, {
 				method,
-				headers: headers ? { ...headers } : undefined,
+				headers: headers ? {...headers} : undefined,
 				body,
 				credentials: "include",
 			});
-			return { status: response.status, text: await response.text() };
+			return {status: response.status, text: await response.text()};
 		}
 	}
 
@@ -3895,18 +4084,21 @@ ${settings_panel_default}`,
 		site;
 		last = Promise.resolve();
 		failedGroups = new Set();
+
 		constructor(site) {
 			this.site = site;
 		}
+
 		get baseUrl() {
 			return location.href.replace(/\/(tasks\/.+|submit.*)$/, "/custom_test");
 		}
+
 		async execute(languageId, sourceCode, input, groupId) {
-			if (groupId && this.failedGroups.has(groupId)) return { status: "CE", input };
+			if (groupId && this.failedGroups.has(groupId)) return {status: "CE", input};
 			const submitted = await this.site.send({
 				url: `${this.baseUrl}/submit/json`,
 				method: "POST",
-				headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+				headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
 				body: buildQueryString({
 					"data.LanguageId": languageId,
 					sourceCode,
@@ -3917,9 +4109,9 @@ ${settings_panel_default}`,
 			if (submitted.text) throw new Error(submitted.text);
 			for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
 				await sleep(POLL_INTERVAL_MS / 10);
-				const response = await this.site.send({ url: `${this.baseUrl}/json?reload=true` });
+				const response = await this.site.send({url: `${this.baseUrl}/json?reload=true`});
 				const data = JSON.parse(response.text);
-				const { Result: result } = data;
+				const {Result: result} = data;
 				if (!result || data.Interval !== undefined) {
 					await sleep(data.Interval ?? POLL_INTERVAL_MS);
 					continue;
@@ -3937,12 +4129,13 @@ ${settings_panel_default}`,
 					error: data.Stderr,
 				};
 			}
-			return { status: "TLE", input, error: "Custom test timed out" };
+			return {status: "TLE", input, error: "Custom test timed out"};
 		}
+
 		run(languageId, sourceCode, input, groupId) {
 			const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
 			this.last = result.catch(() => {
-				return;
+
 			});
 			return result;
 		}
@@ -3954,12 +4147,14 @@ ${settings_panel_default}`,
 		kind = "judge";
 		id;
 		label;
+
 		constructor(queue, language) {
 			this.queue = queue;
 			this.language = language;
 			this.id = `atcoder:${language.id}`;
 			this.label = `${language.label} [AtCoder]`;
 		}
+
 		run(sourceCode, input, options) {
 			return this.queue.run(this.language.id, sourceCode, input, options.runGroupId);
 		}
@@ -3968,14 +4163,16 @@ ${settings_panel_default}`,
 	class AtCoderRunnerProvider {
 		judge;
 		queue;
+
 		constructor(site, judge) {
 			this.judge = judge;
 			this.queue = new CustomTestQueue(site);
 		}
+
 		async runnersFor(language) {
 			const judge = await this.judge();
 			if (judge?.id !== "atcoder") return [];
-			const sameFamily = judge.languages().filter(({ id, family }) => {
+			const sameFamily = judge.languages().filter(({id, family}) => {
 				return id === language.id || (family !== null && family === language.family);
 			});
 			return sameFamily.map((candidate) => new AtCoderRunner(this.queue, candidate));
@@ -3988,6 +4185,7 @@ import contextlib, io, platform
 class __redirect_stdin(contextlib._RedirectStream):
   _stream = "stdin"
 `;
+
 	function wrapSource(sourceCode) {
 		const body = sourceCode
 			.split(
@@ -4017,17 +4215,20 @@ ${body}
 		label = "Python3 Pyodide [Browser]";
 		pyodide = null;
 		queue = Promise.resolve();
+
 		constructor(scripts) {
 			this.scripts = scripts;
 		}
+
 		async load() {
-			const { baseUrl } = runnerCatalog.pyodide;
+			const {baseUrl} = runnerCatalog.pyodide;
 			await this.scripts.loadScript(`${baseUrl}pyodide.js`);
-			const pyodide = await pageGlobals().loadPyodide?.({ indexURL: baseUrl });
+			const pyodide = await pageGlobals().loadPyodide?.({indexURL: baseUrl});
 			if (!pyodide) throw new Error("Pyodide was not loaded.");
 			await pyodide.runPythonAsync(SETUP_CODE);
 			return pyodide;
 		}
+
 		async execute(sourceCode, input) {
 			this.pyodide ??= this.load();
 			const pyodide = await this.pyodide;
@@ -4057,10 +4258,11 @@ ${body}
 				error: pyodide.globals.get("__stderr").getvalue(),
 			};
 		}
+
 		run(sourceCode, input) {
 			const result = this.queue.then(() => this.execute(sourceCode, input));
 			this.queue = result.catch(() => {
-				return;
+
 			});
 			return result;
 		}
@@ -4068,10 +4270,12 @@ ${body}
 
 	class PyodideRunnerProvider {
 		runner;
+
 		constructor(scripts) {
 			this.runner = new PyodideRunner(scripts);
 		}
-		async runnersFor({ family }) {
+
+		async runnersFor({family}) {
 			return family === "python3" ? [this.runner] : [];
 		}
 	}
@@ -4083,19 +4287,22 @@ ${body}
 		kind = "paiza";
 		id;
 		label;
+
 		constructor(http, language, label) {
 			this.http = http;
 			this.language = language;
 			this.id = `paiza:${language}`;
 			this.label = `${label} [PaizaIO]`;
 		}
+
 		async request(path, query2, method = "GET") {
-			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({ ...query2, api_key: "guest" })}`;
-			const response = await this.http.send({ url, method });
+			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query2, api_key: "guest"})}`;
+			const response = await this.http.send({url, method});
 			return JSON.parse(response.text);
 		}
+
 		async run(sourceCode, input) {
-			let { id, status } = await this.request(
+			let {id, status} = await this.request(
 				"create",
 				{
 					source_code: sourceCode,
@@ -4107,10 +4314,10 @@ ${body}
 				"POST",
 			);
 			while (status === "running") {
-				({ status } = await this.request("get_status", { id }));
+				({status} = await this.request("get_status", {id}));
 			}
-			const details = await this.request("get_details", { id });
-			const measured = { execTime: Number(details.time) * 1000, memory: Number(details.memory) / 1000, input };
+			const details = await this.request("get_details", {id});
+			const measured = {execTime: Number(details.time) * 1000, memory: Number(details.memory) / 1000, input};
 			if (details.build_result === "failure") {
 				return {
 					...measured,
@@ -4120,7 +4327,7 @@ ${body}
 					error: details.build_stderr,
 				};
 			}
-			const statusByResult = { timeout: "TLE", failure: "RE" };
+			const statusByResult = {timeout: "TLE", failure: "RE"};
 			return {
 				...measured,
 				status: statusByResult[details.result] ?? "OK",
@@ -4133,13 +4340,15 @@ ${body}
 
 	class PaizaRunnerProvider {
 		http;
+
 		constructor(http) {
 			this.http = http;
 		}
-		async runnersFor({ family }) {
+
+		async runnersFor({family}) {
 			return runnerCatalog.paiza.languages
 				.filter((entry) => entry.family === family)
-				.map(({ language, label }) => new PaizaRunner(this.http, language, label));
+				.map(({language, label}) => new PaizaRunner(this.http, language, label));
 		}
 	}
 
@@ -4149,16 +4358,18 @@ ${body}
 		kind = "local";
 		id;
 		label;
+
 		constructor(client, compilerName, label) {
 			this.client = client;
 			this.compilerName = compilerName;
 			this.id = `local:${compilerName}`;
 			this.label = `${label} [Local]`;
 		}
+
 		async run(sourceCode, input) {
 			const response = await this.client.run(sourceCode, input, this.compilerName);
 			if ("diagnostics" in response) {
-				return { status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed." };
+				return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
 			}
 			return {
 				status: toEasyTestStatus(response.status, response.exitCode),
@@ -4174,15 +4385,17 @@ ${body}
 
 	class LocalRunnerProvider {
 		client;
+
 		constructor(client) {
 			this.client = client;
 		}
-		async runnersFor({ family }) {
+
+		async runnersFor({family}) {
 			if (!this.client.isAvailable()) return [];
 			const compilers = await this.client.list();
 			return compilers
-				.filter(({ language }) => resolveFamily(languageCatalog, language) === family)
-				.map(({ compilerName, label }) => new LocalCodeRunner(this.client, compilerName, label));
+				.filter(({language}) => resolveFamily(languageCatalog, language) === family)
+				.map(({compilerName, label}) => new LocalCodeRunner(this.client, compilerName, label));
 		}
 	}
 
@@ -4190,13 +4403,14 @@ ${body}
 		kind = "browser";
 		id = "browser:text";
 		label = "Text [Browser]";
+
 		async run(sourceCode, input, _options) {
-			return { status: "OK", exitCode: "0", input, output: sourceCode };
+			return {status: "OK", exitCode: "0", input, output: sourceCode};
 		}
 	}
 
 	class TextRunnerProvider {
-		async runnersFor({ family }) {
+		async runnersFor({family}) {
 			return family === "text" ? [new TextRunner()] : [];
 		}
 	}
@@ -4213,6 +4427,7 @@ ${body}
 		id;
 		label;
 		optimization;
+
 		constructor(http, compiler) {
 			this.http = http;
 			this.compiler = compiler;
@@ -4221,12 +4436,13 @@ ${body}
 			this.label = `${compiler.language} ${compiler.name}${usesAcl ? " + ACL" : ""} [Wandbox]`;
 			this.optimization = compiler.switches.find((item) => item["display-name"] === "Optimization")?.name;
 		}
+
 		async collectAclFiles(source, files = new Map()) {
 			const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
 			const missing = paths.filter((path) => !files.has(path));
 			const loaded = await Promise.all(
 				missing.map(async (path) => {
-					const response = await this.http.send({ url: runnerCatalog.wandbox.aclBaseUrl + path });
+					const response = await this.http.send({url: runnerCatalog.wandbox.aclBaseUrl + path});
 					return [path, response.text];
 				}),
 			);
@@ -4234,6 +4450,7 @@ ${body}
 			for (const [, code] of loaded) await this.collectAclFiles(code, files);
 			return files;
 		}
+
 		async run(sourceCode, input, _options) {
 			const usesAcl = this.compiler.language === "C++";
 			const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map();
@@ -4241,14 +4458,14 @@ ${body}
 			const response = await this.http.send({
 				url: runnerCatalog.wandbox.compileUrl,
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				headers: {"Content-Type": "application/json"},
 				body: JSON.stringify({
 					compiler: this.compiler.name,
 					code: sourceCode,
 					stdin: input,
 					options: this.optimization,
 					...(usesAcl
-						? { "compiler-option-raw": "-I.", codes: [...files].map(([file, code]) => ({ file, code })) }
+						? {"compiler-option-raw": "-I.", codes: [...files].map(([file, code]) => ({file, code}))}
 						: {}),
 				}),
 			});
@@ -4256,7 +4473,7 @@ ${body}
 			const body = JSON.parse(response.text);
 			const output = body.program_output ?? "";
 			const error = body.program_error ?? "";
-			if (String(body.status) === "0") return { status: "OK", exitCode: "0", execTime, input, output, error };
+			if (String(body.status) === "0") return {status: "OK", exitCode: "0", execTime, input, output, error};
 			return {
 				status: body.compiler_output || body.compiler_error ? "CE" : "RE",
 				exitCode: `${body.status}${body.signal ? ` (${body.signal})` : ""}`,
@@ -4271,23 +4488,26 @@ ${body}
 	class WandboxRunnerProvider {
 		http;
 		state;
+
 		constructor(http, state) {
 			this.http = http;
 			this.state = state;
 		}
+
 		async compilers() {
 			const cached = this.state.get(CACHE_KEY);
 			if (cached && Date.now() - cached.fetchedAt < runnerCatalog.wandbox.cacheHours * HOUR_MS)
 				return cached.compilers;
-			const response = await this.http.send({ url: runnerCatalog.wandbox.listUrl });
+			const response = await this.http.send({url: runnerCatalog.wandbox.listUrl});
 			const compilers = JSON.parse(response.text);
-			this.state.set(CACHE_KEY, { compilers, fetchedAt: Date.now() });
+			this.state.set(CACHE_KEY, {compilers, fetchedAt: Date.now()});
 			return compilers;
 		}
-		async runnersFor({ family }) {
+
+		async runnersFor({family}) {
 			const compilers = await this.compilers();
 			return compilers
-				.filter(({ language, version }) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
+				.filter(({language, version}) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
 				.map((compiler) => new WandboxRunner(this.http, compiler));
 		}
 	}
@@ -4302,26 +4522,31 @@ ${body}
 		}
 		return destination;
 	}
+
 	function repeat(character, count) {
 		return Array(count + 1).join(character);
 	}
+
 	function trimLeadingNewlines(string) {
 		return string.replace(/^\n*/, "");
 	}
+
 	function trimTrailingNewlines(string) {
 		var indexEnd = string.length;
 		while (
 			indexEnd > 0 &&
 			string[indexEnd - 1] ===
-				`
+			`
 `
-		)
+			)
 			indexEnd--;
 		return string.substring(0, indexEnd);
 	}
+
 	function trimNewlines(string) {
 		return trimTrailingNewlines(trimLeadingNewlines(string));
 	}
+
 	var blockElements = [
 		"ADDRESS",
 		"ARTICLE",
@@ -4373,9 +4598,11 @@ ${body}
 		"TR",
 		"UL",
 	];
+
 	function isBlock(node) {
 		return is(node, blockElements);
 	}
+
 	var voidElements = [
 		"AREA",
 		"BASE",
@@ -4394,12 +4621,15 @@ ${body}
 		"TRACK",
 		"WBR",
 	];
+
 	function isVoid(node) {
 		return is(node, voidElements);
 	}
+
 	function hasVoid(node) {
 		return has(node, voidElements);
 	}
+
 	var meaningfulWhenBlankElements = [
 		"A",
 		"TABLE",
@@ -4413,15 +4643,19 @@ ${body}
 		"AUDIO",
 		"VIDEO",
 	];
+
 	function isMeaningfulWhenBlank(node) {
 		return is(node, meaningfulWhenBlankElements);
 	}
+
 	function hasMeaningfulWhenBlank(node) {
 		return has(node, meaningfulWhenBlankElements);
 	}
+
 	function is(node, tagNames) {
 		return tagNames.indexOf(node.nodeName) >= 0;
 	}
+
 	function has(node, tagNames) {
 		return (
 			node.getElementsByTagName &&
@@ -4430,6 +4664,7 @@ ${body}
 			})
 		);
 	}
+
 	var markdownEscapes = [
 		[/\\/g, "\\\\"],
 		[/\*/g, "\\*"],
@@ -4445,11 +4680,13 @@ ${body}
 		[/_/g, "\\_"],
 		[/^(\d+)\. /g, "$1\\. "],
 	];
+
 	function escapeMarkdown(string) {
 		return markdownEscapes.reduce(function (accumulator, escape) {
 			return accumulator.replace(escape[0], escape[1]);
 		}, string);
 	}
+
 	var rules = {};
 	rules.paragraph = {
 		filter: "p",
@@ -4753,22 +4990,26 @@ ${body}
 			return src ? "![" + alt + "]" + "(" + src + titlePart + ")" : "";
 		},
 	};
+
 	function cleanAttribute(attribute) {
 		return attribute
 			? attribute.replace(
-					/(\n+\s*)+/g,
-					`
+				/(\n+\s*)+/g,
+				`
 `,
-				)
+			)
 			: "";
 	}
+
 	function escapeLinkDestination(destination) {
 		var escaped = destination.replace(/([<>()])/g, "\\$1");
 		return escaped.indexOf(" ") >= 0 ? "<" + escaped + ">" : escaped;
 	}
+
 	function escapeLinkTitle(title) {
 		return title.replace(/"/g, '\\"');
 	}
+
 	function Rules(options) {
 		this.options = options;
 		this._keep = [];
@@ -4783,6 +5024,7 @@ ${body}
 		this.array = [];
 		for (var key in options.rules) this.array.push(options.rules[key]);
 	}
+
 	Rules.prototype = {
 		add: function (key, rule) {
 			this.array.unshift(rule);
@@ -4813,13 +5055,15 @@ ${body}
 			for (var i = 0; i < this.array.length; i++) fn(this.array[i], i);
 		},
 	};
+
 	function findRule(rules2, node, options) {
 		for (var i = 0; i < rules2.length; i++) {
 			var rule = rules2[i];
 			if (filterValue(rule, node, options)) return rule;
 		}
-		return;
+
 	}
+
 	function filterValue(rule, node, options) {
 		var filter = rule.filter;
 		if (typeof filter === "string") {
@@ -4832,6 +5076,7 @@ ${body}
 			throw new TypeError("`filter` needs to be a string, array, or function");
 		}
 	}
+
 	function collapseWhitespace(options) {
 		var element = options.element;
 		var isBlock2 = options.isBlock;
@@ -4886,18 +5131,22 @@ ${body}
 			}
 		}
 	}
+
 	function remove(node) {
 		var next = node.nextSibling || node.parentNode;
 		node.parentNode.removeChild(node);
 		return next;
 	}
+
 	function next(prev, current, isPre) {
 		if ((prev && prev.parentNode === current) || isPre(current)) {
 			return current.nextSibling || current.parentNode;
 		}
 		return current.firstChild || current.nextSibling || current.parentNode;
 	}
+
 	var root = typeof window !== "undefined" ? window : {};
+
 	function canParseHTMLNatively() {
 		var Parser = root.DOMParser;
 		var canParse = false;
@@ -4905,11 +5154,14 @@ ${body}
 			if (new Parser().parseFromString("", "text/html")) {
 				canParse = true;
 			}
-		} catch (e) {}
+		} catch (e) {
+		}
 		return canParse;
 	}
+
 	function createHTMLParser() {
-		var Parser = function () {};
+		var Parser = function () {
+		};
 		{
 			if (shouldUseActiveX()) {
 				Parser.prototype.parseFromString = function (string) {
@@ -4932,6 +5184,7 @@ ${body}
 		}
 		return Parser;
 	}
+
 	function shouldUseActiveX() {
 		var useActiveX = false;
 		try {
@@ -4941,7 +5194,9 @@ ${body}
 		}
 		return useActiveX;
 	}
+
 	var HTMLParser = canParseHTMLNatively() ? root.DOMParser : createHTMLParser();
+
 	function RootNode(input, options) {
 		var root2;
 		if (typeof input === "string") {
@@ -4961,14 +5216,18 @@ ${body}
 		});
 		return root2;
 	}
+
 	var _htmlParser;
+
 	function htmlParser() {
 		_htmlParser = _htmlParser || new HTMLParser();
 		return _htmlParser;
 	}
+
 	function isPreOrCode(node) {
 		return node.nodeName === "PRE" || node.nodeName === "CODE";
 	}
+
 	function Node2(node, options) {
 		node.isBlock = isBlock(node);
 		node.isCode = node.nodeName === "CODE" || node.parentNode.isCode;
@@ -4976,6 +5235,7 @@ ${body}
 		node.flankingWhitespace = flankingWhitespace(node, options);
 		return node;
 	}
+
 	function isBlank(node) {
 		return (
 			!isVoid(node) &&
@@ -4985,6 +5245,7 @@ ${body}
 			!hasMeaningfulWhenBlank(node)
 		);
 	}
+
 	function flankingWhitespace(node, options) {
 		if (node.isBlock || (options.preformattedCode && node.isCode)) {
 			return {
@@ -5004,6 +5265,7 @@ ${body}
 			trailing: edges.trailing,
 		};
 	}
+
 	function edgeWhitespace(string) {
 		var m = string.match(/^(([ \t\r\n]*)(\s*))(?:(?=\S)[\s\S]*\S)?((\s*?)([ \t\r\n]*))$/);
 		return {
@@ -5015,6 +5277,7 @@ ${body}
 			trailingAscii: m[6],
 		};
 	}
+
 	function isFlankedByWhitespace(side, node, options) {
 		var sibling;
 		var regExp;
@@ -5037,7 +5300,9 @@ ${body}
 		}
 		return isFlanked;
 	}
+
 	var reduce = Array.prototype.reduce;
+
 	function TurndownService(options) {
 		if (!(this instanceof TurndownService)) return new TurndownService(options);
 		var defaults = {
@@ -5065,8 +5330,8 @@ ${body}
 					? `
 
 ` +
-							node.outerHTML +
-							`
+					node.outerHTML +
+					`
 
 `
 					: node.outerHTML;
@@ -5076,8 +5341,8 @@ ${body}
 					? `
 
 ` +
-							content +
-							`
+					content +
+					`
 
 `
 					: content;
@@ -5086,6 +5351,7 @@ ${body}
 		this.options = extend({}, defaults, options);
 		this.rules = new Rules(this.options);
 	}
+
 	TurndownService.prototype = {
 		turndown: function (input) {
 			if (!canConvert(input)) {
@@ -5121,6 +5387,7 @@ ${body}
 			return escapeMarkdown(string);
 		},
 	};
+
 	function process(parentNode) {
 		var self = this;
 		return reduce.call(
@@ -5138,6 +5405,7 @@ ${body}
 			"",
 		);
 	}
+
 	function postProcess(output) {
 		var self = this;
 		this.rules.forEach(function (rule) {
@@ -5147,6 +5415,7 @@ ${body}
 		});
 		return output.replace(/^[\t\r\n]+/, "").replace(/[\t\r\n\s]+$/, "");
 	}
+
 	function replacementForNode(node) {
 		var rule = this.rules.forNode(node);
 		var content = process.call(this, node);
@@ -5154,6 +5423,7 @@ ${body}
 		if (whitespace.leading || whitespace.trailing) content = content.trim();
 		return whitespace.leading + rule.replacement(content, node, this.options) + whitespace.trailing;
 	}
+
 	function join(output, replacement) {
 		var s1 = trimTrailingNewlines(output);
 		var s2 = trimLeadingNewlines(replacement);
@@ -5163,6 +5433,7 @@ ${body}
 `.substring(0, nls);
 		return s1 + separator + s2;
 	}
+
 	function canConvert(input) {
 		return (
 			input != null &&
@@ -5173,6 +5444,7 @@ ${body}
 
 	// ../node_modules/.bun/turndown-plugin-gfm@1.0.2/node_modules/turndown-plugin-gfm/lib/turndown-plugin-gfm.es.js
 	var highlightRegExp = /highlight-(?:text|source)-([a-z0-9]+)/;
+
 	function highlightedCodeBlock(turndownService) {
 		turndownService.addRule("highlightedCodeBlock", {
 			filter: function (node) {
@@ -5206,6 +5478,7 @@ ${body}
 			},
 		});
 	}
+
 	function strikethrough(turndownService) {
 		turndownService.addRule("strikethrough", {
 			filter: ["del", "s", "strike"],
@@ -5214,6 +5487,7 @@ ${body}
 			},
 		});
 	}
+
 	var indexOf = Array.prototype.indexOf;
 	var every = Array.prototype.every;
 	var rules2 = {};
@@ -5227,7 +5501,7 @@ ${body}
 		filter: "tr",
 		replacement: function (content, node) {
 			var borderCells = "";
-			var alignMap = { left: ":--", right: "--:", center: ":-:" };
+			var alignMap = {left: ":--", right: "--:", center: ":-:"};
 			if (isHeadingRow(node)) {
 				for (var i = 0; i < node.childNodes.length; i++) {
 					var border = "---";
@@ -5276,6 +5550,7 @@ ${body}
 			return content;
 		},
 	};
+
 	function isHeadingRow(tr) {
 		var parentNode = tr.parentNode;
 		return (
@@ -5287,6 +5562,7 @@ ${body}
 				}))
 		);
 	}
+
 	function isFirstTbody(element) {
 		var previousSibling = element.previousSibling;
 		return (
@@ -5294,18 +5570,21 @@ ${body}
 			(!previousSibling || (previousSibling.nodeName === "THEAD" && /^\s*$/i.test(previousSibling.textContent)))
 		);
 	}
+
 	function cell(content, node) {
 		var index = indexOf.call(node.parentNode.childNodes, node);
 		var prefix = " ";
 		if (index === 0) prefix = "| ";
 		return prefix + content + " |";
 	}
+
 	function tables(turndownService) {
 		turndownService.keep(function (node) {
 			return node.nodeName === "TABLE" && !isHeadingRow(node.rows[0]);
 		});
 		for (var key in rules2) turndownService.addRule(key, rules2[key]);
 	}
+
 	function taskListItems(turndownService) {
 		turndownService.addRule("taskListItems", {
 			filter: function (node) {
@@ -5316,6 +5595,7 @@ ${body}
 			},
 		});
 	}
+
 	function gfm(turndownService) {
 		turndownService.use([highlightedCodeBlock, strikethrough, tables, taskListItems]);
 	}
@@ -5330,8 +5610,9 @@ ${body}
 			fallback;
 		return `$${tex.trim()}$`;
 	}
+
 	function createTurndown() {
-		const service = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced", bulletListMarker: "-" });
+		const service = new TurndownService({headingStyle: "atx", codeBlockStyle: "fenced", bulletListMarker: "-"});
 		service.use(gfm);
 		service.addRule("math", {
 			filter: "var",
@@ -5381,8 +5662,10 @@ ${content.trim()}
 		});
 		return service;
 	}
+
 	var BLOCK_TAGS = new Set(["P", "DIV", "UL", "OL", "SECTION"]);
 	var IGNORED_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT"]);
+
 	function plainTextOf(node) {
 		if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
 		if (node.nodeType !== Node.ELEMENT_NODE) return "";
@@ -5415,9 +5698,11 @@ ${inner}
 
 	class TurndownStatementConverter {
 		turndown = createTurndown();
+
 		toMarkdown(html) {
 			return this.turndown.turndown(html);
 		}
+
 		toPlainText(html) {
 			const template = document.createElement("template");
 			template.innerHTML = html;
@@ -5442,21 +5727,21 @@ ${inner}
 	}
 
 	class GmNotifier {
-		notify({ title, text, url }) {
-			GM_notification({ title, text, onclick: url ? () => window.open(url, "_blank") : undefined });
+		notify({title, text, url}) {
+			GM_notification({title, text, onclick: url ? () => window.open(url, "_blank") : undefined});
 		}
 	}
 
 	class GmHttpClient {
-		send({ url, method = "GET", headers, body, timeoutMs }) {
+		send({url, method = "GET", headers, body, timeoutMs}) {
 			return new Promise((resolve, reject) => {
 				GM_xmlhttpRequest({
 					url,
 					method,
-					headers: headers ? { ...headers } : undefined,
+					headers: headers ? {...headers} : undefined,
 					data: body,
 					timeout: timeoutMs,
-					onload: ({ status, responseText }) => resolve({ status, text: responseText }),
+					onload: ({status, responseText}) => resolve({status, text: responseText}),
 					onerror: () => reject(new Error(`Request failed: ${url}`)),
 					ontimeout: () => reject(new Error(`Request timed out: ${url}`)),
 				});
@@ -5478,7 +5763,7 @@ ${inner}
 			live: definition.live === true,
 			async run(storedOptions, services) {
 				const options = normalizeOptions(definition.options, storedOptions);
-				const context = Object.assign(Object.create(services), { options });
+				const context = Object.assign(Object.create(services), {options});
 				return (await definition.start(context)) ?? undefined;
 			},
 		};
@@ -5501,12 +5786,12 @@ ${inner}
 		],
 		phase: "ready",
 		options: {
-			url: option.text("http://localhost:8080", "localRunner.url", { validate: isHttpUrl }),
+			url: option.text("http://localhost:8080", "localRunner.url", {validate: isHttpUrl}),
 		},
 		live: true,
 		start() {
 			return () => {
-				return;
+
 			};
 		},
 	});
@@ -5515,6 +5800,7 @@ ${inner}
 	function createTranslate() {
 		return createTranslator(detectLocale);
 	}
+
 	function createServices(page, settings, openSettings) {
 		const state = new GmKeyValueStore();
 		const http = new GmHttpClient();
@@ -5522,7 +5808,7 @@ ${inner}
 		const scripts = new ElementScriptLoader();
 		const bridge = new UnsafeWindowPageBridge();
 		const localRunnerEndpoint = () => {
-			const { id, defaultEnabled, options } = localRunner;
+			const {id, defaultEnabled, options} = localRunner;
 			if (!settings.isEnabled(id, defaultEnabled)) return null;
 			return String(normalizeOptions(options, settings.storedOptions(id)).url);
 		};
@@ -5575,18 +5861,20 @@ ${inner}
 
 	// CpToolkit/src/domain/submission/status.ts
 	var JUDGING_PROGRESS_PATTERN = /^\d+\s*\/\s*\d+/;
+
 	function isJudging(status) {
 		return status === "" || status === "WJ" || status === "WR" || JUDGING_PROGRESS_PATTERN.test(status);
 	}
+
 	function summarizeJudgeCases(cases) {
 		const total = cases.length;
 		const sum = (select) => cases.reduce((value, item) => value + select(item), 0);
 		return {
-			accepted: cases.filter(({ status }) => status === "AC").length,
+			accepted: cases.filter(({status}) => status === "AC").length,
 			total,
-			averageTimeMs: Math.round((sum(({ timeMs }) => timeMs) / total) * 10) / 10,
-			averageMemoryKb: Math.round(sum(({ memoryKb }) => memoryKb) / total),
-			timeIsLowerBound: cases.some(({ status }) => status === "TLE"),
+			averageTimeMs: Math.round((sum(({timeMs}) => timeMs) / total) * 10) / 10,
+			averageMemoryKb: Math.round(sum(({memoryKb}) => memoryKb) / total),
+			timeIsLowerBound: cases.some(({status}) => status === "TLE"),
 		};
 	}
 
@@ -5594,6 +5882,7 @@ ${inner}
 	var COLUMN_COUNT = 4;
 	var MIN_TABLES_WITH_CASES = 5;
 	var MIN_CASES = 2;
+
 	function readCase(row) {
 		const [, status, time, memory] = row.querySelectorAll("td");
 		return {
@@ -5602,6 +5891,7 @@ ${inner}
 			memoryKb: Number.parseInt(memory?.textContent ?? "", 10) || 0,
 		};
 	}
+
 	var averageResult = defineFeature({
 		id: "average-result",
 		title: "averageResult.title",
@@ -5612,33 +5902,33 @@ ${inner}
 		phase: "ready",
 		options: {},
 		live: true,
-		start({ translate }) {
+		start({translate}) {
 			const tables2 = document.querySelectorAll("table");
 			const body = tables2[tables2.length - 1]?.querySelector("tbody");
 			const rows = [...(body?.querySelectorAll("tr") ?? [])];
 			const isCaseTable = rows.every((row2) => row2.querySelectorAll("td").length === COLUMN_COUNT);
 			if (tables2.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable)
 				return () => {
-					return;
+
 				};
-			const { accepted, total, averageTimeMs, averageMemoryKb, timeIsLowerBound } = summarizeJudgeCases(
+			const {accepted, total, averageTimeMs, averageMemoryKb, timeIsLowerBound} = summarizeJudgeCases(
 				rows.map(readCase),
 			);
 			const allAccepted = accepted === total;
 			const row = h(
 				"tr",
 				{},
-				h("td", { className: "text-center" }, h("b", { textContent: translate("averageResult.average") })),
+				h("td", {className: "text-center"}, h("b", {textContent: translate("averageResult.average")})),
 				h(
 					"td",
-					{ className: "text-center" },
+					{className: "text-center"},
 					h("span", {
 						className: `label ${allAccepted ? "label-success" : "label-warning"}`,
 						textContent: `${accepted}/${total}`,
 					}),
 				),
-				h("td", { className: "text-right", textContent: `${averageTimeMs}${timeIsLowerBound ? "+" : ""} ms` }),
-				h("td", { className: "text-right", textContent: `${averageMemoryKb} KB` }),
+				h("td", {className: "text-right", textContent: `${averageTimeMs}${timeIsLowerBound ? "+" : ""} ms`}),
+				h("td", {className: "text-right", textContent: `${averageMemoryKb} KB`}),
 			);
 			body.prepend(row);
 			return () => row.remove();
@@ -5754,10 +6044,10 @@ ${inner}
 `;
 
 	// CpToolkit/src/ui/dock/dock.ts
-	function createDock({ css, toggleLabel, closeLabel }) {
-		const tabs = h("div", { className: "dock-tabs" });
-		const content = h("div", { className: "dock-content" });
-		const panel = h("div", { className: "dock-panel", hidden: true }, tabs, content);
+	function createDock({css, toggleLabel, closeLabel}) {
+		const tabs = h("div", {className: "dock-tabs"});
+		const content = h("div", {className: "dock-content"});
+		const panel = h("div", {className: "dock-panel", hidden: true}, tabs, content);
 		const setOpen = (open) => {
 			panel.hidden = !open;
 			toggleButton.dataset.open = String(open);
@@ -5769,9 +6059,9 @@ ${inner}
 			ariaLabel: toggleLabel,
 			onclick: () => setOpen(panel.hidden),
 		});
-		const dock = h("div", { className: "dock" }, toggleButton, panel);
+		const dock = h("div", {className: "dock"}, toggleButton, panel);
 		const host = h("div");
-		host.attachShadow({ mode: "open" }).append(
+		host.attachShadow({mode: "open"}).append(
 			h("style", {
 				textContent: `${theme_default}
 ${dock_default}
@@ -5784,20 +6074,20 @@ ${css}`,
 			if (event.target !== tabs) return;
 			const startY = event.clientY;
 			const startHeight = content.getBoundingClientRect().height;
-			const onMove = ({ clientY }) => {
+			const onMove = ({clientY}) => {
 				content.style.height = `${startHeight - (clientY - startY)}px`;
 			};
 			tabs.setPointerCapture(event.pointerId);
 			tabs.addEventListener("pointermove", onMove);
-			tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), { once: true });
+			tabs.addEventListener("pointerup", () => tabs.removeEventListener("pointermove", onMove), {once: true});
 		});
 		const activate = (tab, pane) => {
 			for (const other of tabs.children) other.dataset.active = String(other === tab);
 			for (const other of content.children) other.hidden = other !== pane;
 		};
 		return {
-			addTab(label, pane, { closable = false } = {}) {
-				const tab = h("div", { className: "dock-tab", textContent: label });
+			addTab(label, pane, {closable = false} = {}) {
+				const tab = h("div", {className: "dock-tab", textContent: label});
 				const select = () => activate(tab, pane);
 				const show = () => {
 					setOpen(true);
@@ -5846,17 +6136,20 @@ ${css}`,
 	var EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
 	var shortcuts = new Map();
 	var listening = false;
+
 	function comboOf(event) {
 		const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
 		return [event.ctrlKey && "Ctrl", event.shiftKey && "Shift", event.altKey && "Alt", key]
 			.filter(Boolean)
 			.join("+");
 	}
+
 	function isTextField(target) {
 		if (!(target instanceof HTMLElement)) return false;
 		const isEditable = target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 		return isEditable && target.closest(EDITOR_ELEMENTS) === null;
 	}
+
 	function onKeyDown(event) {
 		const shortcut = shortcuts.get(comboOf(event));
 		if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
@@ -5864,12 +6157,13 @@ ${css}`,
 		event.preventDefault();
 		event.stopPropagation();
 	}
-	function registerShortcut(combo, handler, { inTextFields = false } = {}) {
+
+	function registerShortcut(combo, handler, {inTextFields = false} = {}) {
 		if (!listening) {
 			document.addEventListener("keydown", onKeyDown, true);
 			listening = true;
 		}
-		shortcuts.set(combo, { handler, inTextFields });
+		shortcuts.set(combo, {handler, inTextFields});
 		return () => shortcuts.delete(combo);
 	}
 
@@ -6166,31 +6460,37 @@ summary {
 	class SavedCodes {
 		state;
 		limit;
+
 		constructor(state, limit) {
 			this.state = state;
 			this.limit = limit;
 		}
+
 		list() {
 			return this.state.get(SAVED_CODE_KEY) ?? [];
 		}
+
 		save(path, code) {
 			const others = this.list().filter((saved) => saved.path !== path);
-			this.state.set(SAVED_CODE_KEY, [...others, { path, code }].slice(-this.limit));
+			this.state.set(SAVED_CODE_KEY, [...others, {path, code}].slice(-this.limit));
 		}
+
 		find(path) {
 			return this.list().find((saved) => saved.path === path)?.code ?? null;
 		}
 	}
 
 	// CpToolkit/src/features/easy-test/views.ts
-	function toneOf({ status }) {
+	function toneOf({status}) {
 		if (status === "AC") return "success";
 		return status === "OK" ? null : "warning";
 	}
+
 	function resultField(label, rows) {
-		const textarea = h("textarea", { rows, readOnly: true });
-		return { textarea, element: h("label", { className: "result-field" }, label, textarea) };
+		const textarea = h("textarea", {rows, readOnly: true});
+		return {textarea, element: h("label", {className: "result-field"}, label, textarea)};
 	}
+
 	function createResultView(translate) {
 		const input = resultField(translate("easyTest.standardInput"), 3);
 		const expected = resultField(translate("easyTest.expectedOutput"), 3);
@@ -6203,25 +6503,25 @@ summary {
 		const memory = h("td");
 		const element = h(
 			"div",
-			{ className: "result" },
-			h("div", { className: "result-inputs" }, input.element, expected.element),
+			{className: "result"},
+			h("div", {className: "result-inputs"}, input.element, expected.element),
 			h(
 				"table",
-				{ className: "result-stats" },
+				{className: "result-stats"},
 				h(
 					"tbody",
 					{},
 					h(
 						"tr",
 						{},
-						h("th", { textContent: translate("easyTest.exitCode") }),
-						h("th", { textContent: translate("easyTest.execTime") }),
-						h("th", { textContent: translate("easyTest.memory") }),
+						h("th", {textContent: translate("easyTest.exitCode")}),
+						h("th", {textContent: translate("easyTest.execTime")}),
+						h("th", {textContent: translate("easyTest.memory")}),
 					),
 					h("tr", {}, exitCode, execTime, memory),
 				),
 			),
-			h("div", { className: "result-outputs" }, output.element, error.element),
+			h("div", {className: "result-outputs"}, output.element, error.element),
 		);
 		return {
 			element,
@@ -6245,11 +6545,12 @@ summary {
 			},
 		};
 	}
+
 	function createResultRow(total, closeLabel, onClose) {
-		const bar = h("div", { className: "cp-et-progress-bar", textContent: `0 / ${total}` });
+		const bar = h("div", {className: "cp-et-progress-bar", textContent: `0 / ${total}`});
 		const element = h(
 			"div",
-			{ className: "cp-et-row" },
+			{className: "cp-et-row"},
 			h("button", {
 				type: "button",
 				className: "cp-et-close",
@@ -6260,17 +6561,17 @@ summary {
 					onClose();
 				},
 			}),
-			h("div", { className: "cp-et-progress" }, bar),
-			h("div", { className: "cp-et-time", textContent: new Date().toTimeString().slice(0, 8) }),
+			h("div", {className: "cp-et-progress"}, bar),
+			h("div", {className: "cp-et-time", textContent: new Date().toTimeString().slice(0, 8)}),
 		);
 		let finished = 0;
 		let accepted = 0;
 		return {
 			element,
 			track(result, onShow) {
-				const label = h("div", { className: "cp-et-label", textContent: "WJ", onclick: onShow });
+				const label = h("div", {className: "cp-et-label", textContent: "WJ", onclick: onShow});
 				element.append(label);
-				result.then(({ status }) => {
+				result.then(({status}) => {
 					label.textContent = status;
 					if (status === "IE") label.dataset.tone = "danger";
 					else if (status === "AC") label.dataset.tone = "success";
@@ -6284,19 +6585,21 @@ summary {
 			},
 		};
 	}
+
 	function formRow(label, control) {
 		return h(
 			"div",
-			{ className: "form-row" },
-			h("span", { className: "form-row-label", textContent: label }),
+			{className: "form-row"},
+			h("span", {className: "form-row-label", textContent: label}),
 			control,
 		);
 	}
-	function createTestPanel(translate, allowableError, { onRun, onOpenSettings }) {
-		const environment = h("select", { className: "environment" });
-		const input = h("textarea", { rows: 3 });
-		const expected = h("textarea", { rows: 3 });
-		const allowable = h("input", { type: "text", value: allowableError });
+
+	function createTestPanel(translate, allowableError, {onRun, onOpenSettings}) {
+		const environment = h("select", {className: "environment"});
+		const input = h("textarea", {rows: 3});
+		const expected = h("textarea", {rows: 3});
+		const allowable = h("input", {type: "text", value: allowableError});
 		const useAllowable = h("input", {
 			type: "checkbox",
 			checked: true,
@@ -6315,7 +6618,7 @@ summary {
 			{},
 			h(
 				"div",
-				{ className: "test-form" },
+				{className: "test-form"},
 				h(
 					"div",
 					{},
@@ -6325,13 +6628,13 @@ summary {
 				h(
 					"details",
 					{},
-					h("summary", { textContent: translate("easyTest.expectedOutput") }),
+					h("summary", {textContent: translate("easyTest.expectedOutput")}),
 					formRow(
 						translate("easyTest.allowableError"),
 						h(
 							"div",
-							{ className: "input-group" },
-							h("span", { className: "input-group-addon" }, useAllowable),
+							{className: "input-group"},
+							h("span", {className: "input-group-addon"}, useAllowable),
 							allowable,
 						),
 					),
@@ -6340,7 +6643,7 @@ summary {
 			),
 			h(
 				"div",
-				{ className: "test-actions" },
+				{className: "test-actions"},
 				runButton,
 				h("button", {
 					type: "button",
@@ -6373,7 +6676,7 @@ summary {
 	var featureOptions = {
 		precompile: option.boolean(true, "easyTest.precompile"),
 		keyboardShortcuts: option.boolean(true, "easyTest.keyboardShortcuts"),
-		savedCodeLimit: option.number(10, "easyTest.savedCodeLimit", { min: 0 }),
+		savedCodeLimit: option.number(10, "easyTest.savedCodeLimit", {min: 0}),
 		allowableError: option.text("1e-6", "easyTest.allowableError"),
 	};
 
@@ -6384,16 +6687,17 @@ summary {
 		panel;
 		savedCodes;
 		buttons = [];
-		resultList = h("div", { className: "row" });
+		resultList = h("div", {className: "row"});
 		candidates = [];
 		refreshing = Promise.resolve();
 		runnable = false;
 		runCount = 0;
 		running = 0;
+
 		constructor(site, context) {
 			this.site = site;
 			this.context = context;
-			const { options, state, translate, openSettings } = context;
+			const {options, state, translate, openSettings} = context;
 			this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
 			this.dock = createDock({
 				css: easy_test_default,
@@ -6406,6 +6710,7 @@ summary {
 			});
 			this.dock.addTab("Easy Test", this.panel.element);
 		}
+
 		start() {
 			injectStyle(result_row_default);
 			this.panel.environment.addEventListener("change", () => this.rememberRunner());
@@ -6416,6 +6721,7 @@ summary {
 			if (this.context.options.precompile) this.watchSource();
 			if (this.context.options.keyboardShortcuts) this.registerShortcuts();
 		}
+
 		createButton(label, className, onClick) {
 			const button = h("button", {
 				type: "button",
@@ -6427,15 +6733,17 @@ summary {
 			this.buttons.push(button);
 			return button;
 		}
+
 		createTestButton(label, className, shortcut, onClick) {
 			const button = this.createButton(label, className, onClick);
 			button.title = shortcut;
 			button.style.marginLeft = "1rem";
 			return button;
 		}
+
 		placeButtons() {
-			const { translate } = this.context;
-			const { testButtons, sideButtons, results } = this.site.mounts;
+			const {translate} = this.context;
+			const {testButtons, sideButtons, results} = this.site.mounts;
 			if (testButtons instanceof Element) {
 				testButtons.append(
 					this.createTestButton(
@@ -6463,6 +6771,7 @@ summary {
 			}
 			if (results instanceof Element) results.append(this.resultList);
 		}
+
 		placeSampleButtons() {
 			this.site.samples().then((samples) => {
 				for (const sample of samples) {
@@ -6478,8 +6787,9 @@ summary {
 				}
 			});
 		}
+
 		watchSource() {
-			const { localRunner: localRunner2 } = this.context;
+			const {localRunner: localRunner2} = this.context;
 			let timer;
 			const schedule = () => {
 				clearTimeout(timer);
@@ -6487,13 +6797,14 @@ summary {
 					const code = this.site.sourceCode();
 					if (code && localRunner2.isAvailable())
 						localRunner2.prepare(code).catch(() => {
-							return;
+
 						});
 				}, PRECOMPILE_DELAY_MS);
 			};
 			this.site.onSourceChange(schedule);
 			schedule();
 		}
+
 		registerShortcuts() {
 			const handled = (action) => () => {
 				action();
@@ -6502,22 +6813,24 @@ summary {
 			registerShortcut(
 				TEST_AND_SUBMIT_KEY,
 				handled(() => void this.testAndSubmit()),
-				{ inTextFields: true },
+				{inTextFields: true},
 			);
 			registerShortcut(
 				TEST_ALL_KEY,
 				handled(() => void this.testAll()),
-				{ inTextFields: true },
+				{inTextFields: true},
 			);
 			registerShortcut(
 				"Alt+Escape",
 				handled(() => this.dock.toggle()),
-				{ inTextFields: true },
+				{inTextFields: true},
 			);
 		}
+
 		selections() {
 			return this.context.state.get(RUNNER_SELECTION_KEY) ?? {};
 		}
+
 		rememberRunner() {
 			const language = this.site.language();
 			if (!language) return;
@@ -6526,52 +6839,57 @@ summary {
 				[language.id]: this.panel.environment.value,
 			});
 		}
+
 		refreshEnvironment() {
 			this.refreshing = this.refreshing.then(() => this.loadEnvironment());
 			return this.refreshing;
 		}
+
 		async loadEnvironment() {
-			const { runners, translate } = this.context;
-			const { environment } = this.panel;
+			const {runners, translate} = this.context;
+			const {environment} = this.panel;
 			const language = this.site.language();
 			const candidates = language ? await runners.candidates(language) : [];
 			const previous = environment.value;
 			this.candidates = candidates;
 			const signature = candidates.map(
-				({ id, label }) => `${id}
+				({id, label}) => `${id}
 ${label}`,
 			).join(`
 `);
 			if (environment.dataset.signature !== signature || candidates.length === 0) {
 				environment.dataset.signature = signature;
 				environment.replaceChildren(
-					...candidates.map(({ id, label }) => h("option", { value: id, textContent: label })),
+					...candidates.map(({id, label}) => h("option", {value: id, textContent: label})),
 				);
 				if (candidates.length === 0)
-					environment.append(h("option", { textContent: translate("easyTest.noEnvironment") }));
+					environment.append(h("option", {textContent: translate("easyTest.noEnvironment")}));
 			}
 			const isCandidate = (id) => candidates.some((candidate) => candidate.id === id);
-			const local = candidates.find(({ kind }) => kind === "local")?.id;
+			const local = candidates.find(({kind}) => kind === "local")?.id;
 			const saved = language ? this.selections()[language.id] : undefined;
 			const next2 = local ?? (isCandidate(previous) ? previous : isCandidate(saved) ? saved : candidates[0]?.id);
 			if (next2 !== undefined) environment.value = next2;
 			this.setRunnable(candidates.length > 0 && this.running === 0);
 		}
+
 		setRunnable(runnable) {
 			this.runnable = runnable;
 			this.panel.setRunnable(runnable);
 			for (const button of this.buttons) button.classList.toggle("disabled", !runnable);
 		}
+
 		runOptions(extra) {
 			const allowableError = this.panel.allowableError();
-			return { trim: true, split: true, ...(allowableError === undefined ? {} : { allowableError }), ...extra };
+			return {trim: true, split: true, ...(allowableError === undefined ? {} : {allowableError}), ...extra};
 		}
+
 		execute(testCase, options) {
-			const { runners, translate } = this.context;
+			const {runners, translate} = this.context;
 			const code = this.site.sourceCode();
 			if (code) this.savedCodes.save(this.site.taskUri(), code);
 			const view = createResultView(translate);
-			const tab = this.dock.addTab(`#${++this.runCount} ${testCase.title}`, view.element, { closable: true });
+			const tab = this.dock.addTab(`#${++this.runCount} ${testCase.title}`, view.element, {closable: true});
 			this.running++;
 			this.setRunnable(false);
 			const result = runners.test(
@@ -6590,41 +6908,47 @@ ${label}`,
 				.finally(() => {
 					if (--this.running === 0) this.setRunnable(this.candidates.length > 0);
 				});
-			return { result, tab };
+			return {result, tab};
 		}
+
 		async runPanel() {
 			await this.refreshEnvironment();
-			const { input, expected } = this.panel;
-			this.execute({ title: "Run", input: input.value, output: expected.value || null }, {});
+			const {input, expected} = this.panel;
+			this.execute({title: "Run", input: input.value, output: expected.value || null}, {});
 		}
+
 		async runSample(sample) {
 			await this.refreshEnvironment();
-			const { result, tab } = this.execute(sample, {});
+			const {result, tab} = this.execute(sample, {});
 			await result;
 			tab.show();
 		}
+
 		async runSamples() {
 			const samples = await this.site.samples();
 			await this.refreshEnvironment();
 			const runGroupId = crypto.randomUUID();
-			const executions = samples.map((sample) => this.execute(sample, { runGroupId }));
+			const executions = samples.map((sample) => this.execute(sample, {runGroupId}));
 			executions[0]?.tab.select();
 			const row = createResultRow(samples.length, this.context.translate("settings.close"), () => {
-				for (const { tab } of executions) tab.close();
+				for (const {tab} of executions) tab.close();
 			});
 			this.resultList.prepend(row.element);
-			for (const { result, tab } of executions) row.track(result, () => tab.show());
-			const results = await Promise.all(executions.map(({ result }) => result));
-			return results.every(({ status }) => status === "AC");
+			for (const {result, tab} of executions) row.track(result, () => tab.show());
+			const results = await Promise.all(executions.map(({result}) => result));
+			return results.every(({status}) => status === "AC");
 		}
+
 		async testAll() {
 			await this.runSamples();
 		}
+
 		async testAndSubmit() {
 			if (await this.runSamples()) this.site.submit();
 		}
+
 		restore() {
-			const { translate } = this.context;
+			const {translate} = this.context;
 			const code = this.savedCodes.find(this.site.taskUri());
 			if (code === null) {
 				window.alert(translate("easyTest.noSavedCode"));
@@ -6633,6 +6957,7 @@ ${label}`,
 			}
 		}
 	}
+
 	var easyTest = defineFeature({
 		id: "easy-test",
 		title: "easyTest.title",
@@ -6655,24 +6980,27 @@ ${label}`,
 	var css = `.cp-editorial {margin-top: 0.3em; font-size: smaller;}
 ${EDITORIAL_BODY} > ul > li {font-size: larger;}
 pre code {tab-size: 4;}`;
-	async function loadLibraries({ scripts }) {
+
+	async function loadLibraries({scripts}) {
 		await scripts.loadStylesheet(libraries.katexStylesheet);
 		await scripts.loadScript(libraries.katexScript);
 		await Promise.all([scripts.loadScript(libraries.katexAutoRender), scripts.loadScript(libraries.prettify)]);
 	}
-	async function loadEditorial(link, { site, page }) {
-		const response = await site.send({ url: link.href });
+
+	async function loadEditorial(link, {site, page}) {
+		const response = await site.send({url: link.href});
 		if (response.status !== 200) throw new Error(`Failed to load ${link.href}`);
 		const parsed = new DOMParser().parseFromString(response.text, "text/html");
 		const content = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(1)`);
 		if (!content) throw new Error(`Editorial was not found in ${link.href}`);
 		const history = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(2)`);
-		const container = h("div", { className: "cp-editorial" }, content);
+		const container = h("div", {className: "cp-editorial"}, content);
 		if (history) container.append(history);
 		link.parentElement?.append(container);
 		page.renderMath(container);
 		page.highlightCode();
 	}
+
 	var editorialList = defineFeature({
 		id: "editorial-list",
 		title: "editorialList.title",
@@ -6703,7 +7031,7 @@ pre code {tab-size: 4;}`;
 				loadEditorial(link, context).catch((error) => console.warn(error));
 			};
 			const observer = new IntersectionObserver((entries) => {
-				for (const { target, isIntersecting } of entries) {
+				for (const {target, isIntersecting} of entries) {
 					if (isIntersecting) queue.add(target);
 					else queue.delete(target);
 				}
@@ -6740,18 +7068,20 @@ pre code {tab-size: 4;}`;
 
 	// CpToolkit/src/features/efficient-layout/index.ts
 	function createDetails(summary) {
-		return h("details", { open: true }, h("summary", { textContent: summary }));
+		return h("details", {open: true}, h("summary", {textContent: summary}));
 	}
+
 	function createSampleRow(parent, translate) {
 		const existing = parent.querySelector(".cp-samples-row");
 		if (existing) return existing;
 		const container = createDetails(translate("efficientLayout.samples"));
 		container.className = "cp-samples-container";
-		const row = h("div", { className: "cp-samples-row" });
+		const row = h("div", {className: "cp-samples-row"});
 		container.append(row);
 		parent.append(container);
 		return row;
 	}
+
 	function arrangeSamples(ioStyle, translate) {
 		const parent = ioStyle.parentElement;
 		if (!parent) return;
@@ -6767,6 +7097,7 @@ pre code {tab-size: 4;}`;
 			createSampleRow(parent, translate).append(...(groupSize === 2 ? [h("div", {}, ...group)] : group));
 		}
 	}
+
 	var efficientLayout = defineFeature({
 		id: "efficient-layout",
 		title: "efficientLayout.title",
@@ -6776,9 +7107,9 @@ pre code {tab-size: 4;}`;
 		routes: ["atcoder:task", "atcoder:tasksPrint"],
 		phase: "ready",
 		options: {
-			sampleWidth: option.number(60, "efficientLayout.sampleWidth", { min: 10, max: 100 }),
+			sampleWidth: option.number(60, "efficientLayout.sampleWidth", {min: 10, max: 100}),
 		},
-		start({ options, translate }) {
+		start({options, translate}) {
 			for (const ioStyle of document.querySelectorAll(".io-style")) {
 				arrangeSamples(ioStyle, translate);
 				const details = createDetails(translate("efficientLayout.ioFormat"));
@@ -6797,22 +7128,25 @@ ${efficient_layout_default}`);
 	var PERFORMANCE_COLUMN = 3;
 	var RATING_COLUMN = 4;
 	var modeChoices = [
-		{ value: "none", label: "historyColors.modeNone" },
-		{ value: "text", label: "historyColors.modeText" },
-		{ value: "background", label: "historyColors.modeBackground" },
+		{value: "none", label: "historyColors.modeNone"},
+		{value: "text", label: "historyColors.modeText"},
+		{value: "background", label: "historyColors.modeBackground"},
 	];
+
 	function colorizeText(cell2, value) {
 		const crown = crownImageOf(ratingScale, value);
 		cell2.replaceChildren();
-		if (crown) cell2.append(h("img", { src: crown }), " ");
-		cell2.append(h("span", { className: tierOf(ratingScale, value).className, textContent: String(value) }));
+		if (crown) cell2.append(h("img", {src: crown}), " ");
+		cell2.append(h("span", {className: tierOf(ratingScale, value).className, textContent: String(value)}));
 	}
+
 	function colorizeCell(cell2, mode) {
 		const value = Number(cell2?.textContent?.trim() || Number.NaN);
 		if (!cell2 || Number.isNaN(value)) return;
 		if (mode === "text") colorizeText(cell2, value);
 		if (mode === "background") cell2.style.background = backgroundOf(ratingScale, value);
 	}
+
 	var historyColors = defineFeature({
 		id: "history-colors",
 		title: "historyColors.title",
@@ -6825,7 +7159,7 @@ ${efficient_layout_default}`);
 			performanceMode: option.select("background", "historyColors.performanceMode", modeChoices),
 			ratingMode: option.select("background", "historyColors.ratingMode", modeChoices),
 		},
-		start({ options }) {
+		start({options}) {
 			for (const row of document.querySelectorAll("#history tbody tr")) {
 				const cells = row.querySelectorAll("td");
 				colorizeCell(cells[PERFORMANCE_COLUMN], options.performanceMode);
@@ -6848,12 +7182,12 @@ ${efficient_layout_default}`);
 			openStatementDetails: option.boolean(true, "hoverMenu.openStatementDetails"),
 		},
 		live: true,
-		start({ options }) {
+		start({options}) {
 			const controller = new AbortController();
-			const { signal } = controller;
+			const {signal} = controller;
 			for (const item of document.querySelectorAll(".nav > li:not(.pull-right)")) {
-				item.addEventListener("mouseenter", () => item.classList.add(OPEN_CLASS), { signal });
-				item.addEventListener("mouseleave", () => item.classList.remove(OPEN_CLASS), { signal });
+				item.addEventListener("mouseenter", () => item.classList.add(OPEN_CLASS), {signal});
+				item.addEventListener("mouseleave", () => item.classList.remove(OPEN_CLASS), {signal});
 			}
 			if (options.openStatementDetails) {
 				for (const details of document.querySelectorAll("#task-statement details")) {
@@ -6868,6 +7202,7 @@ ${efficient_layout_default}`);
 	var FOLDABLE_TYPE_PATTERN =
 		/^\s*(?:(?:public|protected|private|abstract|final|static|sealed|non-sealed|strictfp)\s+)*(?:class|interface|enum|record|@interface)\b/;
 	var BLOCK_COMMENT_PATTERN = /^\s*\/\*/;
+
 	function findFoldStartLines(source) {
 		return source
 			.split(
@@ -6885,7 +7220,8 @@ ${efficient_layout_default}`);
 			try {
 				const transformed = await localRunner2.transform(code, options.header);
 				if (transformed.status === "success") return transformed.sourceCode;
-			} catch {}
+			} catch {
+			}
 		}
 		return modifyJavaCode(code, options).modified;
 	}
@@ -6895,7 +7231,8 @@ ${efficient_layout_default}`);
 	var MIN_SOURCE_LENGTH = 30;
 	var FOLD_DELAY_MS = 100;
 	var EDITOR_SETUP_DELAY_MS = 500;
-	function findSubmitButton({ submitButtons, labeledSubmit }) {
+
+	function findSubmitButton({submitButtons, labeledSubmit}) {
 		for (const selector of submitButtons) {
 			const button = document.querySelector(selector);
 			if (button) return button;
@@ -6911,6 +7248,7 @@ ${efficient_layout_default}`);
 		}
 		return null;
 	}
+
 	var javaSubmit = defineFeature({
 		id: "java-submit",
 		title: "javaSubmit.title",
@@ -6927,7 +7265,7 @@ ${efficient_layout_default}`);
 			headerName: option.text("", "javaSubmit.headerName"),
 			foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 		},
-		start({ options, judge, editors, localRunner: localRunner2 }) {
+		start({options, judge, editors, localRunner: localRunner2}) {
 			const target = judge?.submission;
 			if (!target) return;
 			registerShortcut(target.shortcut, () => {
@@ -6936,7 +7274,7 @@ ${efficient_layout_default}`);
 				return button !== null;
 			});
 			const header = options.addHeader ? options.headerName || true : false;
-			editors.locate(target, { delayMs: EDITOR_SETUP_DELAY_MS }).then((editor) => {
+			editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((editor) => {
 				if (!editor) return;
 				const fold = () => editor.foldLines(findFoldStartLines(editor.getValue()));
 				registerShortcut(FOLD_SHORTCUT, () => {
@@ -6946,7 +7284,7 @@ ${efficient_layout_default}`);
 				editor.onPaste(() => {
 					const code = editor.getValue();
 					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return;
-					transformJava(code, localRunner2, { ...options, header }).then((transformed) => {
+					transformJava(code, localRunner2, {...options, header}).then((transformed) => {
 						if (transformed === code || editor.getValue() !== code) return;
 						editor.setValue(transformed);
 						if (options.foldOnPaste) setTimeout(fold, FOLD_DELAY_MS);
@@ -6965,6 +7303,7 @@ ${efficient_layout_default}`);
 	var UNLOCK_INTERVAL_MS = 120;
 	var OBSERVE_DURATION_MS = 5000;
 	var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 	function findLanguageSelect() {
 		for (const selector of paizaLanguageSelect.selects) {
 			const select = document.querySelector(selector);
@@ -6972,6 +7311,7 @@ ${efficient_layout_default}`);
 		}
 		return null;
 	}
+
 	function applyOption(select, value, page) {
 		select.value = value;
 		page.triggerChange(select);
@@ -6979,19 +7319,21 @@ ${efficient_layout_default}`);
 			const field = document.getElementById(id);
 			if (!(field instanceof HTMLInputElement)) continue;
 			field.value = value;
-			field.dispatchEvent(new Event("change", { bubbles: true }));
+			field.dispatchEvent(new Event("change", {bubbles: true}));
 		}
 	}
+
 	function selectLanguage(target, page) {
 		const select = findLanguageSelect();
 		if (!select || select.disabled) return false;
-		const option2 = [...select.options].find(({ text }) => isLanguageOption(text, target));
+		const option2 = [...select.options].find(({text}) => isLanguageOption(text, target));
 		if (!option2) return false;
-		const placeholder = [...select.options].find(({ value }) => value === "");
+		const placeholder = [...select.options].find(({value}) => value === "");
 		if (placeholder) applyOption(select, placeholder.value, page);
 		applyOption(select, option2.value, page);
 		return select.value === option2.value;
 	}
+
 	function unlockTextInputs() {
 		for (const input of document.querySelectorAll(".ace_text-input")) {
 			input.removeAttribute("readonly");
@@ -6999,9 +7341,10 @@ ${efficient_layout_default}`);
 			if (input.tabIndex < 0) input.tabIndex = 0;
 		}
 	}
-	async function unlockEditor({ editors, judge }) {
+
+	async function unlockEditor({editors, judge}) {
 		const target = judge?.submission;
-		const editor = target ? await editors.locate(target, { timeoutMs: EDITOR_TIMEOUT_MS }) : null;
+		const editor = target ? await editors.locate(target, {timeoutMs: EDITOR_TIMEOUT_MS}) : null;
 		const deadline = Date.now() + UNLOCK_DURATION_MS;
 		while (editor?.isReadOnly() && Date.now() < deadline) {
 			editor.setWritable();
@@ -7009,6 +7352,7 @@ ${efficient_layout_default}`);
 			await sleep2(UNLOCK_INTERVAL_MS);
 		}
 	}
+
 	var paizaLanguage = defineFeature({
 		id: "paiza-language",
 		title: "paizaLanguage.title",
@@ -7033,14 +7377,14 @@ ${efficient_layout_default}`);
 				observer.disconnect();
 				sleep2(AFTER_SELECTION_DELAY_MS).then(() => unlockEditor(context));
 			});
-			observer.observe(document.body, { childList: true, subtree: true });
+			observer.observe(document.body, {childList: true, subtree: true});
 			setTimeout(() => observer.disconnect(), OBSERVE_DURATION_MS);
 		},
 	});
 
 	// CpToolkit/src/features/rating-graph/index.ts
 	function createGraphButton(marginLeft, onClick) {
-		const button = h("button", { className: "btn btn-default", type: "button", onclick: onClick });
+		const button = h("button", {className: "btn btn-default", type: "button", onclick: onClick});
 		Object.assign(button.style, {
 			marginLeft,
 			padding: "5px 10px",
@@ -7052,6 +7396,7 @@ ${efficient_layout_default}`);
 		});
 		return button;
 	}
+
 	var ratingGraph = defineFeature({
 		id: "rating-graph",
 		title: "ratingGraph.title",
@@ -7063,17 +7408,17 @@ ${efficient_layout_default}`);
 		options: {
 			recentByDefault: option.boolean(true, "ratingGraph.recentByDefault"),
 		},
-		async start({ options, ratingGraph: graph, site, translate }) {
+		async start({options, ratingGraph: graph, site, translate}) {
 			const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
 			const buttonGroups = document.querySelectorAll(".btn-text-group");
 			const buttonGroup = buttonGroups[buttonGroups.length - 1];
 			if (!userName || !buttonGroup) return;
 			const heuristic = new URLSearchParams(location.search).get("contestType") === "heuristic";
 			const url = `/users/${userName}/history/json${heuristic ? "?contestType=heuristic" : ""}`;
-			const response = await site.send({ url });
+			const response = await site.send({url});
 			const history = safeJsonParse(response.text, []);
 			if (!(await graph.prepare(ratedPerformances(history)))) return;
-			const view = { showPerformance: true, recentOnly: options.recentByDefault };
+			const view = {showPerformance: true, recentOnly: options.recentByDefault};
 			const redraw = () => {
 				periodButton.textContent = translate(
 					view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent",
@@ -7103,27 +7448,33 @@ ${efficient_layout_default}`);
 
 	class PendingSubmissions {
 		state;
+
 		constructor(state) {
 			this.state = state;
 		}
+
 		list(now) {
 			const pending = this.state.get(PENDING_KEY) ?? [];
-			return pending.filter(({ addedAt }) => now - addedAt < PENDING_LIFETIME_MS);
+			return pending.filter(({addedAt}) => now - addedAt < PENDING_LIFETIME_MS);
 		}
+
 		add(submissions, now) {
 			const current = this.list(now);
-			const known = new Set(current.map(({ id }) => id));
-			this.state.set(PENDING_KEY, [...current, ...submissions.filter(({ id }) => !known.has(id))]);
+			const known = new Set(current.map(({id}) => id));
+			this.state.set(PENDING_KEY, [...current, ...submissions.filter(({id}) => !known.has(id))]);
 		}
+
 		remove(ids, now) {
 			this.state.set(
 				PENDING_KEY,
-				this.list(now).filter(({ id }) => !ids.includes(id)),
+				this.list(now).filter(({id}) => !ids.includes(id)),
 			);
 		}
+
 		markFocused(now) {
 			this.state.set(LAST_FOCUS_KEY, now);
 		}
+
 		claimPoll(now, intervalMs) {
 			const lastFocus = Number(this.state.get(LAST_FOCUS_KEY) ?? 0);
 			const lastPoll = Number(this.state.get(LAST_POLL_KEY) ?? 0);
@@ -7187,11 +7538,12 @@ ${efficient_layout_default}`);
 
 	// CpToolkit/src/ui/toast/toast.ts
 	var container = null;
+
 	function ensureContainer() {
 		if (container?.isConnected) return container;
-		const list = h("div", { className: "toasts" });
+		const list = h("div", {className: "toasts"});
 		const host = h("div");
-		host.attachShadow({ mode: "open" }).append(
+		host.attachShadow({mode: "open"}).append(
 			h("style", {
 				textContent: `${theme_default}
 ${toast_default}`,
@@ -7202,13 +7554,14 @@ ${toast_default}`,
 		container = list;
 		return list;
 	}
-	function showToast({ title, detail, tone, href, durationMs }) {
-		const heading = href ? h("a", { href, target: "_blank", rel: "noopener", textContent: title }) : title;
+
+	function showToast({title, detail, tone, href, durationMs}) {
+		const heading = href ? h("a", {href, target: "_blank", rel: "noopener", textContent: title}) : title;
 		const toast = h(
 			"div",
-			{ className: "toast" },
-			h("div", { className: "toast-title" }, heading),
-			h("div", { className: "toast-detail", textContent: detail }),
+			{className: "toast"},
+			h("div", {className: "toast-title"}, heading),
+			h("div", {className: "toast-detail", textContent: detail}),
 		);
 		toast.dataset.tone = tone;
 		toast.addEventListener("click", () => toast.remove());
@@ -7220,6 +7573,7 @@ ${toast_default}`,
 	var POLL_INTERVAL_MS2 = 5000;
 	var TOAST_DURATION_MS = 1e4;
 	var SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
+
 	function parseResult(html) {
 		const page = new DOMParser().parseFromString(`<table><tr>${html}</tr></table>`, "text/html");
 		const status = page.querySelector(".label")?.textContent?.trim() ?? "";
@@ -7227,8 +7581,9 @@ ${toast_default}`,
 			.slice(1)
 			.map((cell2) => cell2.textContent?.trim())
 			.join("  ");
-		return { status, detail };
+		return {status, detail};
 	}
+
 	function collectPending(contestId, now) {
 		return [...document.querySelectorAll(".table-responsive > table > tbody > tr")].flatMap((row) => {
 			const status = row.querySelector(".label")?.textContent?.trim() ?? "";
@@ -7237,10 +7592,11 @@ ${toast_default}`,
 				.find(Boolean);
 			if (!id || !isJudging(status)) return [];
 			return [
-				{ id, contestId, taskName: row.querySelectorAll("td")[1]?.textContent?.trim() ?? "", addedAt: now },
+				{id, contestId, taskName: row.querySelectorAll("td")[1]?.textContent?.trim() ?? "", addedAt: now},
 			];
 		});
 	}
+
 	var resultNotifier = defineFeature({
 		id: "result-notifier",
 		title: "resultNotifier.title",
@@ -7253,13 +7609,13 @@ ${toast_default}`,
 			desktop: option.boolean(true, "resultNotifier.desktop"),
 		},
 		live: true,
-		start({ options, isOnRoute, notifier, site, state }) {
+		start({options, isOnRoute, notifier, site, state}) {
 			const pending = new PendingSubmissions(state);
 			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
 			if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
 				pending.add(collectPending(contestId, Date.now()), Date.now());
 			}
-			const notify = (submission, { status, detail }) => {
+			const notify = (submission, {status, detail}) => {
 				const url = buildAtCoderSubmissionUrl(submission.contestId, submission.id);
 				const title = `${status}: ${submission.taskName}`;
 				showToast({
@@ -7269,14 +7625,14 @@ ${toast_default}`,
 					href: url,
 					durationMs: TOAST_DURATION_MS,
 				});
-				if (options.desktop && document.hidden) notifier.notify({ title, text: detail, url });
+				if (options.desktop && document.hidden) notifier.notify({title, text: detail, url});
 			};
 			const checkContest = async (id, submissions) => {
 				const url = buildAtCoderSubmissionStatusJsonUrl(
 					id,
 					submissions.map((submission) => submission.id),
 				);
-				const response = await site.send({ url });
+				const response = await site.send({url});
 				if (response.status !== 200) return;
 				const results = safeJsonParse(response.text, {}).Result ?? {};
 				const finished = submissions.flatMap((submission) => {
@@ -7299,7 +7655,7 @@ ${toast_default}`,
 						id,
 						submissions.filter((submission) => submission.contestId === id),
 					).catch(() => {
-						return;
+
 					});
 				}
 			};
@@ -7312,19 +7668,23 @@ ${toast_default}`,
 	// CpToolkit/src/features/statement-copy/index.ts
 	var COPIED_LABEL_MS = 1500;
 	var EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right";
+
 	function isSampleHeading(section) {
 		const title = section.querySelector("h3")?.textContent ?? "";
 		return statementCatalog.sampleHeadings.some((heading) => title.includes(heading));
 	}
+
 	function withoutControls(element) {
 		const clone = element.cloneNode(true);
 		for (const control of clone.querySelectorAll(EXCLUDED_FROM_COPY)) control.remove();
 		return clone;
 	}
+
 	function findVisibleStatement(container2) {
 		const languages = [...container2.querySelectorAll(".lang-ja, .lang-en")];
 		return languages.find((element) => getComputedStyle(element).display !== "none") ?? container2;
 	}
+
 	var statementCopy = defineFeature({
 		id: "statement-copy",
 		title: "statementCopy.title",
@@ -7335,17 +7695,17 @@ ${toast_default}`,
 		phase: "ready",
 		options: {
 			format: option.select("markdown", "statementCopy.format", [
-				{ value: "markdown", label: "statementCopy.formatMarkdown" },
-				{ value: "plain", label: "statementCopy.formatPlain" },
+				{value: "markdown", label: "statementCopy.formatMarkdown"},
+				{value: "plain", label: "statementCopy.formatPlain"},
 			]),
 		},
 		live: true,
-		start({ options, clipboard, statementConverter, translate }) {
+		start({options, clipboard, statementConverter, translate}) {
 			const added = [];
 			const container2 = document.getElementById("task-statement");
 			if (!container2)
 				return () => {
-					return;
+
 				};
 			const convert = (element) => {
 				const html = withoutControls(element).innerHTML;
@@ -7354,7 +7714,7 @@ ${toast_default}`,
 					: statementConverter.toMarkdown(html);
 			};
 			const createButton = (label, getText) => {
-				const button = h("button", { type: "button", className: "btn btn-default btn-sm", textContent: label });
+				const button = h("button", {type: "button", className: "btn btn-default btn-sm", textContent: label});
 				button.style.marginLeft = "10px";
 				button.addEventListener("click", (event) => {
 					event.preventDefault();
@@ -7392,7 +7752,7 @@ ${body}`.trim();
 				};
 				const wrapper = h(
 					"span",
-					{ className: "pull-right" },
+					{className: "pull-right"},
 					createButton(translate("statementCopy.copyAll"), copyAll),
 				);
 				wrapper.style.fontSize = "14px";
@@ -7408,9 +7768,11 @@ ${body}`.trim();
 	// CpToolkit/src/domain/statement/tokens.ts
 	var NUMBER_PATTERN = /(^|\W)([+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[+-]?\d+)?)/gi;
 	var PURE_NUMBER_PATTERN = /^[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[+-]?\d+)?$/i;
+
 	function isPureNumber(text) {
 		return PURE_NUMBER_PATTERN.test(text.trim());
 	}
+
 	function splitNumbers(text) {
 		const segments = [];
 		let position = 0;
@@ -7418,13 +7780,14 @@ ${body}`.trim();
 			const prefix = match[1] ?? "";
 			const value = match[2] ?? "";
 			const start = match.index + prefix.length;
-			if (start > position) segments.push({ text: text.slice(position, start), emphasized: false });
-			segments.push({ text: value, emphasized: true });
+			if (start > position) segments.push({text: text.slice(position, start), emphasized: false});
+			segments.push({text: value, emphasized: true});
 			position = start + value.length;
 		}
-		if (position < text.length) segments.push({ text: text.slice(position), emphasized: false });
+		if (position < text.length) segments.push({text: text.slice(position), emphasized: false});
 		return segments;
 	}
+
 	function splitLimitValue(text, keyword) {
 		const pattern = new RegExp(`${keyword}\\s*[:：]\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)`, "g");
 		const segments = [];
@@ -7432,12 +7795,12 @@ ${body}`.trim();
 		for (const match of text.matchAll(pattern)) {
 			const value = match[1] ?? "";
 			const valueStart = match.index + match[0].length - value.length;
-			segments.push({ text: text.slice(position, valueStart), emphasized: false });
-			segments.push({ text: value, emphasized: true });
+			segments.push({text: text.slice(position, valueStart), emphasized: false});
+			segments.push({text: value, emphasized: true});
 			position = valueStart + value.length;
 		}
 		if (position === 0) return null;
-		if (position < text.length) segments.push({ text: text.slice(position), emphasized: false });
+		if (position < text.length) segments.push({text: text.slice(position), emphasized: false});
 		return segments;
 	}
 
@@ -7473,6 +7836,7 @@ ${body}`.trim();
 	var MEMORY_CLASS = "cp-memory-limit";
 	var SKIPPED_ANCESTORS = `.katex, var, .${NUMBER_CLASS}, .${TIME_CLASS}, .${MEMORY_CLASS}`;
 	var HIGHLIGHT_DELAY_MS = 100;
+
 	function collectTextNodes(root2, accepts) {
 		const walker = document.createTreeWalker(root2, NodeFilter.SHOW_TEXT, {
 			acceptNode(node) {
@@ -7488,13 +7852,15 @@ ${body}`.trim();
 		}
 		return nodes;
 	}
+
 	function replaceWithSegments(node, segments, className) {
 		node.replaceWith(
-			...segments.map(({ text, emphasized }) =>
-				emphasized ? h("span", { className, textContent: text }) : text,
+			...segments.map(({text, emphasized}) =>
+				emphasized ? h("span", {className, textContent: text}) : text,
 			),
 		);
 	}
+
 	function markTargetSections() {
 		for (const section of document.querySelectorAll("#task-statement section")) {
 			const title = section.querySelector("h3")?.textContent ?? "";
@@ -7502,6 +7868,7 @@ ${body}`.trim();
 				section.classList.add(TARGET_CLASS);
 		}
 	}
+
 	function highlightNumbers() {
 		for (const scope of document.querySelectorAll(`.${TARGET_CLASS}`)) {
 			for (const element of scope.querySelectorAll(".katex .mord, .katex .text")) {
@@ -7514,6 +7881,7 @@ ${body}`.trim();
 			}
 		}
 	}
+
 	function emphasizeLimit(root2, keywords, className) {
 		for (const keyword of keywords) {
 			for (const node of collectTextNodes(root2, (text) => text.includes(keyword))) {
@@ -7522,12 +7890,14 @@ ${body}`.trim();
 			}
 		}
 	}
+
 	function emphasizeLimits() {
 		const root2 = document.getElementById("main-container");
 		if (!root2) return;
 		emphasizeLimit(root2, statementCatalog.timeLimitKeywords, TIME_CLASS);
 		emphasizeLimit(root2, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
 	}
+
 	var statementHighlight = defineFeature({
 		id: "statement-highlight",
 		title: "statementHighlight.title",
@@ -7543,7 +7913,7 @@ ${body}`.trim();
 			memoryColor: option.color("#1d643b", "statementHighlight.memoryColor"),
 		},
 		live: true,
-		start({ options }) {
+		start({options}) {
 			const style = injectStyle(`:root {
 	--cp-number-color: ${options.numberColor};
 	--cp-variable-color: ${options.variableColor};
@@ -7579,6 +7949,7 @@ ${statement_highlight_default}`);
 	// CpToolkit/src/features/submission-defaults/index.ts
 	var SUBMISSION_PATH_PATTERN = /\/submissions(?:\/me)?\/?$/;
 	var SUBMISSION_PAGE_TABS = "#main-container > div.row > div:nth-child(2) > ul > li > a";
+
 	function applyDefaultQuery(query2) {
 		for (const link of document.querySelectorAll("#contest-nav-tabs a")) {
 			const href = link.getAttribute("href");
@@ -7589,6 +7960,7 @@ ${statement_highlight_default}`);
 			link.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
 		}
 	}
+
 	function keepSearchQuery() {
 		for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
 			const url = new URL(tab.getAttribute("href") ?? "", location.origin);
@@ -7596,6 +7968,7 @@ ${statement_highlight_default}`);
 			tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
 		}
 	}
+
 	var submissionDefaults = defineFeature({
 		id: "submission-defaults",
 		title: "submissionDefaults.title",
@@ -7608,15 +7981,15 @@ ${statement_highlight_default}`);
 			language: option.text("Java", "submissionDefaults.language"),
 			status: option.text("AC", "submissionDefaults.status"),
 			orderBy: option.select("time_consumption", "submissionDefaults.orderBy", [
-				{ value: "time_consumption", label: "submissionDefaults.orderTime" },
-				{ value: "memory_consumption", label: "submissionDefaults.orderMemory" },
-				{ value: "source_length", label: "submissionDefaults.orderLength" },
-				{ value: "score", label: "submissionDefaults.orderScore" },
+				{value: "time_consumption", label: "submissionDefaults.orderTime"},
+				{value: "memory_consumption", label: "submissionDefaults.orderMemory"},
+				{value: "source_length", label: "submissionDefaults.orderLength"},
+				{value: "score", label: "submissionDefaults.orderScore"},
 			]),
 			taskFilter: option.boolean(true, "submissionDefaults.taskFilter"),
 			keepQuery: option.boolean(true, "submissionDefaults.keepQuery"),
 		},
-		start({ options, isOnRoute }) {
+		start({options, isOnRoute}) {
 			const task = options.taskFilter ? parseAtCoderTaskUrl(location.href)?.taskId : undefined;
 			applyDefaultQuery(
 				buildAtCoderSubmissionsQuery({
@@ -7643,12 +8016,12 @@ ${statement_highlight_default}`);
 			language: option.text("", "submissionShortcuts.language"),
 		},
 		live: true,
-		start({ options, translate }) {
+		start({options, translate}) {
 			const task = parseAtCoderTaskUrl(location.href);
 			const title = document.querySelector(".h2");
 			if (!task || !title)
 				return () => {
-					return;
+
 				};
 			const createLink = (label, orderBy) => {
 				const query2 = buildAtCoderSubmissionsQuery({
@@ -7687,7 +8060,7 @@ ${statement_highlight_default}`);
 		routes: ["atcoder:task"],
 		phase: "ready",
 		options: {},
-		start({ translate }) {
+		start({translate}) {
 			const submitButton = document.querySelector("#submit");
 			if (!submitButton) return;
 			let timer;
@@ -7696,7 +8069,7 @@ ${statement_highlight_default}`);
 				closeLabel: translate("settings.close"),
 				css: form_default,
 			});
-			const minutes = h("input", { type: "number", min: "1" });
+			const minutes = h("input", {type: "number", min: "1"});
 			const info = h("p");
 			const cancel = () => {
 				clearTimeout(timer);
@@ -7717,15 +8090,15 @@ ${statement_highlight_default}`);
 			modal.body.append(
 				h(
 					"label",
-					{ className: "field" },
-					h("span", { className: "field-label", textContent: translate("submissionTimer.minutes") }),
+					{className: "field"},
+					h("span", {className: "field-label", textContent: translate("submissionTimer.minutes")}),
 					minutes,
 				),
 				info,
 			);
 			modal.footer.append(
-				h("button", { type: "button", textContent: translate("submissionTimer.set"), onclick: schedule }),
-				h("button", { type: "button", textContent: translate("submissionTimer.cancel"), onclick: cancel }),
+				h("button", {type: "button", textContent: translate("submissionTimer.set"), onclick: schedule}),
+				h("button", {type: "button", textContent: translate("submissionTimer.cancel"), onclick: cancel}),
 			);
 			const openButton = h("button", {
 				type: "button",
@@ -7744,37 +8117,41 @@ ${statement_highlight_default}`);
 		if (regular) return `${regular}-${taskCount}`;
 		return catalog.permanentPrefixes.find((prefix) => contestId.startsWith(prefix)) ?? "other";
 	}
+
 	function defaultRange(taskCount, maxTabs) {
-		return { begin: 0, end: Math.min(maxTabs, taskCount) - 1 };
+		return {begin: 0, end: Math.min(maxTabs, taskCount) - 1};
 	}
+
 	function adjustRange(range, changed, maxTabs) {
-		const { begin, end } = range;
+		const {begin, end} = range;
 		if (changed === "begin") {
-			if (end < begin) return { begin, end: begin };
-			return { begin, end: Math.min(end, begin + maxTabs - 1) };
+			if (end < begin) return {begin, end: begin};
+			return {begin, end: Math.min(end, begin + maxTabs - 1)};
 		}
-		if (begin > end) return { begin: end, end };
-		return { begin: Math.max(begin, end - maxTabs + 1), end };
+		if (begin > end) return {begin: end, end};
+		return {begin: Math.max(begin, end - maxTabs + 1), end};
 	}
-	function rangeIndices({ begin, end }, reverse) {
-		const indices = Array.from({ length: end - begin + 1 }, (_, index) => begin + index);
+
+	function rangeIndices({begin, end}, reverse) {
+		const indices = Array.from({length: end - begin + 1}, (_, index) => begin + index);
 		return reverse ? indices.reverse() : indices;
 	}
 
 	// CpToolkit/src/application/contest/task-list.ts
 	var CACHE_KEY2 = "task-dropdown:tasks";
 	var DAY_MS = 24 * 60 * 60 * 1000;
-	async function loadContestTasks(contestId, { site, state, parse, cacheDays }) {
+
+	async function loadContestTasks(contestId, {site, state, parse, cacheDays}) {
 		const cache = state.get(CACHE_KEY2) ?? {};
 		const now = Date.now();
 		const fresh = Object.entries(cache).filter(([, entry]) => now - entry.lastAccess < cacheDays * DAY_MS);
 		let tasks = cache[contestId]?.tasks ?? null;
 		if (!tasks) {
-			const response = await site.send({ url: `/contests/${contestId}/tasks` });
+			const response = await site.send({url: `/contests/${contestId}/tasks`});
 			if (response.status !== 200) return null;
 			tasks = parse(response.text);
 		}
-		state.set(CACHE_KEY2, { ...Object.fromEntries(fresh), [contestId]: { tasks, lastAccess: now } });
+		state.set(CACHE_KEY2, {...Object.fromEntries(fresh), [contestId]: {tasks, lastAccess: now}});
 		return tasks;
 	}
 
@@ -7825,17 +8202,19 @@ button.primary {
 			range.begin >= 0 && range.begin <= range.end && range.end < taskCount && range.end - range.begin < maxTabs
 		);
 	}
+
 	function createTaskSelect(tasks) {
 		return h(
 			"select",
 			{},
 			...tasks.map((task, index) => {
-				return h("option", { value: String(index), textContent: `${task.label} - ${task.name}` });
+				return h("option", {value: String(index), textContent: `${task.label} - ${task.name}`});
 			}),
 		);
 	}
+
 	function createOpenTasksModal(params) {
-		const { tasks, maxTabs, savedRange, savedReverse, translate, onOpen } = params;
+		const {tasks, maxTabs, savedRange, savedReverse, translate, onOpen} = params;
 		const canOpenAll = tasks.length <= maxTabs;
 		const initial = isValidRange(savedRange, tasks.length, maxTabs)
 			? savedRange
@@ -7846,23 +8225,23 @@ button.primary {
 			closeLabel: translate("settings.close"),
 			css: open_tasks_modal_default,
 		});
-		const allRadio = h("input", { type: "radio", name: "open-type", disabled: !canOpenAll });
-		const rangeRadio = h("input", { type: "radio", name: "open-type" });
+		const allRadio = h("input", {type: "radio", name: "open-type", disabled: !canOpenAll});
+		const rangeRadio = h("input", {type: "radio", name: "open-type"});
 		const beginSelect = createTaskSelect(tasks);
 		const endSelect = createTaskSelect(tasks);
-		const reverse = h("input", { type: "checkbox", checked: savedReverse });
-		const info = h("p", { className: "open-tasks-info" });
+		const reverse = h("input", {type: "checkbox", checked: savedReverse});
+		const info = h("p", {className: "open-tasks-info"});
 		const isAll = () => allRadio.checked;
-		const selectedRange = () => (isAll() ? { begin: 0, end: tasks.length - 1 } : range);
+		const selectedRange = () => (isAll() ? {begin: 0, end: tasks.length - 1} : range);
 		const refresh = () => {
 			beginSelect.value = String(range.begin);
 			endSelect.value = String(range.end);
 			beginSelect.disabled = endSelect.disabled = isAll();
-			const { begin, end } = selectedRange();
+			const {begin, end} = selectedRange();
 			info.textContent = translate("taskDropdown.tabCount").replace("{count}", String(end - begin + 1));
 		};
 		const changeRange = (changed) => {
-			range = adjustRange({ begin: Number(beginSelect.value), end: Number(endSelect.value) }, changed, maxTabs);
+			range = adjustRange({begin: Number(beginSelect.value), end: Number(endSelect.value)}, changed, maxTabs);
 			refresh();
 		};
 		allRadio.checked = canOpenAll && initial.begin === 0 && initial.end === tasks.length - 1;
@@ -7874,28 +8253,28 @@ button.primary {
 		modal.body.append(
 			h(
 				"div",
-				{ className: "open-tasks-row" },
+				{className: "open-tasks-row"},
 				h("label", {}, allRadio, ` ${translate("taskDropdown.all")}`),
 				canOpenAll
 					? ""
 					: h("span", {
-							className: "open-tasks-caution",
-							textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
-						}),
+						className: "open-tasks-caution",
+						textContent: translate("taskDropdown.tabLimit").replace("{count}", String(maxTabs)),
+					}),
 			),
 			h(
 				"div",
-				{ className: "open-tasks-row" },
+				{className: "open-tasks-row"},
 				h("label", {}, rangeRadio, ` ${translate("taskDropdown.range")}`),
 				beginSelect,
 				"-",
 				endSelect,
 			),
-			h("div", { className: "open-tasks-row" }, h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
+			h("div", {className: "open-tasks-row"}, h("label", {}, reverse, ` ${translate("taskDropdown.reverse")}`)),
 			info,
 		);
 		modal.footer.append(
-			h("span", { className: "open-tasks-spacer" }),
+			h("span", {className: "open-tasks-spacer"}),
 			h("button", {
 				type: "button",
 				textContent: translate("taskDropdown.cancel"),
@@ -7954,6 +8333,7 @@ button.primary {
 	var NEW_TAB_KEY = "task-dropdown:newTab";
 	var REVERSE_KEY = "task-dropdown:reverse";
 	var RANGES_KEY = "task-dropdown:ranges";
+
 	function parseTaskPage(html) {
 		const page = new DOMParser().parseFromString(html, "text/html");
 		return [...page.querySelectorAll("#contest-nav-tabs + .col-sm-12 tbody tr")].flatMap((row) => {
@@ -7961,9 +8341,10 @@ button.primary {
 			const link = labelCell?.querySelector("a");
 			const url = link?.getAttribute("href");
 			if (!link || !url) return [];
-			return [{ url, label: link.textContent ?? "", name: nameCell?.textContent?.trim() ?? "" }];
+			return [{url, label: link.textContent ?? "", name: nameCell?.textContent?.trim() ?? ""}];
 		});
 	}
+
 	function turnIntoDropdown(tab) {
 		tab.className = "dropdown-toggle";
 		tab.href = "#";
@@ -7971,8 +8352,8 @@ button.primary {
 		tab.setAttribute("role", "button");
 		tab.setAttribute("aria-haspopup", "true");
 		tab.setAttribute("aria-expanded", "false");
-		tab.append(h("span", { className: "caret" }));
-		const menu = h("ul", { className: "dropdown-menu cp-task-menu" });
+		tab.append(h("span", {className: "caret"}));
+		const menu = h("ul", {className: "dropdown-menu cp-task-menu"});
 		const item = tab.parentElement;
 		item?.classList.add("dropdown");
 		item?.append(menu);
@@ -7980,19 +8361,22 @@ button.primary {
 		item?.addEventListener("mouseleave", () => item.classList.remove("open"));
 		return menu;
 	}
+
 	function createNewTabToggle(state, translate) {
-		const checkbox = h("input", { type: "checkbox", checked: state.get(NEW_TAB_KEY) === true });
+		const checkbox = h("input", {type: "checkbox", checked: state.get(NEW_TAB_KEY) === true});
 		checkbox.addEventListener("change", () => state.set(NEW_TAB_KEY, checkbox.checked));
 		const label = h("label", {}, checkbox, translate("taskDropdown.newTab"));
 		label.addEventListener("click", (event) => event.stopPropagation());
 		return h("li", {}, label);
 	}
+
 	function withIcon(link, icon) {
-		link.prepend(h("span", { className: `glyphicon ${icon}`, ariaHidden: "true" }), " ");
+		link.prepend(h("span", {className: `glyphicon ${icon}`, ariaHidden: "true"}), " ");
 		return link;
 	}
+
 	function createTaskLink(href, text, state, icon) {
-		const link = h("a", { href, textContent: text });
+		const link = h("a", {href, textContent: text});
 		if (icon) withIcon(link, icon);
 		link.addEventListener("click", () => {
 			const newTab = state.get(NEW_TAB_KEY) === true;
@@ -8001,6 +8385,7 @@ button.primary {
 		});
 		return h("li", {}, link);
 	}
+
 	var taskDropdown = defineFeature({
 		id: "task-dropdown",
 		title: "taskDropdown.title",
@@ -8010,7 +8395,7 @@ button.primary {
 		routes: ["atcoder:contest"],
 		phase: "ready",
 		options: {},
-		async start({ site, state, translate }) {
+		async start({site, state, translate}) {
 			const tab = document.querySelector('#contest-nav-tabs a[href$="tasks"]');
 			const contestId = /^\/contests\/([^/?#]+)/.exec(location.pathname)?.[1];
 			if (!tab || !contestId) return;
@@ -8029,8 +8414,8 @@ button.primary {
 			}).catch(() => null);
 			if (!tasks) {
 				menu.append(
-					h("li", { className: "divider" }),
-					h("li", {}, h("a", { textContent: translate("taskDropdown.loadFailed") })),
+					h("li", {className: "divider"}),
+					h("li", {}, h("a", {textContent: translate("taskDropdown.loadFailed")})),
 				);
 				return;
 			}
@@ -8044,18 +8429,18 @@ button.primary {
 				translate,
 				onOpen(range, reverse) {
 					state.set(REVERSE_KEY, reverse);
-					if (category !== "other") state.set(RANGES_KEY, { ...ranges, [category]: range });
+					if (category !== "other") state.set(RANGES_KEY, {...ranges, [category]: range});
 				},
 			});
 			const openAtOnce = withIcon(
-				h("a", { href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...` }),
+				h("a", {href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...`}),
 				"glyphicon-sort-by-attributes-alt",
 			);
 			openAtOnce.addEventListener("click", (event) => {
 				event.preventDefault();
 				modal.open();
 			});
-			menu.append(h("li", {}, openAtOnce), h("li", { className: "divider" }));
+			menu.append(h("li", {}, openAtOnce), h("li", {className: "divider"}));
 			menu.append(...tasks.map((task) => createTaskLink(task.url, `${task.label} - ${task.name}`, state)));
 		},
 	});
@@ -8073,7 +8458,7 @@ button.primary {
 		routes: ["atcoder:tessokuTasks"],
 		phase: "ready",
 		options: {},
-		start({ translate }) {
+		start({translate}) {
 			const body = document.querySelector(`${TASK_LIST} > div > table > tbody`);
 			const heading = document.querySelector(`${TASK_LIST} > h2`);
 			if (!body || !heading) return;
@@ -8106,17 +8491,18 @@ button.primary {
 	});
 
 	// CpToolkit/src/features/top-links/index.ts
-	function createLink({ title, subtitle, label, labelClass, description, href }) {
-		const heading = h("h4", { className: "list-group-item-heading clearfix" }, h("b", { textContent: title }));
-		if (subtitle) heading.append(" ", h("small", { className: "no-break", textContent: `(${subtitle})` }));
-		if (label) heading.append(h("span", { className: `label ${labelClass ?? ""} pull-right`, textContent: label }));
+	function createLink({title, subtitle, label, labelClass, description, href}) {
+		const heading = h("h4", {className: "list-group-item-heading clearfix"}, h("b", {textContent: title}));
+		if (subtitle) heading.append(" ", h("small", {className: "no-break", textContent: `(${subtitle})`}));
+		if (label) heading.append(h("span", {className: `label ${labelClass ?? ""} pull-right`, textContent: label}));
 		return h(
 			"a",
-			{ href, className: "list-group-item" },
+			{href, className: "list-group-item"},
 			heading,
-			h("p", { className: "list-group-item-text text-muted", textContent: description }),
+			h("p", {className: "list-group-item-text text-muted", textContent: description}),
 		);
 	}
+
 	var topLinks = defineFeature({
 		id: "top-links",
 		title: "topLinks.title",
@@ -8153,10 +8539,10 @@ button.primary {
 		routes: ["atcoder:page"],
 		phase: "start",
 		options: {
-			width: option.text("50%", "wideLayout.width", { validate: (value) => CSS.supports("width", value) }),
+			width: option.text("50%", "wideLayout.width", {validate: (value) => CSS.supports("width", value)}),
 		},
 		live: true,
-		start({ options }) {
+		start({options}) {
 			const style = injectStyle(`:root {--cp-main-width: ${options.width};}
 ${wide_layout_default}`);
 			return () => style.remove();
@@ -8206,8 +8592,8 @@ ${wide_layout_default}`);
 			logger: new ConsoleLogger(host.name),
 		});
 		runtime.start();
-		const { translate } = services;
-		panel = createSettingsPanel({ features, settings, runtime, translate, version: host.version });
+		const {translate} = services;
+		panel = createSettingsPanel({features, settings, runtime, translate, version: host.version});
 		lifecycle.reach("ready").then(() => {
 			host.registerCommand(translate("settings.open"), () => panel?.open());
 			if (page) addNavigationEntry(page.judge.navigationLists, host.name, () => panel?.open());

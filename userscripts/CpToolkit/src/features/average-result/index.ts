@@ -32,7 +32,13 @@ export const averageResult = defineFeature({
 		const isCaseTable = rows.every((row) => row.querySelectorAll("td").length === COLUMN_COUNT);
 		if (tables.length < MIN_TABLES_WITH_CASES || !body || rows.length < MIN_CASES || !isCaseTable) return () => undefined;
 
-		const {accepted, total, averageTimeMs, averageMemoryKb, timeIsLowerBound} = summarizeJudgeCases(rows.map(readCase));
+		const {
+			accepted,
+			total,
+			averageTimeMs,
+			averageMemoryKb,
+			timeIsLowerBound
+		} = summarizeJudgeCases(rows.map(readCase));
 		const allAccepted = accepted === total;
 		const row = h(
 			"tr",

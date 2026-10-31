@@ -25,7 +25,10 @@ export type FieldControl = {
 export function createField(label: string, control: HTMLElement, errorMessage: string): FieldControl {
 	const error = h("span", {className: "field-error", textContent: errorMessage, hidden: true});
 	return {
-		element: h("label", {className: "field"}, h("span", {className: "field-label", textContent: label}), control, error),
+		element: h("label", {className: "field"}, h("span", {
+			className: "field-label",
+			textContent: label
+		}), control, error),
 		setInvalid(invalid) {
 			control.setAttribute("aria-invalid", String(invalid));
 			error.hidden = !invalid;

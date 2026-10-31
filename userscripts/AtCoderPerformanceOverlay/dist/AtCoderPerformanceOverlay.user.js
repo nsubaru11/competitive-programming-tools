@@ -56,9 +56,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -68,14 +68,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -95,8 +97,8 @@ if (!cpToolkitRetirement.replaced) {
 		{
 			const element =
 				document.getElementsByClassName("btn-text-group")[
-					document.getElementsByClassName("btn-text-group").length - 1
-				];
+				document.getElementsByClassName("btn-text-group").length - 1
+					];
 			const insertButton = Object.assign(document.createElement("button"), {
 				className: "btn btn-default",
 				id: "onoffButton",
@@ -179,12 +181,14 @@ if (!cpToolkitRetirement.replaced) {
 		var particles;
 		var standings_url;
 		var username = document.getElementsByClassName("username")[0].textContent ?? "";
+
 		function waitForPageLoad() {
 			if (document.readyState === "complete") return Promise.resolve();
 			return new Promise((resolve) => {
-				window.addEventListener("load", () => resolve(), { once: true });
+				window.addEventListener("load", () => resolve(), {once: true});
 			});
 		}
+
 		function waitForDependencies() {
 			return new Promise((resolve, reject) => {
 				const start = Date.now();
@@ -205,10 +209,12 @@ if (!cpToolkitRetirement.replaced) {
 				}, 50);
 			});
 		}
+
 		function refreshCanvasRefs() {
 			canvas_status = document.getElementById("ratingStatus");
 			canvas_graph = document.getElementById("ratingGraph");
 		}
+
 		function replaceCanvas(id) {
 			const oldCanvas = document.getElementById(id);
 			if (!oldCanvas || !oldCanvas.parentNode) return null;
@@ -216,6 +222,7 @@ if (!cpToolkitRetirement.replaced) {
 			oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
 			return newCanvas;
 		}
+
 		function prepareCanvases() {
 			if (window.__perf_graph_canvas_ready) {
 				refreshCanvasRefs();
@@ -226,6 +233,7 @@ if (!cpToolkitRetirement.replaced) {
 			refreshCanvasRefs();
 			window.__perf_graph_canvas_ready = true;
 		}
+
 		function initStage(stage, canvas) {
 			const rect = canvas.getBoundingClientRect();
 			const attrWidth = Number(canvas.getAttribute("width")) || canvas.width || DEFAULT_WIDTH;
@@ -241,13 +249,15 @@ if (!cpToolkitRetirement.replaced) {
 			canvas.style.maxWidth = cssWidth + "px";
 			canvas.style.maxHeight = cssHeight + "px";
 			stage.enableMouseOver();
-			return { cssWidth, cssHeight };
+			return {cssWidth, cssHeight};
 		}
+
 		function newShape(parent) {
 			let s = new cj.Shape();
 			parent.addChild(s);
 			return s;
 		}
+
 		function newText(parent, x, y, font) {
 			let t = new cj.Text("", font, "#000");
 			t.x = x;
@@ -257,6 +267,7 @@ if (!cpToolkitRetirement.replaced) {
 			parent.addChild(t);
 			return t;
 		}
+
 		function init(click_num) {
 			let perf_rating_history = window.perf_rating_history;
 			n = rating_history.length;
@@ -310,20 +321,24 @@ if (!cpToolkitRetirement.replaced) {
 			cj.Ticker.removeAllEventListeners("tick");
 			cj.Ticker.setFPS(60);
 			cj.Ticker.addEventListener("tick", handleTick);
+
 			function handleTick(_event) {
 				updateParticles();
 				stage_status.update();
 			}
 		}
+
 		function getPer(x, l, r) {
 			return (x - l) / (r - l);
 		}
+
 		function getColor(x) {
 			for (let i = COLORS.length - 1; i >= 0; i--) {
 				if (x >= COLORS[i][0]) return COLORS[i];
 			}
 			return [-1, "#000000", 0.1];
 		}
+
 		function initBackground() {
 			panel_shape = newShape(stage_graph);
 			panel_shape.x = OFFSET_X;
@@ -332,6 +347,7 @@ if (!cpToolkitRetirement.replaced) {
 			border_shape = newShape(stage_graph);
 			border_shape.x = OFFSET_X;
 			border_shape.y = OFFSET_Y;
+
 			function newLabelY(s, y) {
 				let t = new cj.Text(s, LABEL_FONT, "#000");
 				t.x = OFFSET_X - 10;
@@ -340,6 +356,7 @@ if (!cpToolkitRetirement.replaced) {
 				t.textBaseline = "middle";
 				stage_graph.addChild(t);
 			}
+
 			function newLabelX(s, x, y) {
 				let t = new cj.Text(s, LABEL_FONT, "#000");
 				t.x = OFFSET_X + x;
@@ -348,6 +365,7 @@ if (!cpToolkitRetirement.replaced) {
 				t.textBaseline = "top";
 				stage_graph.addChild(t);
 			}
+
 			let y1 = 0;
 			for (let i = COLORS.length - 1; i >= 0; i--) {
 				let y2 = PANEL_HEIGHT - PANEL_HEIGHT * getPer(COLORS[i][0], y_min, y_max);
@@ -399,6 +417,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			border_shape.graphics.s("#888").ss(1.5).rr(0, 0, PANEL_WIDTH, PANEL_HEIGHT, 2);
 		}
+
 		function initChart(click_num4) {
 			let perf_rating_history = window.perf_rating_history;
 			chart_container = new cj.Container();
@@ -407,15 +426,18 @@ if (!cpToolkitRetirement.replaced) {
 			line_shape = newShape(chart_container);
 			highest_shape = newShape(chart_container);
 			vertex_shapes = [];
+
 			function mouseoverVertex(e) {
 				vertex_shapes[e.target.i].scaleX = vertex_shapes[e.target.i].scaleY = 1.2;
 				stage_graph.update();
 				setStatus(rating_history[e.target.i], perf_rating_history[e.target.i], true, click_num4);
 			}
+
 			function mouseoutVertex(e) {
 				vertex_shapes[e.target.i].scaleX = vertex_shapes[e.target.i].scaleY = 1;
 				stage_graph.update();
 			}
+
 			let highest_i = 0;
 			for (let i = 0; i < n; i++) {
 				if (rating_history[highest_i].NewRating < rating_history[i].NewRating) {
@@ -465,6 +487,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 			}
 		}
+
 		function initPerfChart(click_num2) {
 			let perf_rating_history = window.perf_rating_history;
 			perf_chart_container = new cj.Container();
@@ -477,15 +500,18 @@ if (!cpToolkitRetirement.replaced) {
 				perf_chart_container.visible = false;
 				return;
 			}
+
 			function mouseoverVertex(e) {
 				perf_vertex_shapes[e.target.i].scaleX = perf_vertex_shapes[e.target.i].scaleY = 1.2;
 				stage_graph.update();
 				setStatus(rating_history[e.target.i], perf_rating_history[e.target.i], true, click_num2);
 			}
+
 			function mouseoutVertex(e) {
 				perf_vertex_shapes[e.target.i].scaleX = perf_vertex_shapes[e.target.i].scaleY = 1;
 				stage_graph.update();
 			}
+
 			let highest_i_perf = 0;
 			for (let i = 0; i < perf_n; i++) {
 				const current = perf_rating_history[i].Performance ?? 0;
@@ -557,6 +583,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			stage_graph.update();
 		}
+
 		function initStatus(click_num5) {
 			let perf_rating_history = window.perf_rating_history;
 			border_status_shape = newShape(stage_status);
@@ -589,6 +616,7 @@ if (!cpToolkitRetirement.replaced) {
 				setStatus(rating_history[lastRatingIndex], perf_rating_history[lastPerfIndex], false, click_num5);
 			}
 		}
+
 		function getRatingPer(x) {
 			let pre = COLORS[COLORS.length - 1][0] + STEP_SIZE;
 			for (let i = COLORS.length - 1; i >= 0; i--) {
@@ -597,19 +625,22 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return 0;
 		}
+
 		function getOrdinal(x) {
 			let s = ["th", "st", "nd", "rd"],
 				v = x % 100;
 			return x + (s[(v - 20) % 10] || s[v] || s[0]);
 		}
+
 		function getDiff(x) {
 			let sign = x === 0 ? "±" : x < 0 ? "-" : "+";
 			return sign + Math.abs(x);
 		}
+
 		function setStatus(data, data2, particle_flag, click_num3) {
 			if (!data || !data2) return;
 			let date = new Date(data.EndTime * 1000);
-			let { NewRating: rating, OldRating: old_rating } = data;
+			let {NewRating: rating, OldRating: old_rating} = data;
 			let place = data.Place;
 			let contest_name = data.ContestName;
 			let perf = data2.Performance;
@@ -638,6 +669,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			stage_graph.update();
 		}
+
 		function setParticle(particle, x, y, color, alpha, star_flag) {
 			particle.x = x;
 			particle.y = y;
@@ -652,6 +684,7 @@ if (!cpToolkitRetirement.replaced) {
 			particle.text = star_flag ? "★" : "@";
 			particle.alpha = alpha;
 		}
+
 		function setParticles(num, color, alpha, rating) {
 			for (let i = 0; i < PARTICLE_MAX; i++) {
 				if (i < num) {
@@ -662,6 +695,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 			}
 		}
+
 		function updateParticle(particle) {
 			if (particle.life <= 0) {
 				particle.visible = false;
@@ -675,6 +709,7 @@ if (!cpToolkitRetirement.replaced) {
 			particle.scaleX = particle.scaleY = particle.life / LIFE_MAX;
 			particle.rotation += particle.rot_speed;
 		}
+
 		function updateParticles() {
 			for (let i = 0; i < PARTICLE_MAX; i++) {
 				if (particles[i].life > 0) {
@@ -682,6 +717,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 			}
 		}
+
 		async function main() {
 			let json, page;
 			try {
@@ -712,7 +748,7 @@ if (!cpToolkitRetirement.replaced) {
 				if (rated && page[i] && page[i].children[3]) {
 					const perfValue = Number(page[i].children[3].innerText);
 					json[i].Performance = Math.max(0, perfValue);
-					window.perf_rating_history.push({ ...json[i] });
+					window.perf_rating_history.push({...json[i]});
 				}
 			}
 			window.rating_history_original = rating_history.slice();
@@ -757,6 +793,7 @@ if (!cpToolkitRetirement.replaced) {
 				};
 			}
 		}
+
 		async function bootstrap() {
 			if (window.__perf_graph_bootstrap) return;
 			window.__perf_graph_bootstrap = true;
@@ -774,6 +811,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			await main();
 		}
+
 		bootstrap();
 	})();
 }

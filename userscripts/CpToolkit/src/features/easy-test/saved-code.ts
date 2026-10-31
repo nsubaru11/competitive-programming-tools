@@ -12,10 +12,6 @@ export class SavedCodes {
 	constructor(private readonly state: KeyValueStore, private readonly limit: number) {
 	}
 
-	private list(): readonly SavedCode[] {
-		return (this.state.get(SAVED_CODE_KEY) ?? []) as readonly SavedCode[];
-	}
-
 	save(path: string, code: string): void {
 		const others = this.list().filter((saved) => saved.path !== path);
 		this.state.set(SAVED_CODE_KEY, [...others, {path, code}].slice(-this.limit));
@@ -23,5 +19,9 @@ export class SavedCodes {
 
 	find(path: string): string | null {
 		return this.list().find((saved) => saved.path === path)?.code ?? null;
+	}
+
+	private list(): readonly SavedCode[] {
+		return (this.state.get(SAVED_CODE_KEY) ?? []) as readonly SavedCode[];
 	}
 }

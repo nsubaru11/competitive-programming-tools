@@ -352,7 +352,10 @@ export class CreateJsRatingGraph implements RatingGraph {
 		drawBackground();
 		createStatus();
 		drawSeries(history.map((entry) => entry.NewRating), "#000", "Highest(Rate)", 3.5);
-		if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {radius: 2.5, strokeWidth: 1});
+		if (showPerformance && performances.length > 0) drawSeries(performances, "#F00", "Highest(Perf)", 2.8, {
+			radius: 2.5,
+			strokeWidth: 1
+		});
 		updateStatus(count - 1, false);
 		stageGraph.update();
 		stageStatus.update();

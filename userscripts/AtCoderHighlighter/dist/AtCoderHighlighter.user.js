@@ -55,9 +55,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -66,14 +66,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -115,6 +117,7 @@ if (!cpToolkitRetirement.replaced) {
 					memory: IS_JP ? "メモリ制限の色" : "Memory Limit Color",
 				},
 			};
+
 			function normalizeHexColor(input) {
 				if (typeof input !== "string") return null;
 				const value = input.trim();
@@ -125,6 +128,7 @@ if (!cpToolkitRetirement.replaced) {
 				if (/^#[0-9a-fA-F]{6}$/.test(value) || /^#[0-9a-fA-F]{8}$/.test(value)) return value;
 				return null;
 			}
+
 			function normalizeColor(input) {
 				if (typeof input !== "string") return null;
 				const trimmed = input.trim();
@@ -133,6 +137,7 @@ if (!cpToolkitRetirement.replaced) {
 				if (/^(rgb|rgba|hsl|hsla)\([^)]*\)$/.test(trimmed)) return trimmed;
 				return null;
 			}
+
 			function readColors() {
 				if (typeof GM_getValue !== "function") return Object.assign({}, DEFAULT_COLORS);
 				return {
@@ -142,10 +147,12 @@ if (!cpToolkitRetirement.replaced) {
 					memory: GM_getValue("memoryLimitColor", DEFAULT_COLORS.memory),
 				};
 			}
+
 			function writeColor(key, value) {
 				if (typeof GM_setValue !== "function") return;
 				GM_setValue(key, value);
 			}
+
 			function injectStyles() {
 				const existingStyle = document.getElementById("atcoder-highlighter-style");
 				if (existingStyle) existingStyle.remove();
@@ -183,6 +190,7 @@ if (!cpToolkitRetirement.replaced) {
 		`;
 				(document.head || document.documentElement).appendChild(style);
 			}
+
 			function markTargetSections(root = document) {
 				const sections = (root || document).querySelectorAll("#task-statement section");
 				sections.forEach((sec) => {
@@ -194,10 +202,12 @@ if (!cpToolkitRetirement.replaced) {
 					}
 				});
 			}
+
 			function isPureNumber(text) {
 				if (text === null) return false;
 				return NUM_PURE.test(text.trim());
 			}
+
 			function highlightKaTeXNumbers(scope) {
 				const elements = scope.querySelectorAll(".katex .mord, .katex .text, .katex .mord.text");
 				elements.forEach((el) => {
@@ -208,6 +218,7 @@ if (!cpToolkitRetirement.replaced) {
 					}
 				});
 			}
+
 			function highlightTextNumbers(scope) {
 				const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
 					acceptNode: function (node) {
@@ -262,6 +273,7 @@ if (!cpToolkitRetirement.replaced) {
 					node.parentNode?.replaceChild(fragment, node);
 				});
 			}
+
 			function highlightNumbers() {
 				const scopes = document.querySelectorAll(".target-scope");
 				scopes.forEach((scope) => {
@@ -269,6 +281,7 @@ if (!cpToolkitRetirement.replaced) {
 					highlightTextNumbers(scope);
 				});
 			}
+
 			function wrapLimitValue(element, keyword, className, options = {}) {
 				const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
 					acceptNode: function (node) {
@@ -335,17 +348,18 @@ if (!cpToolkitRetirement.replaced) {
 					if (node.parentNode) node.parentNode.replaceChild(fragment, node);
 				});
 			}
+
 			function emphasizeLimits() {
 				const root = document.getElementById("main-container") || document.body;
 				if (!root) return;
 				const configs = [
-					{ keywords: TIME_LIMIT_KEYWORDS, cls: "time-limit-value", numCls: "time-limit-value-number" },
-					{ keywords: MEMORY_LIMIT_KEYWORDS, cls: "memory-limit-value", numCls: "memory-limit-value-number" },
+					{keywords: TIME_LIMIT_KEYWORDS, cls: "time-limit-value", numCls: "time-limit-value-number"},
+					{keywords: MEMORY_LIMIT_KEYWORDS, cls: "memory-limit-value", numCls: "memory-limit-value-number"},
 				];
 				const candidates = root.querySelectorAll("p, dt, dd, th, td, div, li");
 				candidates.forEach((el) => {
 					const text = el.textContent || "";
-					configs.forEach(({ keywords, cls, numCls }) => {
+					configs.forEach(({keywords, cls, numCls}) => {
 						if (keywords.some((kw) => text.includes(kw)) && !el.querySelector(`.${numCls}`)) {
 							keywords.forEach((kw) =>
 								wrapLimitValue(el, kw, cls, {
@@ -357,7 +371,9 @@ if (!cpToolkitRetirement.replaced) {
 					});
 				});
 			}
+
 			let scheduled = false;
+
 			function scheduleHighlight() {
 				if (scheduled) return;
 				scheduled = true;
@@ -369,21 +385,23 @@ if (!cpToolkitRetirement.replaced) {
 					emphasizeLimits();
 				}, 100);
 			}
+
 			function resetStyles() {
 				const style = document.getElementById("atcoder-highlighter-style");
 				if (style) style.remove();
 				injectStyles();
 				scheduleHighlight();
 			}
+
 			function registerMenu() {
 				if (typeof GM_registerMenuCommand !== "function") return;
 				const menuItems = [
-					{ label: MSG.labels.num, key: "numColor", prop: "num" },
-					{ label: MSG.labels.var, key: "varColor", prop: "var" },
-					{ label: MSG.labels.time, key: "timeLimitColor", prop: "time" },
-					{ label: MSG.labels.memory, key: "memoryLimitColor", prop: "memory" },
+					{label: MSG.labels.num, key: "numColor", prop: "num"},
+					{label: MSG.labels.var, key: "varColor", prop: "var"},
+					{label: MSG.labels.time, key: "timeLimitColor", prop: "time"},
+					{label: MSG.labels.memory, key: "memoryLimitColor", prop: "memory"},
 				];
-				menuItems.forEach(({ label, key, prop }) => {
+				menuItems.forEach(({label, key, prop}) => {
 					GM_registerMenuCommand(`Highlighter: ${label}`, () => {
 						const current = readColors();
 						const next = prompt(`${label}${MSG.prompt}`, current[prop]);
@@ -395,12 +413,14 @@ if (!cpToolkitRetirement.replaced) {
 					});
 				});
 			}
+
 			function observeTaskStatement() {
 				const target = document.getElementById("task-statement") || document.body;
 				if (!target) return;
 				const observer = new MutationObserver(() => scheduleHighlight());
-				observer.observe(target, { childList: true, subtree: true, characterData: true });
+				observer.observe(target, {childList: true, subtree: true, characterData: true});
 			}
+
 			scheduleHighlight();
 			observeTaskStatement();
 			registerMenu();

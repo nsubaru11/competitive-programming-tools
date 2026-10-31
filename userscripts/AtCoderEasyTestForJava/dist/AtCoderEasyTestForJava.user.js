@@ -67,9 +67,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -78,14 +78,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -106,6 +108,7 @@ if (!cpToolkitRetirement.replaced) {
 		function sleep(ms) {
 			return new Promise((resolve) => setTimeout(resolve, ms));
 		}
+
 		// ../shared/src/query.ts
 		function buildQueryString(data) {
 			const params = new URLSearchParams();
@@ -115,12 +118,14 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return params.toString();
 		}
+
 		// ../shared/src/easy-test-judge.ts
 		var FLOAT_PATTERN = /^[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?$/;
-		function evaluateEasyTestOutput(runResult, expectedOutput, options = { trim: true, split: true }) {
+
+		function evaluateEasyTestOutput(runResult, expectedOutput, options = {trim: true, split: true}) {
 			const status = runResult.status;
 			if (status !== "OK" || typeof expectedOutput !== "string") {
-				return { status, output: runResult.output || "", expectedOutput };
+				return {status, output: runResult.output || "", expectedOutput};
 			}
 			let output = runResult.output || "";
 			let expected = expectedOutput;
@@ -154,8 +159,9 @@ if (!cpToolkitRetirement.replaced) {
 				};
 			}
 			const judgedStatus = equals(output, expected) ? "AC" : "WA";
-			return { status: judgedStatus, output, expectedOutput: expected };
+			return {status: judgedStatus, output, expectedOutput: expected};
 		}
+
 		// ../shared/src/json.ts
 		function safeJsonParse(text, fallback) {
 			if (typeof text !== "string") return fallback;
@@ -165,16 +171,20 @@ if (!cpToolkitRetirement.replaced) {
 				return fallback;
 			}
 		}
+
 		// ../shared/src/local-runner.ts
 		function isHttpUrl(value) {
 			return /^https?:\/\//.test(value);
 		}
+
 		function buildLocalRunnerKey(info) {
 			return `${info.language} ${info.compilerName} ${info.label}`;
 		}
+
 		function buildLocalRunnerListRequest() {
-			return { mode: "list" };
+			return {mode: "list"};
 		}
+
 		function buildLocalRunnerPrepareRequest(
 			sourceCode,
 			debug = false,
@@ -182,8 +192,9 @@ if (!cpToolkitRetirement.replaced) {
 			validate = false,
 			header = false,
 		) {
-			return { mode: "prepare", sourceCode, debug, autoImport, validate, header };
+			return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
 		}
+
 		function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
 			return {
 				mode: "run",
@@ -193,6 +204,7 @@ if (!cpToolkitRetirement.replaced) {
 				prepared,
 			};
 		}
+
 		function buildLocalRunnerProgramRunRequest(programId, stdin, compilerName) {
 			return {
 				mode: "run",
@@ -201,6 +213,7 @@ if (!cpToolkitRetirement.replaced) {
 				stdin,
 			};
 		}
+
 		function toEasyTestStatus(status, exitCode = 0) {
 			switch (status) {
 				case "success":
@@ -217,6 +230,7 @@ if (!cpToolkitRetirement.replaced) {
 					return "IE";
 			}
 		}
+
 		// AtCoderEasyTestForJava/src/main.ts
 		(function () {
 			const STORAGE_KEY = "AtCoderEasyTest";
@@ -228,13 +242,15 @@ if (!cpToolkitRetirement.replaced) {
 				const persist = () => {
 					try {
 						localStorage[STORAGE_KEY] = JSON.stringify(storage);
-					} catch (_e) {}
+					} catch (_e) {
+					}
 				};
 				GM_getValue = (key, defaultValue = null) => (key in storage ? storage[key] : defaultValue);
 				GM_setValue = (key, value) => {
 					storage[key] = value;
 					persist();
-					if (hasAsyncGM) Promise.resolve(GM.setValue(key, value)).catch(() => {});
+					if (hasAsyncGM) Promise.resolve(GM.setValue(key, value)).catch(() => {
+					});
 				};
 				if (hasAsyncGM && !("config" in storage)) {
 					Promise.resolve(GM.getValue("config"))
@@ -244,16 +260,19 @@ if (!cpToolkitRetirement.replaced) {
 								persist();
 							}
 						})
-						.catch(() => {});
+						.catch(() => {
+						});
 				}
 			}
 			if (typeof unsafeWindow !== "object") unsafeWindow = window;
+
 			function doneOrFail(p) {
 				return p.then(
 					() => Promise.resolve(),
 					() => Promise.resolve(),
 				);
 			}
+
 			function html2element(html) {
 				const template = document.createElement("template");
 				template.innerHTML = html;
@@ -261,9 +280,10 @@ if (!cpToolkitRetirement.replaced) {
 				if (!element) throw new Error("html2element: empty HTML");
 				return element;
 			}
+
 			function newElement(tagName, attrs = {}, children = []) {
 				const e = document.createElement(tagName);
-				const { style, ...rest } = attrs;
+				const {style, ...rest} = attrs;
 				Object.assign(e, rest);
 				if (style && typeof style === "object") Object.assign(e.style, style);
 				for (const child of children) {
@@ -271,6 +291,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 				return e;
 			}
+
 			function uuid() {
 				const hex = "0123456789abcdef";
 				const yChars = "89ab";
@@ -278,6 +299,7 @@ if (!cpToolkitRetirement.replaced) {
 					c === "x" ? hex[(Math.random() * 16) | 0] : yChars[(Math.random() * 4) | 0],
 				);
 			}
+
 			async function loadScript(src, ctx = null, env = {}) {
 				const js = await fetch(src).then((res) => res.text());
 				const keys = [];
@@ -288,6 +310,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 				globalThis.Function(keys.join(), js).apply(ctx, values);
 			}
+
 			const eventListeners = new Map();
 			const events = {
 				on(name, listener) {
@@ -311,25 +334,31 @@ if (!cpToolkitRetirement.replaced) {
 
 			class ObservableValue {
 				_listeners;
+
 				constructor(value) {
 					this._value = value;
 					this._listeners = new Set();
 				}
+
 				_value;
 				get value() {
 					return this._value;
 				}
+
 				set value(value) {
 					this._value = value;
 					for (const listener of this._listeners) listener(value);
 				}
+
 				addListener(listener) {
 					this._listeners.add(listener);
 					listener(this._value);
 				}
+
 				removeListener(listener) {
 					this._listeners.delete(listener);
 				}
+
 				map(f) {
 					const y = new ObservableValue(f(this.value));
 					this.addListener((x) => {
@@ -338,6 +367,7 @@ if (!cpToolkitRetirement.replaced) {
 					return y;
 				}
 			}
+
 			const hPage = `<!DOCTYPE html>
 <html>
   <head>
@@ -356,7 +386,7 @@ if (!cpToolkitRetirement.replaced) {
 			const components = [];
 			const settings = {
 				add(title, generator) {
-					components.push({ title, generator });
+					components.push({title, generator});
 				},
 				open() {
 					const win = window.open("about:blank");
@@ -367,10 +397,10 @@ if (!cpToolkitRetirement.replaced) {
 					doc.close();
 					const root = doc.getElementById("root");
 					if (!root) throw new Error("Settings root element was not found.");
-					for (const { title, generator } of components) {
-						const panel = newElement("div", { className: "panel panel-default" }, [
-							newElement("div", { className: "panel-heading", textContent: title }),
-							newElement("div", { className: "panel-body" }, [generator(win)]),
+					for (const {title, generator} of components) {
+						const panel = newElement("div", {className: "panel panel-default"}, [
+							newElement("div", {className: "panel-heading", textContent: title}),
+							newElement("div", {className: "panel-body"}, [generator(win)]),
 						]);
 						root.appendChild(panel);
 					}
@@ -378,14 +408,18 @@ if (!cpToolkitRetirement.replaced) {
 			};
 			const options = [];
 			let data = {};
+
 			function toString() {
 				return JSON.stringify(data);
 			}
+
 			function save() {
 				try {
 					GM_setValue("config", toString());
-				} catch (_e) {}
+				} catch (_e) {
+				}
 			}
+
 			function load() {
 				const raw = GM_getValue("config");
 				if (raw && typeof raw === "object") {
@@ -395,22 +429,24 @@ if (!cpToolkitRetirement.replaced) {
 				const parsed = safeJsonParse(typeof raw === "string" ? raw : null, {});
 				data = parsed && typeof parsed === "object" ? parsed : {};
 			}
+
 			function reset() {
 				data = {};
 				save();
 			}
+
 			load();
 			settings.add("config", (win) => {
-				const root = newElement("form", { className: "form-horizontal" });
+				const root = newElement("form", {className: "form-horizontal"});
 				options.sort((a, b) => {
 					const x = a.key.split(".");
 					const y = b.key.split(".");
 					return x < y ? -1 : x > y ? 1 : 0;
 				});
-				for (const { type, key, defaultValue, description } of options) {
+				for (const {type, key, defaultValue, description} of options) {
 					const id = uuid();
-					const control = newElement("div", { className: "col-sm-3 text-center" });
-					const group = newElement("div", { className: "form-group" }, [
+					const control = newElement("div", {className: "col-sm-3 text-center"});
+					const group = newElement("div", {className: "form-group"}, [
 						control,
 						newElement("label", {
 							className: "col-sm-3",
@@ -604,26 +640,26 @@ if (!cpToolkitRetirement.replaced) {
 				},
 				save(savePath, code) {
 					const data2 = codeSaver.get();
-					const idx = data2.findIndex(({ path }) => path === savePath);
+					const idx = data2.findIndex(({path}) => path === savePath);
 					if (idx !== -1) data2.splice(idx, 1);
-					data2.push({ path: savePath, code });
+					data2.push({path: savePath, code});
 					while (data2.length > config.get("codeSaver.limit", 10)) data2.shift();
 					codeSaver.set(data2);
 				},
 				restore(savedPath) {
 					const data2 = codeSaver.get();
-					const idx = data2.findIndex(({ path }) => path === savedPath);
+					const idx = data2.findIndex(({path}) => path === savedPath);
 					if (idx === -1 || !(data2[idx] instanceof Object))
 						return Promise.reject(`No saved code found for ${location.pathname}`);
 					return Promise.resolve(data2[idx].code);
 				},
 			};
 			settings.add(`codeSaver (${location.host})`, (_win) => {
-				const root = newElement("table", { className: "table" }, [
+				const root = newElement("table", {className: "table"}, [
 					newElement("thead", {}, [
 						newElement("tr", {}, [
-							newElement("th", { textContent: "path" }),
-							newElement("th", { textContent: "code" }),
+							newElement("th", {textContent: "path"}),
+							newElement("th", {textContent: "code"}),
 						]),
 					]),
 					newElement("tbody"),
@@ -631,7 +667,7 @@ if (!cpToolkitRetirement.replaced) {
 				for (const savedCode of codeSaver.get()) {
 					root.tBodies[0].appendChild(
 						newElement("tr", {}, [
-							newElement("td", { textContent: savedCode.path }),
+							newElement("td", {textContent: savedCode.path}),
 							newElement("td", {}, [
 								newElement("textarea", {
 									rows: 1,
@@ -644,6 +680,7 @@ if (!cpToolkitRetirement.replaced) {
 				}
 				return root;
 			});
+
 			function similarLangs(targetLang, candidateLangs) {
 				const [targetName, targetDetail = ""] = targetLang.split(" ", 2);
 				const selectedLangs = [];
@@ -658,6 +695,7 @@ if (!cpToolkitRetirement.replaced) {
 				selectedLangs.sort((a, b) => a[1] - b[1]);
 				return selectedLangs.map(([lang]) => lang);
 			}
+
 			function similarity(s, t) {
 				const n = s.length,
 					m = t.length;
@@ -679,15 +717,18 @@ if (!cpToolkitRetirement.replaced) {
 				constructor(label, site2) {
 					this._label = `${label} [${site2}]`;
 				}
+
 				_label;
 				get label() {
 					return this._label;
 				}
+
 				async run(_sourceCode, input, _options = {}) {
-					return { status: "IE", input };
+					return {status: "IE", input};
 				}
+
 				async test(sourceCode, input, expectedOutput, options2) {
-					let result = { status: "IE", input };
+					let result = {status: "IE", input};
 					try {
 						result = await this.run(sourceCode, input, options2);
 					} catch (e) {
@@ -715,11 +756,13 @@ if (!cpToolkitRetirement.replaced) {
 
 			class CustomRunner extends CodeRunner {
 				run;
+
 				constructor(label, run) {
 					super(label, "Browser");
 					this.run = run;
 				}
 			}
+
 			let waitAtCoderCustomTest = Promise.resolve();
 			const AtCoderCustomTestBase = location.href.replace(/\/tasks\/.+$/, "/custom_test");
 			const AtCoderCustomTestResultAPI = AtCoderCustomTestBase + "/json?reload=true";
@@ -728,15 +771,18 @@ if (!cpToolkitRetirement.replaced) {
 
 			class AtCoderRunner extends CodeRunner {
 				languageId;
+
 				constructor(languageId, label) {
 					super(label, "AtCoder");
 					this.languageId = languageId;
 				}
+
 				async run(sourceCode, input, options2 = {}) {
 					const promise = this.submit(sourceCode, input, options2);
 					waitAtCoderCustomTest = promise;
 					return await promise;
 				}
+
 				async submit(sourceCode, input, options2 = {}) {
 					try {
 						await waitAtCoderCustomTest;
@@ -810,24 +856,26 @@ if (!cpToolkitRetirement.replaced) {
 
 			class PaizaIORunner extends CodeRunner {
 				name;
+
 				constructor(name, label) {
 					super(label, "PaizaIO");
 					this.name = name;
 				}
+
 				async run(sourceCode, input, _options = {}) {
 					let id;
 					let status;
 					try {
 						const res2 = await fetch(
 							"https://api.paiza.io/runners/create?" +
-								buildQueryString({
-									source_code: sourceCode,
-									language: this.name,
-									input,
-									longpoll: "true",
-									longpoll_timeout: "10",
-									api_key: "guest",
-								}),
+							buildQueryString({
+								source_code: sourceCode,
+								language: this.name,
+								input,
+								longpoll: "true",
+								longpoll_timeout: "10",
+								api_key: "guest",
+							}),
 							{
 								method: "POST",
 								mode: "cors",
@@ -845,10 +893,10 @@ if (!cpToolkitRetirement.replaced) {
 					while (status === "running") {
 						const res2 = await fetch(
 							"https://api.paiza.io/runners/get_status?" +
-								buildQueryString({
-									id,
-									api_key: "guest",
-								}),
+							buildQueryString({
+								id,
+								api_key: "guest",
+							}),
 							{
 								mode: "cors",
 							},
@@ -857,10 +905,10 @@ if (!cpToolkitRetirement.replaced) {
 					}
 					const res = await fetch(
 						"https://api.paiza.io/runners/get_details?" +
-							buildQueryString({
-								id,
-								api_key: "guest",
-							}),
+						buildQueryString({
+							id,
+							api_key: "guest",
+						}),
 						{
 							mode: "cors",
 						},
@@ -886,6 +934,7 @@ if (!cpToolkitRetirement.replaced) {
 					return result;
 				}
 			}
+
 			async function loadPyodide() {
 				const script = await fetch("https://cdn.jsdelivr.net/pyodide/v0.24.0/full/pyodide.js").then((res) =>
 					res.text(),
@@ -902,6 +951,7 @@ class __redirect_stdin(contextlib._RedirectStream):
 `);
 				return pyodide;
 			}
+
 			let _pyodide = Promise.reject("Pyodide is not yet loaded");
 			let _serial = Promise.resolve();
 			const pyodideRunner = new CustomRunner(
@@ -968,12 +1018,14 @@ def __run():
 						});
 					}),
 			);
+
 			function pairs(list) {
 				const pairs2 = [];
 				const len = list.length >> 1;
 				for (let i = 0; i < len; i++) pairs2.push([list[i * 2], list[i * 2 + 1]]);
 				return pairs2;
 			}
+
 			async function init$5() {
 				if (location.host !== "atcoder.jp") throw "Not AtCoder";
 				const doc = unsafeWindow.document;
@@ -1271,11 +1323,13 @@ def __run():
 				const isTestCasesHere = /^\/contests\/[^\/]+\/tasks\//.test(location.pathname);
 				const taskSelector = doc.querySelector("#select-task");
 				let warnedTestCasesNotLoaded = false;
+
 				function getTaskURI() {
 					if (taskSelector)
 						return `${location.origin}/contests/${unsafeWindow.contestScreenName}/tasks/${taskSelector.value}`;
 					return `${location.origin}${location.pathname}`;
 				}
+
 				const testcasesCache = {};
 				let activeTestcaseFetchController = null;
 				if (taskSelector) {
@@ -1292,14 +1346,14 @@ def __run():
 						log.debug("Fetching test cases:", taskURI);
 						const promise = fetchTestCases(taskURI, controller.signal)
 							.then((testcases) => {
-								testcasesCache[taskURI] = { testcases, state: "loaded" };
+								testcasesCache[taskURI] = {testcases, state: "loaded"};
 							})
 							.catch((e) => {
 								if (e && e.name === "AbortError") {
-									testcasesCache[taskURI] = { state: "error", error: "aborted" };
+									testcasesCache[taskURI] = {state: "error", error: "aborted"};
 									return;
 								}
-								testcasesCache[taskURI] = { state: "error", error: e };
+								testcasesCache[taskURI] = {state: "error", error: e};
 								log.warn("Failed to fetch test cases:", taskURI, e);
 							})
 							.finally(() => {
@@ -1307,18 +1361,20 @@ def __run():
 									activeTestcaseFetchController = null;
 								}
 							});
-						testcasesCache[taskURI] = { state: "loading", promise, controller };
+						testcasesCache[taskURI] = {state: "loading", promise, controller};
 					};
 					unsafeWindow.$("#select-task").change(doFetchTestCases);
 					doFetchTestCases();
 				}
+
 				async function fetchTestCases(taskUrl, signal = undefined) {
-					const res = await fetch(taskUrl, { signal, credentials: "include" });
+					const res = await fetch(taskUrl, {signal, credentials: "include"});
 					if (!res.ok) throw new Error(`Failed to fetch task page: ${res.status} ${res.statusText}`);
 					const html = await res.text();
 					const taskDoc = new DOMParser().parseFromString(html, "text/html");
 					return getTestCases(taskDoc);
 				}
+
 				function getTestCases(doc2) {
 					const selectors = [
 						["#task-statement p+pre.literal-block", ".section"],
@@ -1368,6 +1424,7 @@ def __run():
 					}
 					return [];
 				}
+
 				return {
 					name: "AtCoder",
 					language,
@@ -1414,7 +1471,7 @@ def __run():
 							return testcasesCache[taskURI].testcases;
 						if (isTestCasesHere) {
 							const testcases = getTestCases(doc);
-							testcasesCache[taskURI] = { testcases, state: "loaded" };
+							testcasesCache[taskURI] = {testcases, state: "loaded"};
 							return testcases;
 						} else {
 							if (!warnedTestCasesNotLoaded) {
@@ -1434,6 +1491,7 @@ def __run():
 					},
 				};
 			}
+
 			async function init$4() {
 				if (location.host !== "yukicoder.me") throw "Not yukicoder";
 				const $ = unsafeWindow.$;
@@ -1492,7 +1550,7 @@ def __run():
 				};
 				for (const btnCopyInput of doc.querySelectorAll(".copy-sample-input")) {
 					btnCopyInput.parentElement?.insertBefore(
-						newElement("span", { className: "atcoder-easy-test-anchor" }),
+						newElement("span", {className: "atcoder-easy-test-anchor"}),
 						btnCopyInput,
 					);
 				}
@@ -1557,18 +1615,24 @@ def __run():
 					this._element.style.width = "100%";
 					this._element.style.minHeight = "5em";
 				}
+
 				_element;
 				get element() {
 					return this._element;
 				}
+
 				get sourceCode() {
 					return this._element.value;
 				}
+
 				set sourceCode(sourceCode) {
 					this._element.value = sourceCode;
 				}
-				setLanguage(_lang) {}
+
+				setLanguage(_lang) {
+				}
 			}
+
 			const langMap = {
 				3: "Delphi 7",
 				4: "Pascal Free Pascal 3.0.2",
@@ -1611,6 +1675,7 @@ def __run():
 				91: "GNU G++23 14.2 (64 bit, msys2)",
 			};
 			config.registerFlag("site.codeforces.showEditor", true, "Show Editor in Codeforces Problem Page");
+
 			async function init$3() {
 				if (location.host !== "codeforces.com") throw "not Codeforces";
 				const doc = unsafeWindow.document;
@@ -1681,7 +1746,8 @@ def __run():
 							set sourceCode(sourceCode) {
 								aceEditor.setValue(sourceCode);
 							},
-							setLanguage(_lang) {},
+							setLanguage(_lang) {
+							},
 						};
 						const buttonContainer = doc.querySelector(".submit-form .submit").parentElement;
 						if (!buttonContainer) throw new Error("Codeforces button container was not found.");
@@ -1724,7 +1790,7 @@ def __run():
 					},
 					set sourceCode(sourceCode) {
 						const container = new DataTransfer();
-						container.items.add(new File([sourceCode], "prog.txt", { type: "text/plain" }));
+						container.items.add(new File([sourceCode], "prog.txt", {type: "text/plain"}));
 						const eFile2 = doc.querySelector(".submitForm").elements.namedItem("sourceFile");
 						eFile2.files = container.files;
 						_sourceCode = sourceCode;
@@ -1791,11 +1857,13 @@ def __run():
 					},
 				};
 			}
+
 			config.registerFlag(
 				"site.codeforcesMobile.showEditor",
 				true,
 				"Show Editor in Mobile Codeforces (m[1-3].codeforces.com) Problem Page",
 			);
+
 			async function init$2() {
 				if (!/^m[1-3]\.codeforces\.com$/.test(location.host)) throw "not Codeforces Mobile";
 				const url = /\/contest\/(\d+)\/problem\/([^/]+)/.exec(location.pathname);
@@ -1813,9 +1881,11 @@ def __run():
 				);
 				await loadScript("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js");
 				const language = new ObservableValue("");
-				let submit = () => {};
+				let submit = () => {
+				};
 				let getSourceCode = () => "";
-				let setSourceCode = (_sourceCode) => {};
+				let setSourceCode = (_sourceCode) => {
+				};
 				if (config.get("site.codeforcesMobile.showEditor", true)) {
 					const frame = newElement("iframe", {
 						src: `/contest/${contestId}/submit`,
@@ -1899,6 +1969,7 @@ def __run():
 					},
 				};
 			}
+
 			async function init$1() {
 				if (location.host !== "greasyfork.org" && !location.href.match(/433152-atcoder-easy-test-v2/))
 					throw "Not about page";
@@ -1923,8 +1994,10 @@ def __run():
 					get sourceCode() {
 						return "";
 					},
-					set sourceCode(_sourceCode) {},
-					submit() {},
+					set sourceCode(_sourceCode) {
+					},
+					submit() {
+					},
 					get testButtonContainer() {
 						return e;
 					},
@@ -1948,6 +2021,7 @@ def __run():
 					},
 				};
 			}
+
 			const inits = [init$1()];
 			config.registerFlag("site.atcoder", true, "Use AtCoder Easy Test in AtCoder");
 			if (config.get("site.atcoder", true)) inits.push(init$5());
@@ -1971,15 +2045,18 @@ def __run():
 			class WandboxRunner extends CodeRunner {
 				name;
 				options;
+
 				constructor(name, label, options2 = {}) {
 					super(label, "Wandbox");
 					this.name = name;
 					this.options = options2;
 				}
+
 				getOptions(sourceCode, input) {
 					if (typeof this.options === "function") return this.options(sourceCode, input);
 					return this.options;
 				}
+
 				run(sourceCode, input, options2 = {}) {
 					return this.request(
 						Object.assign(
@@ -1992,6 +2069,7 @@ def __run():
 						),
 					);
 				}
+
 				async request(body) {
 					const startTime = Date.now();
 					let res;
@@ -2065,7 +2143,7 @@ def __run():
 					await includeHeader(sourceCode);
 					const codes = [];
 					for (const [file, code] of files) {
-						codes.push({ file, code });
+						codes.push({file, code});
 					}
 					return await this.request(
 						Object.assign(
@@ -2080,13 +2158,15 @@ def __run():
 					);
 				}
 			}
+
 			config.registerCount(
 				"wandboxAPI.cacheLifetime",
 				24 * 60 * 60 * 1000,
 				"lifetime [ms] of Wandbox compiler list cache",
 			);
+
 			async function fetchWandboxCompilers() {
-				const cached = config.get("wandboxAPI.cachedCompilerList", { value: null, lastModified: -Infinity });
+				const cached = config.get("wandboxAPI.cachedCompilerList", {value: null, lastModified: -Infinity});
 				if (
 					Array.isArray(cached.value) &&
 					Date.now() - cached.lastModified <= config.get("wandboxAPI.cacheLifetime", 24 * 60 * 60 * 1000)
@@ -2098,13 +2178,15 @@ def __run():
 				if (!Array.isArray(compilers)) {
 					throw new Error("Wandbox compiler list is not a JSON array.");
 				}
-				config.set("wandboxAPI.cachedCompilerList", { value: compilers, lastModified: Date.now() });
+				config.set("wandboxAPI.cachedCompilerList", {value: compilers, lastModified: Date.now()});
 				config.save();
 				return compilers;
 			}
+
 			function getOptimizationOption(compiler) {
 				return compiler.switches.find((sw) => sw["display-name"] === "Optimization")?.name;
 			}
+
 			function toRunner(compiler) {
 				const optimizationOption = getOptimizationOption(compiler);
 				if (compiler.language === "C++") {
@@ -2118,14 +2200,17 @@ def __run():
 					});
 				}
 			}
+
 			let runners$1 = {};
 			const currentLocalRunners = [];
 			let localRunnerCacheURL = "";
 			let localRunnerCacheSignature = "";
 			let preparedLocalProgram = null;
+
 			function clearPreparedLocalProgram(sourceCode) {
 				if (!sourceCode || preparedLocalProgram?.sourceCode === sourceCode) preparedLocalProgram = null;
 			}
+
 			function prepareLocalProgram(apiURL, sourceCode) {
 				if (preparedLocalProgram?.apiURL === apiURL && preparedLocalProgram.sourceCode === sourceCode) {
 					return preparedLocalProgram.promise;
@@ -2133,13 +2218,13 @@ def __run():
 				const promise = fetch(apiURL, {
 					method: "POST",
 					mode: "cors",
-					headers: { "Content-Type": "application/json" },
+					headers: {"Content-Type": "application/json"},
 					body: JSON.stringify(buildLocalRunnerPrepareRequest(sourceCode, true, true, false)),
 				}).then(async (response) => {
 					if (!response.ok) throw new Error(`LocalRunner prepare failed: ${response.status}`);
 					return await response.json();
 				});
-				preparedLocalProgram = { apiURL, sourceCode, promise };
+				preparedLocalProgram = {apiURL, sourceCode, promise};
 				promise.catch(() => {
 					if (preparedLocalProgram?.promise === promise) preparedLocalProgram = null;
 				});
@@ -2148,13 +2233,16 @@ def __run():
 
 			class LocalRunner extends CodeRunner {
 				compilerName;
+
 				constructor(compilerName, label) {
 					super(label, "Local");
 					this.compilerName = compilerName;
 				}
+
 				static setRunners(_runners) {
 					runners$1 = _runners;
 				}
+
 				static async update() {
 					const apiURL = config.getString("codeRunner.localRunnerURL", "");
 					if (!apiURL) {
@@ -2182,11 +2270,11 @@ def __run():
 							body: JSON.stringify(buildLocalRunnerListRequest()),
 						}).then((r) => r.json());
 						const nextEntries = [];
-						for (const { compilerName, label, ...info } of res) {
-							const key = buildLocalRunnerKey({ compilerName, label, ...info });
-							nextEntries.push({ key, compilerName, label });
+						for (const {compilerName, label, ...info} of res) {
+							const key = buildLocalRunnerKey({compilerName, label, ...info});
+							nextEntries.push({key, compilerName, label});
 						}
-						const nextSignature = nextEntries.map(({ key }) => key).join(`
+						const nextSignature = nextEntries.map(({key}) => key).join(`
 `);
 						if (localRunnerCacheURL === apiURL && localRunnerCacheSignature === nextSignature) {
 							return false;
@@ -2195,7 +2283,7 @@ def __run():
 							delete runners$1[key];
 						}
 						currentLocalRunners.length = 0;
-						for (const { key, compilerName, label } of nextEntries) {
+						for (const {key, compilerName, label} of nextEntries) {
 							runners$1[key] = new LocalRunner(compilerName, label);
 							currentLocalRunners.push(key);
 						}
@@ -2207,6 +2295,7 @@ def __run():
 						return false;
 					}
 				}
+
 				async run(sourceCode, input, _options = {}) {
 					const apiURL = config.getString("codeRunner.localRunnerURL", "");
 					if (!isHttpUrl(apiURL)) {
@@ -2217,7 +2306,7 @@ def __run():
 						fetch(apiURL, {
 							method: "POST",
 							mode: "cors",
-							headers: { "Content-Type": "application/json" },
+							headers: {"Content-Type": "application/json"},
 							body: JSON.stringify(buildLocalRunnerRunRequest(sourceCode, input, this.compilerName)),
 						}).then((r) => r.json());
 					try {
@@ -2233,7 +2322,7 @@ def __run():
 							fetch(apiURL, {
 								method: "POST",
 								mode: "cors",
-								headers: { "Content-Type": "application/json" },
+								headers: {"Content-Type": "application/json"},
 								body: JSON.stringify(
 									buildLocalRunnerProgramRunRequest(programId, input, this.compilerName),
 								),
@@ -2256,10 +2345,10 @@ def __run():
 							try {
 								res = await runLegacy();
 							} catch (legacyError) {
-								return { status: "IE", input, error: String(legacyError) };
+								return {status: "IE", input, error: String(legacyError)};
 							}
 						} else {
-							return { status: "IE", input, error: String(error) };
+							return {status: "IE", input, error: String(error)};
 						}
 					}
 					return {
@@ -2273,6 +2362,7 @@ def __run():
 					};
 				}
 			}
+
 			const runners = {
 				"C C17 Clang paiza.io": new PaizaIORunner("c", "C (C17 / Clang)"),
 				"Python3 CPython paiza.io": new PaizaIORunner("python3", "Python3"),
@@ -2309,6 +2399,7 @@ def __run():
 				"COBOL Free OpenCOBOL 1.1.0 AtCoder": new AtCoderRunner("4061", "COBOL - Free (OpenCOBOL 1.1.0)"),
 			};
 			let wandboxPromise = null;
+
 			function ensureWandboxCompilersLoaded() {
 				if (!wandboxPromise) {
 					wandboxPromise = fetchWandboxCompilers().then((compilers) => {
@@ -2325,6 +2416,7 @@ def __run():
 				}
 				return wandboxPromise;
 			}
+
 			site.then((site2) => {
 				if (site2.name === "AtCoder") {
 					for (const [languageId, descriptor] of Object.entries(site2.langMap)) {
@@ -2351,6 +2443,7 @@ def __run():
 			let precompileTimeout = null;
 			let lastPrecompiledCode = "";
 			const PRECOMPILE_DELAY_MS = 180;
+
 			async function triggerPrecompile() {
 				try {
 					const apiURL = config.getString("codeRunner.localRunnerURL", "");
@@ -2368,11 +2461,13 @@ def __run():
 					log.error("[LocalRunner] Precompile error:", e);
 				}
 			}
+
 			function schedulePrecompile() {
 				if (!config.get("codeRunner.precompile.enable", true)) return;
 				if (precompileTimeout) clearTimeout(precompileTimeout);
 				precompileTimeout = setTimeout(triggerPrecompile, PRECOMPILE_DELAY_MS);
 			}
+
 			site.then((currentSite) => {
 				if (currentSite.name === "AtCoder") {
 					let checkCount = 0;
@@ -2435,7 +2530,7 @@ def __run():
 					}
 				},
 				async getEnvironment(languageId, options2 = {}) {
-					const { refreshLocalRunner = true } = options2;
+					const {refreshLocalRunner = true} = options2;
 					await ensureWandboxCompilersLoaded();
 					await localRunnerPromise;
 					if (refreshLocalRunner) await LocalRunner.update();
@@ -2572,6 +2667,7 @@ def __run():
   color: #333;
 }
 </style>`;
+
 			async function init() {
 				const site$1 = await site;
 				const style = html2element(hStyle$1);
@@ -2590,7 +2686,7 @@ def __run():
 						const target = event.target;
 						const pageY = event.pageY;
 						if (target.id !== "bottom-menu-tabs") return;
-						resizeStart = { y: pageY, height: bottomMenuContents.getBoundingClientRect().height };
+						resizeStart = {y: pageY, height: bottomMenuContents.getBoundingClientRect().height};
 					};
 					const onMove = (event) => {
 						if (!resizeStart) return;
@@ -2682,6 +2778,7 @@ def __run():
 				log.debug("bottomMenu OK");
 				return menuController;
 			}
+
 			const hRowTemplate = `<div class="atcoder-easy-test-cases-row alert alert-dismissible">
   <button type="button" class="close" data-dismiss="alert" aria-label="close">
     <span aria-hidden="true">×</span>
@@ -2695,6 +2792,7 @@ def __run():
 			class ResultRow {
 				_tabs;
 				_promise;
+
 				constructor(pairs2) {
 					this._tabs = pairs2.map(([_pResult, tab]) => tab);
 					this._element = html2element(hRowTemplate);
@@ -2745,19 +2843,23 @@ def __run():
 						}),
 					);
 				}
+
 				_element;
 				get element() {
 					return this._element;
 				}
+
 				onFinish(listener) {
 					this._promise.then(listener);
 				}
+
 				remove() {
 					for (const pTab of this._tabs) pTab.then((tab) => tab.close());
 					const parent = this._element.parentElement;
 					if (parent) parent.removeChild(this._element);
 				}
 			}
+
 			const hResultList = '<div class="row"></div>';
 			const eResultList = html2element(hResultList);
 			site.then((site2) => site2.resultListContainer.appendChild(eResultList));
@@ -2832,6 +2934,7 @@ def __run():
     </div>
   </div>
 </div>`;
+
 			function setClassFromData(element, name) {
 				const classes = (element.dataset[name] ?? "").split(/\s+/);
 				for (let className of classes) {
@@ -2851,25 +2954,31 @@ def __run():
 					this._element = html2element(hTabTemplate);
 					this._element.id = `atcoder-easy-test-result-${this._uid}`;
 				}
+
 				_title = "";
 				get title() {
 					return this._title;
 				}
+
 				set title(title) {
 					this._title = title;
 				}
+
 				_uid;
 				get uid() {
 					return this._uid;
 				}
+
 				_element;
 				get element() {
 					return this._element;
 				}
+
 				_result;
 				get result() {
 					return this._result;
 				}
+
 				set result(result) {
 					this._result = result;
 					if (result.status === "AC") {
@@ -2885,31 +2994,39 @@ def __run():
 					if ("output" in result) this.output = result.output;
 					if (result.error) this.error = result.error;
 				}
+
 				set input(input) {
 					this._get("input").value = input;
 				}
+
 				get inputStyle() {
 					return this._get("input").style;
 				}
+
 				set expectedOutput(output) {
 					this._get("expected-output").value = output ?? "";
 					setClassFromData(this._get("col-input"), "ifExpectedOutput");
 					setClassFromData(this._get("col-expected-output"), "ifExpectedOutput");
 				}
+
 				get expectedOutputStyle() {
 					return this._get("expected-output").style;
 				}
+
 				set output(output) {
 					this._get("output").value = output ?? "";
 				}
+
 				get outputStyle() {
 					return this._get("output").style;
 				}
+
 				set error(error) {
 					this._get("error").value = error;
 					setClassFromData(this._get("col-output"), "ifError");
 					setClassFromData(this._get("col-error"), "ifError");
 				}
+
 				set exitCode(code) {
 					const element = this._get("exit-code");
 					element.textContent = String(code ?? "");
@@ -2917,18 +3034,22 @@ def __run():
 					element.classList.toggle("bg-success", isSuccess);
 					element.classList.toggle("bg-danger", !isSuccess);
 				}
+
 				set execTime(time) {
 					this._get("exec-time").textContent = time;
 				}
+
 				set memory(memory) {
 					this._get("memory").textContent = memory;
 				}
+
 				_get(name) {
 					const element = this._element.querySelector(`.atcoder-easy-test-result-${name}`);
 					if (!element) throw new Error(`Result tab element not found: ${name}`);
 					return element;
 				}
 			}
+
 			const hRoot = `<form id="atcoder-easy-test-container" class="form-horizontal">
   <div class="row">
       <div class="col-xs-12 col-lg-8">
@@ -3073,7 +3194,7 @@ def __run():
 				unsafeWindow.atCoderEasyTest = atCoderEasyTest;
 				{
 					let runTest = function (title, input, output = null, options2 = {}) {
-							const opts = Object.assign({ trim: true, split: true }, options2);
+							const opts = Object.assign({trim: true, split: true}, options2);
 							if (eAllowableErrorCheck.checked) {
 								opts.allowableError = parseFloat(eAllowableError.value);
 							}
@@ -3089,7 +3210,7 @@ def __run():
 						runAllCases = function (testcases) {
 							const runGroupId = uuid();
 							const pairs2 = testcases.map((testcase) =>
-								runTest(testcase.title, testcase.input, testcase.output, { runGroupId }),
+								runTest(testcase.title, testcase.input, testcase.output, {runGroupId}),
 							);
 							resultList.addResult(pairs2);
 							return Promise.all(
@@ -3124,23 +3245,26 @@ def __run():
 						settings.open();
 					});
 					let latestSetLanguageToken = 0;
+
 					async function onEnvChange() {
 						const langSelection = config.get("langSelection", {});
 						langSelection[site$1.language.value] = eLanguage.value;
 						config.set("langSelection", langSelection);
 						config.save();
 					}
+
 					if (unsafeWindow.jQuery?.fn?.select2) {
 						unsafeWindow["jQuery"](eLanguage).on("change", onEnvChange);
 					} else {
 						eLanguage.addEventListener("change", onEnvChange);
 					}
+
 					async function setLanguage(refreshLocalRunner = true) {
 						const currentToken = ++latestSetLanguageToken;
 						const languageId = site$1.language.value;
 						try {
 							if (!languageId) throw new Error("AtCoder Easy Test: language not set");
-							const langs = await codeRunner.getEnvironment(languageId, { refreshLocalRunner });
+							const langs = await codeRunner.getEnvironment(languageId, {refreshLocalRunner});
 							if (currentToken !== latestSetLanguageToken) return;
 							log.debug("getEnvironment:", languageId, `(${langs.length} candidates)`);
 							const previousValue = eLanguage.value;
@@ -3199,6 +3323,7 @@ def __run():
 							events.trig("disable");
 						}
 					}
+
 					site$1.language.addListener(() => setLanguage());
 					eAllowableError.disabled = !eAllowableErrorCheck.checked;
 					eAllowableErrorCheck.addEventListener("change", () => {

@@ -108,7 +108,10 @@ export const taskDropdown = defineFeature({
 				if (category !== "other") state.set(RANGES_KEY, {...ranges, [category]: range});
 			},
 		});
-		const openAtOnce = withIcon(h("a", {href: "#", textContent: `${translate("taskDropdown.openAtOnce")}...`}), "glyphicon-sort-by-attributes-alt");
+		const openAtOnce = withIcon(h("a", {
+			href: "#",
+			textContent: `${translate("taskDropdown.openAtOnce")}...`
+		}), "glyphicon-sort-by-attributes-alt");
 		openAtOnce.addEventListener("click", (event) => {
 			event.preventDefault();
 			modal.open();

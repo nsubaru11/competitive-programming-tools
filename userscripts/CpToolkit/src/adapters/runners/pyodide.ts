@@ -36,6 +36,12 @@ class PyodideRunner implements CodeRunner {
 	constructor(private readonly scripts: ScriptLoader) {
 	}
 
+	run(sourceCode: string, input: string): Promise<RunResult> {
+		const result = this.queue.then(() => this.execute(sourceCode, input));
+		this.queue = result.catch(() => undefined);
+		return result;
+	}
+
 	private async load(): Promise<PyodideApi> {
 		const {baseUrl} = runnerCatalog.pyodide;
 		await this.scripts.loadScript(`${baseUrl}pyodide.js`);
@@ -68,12 +74,6 @@ class PyodideRunner implements CodeRunner {
 			output: pyodide.globals.get("__stdout").getvalue(),
 			error: pyodide.globals.get("__stderr").getvalue(),
 		};
-	}
-
-	run(sourceCode: string, input: string): Promise<RunResult> {
-		const result = this.queue.then(() => this.execute(sourceCode, input));
-		this.queue = result.catch(() => undefined);
-		return result;
 	}
 }
 

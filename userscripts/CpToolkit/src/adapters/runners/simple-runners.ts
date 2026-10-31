@@ -31,12 +31,6 @@ class PaizaRunner implements CodeRunner {
 		this.label = `${label} [PaizaIO]`;
 	}
 
-	private async request<T>(path: string, query: Record<string, string>, method: "GET" | "POST" = "GET"): Promise<T> {
-		const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query, api_key: "guest"})}`;
-		const response = await this.http.send({url, method});
-		return JSON.parse(response.text) as T;
-	}
-
 	async run(sourceCode: string, input: string): Promise<RunResult> {
 		let {id, status} = await this.request<PaizaCreated>("create", {
 			source_code: sourceCode,
@@ -67,6 +61,12 @@ class PaizaRunner implements CodeRunner {
 			output: details.stdout,
 			error: details.stderr,
 		};
+	}
+
+	private async request<T>(path: string, query: Record<string, string>, method: "GET" | "POST" = "GET"): Promise<T> {
+		const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query, api_key: "guest"})}`;
+		const response = await this.http.send({url, method});
+		return JSON.parse(response.text) as T;
 	}
 }
 

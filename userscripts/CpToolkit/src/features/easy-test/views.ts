@@ -147,7 +147,12 @@ export function createTestPanel(
 			allowable.disabled = !useAllowable.checked;
 		},
 	});
-	const runButton = h("button", {type: "button", className: "run-button", textContent: translate("easyTest.run"), onclick: onRun});
+	const runButton = h("button", {
+		type: "button",
+		className: "run-button",
+		textContent: translate("easyTest.run"),
+		onclick: onRun
+	});
 	const element = h(
 		"div",
 		{},

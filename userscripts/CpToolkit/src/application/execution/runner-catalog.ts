@@ -1,6 +1,12 @@
 import type {RunnerKind} from "@catalog/tables";
 import {labelDistance} from "@domain/execution/language";
-import {type JudgeLanguage, judgeResult, type RunOptions, type RunResult, type TestCase} from "@domain/execution/result";
+import {
+	type JudgeLanguage,
+	judgeResult,
+	type RunOptions,
+	type RunResult,
+	type TestCase
+} from "@domain/execution/result";
 
 export interface CodeRunner {
 	readonly id: string;

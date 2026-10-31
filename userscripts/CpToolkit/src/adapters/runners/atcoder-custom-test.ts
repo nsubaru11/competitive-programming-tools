@@ -27,6 +27,12 @@ class CustomTestQueue {
 		return location.href.replace(/\/(tasks\/.+|submit.*)$/, "/custom_test");
 	}
 
+	run(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
+		const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
+		this.last = result.catch(() => undefined);
+		return result;
+	}
+
 	private async execute(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
 		if (groupId && this.failedGroups.has(groupId)) return {status: "CE", input};
 		const submitted = await this.site.send({
@@ -65,12 +71,6 @@ class CustomTestQueue {
 			};
 		}
 		return {status: "TLE", input, error: "Custom test timed out"};
-	}
-
-	run(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
-		const result = this.last.then(() => this.execute(languageId, sourceCode, input, groupId));
-		this.last = result.catch(() => undefined);
-		return result;
 	}
 }
 

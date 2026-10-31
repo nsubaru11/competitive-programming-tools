@@ -19,6 +19,9 @@ abstract class CodeforcesSiteBase implements JudgeSite {
 	readonly id = "codeforces";
 	abstract readonly mounts: JudgeMounts;
 
+	constructor(private readonly bridge: PageBridge) {
+	}
+
 	protected abstract get languageSelect(): HTMLSelectElement | null;
 
 	abstract sourceCode(): string;
@@ -28,9 +31,6 @@ abstract class CodeforcesSiteBase implements JudgeSite {
 	abstract submit(): void;
 
 	abstract samples(): Promise<readonly SampleCase[]>;
-
-	constructor(private readonly bridge: PageBridge) {
-	}
 
 	taskUri(): string {
 		return location.href;
@@ -133,6 +133,18 @@ export class CodeforcesMobileSite extends CodeforcesSiteBase {
 		super(bridge);
 	}
 
+	get mounts(): JudgeMounts {
+		return {testButtons: this.main, sideButtons: this.main, results: this.main};
+	}
+
+	protected get languageSelect(): HTMLSelectElement | null {
+		return this.form.elements.namedItem("programTypeId") as HTMLSelectElement | null;
+	}
+
+	private get source(): HTMLTextAreaElement | null {
+		return this.form.elements.namedItem("source") as HTMLTextAreaElement | null;
+	}
+
 	static async create(bridge: PageBridge): Promise<CodeforcesMobileSite | null> {
 		const main = document.querySelector("main");
 		const url = /\/contest\/(\d+)\/problem\/([^/]+)/.exec(location.pathname);
@@ -151,18 +163,6 @@ export class CodeforcesMobileSite extends CodeforcesSiteBase {
 		}
 		main.append(form);
 		return new CodeforcesMobileSite(bridge, main, form);
-	}
-
-	get mounts(): JudgeMounts {
-		return {testButtons: this.main, sideButtons: this.main, results: this.main};
-	}
-
-	protected get languageSelect(): HTMLSelectElement | null {
-		return this.form.elements.namedItem("programTypeId") as HTMLSelectElement | null;
-	}
-
-	private get source(): HTMLTextAreaElement | null {
-		return this.form.elements.namedItem("source") as HTMLTextAreaElement | null;
 	}
 
 	sourceCode(): string {

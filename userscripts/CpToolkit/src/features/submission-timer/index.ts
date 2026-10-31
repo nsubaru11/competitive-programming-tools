@@ -19,7 +19,11 @@ export const submissionTimer = defineFeature({
 		if (!submitButton) return;
 
 		let timer: ReturnType<typeof setTimeout> | undefined;
-		const modal = createModal({title: translate("submissionTimer.title"), closeLabel: translate("settings.close"), css: formCss});
+		const modal = createModal({
+			title: translate("submissionTimer.title"),
+			closeLabel: translate("settings.close"),
+			css: formCss
+		});
 		const minutes = h("input", {type: "number", min: "1"});
 		const info = h("p");
 		const cancel = (): void => {
@@ -39,7 +43,10 @@ export const submissionTimer = defineFeature({
 			info.textContent = translate("submissionTimer.scheduled").replace("{time}", at);
 		};
 		modal.body.append(
-			h("label", {className: "field"}, h("span", {className: "field-label", textContent: translate("submissionTimer.minutes")}), minutes),
+			h("label", {className: "field"}, h("span", {
+				className: "field-label",
+				textContent: translate("submissionTimer.minutes")
+			}), minutes),
 			info,
 		);
 		modal.footer.append(

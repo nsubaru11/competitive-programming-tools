@@ -43,19 +43,6 @@ class WandboxRunner implements CodeRunner {
 		this.optimization = compiler.switches.find((item) => item["display-name"] === "Optimization")?.name;
 	}
 
-	/** C++ の AtCoder Library を、コンパイルに必要なファイルとして集める。 */
-	private async collectAclFiles(source: string, files = new Map<string, string>()): Promise<Map<string, string>> {
-		const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
-		const missing = paths.filter((path) => !files.has(path));
-		const loaded = await Promise.all(missing.map(async (path) => {
-			const response = await this.http.send({url: runnerCatalog.wandbox.aclBaseUrl + path});
-			return [path, response.text] as const;
-		}));
-		for (const [path, code] of loaded) files.set(path, code);
-		for (const [, code] of loaded) await this.collectAclFiles(code, files);
-		return files;
-	}
-
 	async run(sourceCode: string, input: string, _options: RunOptions): Promise<RunResult> {
 		const usesAcl = this.compiler.language === "C++";
 		const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map<string, string>();
@@ -69,7 +56,10 @@ class WandboxRunner implements CodeRunner {
 				code: sourceCode,
 				stdin: input,
 				options: this.optimization,
-				...(usesAcl ? {"compiler-option-raw": "-I.", codes: [...files].map(([file, code]) => ({file, code}))} : {}),
+				...(usesAcl ? {
+					"compiler-option-raw": "-I.",
+					codes: [...files].map(([file, code]) => ({file, code}))
+				} : {}),
 			}),
 		});
 		const execTime = Date.now() - startedAt;
@@ -86,10 +76,30 @@ class WandboxRunner implements CodeRunner {
 			error: (body.compiler_error ?? "") + error,
 		};
 	}
+
+	/** C++ の AtCoder Library を、コンパイルに必要なファイルとして集める。 */
+	private async collectAclFiles(source: string, files = new Map<string, string>()): Promise<Map<string, string>> {
+		const paths = [...source.matchAll(ACL_INCLUDE_PATTERN)].map((match) => `atcoder/${match[1]}`);
+		const missing = paths.filter((path) => !files.has(path));
+		const loaded = await Promise.all(missing.map(async (path) => {
+			const response = await this.http.send({url: runnerCatalog.wandbox.aclBaseUrl + path});
+			return [path, response.text] as const;
+		}));
+		for (const [path, code] of loaded) files.set(path, code);
+		for (const [, code] of loaded) await this.collectAclFiles(code, files);
+		return files;
+	}
 }
 
 export class WandboxRunnerProvider implements RunnerProvider {
 	constructor(private readonly http: HttpClient, private readonly state: KeyValueStore) {
+	}
+
+	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {
+		const compilers = await this.compilers();
+		return compilers
+			.filter(({language, version}) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
+			.map((compiler) => new WandboxRunner(this.http, compiler));
 	}
 
 	private async compilers(): Promise<readonly WandboxCompiler[]> {
@@ -99,12 +109,5 @@ export class WandboxRunnerProvider implements RunnerProvider {
 		const compilers = JSON.parse(response.text) as readonly WandboxCompiler[];
 		this.state.set(CACHE_KEY, {compilers, fetchedAt: Date.now()});
 		return compilers;
-	}
-
-	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {
-		const compilers = await this.compilers();
-		return compilers
-			.filter(({language, version}) => resolveFamily(languageCatalog, `${language} ${version}`) === family)
-			.map((compiler) => new WandboxRunner(this.http, compiler));
 	}
 }

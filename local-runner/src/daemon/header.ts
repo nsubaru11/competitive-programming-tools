@@ -29,6 +29,10 @@ export function applySubmissionHeader<T extends LocalRunnerTransformResponse>(re
 	try {
 		return {...response, sourceCode: prependHeader(response.sourceCode, header)};
 	} catch (error) {
-		return {...response, status: "compileError", diagnostics: error instanceof Error ? error.message : String(error)};
+		return {
+			...response,
+			status: "compileError",
+			diagnostics: error instanceof Error ? error.message : String(error)
+		};
 	}
 }

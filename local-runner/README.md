@@ -1,7 +1,6 @@
 # runner
 
-AtCoder 向けの **ローカル Java 実行** と **CLI**（`test` / `submit` / `toclip` / `localtest` / `run` / `crosscheck` / `tomain` / `serve` / `stop` / `status` / `cacheclear`）です。
-Bun + TypeScript で実装し、Java 側は常駐 `Dispatcher`（インプロセス javac ＋ 実行）と連携します。
+AtCoder 向けの **ローカル Java 実行** と **CLI**（`test` / `submit` / `toclip` / `localtest` / `run` / `crosscheck` / `tomain` / `serve` / `stop` / `status` / `cacheclear`）です。 Bun + TypeScript で実装し、Java 側は常駐 `Dispatcher`（インプロセス javac ＋ 実行）と連携します。
 
 ## 構成
 
@@ -18,8 +17,7 @@ tools/local-runner/
 └── java/              # README + src/（Dispatcher ほか常駐 JVM のクラス群・PROTOCOL.md・WarmUp.java）
 ```
 
-`@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は
-userscript の AtCoder Easy Test for Java と同じ `evaluateEasyTestOutput` です。
+`@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は userscript の AtCoder Easy Test for Java と同じ `evaluateEasyTestOutput` です。
 
 ## 前提条件
 
@@ -80,13 +78,13 @@ toclip D.java  # ファイルを明示
 
 #### 短縮表記（フォルダからコンテスト推定）
 
-`test` / `submit` / `toclip` に**引数を 1 つだけ**渡すと短縮表記になります。
+`test` / `submit` / `toclip` に **引数を 1 つだけ**渡すと短縮表記になります。
 `test d` は、原則としてカレントの上位にある `src` の親フォルダ名からコンテスト（小文字化）を、引数の記号からタスクとソース（`D.java`）を解決します。たとえば `abc463/src/java` では `test abc463_d D.java` と同等です。コンテストIDと問題IDの接頭辞が異なる `jsc2025advance-final` / `jsc2026advance-final` / `tessoku-book` は、それぞれ `abc422` / `abc474` / `tessoku_book` に固定対応します。
 
-- 記号は**大小無視**（`d` = `D`）。コンテスト名は URL に合わせ**小文字化**。
-- 末尾の数字は**ファイル変種**扱い: `test d1` → `D1.java` を、問題 `d`（`abc463_d`）のサンプルでテスト（AtCoder のタスク記号は A〜H と Ex のみで数字付きは無いため）。
+- 記号は **大小無視**（`d` = `D`）。コンテスト名は URL に合わせ **小文字化**。
+- 末尾の数字は **ファイル変種**扱い: `test d1` → `D1.java` を、問題 `d`（`abc463_d`）のサンプルでテスト（AtCoder のタスク記号は A〜H と Ex のみで数字付きは無いため）。
 - コンテストフォルダは原則として `src` の親（`abc463` / `jsc2025advance-final` など）を採用。範囲フォルダ `451-500` は採用しません。
-- ソースは**カレントディレクトリ**から探します（例の構成では `abc463/src/java` で実行）。
+- ソースは **カレントディレクトリ**から探します（例の構成では `abc463/src/java` で実行）。
 - `toclip`はコンテストIDを必要とせず、短縮記号からソースだけを解決します（`toclip d1` → `D1.java`）。
 
 `test` / `submit` / `localtest` / `run` は、Local Runnerサーバーが未起動ならWSL上へ自動起動します。起動時にライブラリソースを`/dev/shm`へ同期して一度だけclass化し、解答のCompiler API解析はそのclasspathを使用します。提出用本文だけを同期済みsourceから取得するため、コンパイル・実行環境をWSLへ統一したままNTFS境界の反復コストを避けます。実行時はソースを一度だけ`prepare`して変換・コンパイルし、以降の各サンプルは`programId`と標準入力だけを送ります。`serve`で事前に温めておくと初回が速くなります。ライブラリを編集した場合は`stop`→`serve`で同期し直してください。
@@ -121,7 +119,7 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 .\bin\test.cmd --max-lines=50 abc448_d D.java
 ```
 
-各サンプルは**実行が終わるたびに逐次表示**され、最後に集計（`Summary:`）を出します。
+各サンプルは **実行が終わるたびに逐次表示**され、最後に集計（`Summary:`）を出します。
 
 ### DEBUG の扱い
 
@@ -142,9 +140,9 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 
 ### 実行時間の警告
 
-`test` / `submit` は問題ページから**実行時間制限**を取得し（サンプルと一緒にキャッシュ）、exec 表示を**制限の 80% 超で黄色、制限以上で赤**にします（例: 2 sec の問題 → 1600ms 超で黄、2000ms 以上で赤）。実行前に `Time limit: 2000ms` のように制限も表示します。
+`test` / `submit` は問題ページから **実行時間制限**を取得し（サンプルと一緒にキャッシュ）、exec 表示を **制限の 80% 超で黄色、制限以上で赤**にします（例: 2 sec の問題 → 1600ms 超で黄、2000ms 以上で赤）。実行前に `Time limit: 2000ms` のように制限も表示します。
 
-制限が分からない `localtest` / `run` / `crosscheck` は、AtCoder で最も一般的な 2 sec を仮の制限として**1600ms 超で黄色、2000ms 以上で赤**です。`--time-limit=3000` のように制限(ms)を指定すれば、その値を基準に test/submit と同じしきい値（80%で黄、100%で赤）になります。
+制限が分からない `localtest` / `run` / `crosscheck` は、AtCoder で最も一般的な 2 sec を仮の制限として **1600ms 超で黄色、2000ms 以上で赤**です。`--time-limit=3000` のように制限 (ms)を指定すれば、その値を基準に test/submit と同じしきい値（80%で黄、100%で赤）になります。
 
 いずれも表示上の警告で、実行自体は従来どおり最大 10 秒まで走ります（TLE 判定の打ち切りは変えません）。ローカルはウォームアップ済み JVM で本番より速く出やすいため、あくまで目安です（`NO_COLOR=1` で色無効）。
 
@@ -187,21 +185,21 @@ bun run --cwd local-runner localtest D.java
 
 ## 環境変数
 
-| 変数                             | 説明                                               | 既定値                        |
-|----------------------------------|----------------------------------------------------|-------------------------------|
-| `LOCAL_RUNNER_URL`               | Local Runner API                                   | `http://localhost:8080`       |
-| `LOCAL_RUNNER_PORT`              | 待受ポート                                         | `8080`                        |
-| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐javacを無効化し外部javacにフォールバック | 有効                          |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`  | auto-start の ready 待ちタイムアウト(ms)           | `60000`                       |
-| `LOCAL_RUNNER_BACKEND`           | Windowsで`native`を明示する診断用上書き            | `wsl`                         |
-| `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                         |
-| `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                          |
-| `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                          |
-| `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`         |
+| 変数                             | 説明                                               | 既定値                         |
+|----------------------------------|----------------------------------------------------|--------------------------------|
+| `LOCAL_RUNNER_URL`               | Local Runner API                                   | `http://localhost:8080`        |
+| `LOCAL_RUNNER_PORT`              | 待受ポート                                         | `8080`                         |
+| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐javacを無効化し外部javacにフォールバック | 有効                           |
+| `LOCAL_RUNNER_START_TIMEOUT_MS`  | auto-start の ready 待ちタイムアウト(ms)           | `60000`                        |
+| `LOCAL_RUNNER_BACKEND`           | Windowsで`native`を明示する診断用上書き            | `wsl`                          |
+| `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                          |
+| `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                           |
+| `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                           |
+| `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`          |
 | `ATCODER_HEADER_FILE`            | 提出物の先頭に付ける既定のヘッダーファイル         | `../templates/header/java.txt` |
-| `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                             |
-| `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                             |
-| `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`      |
+| `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                              |
+| `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                              |
+| `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`       |
 
 既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
 
@@ -221,8 +219,7 @@ cd tools/local-runner
 bun run build        # = typecheck + build:cli:win
 ```
 
-Local Runner（サーバー）は単一バイナリ化しません。通常は`bin/start-local-runner.sh`経由でWSL上の`bun ./src/daemon/server.ts`を実行します（`serve`や`test`等のauto-startから自動起動）。
-Java のコンパイルは外部 `javac` を都度起動せず **常駐Dispatcher 内の javac（インプロセス）** で行うため高速です。`Dispatcher.class` はソース未変更ならキャッシュを再利用します。
+Local Runner（サーバー）は単一バイナリ化しません。通常は`bin/start-local-runner.sh`経由でWSL上の`bun ./src/daemon/server.ts`を実行します（`serve`や`test`等のauto-startから自動起動）。 Java のコンパイルは外部 `javac` を都度起動せず **常駐Dispatcher 内の javac（インプロセス）** で行うため高速です。`Dispatcher.class` はソース未変更ならキャッシュを再利用します。
 
 ## PATH に登録（任意）
 
@@ -230,7 +227,7 @@ Java のコンパイルは外部 `javac` を都度起動せず **常駐Dispatche
 powershell -File ".\bin\install-path.ps1"
 ```
 
-以後、任意ディレクトリから `test` / `submit` を実行できます。短縮表記は**問題フォルダ**で実行します（コンテストをフォルダから推定するため）。
+以後、任意ディレクトリから `test` / `submit` を実行できます。短縮表記は **問題フォルダ**で実行します（コンテストをフォルダから推定するため）。
 
 ```powershell
 cd "C:\...\atcoder\abc\451-500\abc463\src\java"

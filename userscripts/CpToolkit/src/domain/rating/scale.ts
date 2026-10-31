@@ -16,7 +16,13 @@ export type RatingScale = {
 	readonly goldBackground: string;
 };
 
-const UNRATED_TIER: RatingTier = {min: -1, color: "#000000", alpha: 0.1, background: "#FFFFFF", className: "user-unrated"};
+const UNRATED_TIER: RatingTier = {
+	min: -1,
+	color: "#000000",
+	alpha: 0.1,
+	background: "#FFFFFF",
+	className: "user-unrated"
+};
 
 export function tierOf(scale: RatingScale, value: number): RatingTier {
 	return [...scale.tiers].reverse().find((tier) => value >= tier.min) ?? UNRATED_TIER;

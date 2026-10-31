@@ -60,9 +60,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -71,14 +71,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -94,6 +96,7 @@ if (!cpToolkitRetirement.replaced) {
 
 		// JavaCodeSubmitter/src/main.ts
 		var exports_main = {};
+
 		// ../shared/src/utils.ts
 		function normalizeNewlines(text) {
 			return text.replace(
@@ -178,6 +181,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return out.join("");
 		}
+
 		function findMatchingBrace(maskedText, openBraceIdx) {
 			let depth = 1;
 			for (let i = openBraceIdx + 1; i < maskedText.length; i++) {
@@ -186,6 +190,7 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return -1;
 		}
+
 		function isPublicClass(maskedText, classKeywordIndex) {
 			const lineStart =
 				maskedText.lastIndexOf(
@@ -195,6 +200,7 @@ if (!cpToolkitRetirement.replaced) {
 				) + 1;
 			return /\bpublic\b/.test(maskedText.slice(lineStart, classKeywordIndex));
 		}
+
 		function buildClassInfo(maskedText, m) {
 			const name = m[1];
 			const classStart = m.index;
@@ -211,6 +217,7 @@ if (!cpToolkitRetirement.replaced) {
 				isPublic: isPublicClass(maskedText, classStart),
 			};
 		}
+
 		function findMainClassInfo(maskedText) {
 			const mainIndex =
 				/(?:\bpublic\s+static|\bstatic\s+public)\s+void\s+main\s*\(\s*String\s*(?:\[]|\.\.\.)/.exec(maskedText)
@@ -233,9 +240,10 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return candidates.find((c) => c.isPublic) ?? candidates[0] ?? null;
 		}
+
 		function removePackageDeclaration(maskedCode, currentCode) {
 			const m = /\bpackage\s+[A-Za-z_][A-Za-z0-9_.]*\s*;/.exec(maskedCode);
-			if (!m) return { code: currentCode, modified: false };
+			if (!m) return {code: currentCode, modified: false};
 			let end = m.index + m[0].length;
 			if (
 				currentCode[end] ===
@@ -248,55 +256,59 @@ if (!cpToolkitRetirement.replaced) {
 				modified: true,
 			};
 		}
+
 		function renameClassToMain(maskedCode, currentCode) {
 			const info = findMainClassInfo(maskedCode);
-			if (!info || info.name === "Main") return { code: currentCode, modified: false };
+			if (!info || info.name === "Main") return {code: currentCode, modified: false};
 			const escapedName = info.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			const refRegex = new RegExp(`\\b${escapedName}\\b`, "g");
 			const replacements = [];
 			let rm;
 			while ((rm = refRegex.exec(maskedCode)) !== null) {
-				replacements.push({ start: rm.index, end: rm.index + info.name.length });
+				replacements.push({start: rm.index, end: rm.index + info.name.length});
 			}
 			replacements.sort((a, b) => b.start - a.start);
 			let code = currentCode;
-			for (const { start, end } of replacements) {
+			for (const {start, end} of replacements) {
 				code = code.slice(0, start) + "Main" + code.slice(end);
 			}
-			return { code, modified: true };
+			return {code, modified: true};
 		}
+
 		function disableDebugStatements(maskedCode, currentCode) {
 			const debugRegex = /\bDEBUG\b\s*=\s*true\b/g;
 			const replacements = [];
 			let dm;
 			while ((dm = debugRegex.exec(maskedCode)) !== null) {
 				const trueIdx = dm.index + dm[0].lastIndexOf("true");
-				replacements.push({ start: trueIdx, end: trueIdx + 4 });
+				replacements.push({start: trueIdx, end: trueIdx + 4});
 			}
-			if (!replacements.length) return { code: currentCode, modified: false };
+			if (!replacements.length) return {code: currentCode, modified: false};
 			replacements.sort((a, b) => b.start - a.start);
 			let code = currentCode;
-			for (const { start, end } of replacements) {
+			for (const {start, end} of replacements) {
 				code = code.slice(0, start) + "false" + code.slice(end);
 			}
-			return { code, modified: true };
+			return {code, modified: true};
 		}
+
 		function enableDebugStatements(maskedCode, currentCode) {
 			const debugRegex = /\bDEBUG\b\s*=\s*false\b/g;
 			const replacements = [];
 			let dm;
 			while ((dm = debugRegex.exec(maskedCode)) !== null) {
 				const falseIdx = dm.index + dm[0].lastIndexOf("false");
-				replacements.push({ start: falseIdx, end: falseIdx + 5 });
+				replacements.push({start: falseIdx, end: falseIdx + 5});
 			}
-			if (!replacements.length) return { code: currentCode, modified: false };
+			if (!replacements.length) return {code: currentCode, modified: false};
 			replacements.sort((a, b) => b.start - a.start);
 			let code = currentCode;
-			for (const { start, end } of replacements) {
+			for (const {start, end} of replacements) {
 				code = code.slice(0, start) + "true" + code.slice(end);
 			}
-			return { code, modified: true };
+			return {code, modified: true};
 		}
+
 		function modifyJavaCode(originalCode, options) {
 			let currentCode = normalizeNewlines(originalCode);
 			let packageRemoved = false;
@@ -323,8 +335,9 @@ if (!cpToolkitRetirement.replaced) {
 				debugReplaced = result.modified;
 			}
 			currentCode = currentCode.replace(/^(?:[\t ]*\n)+/, "");
-			return { modified: currentCode, packageRemoved, classReplaced, debugReplaced };
+			return {modified: currentCode, packageRemoved, classReplaced, debugReplaced};
 		}
+
 		// ../shared/src/json.ts
 		function safeJsonParse(text, fallback) {
 			if (typeof text !== "string") return fallback;
@@ -334,6 +347,7 @@ if (!cpToolkitRetirement.replaced) {
 				return fallback;
 			}
 		}
+
 		function parseStoredObject(raw) {
 			if (raw == null) return {};
 			if (typeof raw === "string") {
@@ -348,9 +362,11 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return {};
 		}
+
 		function mergeWithDefaults(defaults, raw) {
 			return Object.assign({}, defaults, parseStoredObject(raw));
 		}
+
 		// ../shared/src/local-runner.ts
 		function buildLocalRunnerTransformRequest(
 			sourceCode,
@@ -359,8 +375,9 @@ if (!cpToolkitRetirement.replaced) {
 			validate = true,
 			header = true,
 		) {
-			return { mode: "transform", sourceCode, debug, autoImport, validate, header };
+			return {mode: "transform", sourceCode, debug, autoImport, validate, header};
 		}
+
 		// JavaCodeSubmitter/src/main.ts
 		(function () {
 			const g = typeof unsafeWindow !== "undefined" && unsafeWindow ? unsafeWindow : window;
@@ -373,6 +390,7 @@ if (!cpToolkitRetirement.replaced) {
 				logEnabled: false,
 				localRunnerURL: "http://localhost:8080",
 			};
+
 			function loadSettings() {
 				try {
 					const ls = g.localStorage;
@@ -384,6 +402,7 @@ if (!cpToolkitRetirement.replaced) {
 					return DEFAULT_SETTINGS;
 				}
 			}
+
 			const SETTINGS = loadSettings();
 			const LOG_PREFIX = "[Java Code Submitter]";
 			const log = (...args) => {
@@ -391,7 +410,8 @@ if (!cpToolkitRetirement.replaced) {
 				try {
 					const fn = console && (console.debug || console.log) ? console.debug || console.log : null;
 					if (fn) fn.call(console, LOG_PREFIX, ...args);
-				} catch {}
+				} catch {
+				}
 			};
 			const isEnterKey = (e) => e.key === "Enter" || e.keyCode === 13;
 			const foldableTypePattern =
@@ -409,11 +429,14 @@ if (!cpToolkitRetirement.replaced) {
 				try {
 					el.click();
 					return;
-				} catch {}
+				} catch {
+				}
 				try {
-					el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-				} catch {}
+					el.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, view: window}));
+				} catch {
+				}
 			};
+
 			function requestLocalTransform(code) {
 				const body = JSON.stringify(
 					buildLocalRunnerTransformRequest(code, false, true, false, SETTINGS.header),
@@ -423,7 +446,7 @@ if (!cpToolkitRetirement.replaced) {
 						GM_xmlhttpRequest({
 							method: "POST",
 							url: SETTINGS.localRunnerURL,
-							headers: { "Content-Type": "application/json" },
+							headers: {"Content-Type": "application/json"},
 							data: body,
 							timeout: 30000,
 							responseType: "json",
@@ -451,16 +474,17 @@ if (!cpToolkitRetirement.replaced) {
 				return fetch(SETTINGS.localRunnerURL, {
 					method: "POST",
 					mode: "cors",
-					headers: { "Content-Type": "application/json" },
+					headers: {"Content-Type": "application/json"},
 					body,
 				}).then(async (response) => {
 					if (!response.ok) throw new Error(`LocalRunner HTTP ${response.status}`);
 					return await response.json();
 				});
 			}
+
 			async function modifyPastedCode(text) {
 				const code = typeof text === "string" ? text : "";
-				if (!code) return { modified: "", didModify: false };
+				if (!code) return {modified: "", didModify: false};
 				try {
 					const transformed = await requestLocalTransform(code);
 					if (transformed.status !== "success") {
@@ -473,7 +497,7 @@ if (!cpToolkitRetirement.replaced) {
 					}
 					if (transformed.addedImports.length) log("Added imports:", transformed.addedImports.join(", "));
 					if (transformed.inlinedClasses.length) log("Bundled:", transformed.inlinedClasses.join(", "));
-					return { modified: transformed.sourceCode, didModify: transformed.sourceCode !== code };
+					return {modified: transformed.sourceCode, didModify: transformed.sourceCode !== code};
 				} catch (error) {
 					log("LocalRunner transform unavailable; using lexical fallback:", error);
 				}
@@ -485,12 +509,13 @@ if (!cpToolkitRetirement.replaced) {
 				const didModify = result.packageRemoved || result.classReplaced || result.debugReplaced;
 				if (result.classReplaced) log("Class renamed to Main");
 				if (result.debugReplaced) log("DEBUG flag disabled");
-				return { modified: result.modified, didModify };
+				return {modified: result.modified, didModify};
 			}
+
 			async function transformEditorSnapshot(getValue, setValue, onModified) {
 				const snapshot = getValue();
 				if (!snapshot || snapshot.length < 30) return;
-				const { modified, didModify } = await modifyPastedCode(snapshot);
+				const {modified, didModify} = await modifyPastedCode(snapshot);
 				if (!didModify || getValue() !== snapshot) return;
 				setValue(modified);
 				onModified();
@@ -499,23 +524,29 @@ if (!cpToolkitRetirement.replaced) {
 			class EditorAdapter {
 				g;
 				initialized;
+
 				constructor(globalObj) {
 					this.g = globalObj || g;
 					this.initialized = false;
 				}
+
 				setup() {
 					return false;
 				}
-				foldClasses() {}
+
+				foldClasses() {
+				}
 			}
 
 			class AceEditorAdapter extends EditorAdapter {
 				getAce() {
 					return this.g && this.g.ace;
 				}
+
 				getEditorDiv() {
 					return document.getElementById("editor") || document.getElementById("editor-div");
 				}
+
 				getEditor() {
 					const ace = this.getAce();
 					const div = this.getEditorDiv();
@@ -526,6 +557,7 @@ if (!cpToolkitRetirement.replaced) {
 						return null;
 					}
 				}
+
 				setup() {
 					const editor = this.getEditor();
 					if (!editor) return false;
@@ -550,6 +582,7 @@ if (!cpToolkitRetirement.replaced) {
 					log("ACE Adapter initialized");
 					return true;
 				}
+
 				foldClasses() {
 					const ace = this.getAce();
 					const editor = this.getEditor();
@@ -573,12 +606,14 @@ if (!cpToolkitRetirement.replaced) {
 				getMonaco() {
 					return this.g && this.g.monaco;
 				}
+
 				getEditor() {
 					const monaco = this.getMonaco();
 					if (!monaco || !monaco.editor) return null;
 					const editors = monaco.editor.getEditors();
 					return editors && editors.length ? editors[0] : null;
 				}
+
 				setup() {
 					const editor = this.getEditor();
 					if (!editor) return false;
@@ -600,7 +635,7 @@ if (!cpToolkitRetirement.replaced) {
 						model.onDidChangeContent((e) => {
 							if (e.isFlush) return;
 							if (e.changes.length === 1) {
-								const { text } = e.changes[0];
+								const {text} = e.changes[0];
 								if (text && text.length >= 30) {
 									transformEditorSnapshot(
 										() => model.getValue(),
@@ -617,6 +652,7 @@ if (!cpToolkitRetirement.replaced) {
 					log("Monaco Adapter initialized");
 					return true;
 				}
+
 				foldClasses() {
 					const editor = this.getEditor();
 					if (!editor) return;
@@ -629,7 +665,7 @@ if (!cpToolkitRetirement.replaced) {
 					if (!action?.run) return;
 					(async () => {
 						for (const lineNumber of foldLines) {
-							editor.setPosition({ lineNumber, column: 1 });
+							editor.setPosition({lineNumber, column: 1});
 							await action.run();
 						}
 					})()
@@ -646,6 +682,7 @@ if (!cpToolkitRetirement.replaced) {
 				getSubmitButton;
 				editor;
 				_cachedBtn;
+
 				constructor(hostSubstr, shortcutFn, submitButtonGetter, editorAdapter) {
 					this.hostSubstr = hostSubstr;
 					this.shortcut = shortcutFn;
@@ -653,9 +690,11 @@ if (!cpToolkitRetirement.replaced) {
 					this.editor = editorAdapter;
 					this._cachedBtn = null;
 				}
+
 				matches(hostname) {
 					return hostname.includes(this.hostSubstr);
 				}
+
 				findSubmitButton() {
 					if (this._cachedBtn && document.contains(this._cachedBtn)) return this._cachedBtn;
 					const btn = this.getSubmitButton && this.getSubmitButton();
@@ -669,21 +708,25 @@ if (!cpToolkitRetirement.replaced) {
 				sites;
 				active;
 				_keybound;
+
 				constructor(globalObj) {
 					this.g = globalObj || g;
 					this.sites = [];
 					this.active = null;
 					this._keybound = false;
 				}
+
 				registerSite(site) {
 					this.sites.push(site);
 				}
+
 				detect() {
 					const host = window.location.hostname;
 					this.active = this.sites.find((s) => s.matches(host)) || null;
 					if (this.active) log("Initialized for:", host);
 					return !!this.active;
 				}
+
 				setupEditorLazy() {
 					if (!this.active) return;
 					const trySetup = () => this.active && this.active.editor && this.active.editor.setup();
@@ -691,9 +734,10 @@ if (!cpToolkitRetirement.replaced) {
 					const observer = new MutationObserver(() => {
 						if (trySetup()) observer.disconnect();
 					});
-					observer.observe(document.body, { childList: true, subtree: true });
+					observer.observe(document.body, {childList: true, subtree: true});
 					setTimeout(() => observer.disconnect(), 30000);
 				}
+
 				registerKeybindings() {
 					if (!this.active || this._keybound) return;
 					this._keybound = true;
@@ -737,12 +781,14 @@ if (!cpToolkitRetirement.replaced) {
 						true,
 					);
 				}
+
 				start() {
 					if (!this.detect()) return;
 					this.registerKeybindings();
 					setTimeout(() => this.setupEditorLazy(), 500);
 				}
 			}
+
 			const submitter = new JavaCodeSubmitter(g);
 			submitter.registerSite(
 				new Site(

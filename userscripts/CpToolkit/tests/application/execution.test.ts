@@ -41,7 +41,10 @@ describe("LocalRunnerClient", () => {
 	});
 
 	test("prepare を持たない古いサーバーにはソースをそのまま渡す", async () => {
-		const http = new FakeHttpClient(({body}) => (body?.includes('"prepare"') ? {status: 400, text: ""} : JSON_OK(output)));
+		const http = new FakeHttpClient(({body}) => (body?.includes('"prepare"') ? {
+			status: 400,
+			text: ""
+		} : JSON_OK(output)));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
 		expect(await client.run("code", "", "java")).toEqual(output as never);
 	});
@@ -55,7 +58,12 @@ describe("LocalRunnerClient", () => {
 
 describe("RunnerCatalogService", () => {
 	const language: JudgeLanguage = {id: "6056", label: "Java 24", family: "java"};
-	const runner = (id: string, kind: CodeRunner["kind"], run: () => Promise<RunResult>, label = id): CodeRunner => ({id, kind, label, run});
+	const runner = (id: string, kind: CodeRunner["kind"], run: () => Promise<RunResult>, label = id): CodeRunner => ({
+		id,
+		kind,
+		label,
+		run
+	});
 	const ok = async (): Promise<RunResult> => ({status: "OK", input: "", output: "1"});
 	const catalog = (runners: readonly CodeRunner[]) => new RunnerCatalogService(
 		() => [{runnersFor: async () => runners}, {runnersFor: () => Promise.reject(new Error("offline"))}],
@@ -102,7 +110,12 @@ describe("RunnerCatalogService", () => {
 
 describe("loadContestTasks", () => {
 	const tasks = [{url: "/contests/abc1/tasks/abc1_a", label: "A", name: "First"}];
-	const dependencies = (http: FakeHttpClient, state = new MemoryStore()) => ({site: http, state, parse: () => tasks, cacheDays: 10});
+	const dependencies = (http: FakeHttpClient, state = new MemoryStore()) => ({
+		site: http,
+		state,
+		parse: () => tasks,
+		cacheDays: 10
+	});
 
 	test("一度取得した問題一覧はキャッシュを使う", async () => {
 		const http = new FakeHttpClient(() => ({status: 200, text: ""}));

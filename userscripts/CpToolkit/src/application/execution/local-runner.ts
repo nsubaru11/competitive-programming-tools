@@ -24,7 +24,11 @@ export class LocalRunnerError extends Error {
 
 /** Local Runner との通信。URL は設定から毎回取得し、未設定なら通信しない。 */
 export class LocalRunnerClient {
-	private prepared: {endpoint: string; sourceCode: string; response: Promise<LocalRunnerPrepareResponse>} | null = null;
+	private prepared: {
+		endpoint: string;
+		sourceCode: string;
+		response: Promise<LocalRunnerPrepareResponse>
+	} | null = null;
 
 	constructor(
 		private readonly http: HttpClient,

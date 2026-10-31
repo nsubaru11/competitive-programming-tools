@@ -54,9 +54,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -65,14 +65,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -149,15 +151,18 @@ ${content.trim()}
 				);
 			},
 		});
+
 		function getCleanElement(element) {
 			const clone = element.cloneNode(true);
 			clone.querySelectorAll(".btn, .btn-copy, .btn-pre, .div-btn-copy").forEach((el) => el.remove());
 			return clone;
 		}
+
 		function getMarkdownFromElement(element) {
 			const cleanEl = getCleanElement(element);
 			return turndownService.turndown(cleanEl.innerHTML);
 		}
+
 		function createButton(text, onClick) {
 			const btn = document.createElement("button");
 			btn.textContent = text;
@@ -174,6 +179,7 @@ ${content.trim()}
 			});
 			return btn;
 		}
+
 		function main() {
 			const statementContainer = document.getElementById("task-statement");
 			if (!statementContainer) return;
@@ -231,6 +237,7 @@ ${content.trim()}
 				taskTitle.appendChild(wrap);
 			}
 		}
+
 		if (document.readyState === "loading") {
 			document.addEventListener("DOMContentLoaded", main);
 		} else {

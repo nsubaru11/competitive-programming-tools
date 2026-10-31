@@ -19,7 +19,11 @@ export type Dock = {
 };
 
 /** 画面下部の開閉できるパネル。サイトの CSS に左右されないよう Shadow DOM に作る。 */
-export function createDock({css, toggleLabel, closeLabel}: {css: string; toggleLabel: string; closeLabel: string}): Dock {
+export function createDock({css, toggleLabel, closeLabel}: {
+	css: string;
+	toggleLabel: string;
+	closeLabel: string
+}): Dock {
 	const tabs = h("div", {className: "dock-tabs"});
 	const content = h("div", {className: "dock-content"});
 	const panel = h("div", {className: "dock-panel", hidden: true}, tabs, content);

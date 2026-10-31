@@ -1,9 +1,32 @@
 {
 	"extends": "../../tsconfig.layer.json",
 	"compilerOptions": {
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"lib": [
+			"ES2022",
+			"DOM",
+			"DOM.Iterable"
+		],
 		"types": []
 	},
-	"include": ["./**/*.ts", "../../types/assets.d.ts"],
-	"references": [{"path": "../../../../shared"}, {"path": "../domain"}, {"path": "../catalog"}, {"path": "../application"}, {"path": "../ui"}]
+	"include": [
+		"./**/*.ts",
+		"../../types/assets.d.ts"
+	],
+	"references": [
+		{
+			"path": "../../../../shared"
+		},
+		{
+			"path": "../domain"
+		},
+		{
+			"path": "../catalog"
+		},
+		{
+			"path": "../application"
+		},
+		{
+			"path": "../ui"
+		}
+	]
 }

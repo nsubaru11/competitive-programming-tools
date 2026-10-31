@@ -29,7 +29,9 @@ afterEach(() => {
 describe("easyTest", () => {
 	const java: JudgeLanguage = {id: "6056", label: "Java 24", family: "java"};
 
-	function createSite(overrides: Partial<Omit<JudgeSite, "submit">> = {}): JudgeSite & {submit: ReturnType<typeof mock>} {
+	function createSite(overrides: Partial<Omit<JudgeSite, "submit">> = {}): JudgeSite & {
+		submit: ReturnType<typeof mock>
+	} {
 		const anchor = document.createElement("span");
 		document.body.append(anchor);
 		const buttons = document.createElement("div");
@@ -262,7 +264,12 @@ describe("easyTest", () => {
 });
 
 describe("javaSubmit", () => {
-	const target = {editor: "ace", editorElements: ["#editor"], shortcut: "Ctrl+Shift+Enter", submitButtons: ["#submit"]} as const;
+	const target = {
+		editor: "ace",
+		editorElements: ["#editor"],
+		shortcut: "Ctrl+Shift+Enter",
+		submitButtons: ["#submit"]
+	} as const;
 	const judge = {id: "atcoder", name: "AtCoder", matches: [], routes: {}, navigationLists: [], submission: target};
 
 	function createEditor(initial: string) {
@@ -304,7 +311,10 @@ describe("javaSubmit", () => {
 
 	test("Local Runner があればその変換結果を使う", async () => {
 		const {editor, paste} = createEditor(source);
-		const http = new FakeHttpClient(() => ({status: 200, text: JSON.stringify({status: "success", sourceCode: "// transformed\n"})}));
+		const http = new FakeHttpClient(() => ({
+			status: 200,
+			text: JSON.stringify({status: "success", sourceCode: "// transformed\n"})
+		}));
 		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
 			judge,
 			localRunner: new LocalRunnerClient(http, () => "http://localhost:8080"),
@@ -318,7 +328,11 @@ describe("javaSubmit", () => {
 
 	test("短いコードは変換しない", async () => {
 		const {editor, paste} = createEditor("short");
-		await javaSubmit.run(undefined, createFakeServices({judge, localRunner: offline, editors: {locate: async () => editor}}));
+		await javaSubmit.run(undefined, createFakeServices({
+			judge,
+			localRunner: offline,
+			editors: {locate: async () => editor}
+		}));
 		await wait();
 		paste();
 		await wait();
@@ -329,7 +343,11 @@ describe("javaSubmit", () => {
 		document.body.innerHTML = '<button id="submit"></button>';
 		const click = mock(() => undefined);
 		document.querySelector("#submit")?.addEventListener("click", click);
-		await javaSubmit.run(undefined, createFakeServices({judge, localRunner: offline, editors: {locate: async () => null}}));
+		await javaSubmit.run(undefined, createFakeServices({
+			judge,
+			localRunner: offline,
+			editors: {locate: async () => null}
+		}));
 
 		pressKey("Enter", {ctrlKey: true});
 		expect(click).not.toHaveBeenCalled();
@@ -344,7 +362,12 @@ describe("paizaLanguage", () => {
 			<option value=""></option><option value="1">JavaScript</option><option value="2">Java (OpenJDK 21)</option>
 		</select><input id="programming_language_id" type="hidden">`;
 		const triggerChange = mock(() => undefined);
-		const page = {onChange: () => undefined, triggerChange, renderMath: () => undefined, highlightCode: () => undefined};
+		const page = {
+			onChange: () => undefined,
+			triggerChange,
+			renderMath: () => undefined,
+			highlightCode: () => undefined
+		};
 		void paizaLanguage.run({language: "Java"}, createFakeServices({page, judge: null}));
 		await wait();
 
@@ -364,7 +387,12 @@ describe("taskDropdown", () => {
 		history.replaceState(null, "", "/contests/abc1/tasks/abc1_a");
 		document.body.innerHTML = '<ul id="contest-nav-tabs-list"><li><a href="/contests/abc1/tasks">問題</a></li></ul>';
 		document.querySelector("ul")!.id = "contest-nav-tabs";
-		await taskDropdown.run(undefined, createFakeServices({site: new FakeHttpClient(() => ({status: 200, text: tasksPage}))}));
+		await taskDropdown.run(undefined, createFakeServices({
+			site: new FakeHttpClient(() => ({
+				status: 200,
+				text: tasksPage
+			}))
+		}));
 
 		const labels = [...document.querySelectorAll(".cp-task-menu a")].map(({textContent}) => textContent?.trim());
 		expect(labels).toEqual(["問題一覧", "まとめて開く...", "A - First", "B - Second"]);
@@ -373,7 +401,12 @@ describe("taskDropdown", () => {
 	test("読み込みに失敗したらその旨を表示する", async () => {
 		history.replaceState(null, "", "/contests/abc2/tasks/abc2_a");
 		document.body.innerHTML = '<ul id="contest-nav-tabs"><li><a href="/contests/abc2/tasks">問題</a></li></ul>';
-		await taskDropdown.run(undefined, createFakeServices({site: new FakeHttpClient(() => ({status: 500, text: ""}))}));
+		await taskDropdown.run(undefined, createFakeServices({
+			site: new FakeHttpClient(() => ({
+				status: 500,
+				text: ""
+			}))
+		}));
 		expect(document.querySelector(".cp-task-menu")?.textContent).toContain("読み込み失敗");
 	});
 });

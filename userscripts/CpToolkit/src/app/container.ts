@@ -1,10 +1,10 @@
-import {type RouteId, judges} from "@catalog/judges";
+import {judges, type RouteId} from "@catalog/judges";
 import {createTranslator, type Translate} from "@catalog/messages";
 import {runnerCatalog} from "@catalog/tables";
 import type {PageMatch} from "@domain/page/route";
 import {normalizeOptions} from "@domain/settings/option";
 import {LocalRunnerClient} from "@application/execution/local-runner";
-import {type RunnerProvider, RunnerCatalogService} from "@application/execution/runner-catalog";
+import {RunnerCatalogService, type RunnerProvider} from "@application/execution/runner-catalog";
 import type {FeatureServices} from "@application/feature/definition";
 import type {JudgeSite} from "@application/ports/judge-site";
 import type {SettingsService} from "@application/settings/settings-service";

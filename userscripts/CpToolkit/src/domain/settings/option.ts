@@ -33,7 +33,7 @@ export type OptionDefinition<L extends string = string> =
 
 export type OptionSet<L extends string = string> = Readonly<Record<string, OptionDefinition<L>>>;
 
-export type OptionValues<S extends OptionSet> = {readonly [K in keyof S]: S[K]["defaultValue"]};
+export type OptionValues<S extends OptionSet> = { readonly [K in keyof S]: S[K]["defaultValue"] };
 
 const SHORT_HEX_COLOR_PATTERN = /^#[0-9a-f]{3}$/;
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/;

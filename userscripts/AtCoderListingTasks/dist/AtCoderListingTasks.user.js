@@ -55,9 +55,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -66,14 +66,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -195,31 +197,31 @@ if (!cpToolkitRetirement.replaced) {
 		}
 	`;
 			const TEXT = {
-				newTab: { ja: "新しいタブで開く", en: "Open in a new tab" },
-				taskTable: { ja: "問題一覧", en: "Task Table" },
-				loadingFailed: { ja: "(読み込み失敗)", en: "(Loading Failed)" },
-				atOnce: { ja: "まとめて開く", en: "Open at once" },
-				modalDescription: { ja: "複数の問題をまとめて開きます。", en: "Open several problems at once." },
-				cancel: { ja: "キャンセル", en: "Cancel" },
-				all: { ja: "すべて", en: "All" },
-				specify: { ja: "範囲を指定", en: "Specify the range" },
+				newTab: {ja: "新しいタブで開く", en: "Open in a new tab"},
+				taskTable: {ja: "問題一覧", en: "Task Table"},
+				loadingFailed: {ja: "(読み込み失敗)", en: "(Loading Failed)"},
+				atOnce: {ja: "まとめて開く", en: "Open at once"},
+				modalDescription: {ja: "複数の問題をまとめて開きます。", en: "Open several problems at once."},
+				cancel: {ja: "キャンセル", en: "Cancel"},
+				all: {ja: "すべて", en: "All"},
+				specify: {ja: "範囲を指定", en: "Specify the range"},
 				caution: {
 					ja: `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`,
 					en: `*Up to ${ATONCE_TAB_MAX} tabs are allowed to open at once.`,
 				},
-				reverse: { ja: "逆順で開く", en: "Open in reverse order" },
+				reverse: {ja: "逆順で開く", en: "Open in reverse order"},
 				modalInfo: {
 					ja: "が開きます。(ポップアップがブロックされた場合は許可してください。)",
 					en: "will open. (If pop-ups are blocked, please allow them.)",
 				},
-				aTab: { ja: "個のタブ", en: "tab " },
-				tabs: { ja: "個のタブ", en: "tabs " },
+				aTab: {ja: "個のタブ", en: "tab "},
+				tabs: {ja: "個のタブ", en: "tabs "},
 			};
 			const DB_NAME = "UserScript_ACLT_Database";
 			const DB_VERSION = 1;
-			const STORE_NAME = { option: "option", problemList: "problemList" };
+			const STORE_NAME = {option: "option", problemList: "problemList"};
 			const STORE_INFO = [
-				{ storeName: STORE_NAME.option, keyPath: "name" },
+				{storeName: STORE_NAME.option, keyPath: "name"},
 				{
 					storeName: STORE_NAME.problemList,
 					keyPath: "contestName",
@@ -247,13 +249,13 @@ if (!cpToolkitRetirement.replaced) {
 						openRequest.onupgradeneeded = () => {
 							let database = openRequest.result;
 							let m = new Map();
-							for (let name of database.objectStoreNames) m.set(name, { status: 1, keyPath: null });
+							for (let name of database.objectStoreNames) m.set(name, {status: 1, keyPath: null});
 							for (let info of storeInfos) {
-								if (m.get(info.storeName)) m.set(info.storeName, { status: 2, keyPath: info.keyPath });
-								else m.set(info.storeName, { status: 0, keyPath: info.keyPath });
+								if (m.get(info.storeName)) m.set(info.storeName, {status: 2, keyPath: info.keyPath});
+								else m.set(info.storeName, {status: 0, keyPath: info.keyPath});
 							}
 							for (let [name, info] of m) {
-								if (info.status === 0) database.createObjectStore(name, { keyPath: info.keyPath });
+								if (info.status === 0) database.createObjectStore(name, {keyPath: info.keyPath});
 								else if (info.status === 1) database.deleteObjectStore(name);
 							}
 							console.info("Database was created or upgraded.");
@@ -411,27 +413,27 @@ if (!cpToolkitRetirement.replaced) {
 							this.newTab = resArray[1].value;
 						} else {
 							this.newTab = false;
-							setTasks.push(this.db.setData(STORE_NAME.option, { name: "newTab", value: this.newTab }));
+							setTasks.push(this.db.setData(STORE_NAME.option, {name: "newTab", value: this.newTab}));
 						}
 						if (resArray[2] !== null) {
 							this.lastRemove = resArray[2].value;
 						} else {
 							this.lastRemove = now;
 							setTasks.push(
-								this.db.setData(STORE_NAME.option, { name: "lastRemove", value: this.lastRemove }),
+								this.db.setData(STORE_NAME.option, {name: "lastRemove", value: this.lastRemove}),
 							);
 						}
 						if (resArray[3] !== null) {
 							this.atOnceSetting = resArray[3].value;
 						} else {
 							this.atOnceSetting = {};
-							setTasks.push(this.db.setData(STORE_NAME.option, { name: "atOnce", value: {} }));
+							setTasks.push(this.db.setData(STORE_NAME.option, {name: "atOnce", value: {}}));
 						}
 						if (resArray[4] !== null) {
 							this.reverse = resArray[4].value;
 						} else {
 							this.reverse = false;
-							setTasks.push(this.db.setData(STORE_NAME.option, { name: "reverse", value: false }));
+							setTasks.push(this.db.setData(STORE_NAME.option, {name: "reverse", value: false}));
 						}
 						if (resArray[0] !== null) {
 							this.problemList = resArray[0].list;
@@ -475,7 +477,7 @@ if (!cpToolkitRetirement.replaced) {
 						} else {
 							this.lastRemove = now;
 							setTasks.push(
-								this.db.setData(STORE_NAME.option, { name: "lastRemove", value: this.lastRemove }),
+								this.db.setData(STORE_NAME.option, {name: "lastRemove", value: this.lastRemove}),
 							);
 						}
 						await Promise.all(setTasks);
@@ -487,7 +489,7 @@ if (!cpToolkitRetirement.replaced) {
 					if (!this.dbExists) {
 						return;
 					}
-					await this.db.setData(STORE_NAME.option, { name, value });
+					await this.db.setData(STORE_NAME.option, {name, value});
 				},
 				removeOldData: async function () {
 					if (!this.dbExists) {
@@ -508,7 +510,7 @@ if (!cpToolkitRetirement.replaced) {
 						await Promise.all(deleteTasks);
 					}
 					this.lastRemove = now;
-					await this.db.setData(STORE_NAME.option, { name: "lastRemove", value: this.lastRemove });
+					await this.db.setData(STORE_NAME.option, {name: "lastRemove", value: this.lastRemove});
 				},
 				getLanguage: function () {
 					this.lang = "ja";
@@ -592,7 +594,7 @@ if (!cpToolkitRetirement.replaced) {
 					}
 				},
 				addCss: function () {
-					let style = $("<style>", { id: `${ID_PREFIX}-style`, html: CSS });
+					let style = $("<style>", {id: `${ID_PREFIX}-style`, html: CSS});
 					$("head").append(style);
 				},
 				changeToDropdown: function () {
@@ -605,9 +607,9 @@ if (!cpToolkitRetirement.replaced) {
 						"aria-haspopup": "true",
 						"aria-expanded": "false",
 					});
-					tasks_tab.append($("<span>", { class: "caret" }));
+					tasks_tab.append($("<span>", {class: "caret"}));
 					tasks_tab.parent().addClass("dropdown");
-					tasks_tab.parent().append($("<ul>", { class: `dropdown-menu ${PRE}-dropdown` }));
+					tasks_tab.parent().append($("<ul>", {class: `dropdown-menu ${PRE}-dropdown`}));
 					tasks_tab
 						.parent()
 						.on("mouseenter", function () {
@@ -619,8 +621,8 @@ if (!cpToolkitRetirement.replaced) {
 				},
 				addList: function () {
 					let dropdown_menu = $(`#${ID_PREFIX}-tab`).parent().children(".dropdown-menu");
-					let task_table = $("<a>", { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
-					task_table.append($("<span>", { class: "glyphicon glyphicon-list", "aria-hidden": "true" }));
+					let task_table = $("<a>", {href: `${CONTEST_URL}/${this.setting.contestName}/tasks`});
+					task_table.append($("<span>", {class: "glyphicon glyphicon-list", "aria-hidden": "true"}));
 					task_table.append(document.createTextNode(" " + TEXT.taskTable[this.setting.lang]));
 					task_table[0].addEventListener("click", {
 						handleEvent: this.changeNewTabAttr,
@@ -641,9 +643,9 @@ if (!cpToolkitRetirement.replaced) {
 						});
 						dropdown_menu.append($("<li>").append(at_once));
 					}
-					let label = $("<label>", { class: `${PRE}-label` });
+					let label = $("<label>", {class: `${PRE}-label`});
 					label.css("color", task_table.css("color"));
-					let checkbox = $("<input>", { type: "checkbox", class: `${PRE}-checkbox` });
+					let checkbox = $("<input>", {type: "checkbox", class: `${PRE}-checkbox`});
 					checkbox.prop("checked", this.setting.newTab);
 					checkbox.on("click", (e) => {
 						this.setting.newTab = e.currentTarget.checked;
@@ -659,10 +661,10 @@ if (!cpToolkitRetirement.replaced) {
 							e.stopPropagation();
 						}
 					});
-					dropdown_menu.append($("<li>", { class: "divider" }));
+					dropdown_menu.append($("<li>", {class: "divider"}));
 					if (this.setting.problemList !== null) {
 						for (let data of this.setting.problemList) {
-							let a = $("<a>", { href: data.url, text: `${data.diff} - ${data.name}` });
+							let a = $("<a>", {href: data.url, text: `${data.diff} - ${data.name}`});
 							a[0].addEventListener("click", {
 								handleEvent: this.changeNewTabAttr,
 								setting: this.setting,
@@ -670,7 +672,7 @@ if (!cpToolkitRetirement.replaced) {
 							dropdown_menu.append($("<li>").append(a));
 						}
 					} else {
-						let a = $("<a>", { text: TEXT.loadingFailed[this.setting.lang] });
+						let a = $("<a>", {text: TEXT.loadingFailed[this.setting.lang]});
 						dropdown_menu.append($("<li>").append(a));
 					}
 				},
@@ -694,24 +696,24 @@ if (!cpToolkitRetirement.replaced) {
 						tabindex: "-1",
 						role: "dialog",
 					});
-					let header = $("<div>", { class: "modal-header" });
+					let header = $("<div>", {class: "modal-header"});
 					let x = $("<button>", {
 						type: "button",
 						class: "close",
 						"data-dismiss": "modal",
 						"aria-label": "Close",
 					});
-					x.append($("<span>", { "aria-hidden": true, text: "×" }));
+					x.append($("<span>", {"aria-hidden": true, text: "×"}));
 					header.append(x);
-					header.append($("<h4>", { class: "modal-title", text: TEXT.atOnce[this.setting.lang] }));
-					let body = $("<div>", { class: "modal-body" });
-					body.append($("<p>", { text: TEXT.modalDescription[this.setting.lang] }));
+					header.append($("<h4>", {class: "modal-title", text: TEXT.atOnce[this.setting.lang]}));
+					let body = $("<div>", {class: "modal-body"});
+					body.append($("<p>", {text: TEXT.modalDescription[this.setting.lang]}));
 					let modalInfo = $("<p>");
-					let option = $("<div>", { class: `${PRE}-option` });
-					let all = $("<div>", { class: `${PRE}-flex ${PRE}-select-all` });
-					let specify = $("<div>", { class: `${PRE}-flex ${PRE}-select-specify` });
-					let label_all = $("<label>", { class: `${PRE}-label-radio` });
-					let radio_all = $("<input>", { type: "radio", name: "open-type" });
+					let option = $("<div>", {class: `${PRE}-option`});
+					let all = $("<div>", {class: `${PRE}-flex ${PRE}-select-all`});
+					let specify = $("<div>", {class: `${PRE}-flex ${PRE}-select-specify`});
+					let label_all = $("<label>", {class: `${PRE}-label-radio`});
+					let radio_all = $("<input>", {type: "radio", name: "open-type"});
 					let label_specify = label_all.clone(true);
 					let radio_specify = radio_all.clone(true);
 					this.isAll =
@@ -721,15 +723,15 @@ if (!cpToolkitRetirement.replaced) {
 					radio_specify.prop("checked", !this.isAll);
 					label_all.append(radio_all, document.createTextNode(TEXT.all[this.setting.lang]));
 					label_specify.append(radio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ":"));
-					let caution = $("<span>", { class: `${PRE}-caution` });
+					let caution = $("<span>", {class: `${PRE}-caution`});
 					if (this.setting.problemList.length > ATONCE_TAB_MAX) {
 						radio_all.prop("disabled", true);
 						label_all.addClass(`${PRE}-disabled`);
 						caution.text(TEXT.caution[this.setting.lang]);
 					}
-					all.append($("<div>", { class: `radio ${PRE}-radio` }).append(label_all), caution);
-					specify.append($("<div>", { class: `radio ${PRE}-radio` }).append(label_specify));
-					let select_begin = $("<div>", { class: `btn-group` });
+					all.append($("<div>", {class: `radio ${PRE}-radio`}).append(label_all), caution);
+					specify.append($("<div>", {class: `radio ${PRE}-radio`}).append(label_specify));
+					let select_begin = $("<div>", {class: `btn-group`});
 					let begin_button = $("<button>", {
 						class: `btn btn-default dropdown-toggle ${PRE}-toggle`,
 						"data-toggle": "dropdown",
@@ -737,8 +739,8 @@ if (!cpToolkitRetirement.replaced) {
 						text: "A",
 						disabled: this.isAll,
 					});
-					begin_button.append($("<span>", { class: `caret ${PRE}-caret` }));
-					let begin_list = $("<ul>", { class: `dropdown-menu ${PRE}-list` });
+					begin_button.append($("<span>", {class: `caret ${PRE}-caret`}));
+					let begin_list = $("<ul>", {class: `dropdown-menu ${PRE}-list`});
 					$.each(this.setting.problemList, (idx, data) => {
 						begin_list.append(
 							$("<li>").append(
@@ -753,7 +755,7 @@ if (!cpToolkitRetirement.replaced) {
 					let select_end = select_begin.clone(true);
 					let end_list = select_end.find("ul");
 					let end_button = select_end.find("button");
-					let between = $("<span>", { text: "−", class: `${PRE}-between` });
+					let between = $("<span>", {text: "−", class: `${PRE}-between`});
 					begin_button.html(
 						`${this.setting.problemList[this.setting.atOnce.begin].diff}<span class="caret ${PRE}-caret"></span>`,
 					);
@@ -808,9 +810,9 @@ if (!cpToolkitRetirement.replaced) {
 						isBegin: false,
 					});
 					specify.append(select_begin, between, select_end);
-					let reverse = $("<div>", { class: "checkbox" });
+					let reverse = $("<div>", {class: "checkbox"});
 					let label_reverse = $("<label>");
-					let check_reverse = $("<input>", { type: "checkbox", name: "reverse" });
+					let check_reverse = $("<input>", {type: "checkbox", name: "reverse"});
 					check_reverse.prop("checked", this.setting.reverse);
 					check_reverse.on("click", (e) => {
 						this.setting.reverse = e.currentTarget.checked;
@@ -820,7 +822,7 @@ if (!cpToolkitRetirement.replaced) {
 					option.append(all, specify, reverse);
 					body.append(option);
 					body.append(modalInfo);
-					let footer = $("<div>", { class: "modal-footer" });
+					let footer = $("<div>", {class: "modal-footer"});
 					let cancel = $("<button>", {
 						type: "button",
 						class: "btn btn-default",
@@ -880,8 +882,8 @@ if (!cpToolkitRetirement.replaced) {
 						blank?.close();
 					});
 					footer.append(cancel, open);
-					let dialog = $("<div>", { class: "modal-dialog", role: "document" });
-					let content = $("<div>", { class: "modal-content" });
+					let dialog = $("<div>", {class: "modal-dialog", role: "document"});
+					let content = $("<div>", {class: "modal-content"});
 					content.append(header, body, footer);
 					modal.append(dialog.append(content));
 					$("#main-div").before(modal);

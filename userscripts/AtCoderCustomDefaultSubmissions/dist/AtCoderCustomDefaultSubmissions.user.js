@@ -54,9 +54,9 @@ const cpToolkitRetirement = (() => {
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();
-	else window.addEventListener("load", showNotice, { once: true });
+	else window.addEventListener("load", showNotice, {once: true});
 
-	return { replaced: Boolean(document.documentElement.dataset.cpToolkit) };
+	return {replaced: Boolean(document.documentElement.dataset.cpToolkit)};
 })();
 
 if (!cpToolkitRetirement.replaced) {
@@ -65,14 +65,16 @@ if (!cpToolkitRetirement.replaced) {
 		var __getOwnPropNames = Object.getOwnPropertyNames;
 		var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 		var __hasOwnProp = Object.prototype.hasOwnProperty;
+
 		function __accessProp(key) {
 			return this[key];
 		}
+
 		var __toCommonJS = (from) => {
 			var entry = (__moduleCache ??= new WeakMap()).get(from),
 				desc;
 			if (entry) return entry;
-			entry = __defProp({}, "__esModule", { value: true });
+			entry = __defProp({}, "__esModule", {value: true});
 			if ((from && typeof from === "object") || typeof from === "function") {
 				for (var key of __getOwnPropNames(from))
 					if (!__hasOwnProp.call(entry, key))
@@ -88,6 +90,7 @@ if (!cpToolkitRetirement.replaced) {
 
 		// AtCoderCustomDefaultSubmissions/src/main.ts
 		var exports_main = {};
+
 		// ../shared/src/query.ts
 		function buildQueryString(data) {
 			const params = new URLSearchParams();
@@ -100,6 +103,7 @@ if (!cpToolkitRetirement.replaced) {
 
 		// ../shared/src/atcoder-url.ts
 		var ATCODER_TASK_URL_PATTERN = /^https:\/\/atcoder\.jp\/contests\/([^/?#]+)\/tasks\/([^/?#]+)/;
+
 		function parseAtCoderTaskUrl(url) {
 			const match = url.match(ATCODER_TASK_URL_PATTERN);
 			if (!match) return null;
@@ -108,6 +112,7 @@ if (!cpToolkitRetirement.replaced) {
 				taskId: match[2],
 			};
 		}
+
 		function buildAtCoderSubmissionsQuery(filter) {
 			const params = {};
 			if (filter.language !== undefined) params["f.LanguageName"] = filter.language;
@@ -116,6 +121,7 @@ if (!cpToolkitRetirement.replaced) {
 			if (filter.task) params["f.Task"] = filter.task;
 			return buildQueryString(params);
 		}
+
 		// ../shared/src/json.ts
 		function safeJsonParse(text, fallback) {
 			if (typeof text !== "string") return fallback;
@@ -125,6 +131,7 @@ if (!cpToolkitRetirement.replaced) {
 				return fallback;
 			}
 		}
+
 		function parseStoredObject(raw) {
 			if (raw == null) return {};
 			if (typeof raw === "string") {
@@ -139,9 +146,11 @@ if (!cpToolkitRetirement.replaced) {
 			}
 			return {};
 		}
+
 		function mergeWithDefaults(defaults, raw) {
 			return Object.assign({}, defaults, parseStoredObject(raw));
 		}
+
 		// AtCoderCustomDefaultSubmissions/src/main.ts
 		(function () {
 			const DEFAULTS = {
@@ -150,15 +159,18 @@ if (!cpToolkitRetirement.replaced) {
 				orderBy: "time_consumption",
 				includeTaskFilter: true,
 			};
+
 			function readConfig() {
 				const raw = typeof GM_getValue === "function" ? GM_getValue("config") : undefined;
 				return mergeWithDefaults(DEFAULTS, raw);
 			}
+
 			function writeConfig(config2) {
 				if (typeof GM_setValue === "function") {
 					GM_setValue("config", config2);
 				}
 			}
+
 			function configureLanguage() {
 				const current = readConfig();
 				const language = window.prompt("Language name (e.g. Java, C#, Python3, Rust):", current.language);
@@ -169,6 +181,7 @@ if (!cpToolkitRetirement.replaced) {
 				writeConfig(next);
 				window.alert("設定を保存しました。ページを再読み込みしてください。");
 			}
+
 			function configureStatus() {
 				const current = readConfig();
 				const status = window.prompt("Status filter (AC/WA/TLE/... or empty for all):", current.status);
@@ -179,6 +192,7 @@ if (!cpToolkitRetirement.replaced) {
 				writeConfig(next);
 				window.alert("設定を保存しました。ページを再読み込みしてください。");
 			}
+
 			function configureOrderBy() {
 				const current = readConfig();
 				const orderBy = window.prompt(
@@ -192,6 +206,7 @@ if (!cpToolkitRetirement.replaced) {
 				writeConfig(next);
 				window.alert("設定を保存しました。ページを再読み込みしてください。");
 			}
+
 			function toggleTaskFilter() {
 				const current = readConfig();
 				const next = Object.assign({}, current, {
@@ -200,10 +215,12 @@ if (!cpToolkitRetirement.replaced) {
 				writeConfig(next);
 				window.alert(`問題番号の絞り込み: ${next.includeTaskFilter ? "ON" : "OFF"}`);
 			}
+
 			function resetConfig() {
 				writeConfig(Object.assign({}, DEFAULTS));
 				window.alert("設定をリセットしました。ページを再読み込みしてください。");
 			}
+
 			if (typeof GM_registerMenuCommand === "function") {
 				GM_registerMenuCommand("AtCoder Custom Default Submissions: 言語設定", configureLanguage);
 				GM_registerMenuCommand("AtCoder Custom Default Submissions: 結果フィルタ設定", configureStatus);
@@ -211,9 +228,11 @@ if (!cpToolkitRetirement.replaced) {
 				GM_registerMenuCommand("AtCoder Custom Default Submissions: 問題番号絞り込み切替", toggleTaskFilter);
 				GM_registerMenuCommand("AtCoder Custom Default Submissions: 設定リセット", resetConfig);
 			}
+
 			function getTaskId() {
 				return parseAtCoderTaskUrl(location.href)?.taskId ?? "";
 			}
+
 			function buildSubmissionQuery(config2, task2) {
 				return buildAtCoderSubmissionsQuery({
 					language: config2.language,
@@ -222,9 +241,11 @@ if (!cpToolkitRetirement.replaced) {
 					task: task2 || undefined,
 				});
 			}
+
 			function isSubmissionLink(url) {
 				return /\/submissions(?:\/me)?\/?$/.test(url.pathname);
 			}
+
 			const config = readConfig();
 			const task = config.includeTaskFilter ? getTaskId() : "";
 			const querystring = buildSubmissionQuery(config, task);

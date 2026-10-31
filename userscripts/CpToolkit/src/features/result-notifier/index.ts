@@ -57,7 +57,13 @@ export const resultNotifier = defineFeature({
 		const notify = (submission: PendingSubmission, {status, detail}: SubmissionResult): void => {
 			const url = buildAtCoderSubmissionUrl(submission.contestId, submission.id);
 			const title = `${status}: ${submission.taskName}`;
-			showToast({title, detail, tone: status === "AC" ? "success" : "warning", href: url, durationMs: TOAST_DURATION_MS});
+			showToast({
+				title,
+				detail,
+				tone: status === "AC" ? "success" : "warning",
+				href: url,
+				durationMs: TOAST_DURATION_MS
+			});
 			if (options.desktop && document.hidden) notifier.notify({title, text: detail, url});
 		};
 

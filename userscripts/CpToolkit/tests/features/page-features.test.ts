@@ -86,7 +86,10 @@ describe("statementCopy", () => {
 	test("プレーンテキストでもコピーできる", async () => {
 		renderStatement();
 		const target = clipboard();
-		await run(statementCopy, {format: "plain"}, {clipboard: target, statementConverter: new TurndownStatementConverter()});
+		await run(statementCopy, {format: "plain"}, {
+			clipboard: target,
+			statementConverter: new TurndownStatementConverter()
+		});
 		document.querySelector<HTMLElement>("h3 button")?.click();
 
 		const text = target.write.mock.calls[0]?.[0] ?? "";
@@ -97,7 +100,10 @@ describe("statementCopy", () => {
 
 	test("サンプルの見出しにはボタンを追加せず、後始末で取り除く", async () => {
 		renderStatement();
-		const dispose = await run(statementCopy, undefined, {clipboard: clipboard(), statementConverter: new TurndownStatementConverter()});
+		const dispose = await run(statementCopy, undefined, {
+			clipboard: clipboard(),
+			statementConverter: new TurndownStatementConverter()
+		});
 		expect(document.querySelectorAll("h3 button")).toHaveLength(1);
 		dispose?.();
 		expect(document.querySelectorAll("button")).toHaveLength(0);

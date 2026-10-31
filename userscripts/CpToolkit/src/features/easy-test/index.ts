@@ -62,7 +62,12 @@ class EasyTest {
 
 	/** 実行中でも次の実行を受け付けるので、見た目だけを切り替える。 */
 	private createButton(label: string, className: string, onClick: () => void): HTMLButtonElement {
-		const button = h("button", {type: "button", className: `btn ${className}`, textContent: label, onclick: onClick});
+		const button = h("button", {
+			type: "button",
+			className: `btn ${className}`,
+			textContent: label,
+			onclick: onClick
+		});
 		button.classList.toggle("disabled", !this.runnable);
 		this.buttons.push(button);
 		return button;
@@ -85,7 +90,11 @@ class EasyTest {
 			);
 		}
 		if (sideButtons instanceof Element) {
-			sideButtons.append(h("a", {className: "btn btn-danger btn-sm", textContent: translate("easyTest.restore"), onclick: () => this.restore()}));
+			sideButtons.append(h("a", {
+				className: "btn btn-danger btn-sm",
+				textContent: translate("easyTest.restore"),
+				onclick: () => this.restore()
+			}));
 		}
 		if (results instanceof Element) results.append(this.resultList);
 	}
@@ -133,7 +142,10 @@ class EasyTest {
 	private rememberRunner(): void {
 		const language = this.site.language();
 		if (!language) return;
-		this.context.state.set(RUNNER_SELECTION_KEY, {...this.selections(), [language.id]: this.panel.environment.value});
+		this.context.state.set(RUNNER_SELECTION_KEY, {
+			...this.selections(),
+			[language.id]: this.panel.environment.value
+		});
 	}
 
 	/** 言語の切り替えと実行が重なっても、最新の状態になるよう順番に更新する。 */
@@ -153,7 +165,10 @@ class EasyTest {
 		const signature = candidates.map(({id, label}) => `${id}\n${label}`).join("\n");
 		if (environment.dataset.signature !== signature || candidates.length === 0) {
 			environment.dataset.signature = signature;
-			environment.replaceChildren(...candidates.map(({id, label}) => h("option", {value: id, textContent: label})));
+			environment.replaceChildren(...candidates.map(({id, label}) => h("option", {
+				value: id,
+				textContent: label
+			})));
 			if (candidates.length === 0) environment.append(h("option", {textContent: translate("easyTest.noEnvironment")}));
 		}
 		const isCandidate = (id: string | undefined): boolean => candidates.some((candidate) => candidate.id === id);

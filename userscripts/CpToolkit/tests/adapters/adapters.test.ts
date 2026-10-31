@@ -11,7 +11,12 @@ import {WandboxRunnerProvider} from "@adapters/runners/wandbox";
 import {LocalRunnerClient} from "@application/execution/local-runner";
 import {FakeHttpClient, MemoryStore} from "../support/fakes";
 
-const bridge = {onChange: () => undefined, triggerChange: () => undefined, renderMath: () => undefined, highlightCode: () => undefined};
+const bridge = {
+	onChange: () => undefined,
+	triggerChange: () => undefined,
+	renderMath: () => undefined,
+	highlightCode: () => undefined
+};
 const noHttp = new FakeHttpClient(() => ({status: 500, text: ""}));
 const java = {id: "1", label: "Java 21", family: "java"};
 
@@ -113,18 +118,40 @@ describe("実行環境", () => {
 	test("paiza の応答を実行結果に変換する", async () => {
 		const http = new FakeHttpClient(({url}) => {
 			if (url.includes("create")) return {status: 200, text: JSON.stringify({id: "x", status: "completed"})};
-			return {status: 200, text: JSON.stringify({
-				exit_code: 0, time: "0.01", memory: "2048", stdout: "ok", stderr: "", build_result: "success", result: "success",
-			})};
+			return {
+				status: 200, text: JSON.stringify({
+					exit_code: 0,
+					time: "0.01",
+					memory: "2048",
+					stdout: "ok",
+					stderr: "",
+					build_result: "success",
+					result: "success",
+				})
+			};
 		});
 		const [runner] = await new PaizaRunnerProvider(http).runnersFor({id: "r", label: "Rust", family: "rust"});
-		expect(await runner?.run("code", "input", {})).toMatchObject({status: "OK", output: "ok", execTime: 10, memory: 2.048});
+		expect(await runner?.run("code", "input", {})).toMatchObject({
+			status: "OK",
+			output: "ok",
+			execTime: 10,
+			memory: 2.048
+		});
 	});
 
 	test("paiza のコンパイルエラーを判定する", async () => {
 		const http = new FakeHttpClient(({url}) => {
 			if (url.includes("create")) return {status: 200, text: JSON.stringify({id: "x", status: "completed"})};
-			return {status: 200, text: JSON.stringify({build_result: "failure", build_exit_code: 1, build_stderr: "error", time: "0", memory: "0"})};
+			return {
+				status: 200,
+				text: JSON.stringify({
+					build_result: "failure",
+					build_exit_code: 1,
+					build_stderr: "error",
+					time: "0",
+					memory: "0"
+				})
+			};
 		});
 		const [runner] = await new PaizaRunnerProvider(http).runnersFor({id: "r", label: "Rust", family: "rust"});
 		expect(await runner?.run("code", "", {})).toMatchObject({status: "CE", error: "error"});
@@ -143,8 +170,15 @@ describe("実行環境", () => {
 	});
 
 	test("Local Runner は同じ言語のコンパイラだけを候補にする", async () => {
-		const list = [{language: "Java", compilerName: "jdk24", label: "Java 24"}, {language: "C++", compilerName: "gcc", label: "G++"}];
-		const client = new LocalRunnerClient(new FakeHttpClient(() => ({status: 200, text: JSON.stringify(list)})), () => "http://localhost:8080");
+		const list = [{language: "Java", compilerName: "jdk24", label: "Java 24"}, {
+			language: "C++",
+			compilerName: "gcc",
+			label: "G++"
+		}];
+		const client = new LocalRunnerClient(new FakeHttpClient(() => ({
+			status: 200,
+			text: JSON.stringify(list)
+		})), () => "http://localhost:8080");
 		expect((await new LocalRunnerProvider(client).runnersFor(java)).map(({label}) => label)).toEqual(["Java 24 [Local]"]);
 	});
 
@@ -164,7 +198,10 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 		write("AtCoderWidenContainer", {containerWidth: "80%"});
 		write("AtCoderCustomDefaultSubmissions", {config: {language: "Rust", includeTaskFilter: false}});
 		write("AtCoderEasyTestForJava", {
-			config: JSON.stringify({"codeRunner.localRunnerURL": "http://localhost:9000", "ui.useKeyboardShortcut": "false"}),
+			config: JSON.stringify({
+				"codeRunner.localRunnerURL": "http://localhost:9000",
+				"ui.useKeyboardShortcut": "false"
+			}),
 		});
 		const settings = new SettingsService(new MemoryStore());
 		importLegacySettings(new LocalStorageLegacyInbox(), settings);

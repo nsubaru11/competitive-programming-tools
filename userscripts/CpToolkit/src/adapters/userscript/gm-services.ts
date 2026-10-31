@@ -1,4 +1,11 @@
-import type {Clipboard, HttpClient, HttpRequest, HttpResponse, Notification, Notifier} from "@application/ports/services";
+import type {
+	Clipboard,
+	HttpClient,
+	HttpRequest,
+	HttpResponse,
+	Notification,
+	Notifier
+} from "@application/ports/services";
 
 export class GmClipboard implements Clipboard {
 	write(text: string): void {

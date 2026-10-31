@@ -13,10 +13,10 @@
 
 `CpToolkit` は上の4本から派生したコードと、次のライブラリを含みます。配布物のライセンスは `MIT AND Apache-2.0 AND 0BSD` です。
 
-| ライブラリ                                                                     | 作者         | ライセンス |
-|--------------------------------------------------------------------------------|--------------|------------|
-| [turndown](https://github.com/mixmark-io/turndown)                             | Dom Christie | MIT        |
-| [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm)       | Dom Christie | MIT        |
+| ライブラリ                                                               | 作者         | ライセンス |
+|--------------------------------------------------------------------------|--------------|------------|
+| [turndown](https://github.com/mixmark-io/turndown)                       | Dom Christie | MIT        |
+| [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) | Dom Christie | MIT        |
 
 ## Apache License 2.0
 
