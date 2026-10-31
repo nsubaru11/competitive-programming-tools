@@ -1,6 +1,6 @@
 # runner
 
-AtCoder 向けの **ローカル Java 実行** と **CLI**（`test` / `submit` / `toclip` / `localtest` / `run` / `tomain` / `serve` / `stop`）です。
+AtCoder 向けの **ローカル Java 実行** と **CLI**（`test` / `submit` / `toclip` / `localtest` / `run` / `crosscheck` / `tomain` / `serve` / `stop` / `status` / `cacheclear`）です。
 Bun + TypeScript で実装し、Java 側は常駐 `Dispatcher`（インプロセス javac ＋ 実行）と連携します。
 
 ## 構成
@@ -12,7 +12,7 @@ tools/local-runner/
 │   ├── cli/           # test / submit / 短縮表記、AtCoder HTTP、サンプルジャッジ
 │   ├── daemon/        # server.ts(HTTP API) / dispatcher.ts(常駐JVM連携) / compiler.ts(javac キャッシュ)
 │   ├── config.ts      # 設定
-│   ├── utils.ts       # ログ・整形
+│   ├── utils/         # ログ・色・整形・ファイル操作
 │   └── types/         # 型定義
 ├── bin/               # test.cmd / submit.cmd、起動スクリプト
 └── java/              # README + src/（Dispatcher ほか常駐 JVM のクラス群・PROTOCOL.md・WarmUp.java）
@@ -42,6 +42,7 @@ userscript の AtCoder Easy Test for Java と同じ `evaluateEasyTestOutput` で
 | `serve`                                                        | Local Runner サーバーだけ先に起動して ready まで待つ                                                                                                            |
 | `stop`                                                         | Local Runner サーバーを停止（graceful shutdown）                                                                                                                |
 | `status`                                                       | Local Runner サーバーの稼働状況を表示（uptime・Java・dispatcher・キャッシュ等。稼働中=0/停止中=1。auto-start はしない）                                         |
+| `cacheclear -a` / `cacheclear -t <taskScreenName>`             | サンプルキャッシュを全削除、または指定タスクだけ削除                                                                                                            |
 
 `taskScreenName` は URL の `/tasks/` 以降そのまま（例: `abc448_d`）。`contestId` は最後の `_` より前から自動解決します。
 
@@ -57,14 +58,14 @@ import lib.io.FastPrinter;
 import lib.io.FastScanner;
 ```
 
-`run` / `localtest` / `test` / `crosscheck` / `tomain` / `toclip` / `submit` は、実行前に`import lib.*`を検出し、`library/src/lib`から必要なクラスと推移的依存を単一ソースへ展開します。ログには`Bundled library classes: ...`として展開対象が表示されます。`patterns.*`は読む・写経する資料なので自動展開しません。
+`run` / `localtest` / `test` / `crosscheck` / `tomain` / `toclip` / `submit` は、実行前に`import lib.*`を検出し、`library/java/src/lib`から必要なクラスと推移的依存を単一ソースへ展開します。ログには`Bundled library classes: ...`として展開対象が表示されます。`patterns.*`は読む・写経する資料なので自動展開しません。
 
 ライブラリは次の順で検索します。
 
 1. `ATCODER_LIB_SRC`で指定された`src`ディレクトリ
-2. 解答ファイルから上位へ探索した`library/src`
+2. `tools`と同じ階層の`library/java/src`
 
-AtCoderリポジトリ直下にlibrary submoduleがあれば、通常は環境変数の設定は不要です。`import static lib...`、本文中の`lib.ds.UnionFind`のような完全修飾参照、バンドル後に単純名が衝突する型はエラーになります。
+リポジトリに`library/java`サブモジュールがあれば、通常は環境変数の設定は不要です。`import static lib...`、本文中の`lib.ds.UnionFind`のような完全修飾参照、バンドル後に単純名が衝突する型はエラーになります。
 
 `import lib.io.*;`のようなワイルドカードimportでも、解答本文で実際に参照しているトップレベル型だけをインラインします。提出コードでは元のlibrary importを削除せず、`// import lib.io.*;`のようにコメントアウトして展開元を残します。
 
@@ -80,12 +81,12 @@ toclip D.java  # ファイルを明示
 #### 短縮表記（フォルダからコンテスト推定）
 
 `test` / `submit` / `toclip` に**引数を 1 つだけ**渡すと短縮表記になります。
-`test d` は、原則としてカレントの上位にある `src` の親フォルダ名からコンテスト（小文字化）を、引数の記号からタスクとソース（`D.java`）を解決します。たとえば `ABC463/src` では `test abc463_d D.java` と同等です。コンテストIDと問題IDの接頭辞が異なる `JSC2025Advance-final` / `JSC2026Advance-final` は、それぞれ `abc422` / `abc474` に固定対応します。
+`test d` は、原則としてカレントの上位にある `src` の親フォルダ名からコンテスト（小文字化）を、引数の記号からタスクとソース（`D.java`）を解決します。たとえば `abc463/src/java` では `test abc463_d D.java` と同等です。コンテストIDと問題IDの接頭辞が異なる `jsc2025advance-final` / `jsc2026advance-final` / `tessoku-book` は、それぞれ `abc422` / `abc474` / `tessoku_book` に固定対応します。
 
 - 記号は**大小無視**（`d` = `D`）。コンテスト名は URL に合わせ**小文字化**。
 - 末尾の数字は**ファイル変種**扱い: `test d1` → `D1.java` を、問題 `d`（`abc463_d`）のサンプルでテスト（AtCoder のタスク記号は A〜H と Ex のみで数字付きは無いため）。
-- コンテストフォルダは原則として `src` の親（`ABC463` / `JSC2025Advance-final` など）を採用。範囲フォルダ `ABC451~475` は採用しません。
-- ソースは**カレントディレクトリ**から探します（例の構成では `ABC463/src` で実行）。
+- コンテストフォルダは原則として `src` の親（`abc463` / `jsc2025advance-final` など）を採用。範囲フォルダ `451-500` は採用しません。
+- ソースは**カレントディレクトリ**から探します（例の構成では `abc463/src/java` で実行）。
 - `toclip`はコンテストIDを必要とせず、短縮記号からソースだけを解決します（`toclip d1` → `D1.java`）。
 
 `test` / `submit` / `localtest` / `run` は、Local Runnerサーバーが未起動ならWSL上へ自動起動します。起動時にライブラリソースを`/dev/shm`へ同期して一度だけclass化し、解答のCompiler API解析はそのclasspathを使用します。提出用本文だけを同期済みsourceから取得するため、コンパイル・実行環境をWSLへ統一したままNTFS境界の反復コストを避けます。実行時はソースを一度だけ`prepare`して変換・コンパイルし、以降の各サンプルは`programId`と標準入力だけを送ります。`serve`で事前に温めておくと初回が速くなります。ライブラリを編集した場合は`stop`→`serve`で同期し直してください。
@@ -125,6 +126,10 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 ソース中の `DEBUG = true` は、`submit` / `tomain` / `toclip`（提出物）では `false` に固定し、`test` / `localtest` / `run`（ローカル実行）では既定で `true` のまま実行します。デバッグ出力を `System.err` に出しておけば、判定（stdout 比較）に影響せず確認できます。
 
 `test` / `localtest` / `run` は `-d/--debug=false` で DEBUG を切って実行でき、提出と同じ条件での確認に使えます。`submit` / `tomain` / `toclip` は提出物のため常に `false`（上書き不可）。
+
+### 提出用ヘッダー
+
+`submit` / `tomain` / `toclip` は、提出物の先頭に `templates/header/java.txt` を付けます。`ATCODER_HEADER_FILE` で差し替えられます。ファイルが無い場合や、ソースが既に `// ====` で始まる場合は付けません。
 
 ### 実行時間の警告
 
@@ -183,12 +188,13 @@ bun run --cwd local-runner localtest D.java
 | `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                         |
 | `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                          |
 | `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                          |
-| `ATCODER_WSL_DISTRO`             | auto-start で使う WSL ディストリ                   | 既定ディストリ                |
-| `ATCODER_RUNNER_DIR_WSL`         | WSL内の `tools/local-runner` パス（明示時）              | wslpath で自動導出            |
-| `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | 上位階層の`library/src`を探索 |
+| `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`         |
+| `ATCODER_HEADER_FILE`            | 提出物の先頭に付けるヘッダーファイル               | `../templates/header/java.txt` |
 | `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                             |
 | `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                             |
 | `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`      |
+
+既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
 
 ## セッションファイル例
 
@@ -218,7 +224,7 @@ powershell -File ".\bin\install-path.ps1"
 以後、任意ディレクトリから `test` / `submit` を実行できます。短縮表記は**問題フォルダ**で実行します（コンテストをフォルダから推定するため）。
 
 ```powershell
-cd "C:\...\AtCoder\ABC\ABC451~475\ABC463\src"
+cd "C:\...\atcoder\abc\451-500\abc463\src\java"
 test d            # = test abc463_d D.java
 submit d          # = submit abc463_d D.java
 ```
