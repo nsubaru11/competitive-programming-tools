@@ -53,7 +53,7 @@ bun run --cwd userscripts ./build.ts AtCoderHighlighter
 `evaluateEasyTestOutput` と runner CLI で共通です。
 
 - [インストール](https://raw.githubusercontent.com/nsubaru11/atcoder-java-tools/main/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js)
-- ローカル実行: [runner/README.md](../runner/README.md)
+- ローカル実行: [local-runner/README.md](../local-runner/README.md)
 
 ### AtCoder Highlighter
 

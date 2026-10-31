@@ -36,7 +36,7 @@ function commandAvailable(command: string, args: string[]): boolean {
  * WSL/Linux 内: setsid でバックグラウンド化し、ログは ~/.atcoder/runner-autostart.log へ。
  */
 function startServer(): void {
-	const binDir = path.join(PROJECT_ROOT, "runner", "bin");
+	const binDir = path.join(PROJECT_ROOT, "local-runner", "bin");
 
 	if (process.platform === "win32") {
 		const backend = (process.env.LOCAL_RUNNER_BACKEND || "wsl").toLowerCase();
@@ -47,7 +47,7 @@ function startServer(): void {
 			if (!nativeAvailable) {
 				throw new Error("LOCAL_RUNNER_BACKEND=native requires bun, java, and javac on Windows PATH.");
 			}
-			const serverPath = path.join(PROJECT_ROOT, "runner", "src", "daemon", "server.ts");
+			const serverPath = path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "server.ts");
 			const child = spawn(bunCommand, [serverPath], {
 				cwd: PROJECT_ROOT,
 				detached: true,

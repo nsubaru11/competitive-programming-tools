@@ -17,7 +17,7 @@ export class ToclipCommand implements Command {
 			? taskCommand.resolveShortSourceArg(args[0])
 			: args[0];
 		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceArg);
-		clipboard.copyToClipboard(transformed);
+		clipboard.copyToClipboard(source.withSubmissionHeader(transformed));
 		console.log(`Copied submission source to clipboard: ${resolvedSourcePath}`);
 		return 0;
 	}

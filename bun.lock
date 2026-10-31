@@ -5,7 +5,7 @@
     "": {
       "name": "atcoder-tools",
     },
-    "runner": {
+    "local-runner": {
       "name": "@atcoder-tools/runner",
       "version": "0.1.0",
       "dependencies": {
@@ -35,7 +35,7 @@
     },
   },
   "packages": {
-    "@atcoder-tools/runner": ["@atcoder-tools/runner@workspace:runner"],
+    "@atcoder-tools/runner": ["@atcoder-tools/runner@workspace:local-runner"],
 
     "@atcoder-tools/shared": ["@atcoder-tools/shared@workspace:shared"],
 

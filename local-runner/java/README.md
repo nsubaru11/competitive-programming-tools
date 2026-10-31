@@ -1,7 +1,7 @@
-# runner/java — 常駐 Dispatcher（Java 側）
+# local-runner/java — 常駐 Dispatcher（Java 側）
 
 Local Runner の**実行バックエンド**です。
-JVM を 1 つ起動しっぱなしにして、TS デーモン（`runner/src/daemon`）から標準入出力経由でコマンドを受け、**インプロセス javac でのコンパイル**と**コンパイル済みクラスの実行**を代行します。
+JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/src/daemon`）から標準入出力経由でコマンドを受け、**インプロセス javac でのコンパイル**と**コンパイル済みクラスの実行**を代行します。
 毎回 `javac`/`java` を起動するコストを無くすのが目的です。
 
 通信プロトコルの正典は [`src/PROTOCOL.md`](./src/PROTOCOL.md) です（ワイヤ形式・各メッセージ・メモリ/隔離フラグの意味）。

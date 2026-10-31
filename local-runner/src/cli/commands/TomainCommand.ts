@@ -34,7 +34,7 @@ export class TomainCommand implements Command {
 		}
 
 		fs.mkdirSync(path.dirname(outPath), {recursive: true});
-		fs.writeFileSync(outPath, transformed, "utf8");
+		fs.writeFileSync(outPath, source.withSubmissionHeader(transformed), "utf8");
 		console.log(`Converted: ${resolvedSourcePath} -> ${outPath}`);
 		return 0;
 	}

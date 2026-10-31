@@ -6,7 +6,7 @@ Bun + TypeScript で実装し、Java 側は常駐 `Dispatcher`（インプロセ
 ## 構成
 
 ```text
-tools/runner/
+tools/local-runner/
 ├── package.json
 ├── src/
 │   ├── cli/           # test / submit / 短縮表記、AtCoder HTTP、サンプルジャッジ
@@ -137,7 +137,7 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 ### 実行例
 
 ```powershell
-cd tools/runner
+cd tools/local-runner
 bun install
 
 # （任意）サーバーを先に起動。test 等を打てば自動起動するので必須ではない
@@ -166,9 +166,9 @@ PATH 登録済みなら任意ディレクトリから `test` / `localtest` / `ru
 
 ```powershell
 cd tools
-bun run --cwd runner serve
-bun run --cwd runner test abc448_d D.java
-bun run --cwd runner localtest D.java
+bun run --cwd local-runner serve
+bun run --cwd local-runner test abc448_d D.java
+bun run --cwd local-runner localtest D.java
 ```
 
 ## 環境変数
@@ -184,7 +184,7 @@ bun run --cwd runner localtest D.java
 | `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                          |
 | `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                          |
 | `ATCODER_WSL_DISTRO`             | auto-start で使う WSL ディストリ                   | 既定ディストリ                |
-| `ATCODER_RUNNER_DIR_WSL`         | WSL内の `tools/runner` パス（明示時）              | wslpath で自動導出            |
+| `ATCODER_RUNNER_DIR_WSL`         | WSL内の `tools/local-runner` パス（明示時）              | wslpath で自動導出            |
 | `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | 上位階層の`library/src`を探索 |
 | `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                             |
 | `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                             |
@@ -202,7 +202,7 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 CLI のソースを変更したら **`bun run build`**（typecheck ＋ CLI の exe 化）を実行してください。`bin/_runner.cmd` はこの exe があれば使い、無ければ `bun src` にフォールバックします。
 
 ```powershell
-cd tools/runner
+cd tools/local-runner
 bun run build        # = typecheck + build:cli:win
 ```
 

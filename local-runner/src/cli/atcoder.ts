@@ -11,7 +11,7 @@ const AUTH_ERROR_MESSAGE = [
 	"[auth] ERROR: REVEL_SESSION is missing, expired, or has been replaced.",
 	"",
 	"Update it with:",
-	"  .\\tools\\runner\\bin\\set-atcoder-session.ps1",
+	"  .\\tools\\local-runner\\bin\\set-atcoder-session.ps1",
 ].join("\n");
 
 function ensureNotLoginPage(body: string) {

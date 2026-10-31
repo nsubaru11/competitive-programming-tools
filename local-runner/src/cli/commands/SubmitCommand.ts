@@ -2,6 +2,7 @@ import * as shared from "@atcoder-tools/shared";
 import * as color from "../../utils/color";
 import * as atcoder from "../atcoder";
 import {TaskCommand, type TaskRunContext} from "./TaskCommand";
+import * as source from "./source";
 
 /** サンプルが全 AC なら（-f 指定時は非 AC でも）AtCoder へ提出し、結果をポーリング表示する。 */
 export class SubmitCommand extends TaskCommand {
@@ -25,7 +26,7 @@ export class SubmitCommand extends TaskCommand {
 		}
 
 		const cookieHeader = atcoder.toCookieHeader();
-		const submitResult = await atcoder.submitToAtCoder(task, transformed, cookieHeader);
+		const submitResult = await atcoder.submitToAtCoder(task, source.withSubmissionHeader(transformed), cookieHeader);
 
 		let submissionId = submitResult.submissionId;
 		let submissionUrl = submitResult.submissionUrl;

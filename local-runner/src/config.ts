@@ -16,7 +16,7 @@ function resolveProjectRoot() {
 		.flatMap((d) => [path.resolve(d, ".."), path.resolve(d, "../..")]);
 	const candidates = [envRoot, importMetaRoot, ...roots].filter(Boolean) as string[];
 	for (const candidate of candidates) {
-		if (fs.existsSync(path.join(candidate, "runner", "java", "src", "Dispatcher.java"))) {
+		if (fs.existsSync(path.join(candidate, "local-runner", "java", "src", "Dispatcher.java"))) {
 			return candidate;
 		}
 	}
@@ -30,7 +30,7 @@ let preparedLibrarySourceRoot: string | null = null;
 function findLibrarySourceRoot(): string {
 	const candidates = [
 		process.env.ATCODER_LIB_SRC,
-		path.resolve(PROJECT_ROOT, "../library/src"),
+		path.resolve(PROJECT_ROOT, "../library/java/src"),
 		path.resolve(PROJECT_ROOT, "library/src"),
 	].filter(Boolean) as string[];
 	for (const candidate of candidates) {
@@ -41,6 +41,11 @@ function findLibrarySourceRoot(): string {
 
 export function resolveLibrarySourceRoot(): string {
 	return preparedLibrarySourceRoot || findLibrarySourceRoot();
+}
+
+/** 提出物の先頭に付けるヘッダーファイル。無ければヘッダーなしで提出する。 */
+export function resolveSubmissionHeaderFile(): string {
+	return process.env.ATCODER_HEADER_FILE || path.resolve(PROJECT_ROOT, "../templates/header/java.txt");
 }
 
 export const CLI_CONFIG = {
@@ -70,7 +75,7 @@ export function resolveDispatcherSourceFile() {
 	const envPath = process.env.LOCAL_RUNNER_DISPATCHER_SOURCE;
 	const candidates = [
 		envPath,
-		path.join(PROJECT_ROOT, "runner", "java", "src", "Dispatcher.java")
+		path.join(PROJECT_ROOT, "local-runner", "java", "src", "Dispatcher.java")
 	].filter(Boolean) as string[];
 	for (const candidate of candidates) {
 		if (fs.existsSync(candidate)) {
@@ -92,7 +97,7 @@ export const RUNNER_CONFIG = {
 	baseDir: process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir,
 	compileRootDir: path.join(process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir, "compiled"),
 	dispatcherBuildDir: path.join(process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir, "dispatcher"),
-	warmUpSourceFile: path.join(PROJECT_ROOT, "runner", "java", "src", "WarmUp.java"),
+	warmUpSourceFile: path.join(PROJECT_ROOT, "local-runner", "java", "src", "WarmUp.java"),
 	warmUpSourceClassName: "WarmUp",
 	warmUpStdin: "",
 	warmUpProfile: (process.env.LOCAL_RUNNER_WARMUP_PROFILE || "full").toLowerCase(),

@@ -20,6 +20,7 @@ const CONTEST_SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 const TASK_PREFIX_BY_CONTEST_ID: Readonly<Record<string, string>> = {
 	"jsc2025advance-final": "abc422",
 	"jsc2026advance-final": "abc474",
+	"tessoku-book": "tessoku_book",
 };
 
 /** cwd から上方向に辿り、原則として `src` の親フォルダ名をコンテストIDとして返す。 */

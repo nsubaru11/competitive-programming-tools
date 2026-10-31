@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as shared from "@atcoder-tools/shared";
-import {CLI_CONFIG} from "../../config";
+import {CLI_CONFIG, resolveSubmissionHeaderFile} from "../../config";
 import * as ensureServer from "../ensureServer";
 import * as transform from "../transform";
 
@@ -16,6 +16,14 @@ export type PreparedSource = {
 	/** ライブラリ展開でインラインされた FQCN 一覧（展開なしなら空）。 */
 	inlinedClasses: string[];
 };
+
+/** 提出物の先頭にヘッダーを付ける。既にヘッダーがあるソースやファイルが無い場合はそのまま返す。 */
+export function withSubmissionHeader(sourceCode: string): string {
+	if (sourceCode.startsWith("// ====")) return sourceCode;
+	const headerFile = resolveSubmissionHeaderFile();
+	if (!fs.existsSync(headerFile)) return sourceCode;
+	return `${shared.normalizeNewlines(fs.readFileSync(headerFile, "utf8")).trimEnd()}\n\n${sourceCode}`;
+}
 
 /**
  * ソースファイルを解決して読み込み、ライブラリ展開（lib import があれば）→

@@ -27,7 +27,9 @@ export function loadLocalSamples(sourceFilePath: string, testDir?: string): Samp
 }
 
 function buildAutoDirs(sourceDir: string, stem: string): string[] {
-	const root = path.dirname(sourceDir); // 例: .../Prelim2025
+	// src/java のように言語別フォルダがある場合は src の親をコンテストフォルダとして扱う。
+	const parent = path.dirname(sourceDir);
+	const root = path.basename(parent).toLowerCase() === "src" ? path.dirname(parent) : parent; // 例: .../prelim2025
 	const dirs: string[] = [path.join(root, stem)]; // <root>/A（問題フォルダが src と並列のとき）
 	for (const name of TEST_DIR_NAMES) {
 		dirs.push(path.join(root, name));        // <root>/judgedata

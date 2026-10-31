@@ -3,12 +3,12 @@
 	"private": true,
 	"workspaces": [
 		"shared",
-		"runner",
+		"local-runner",
 		"userscripts"
 	],
 	"scripts": {
 		"typecheck:userscripts": "bun --cwd userscripts run typecheck",
 		"build:userscripts": "bun --cwd userscripts run build",
-		"typecheck:runner": "bun --cwd runner run typecheck"
+		"typecheck:runner": "bun --cwd local-runner run typecheck"
 	}
 }
