@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.10
+// @version        1.0.11
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1742,17 +1742,43 @@ ${settings_panel_default}`,
 		};
 	}
 
+	// CpToolkit/src/features/settings-panel/navigation-entry.css
+	var navigation_entry_default = `/* サイトのメニューに紛れないよう、黒と白のどちらのヘッダーでも目立つ色にする */
+.cp-settings-entry {
+	display: inline-block;
+	padding: 1px 10px;
+	border-radius: 999px;
+	background: #0969da;
+	color: #fff !important;
+	font-weight: 600;
+	line-height: 1.6;
+	white-space: nowrap;
+}
+
+.cp-settings-entry::before {
+	content: "\\2699\\FE0E";
+	margin-right: 4px;
+}
+
+a:hover > .cp-settings-entry,
+a:focus > .cp-settings-entry {
+	background: #0550ae;
+}
+`;
+
 	// CpToolkit/src/features/settings-panel/navigation-entry.ts
 	function addNavigationEntry(listSelectors, label, onOpen) {
 		const list = listSelectors
 			.map((selector) => document.querySelector(selector))
 			.find((element) => element !== null);
-		const link = h("a", {href: "#", textContent: label});
+		if (!list) return;
+		injectStyle(navigation_entry_default);
+		const link = h("a", {href: "#"}, h("span", {className: "cp-settings-entry", textContent: label}));
 		link.addEventListener("click", (event) => {
 			event.preventDefault();
 			onOpen();
 		});
-		list?.append(h("li", {}, link));
+		list.append(h("li", {}, link));
 	}
 
 	// CpToolkit/data/judges/aoj.yaml
@@ -2053,8 +2079,10 @@ ${settings_panel_default}`,
 		"variableHover.description":
 			"Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.",
 		"latestContests.title": "Latest contests",
-		"latestContests.description": "Adds links to the latest ABC, ARC and other contests to the header.",
+		"latestContests.description": "Adds a header menu with the upcoming contests listed on the home page.",
 		"latestContests.menu": "Latest contests",
+		"latestContests.loading": "Loading...",
+		"latestContests.failed": "Could not load the list",
 		"contestCalendar.title": "Add to calendar",
 		"contestCalendar.description": "Adds a link to contest pages that registers the contest in Google Calendar.",
 		"contestCalendar.add": "Add to calendar",
@@ -2251,8 +2279,10 @@ ${settings_panel_default}`,
 		"variableHover.description":
 			"問題文の変数に重ねると、同じ変数をすべて強調します。クリックで固定し、Esc で解除します。",
 		"latestContests.title": "最新のコンテスト",
-		"latestContests.description": "ヘッダーに ABC や ARC などの最新のコンテストへのリンクを追加します。",
+		"latestContests.description": "ホームの「次のコンテスト」の一覧を、ヘッダーのメニューから開けるようにします。",
 		"latestContests.menu": "最新のコンテスト",
+		"latestContests.loading": "読み込み中...",
+		"latestContests.failed": "取得できませんでした",
 		"contestCalendar.title": "カレンダーへの登録",
 		"contestCalendar.description": "コンテストのページに、Google カレンダーへ登録するリンクを追加します。",
 		"contestCalendar.add": "カレンダーに追加",
@@ -2391,34 +2421,6 @@ ${settings_panel_default}`,
 				"#header .header-page",
 			],
 			cacheMinutes: 60,
-			leadHours: 24,
-			kinds: [
-				{
-					label: "ABC",
-					idPattern: "^abc\\d+$",
-					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=1&category=0&keyword=",
-				},
-				{
-					label: "ARC",
-					idPattern: "^arc\\d+$",
-					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=2&category=0&keyword=",
-				},
-				{
-					label: "AGC",
-					idPattern: "^agc\\d+$",
-					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=3&category=0&keyword=",
-				},
-				{
-					label: "AHC",
-					idPattern: "^ahc\\d+$",
-					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=4&category=0&keyword=",
-				},
-				{
-					label: "AWC",
-					idPattern: "^awc\\d+$",
-					archiveUrl: "https://atcoder.jp/contests/",
-				},
-			],
 		},
 	};
 	// CpToolkit/data/languages.yaml
@@ -8078,49 +8080,22 @@ ${efficient_layout_default}`);
 		},
 	});
 
-	// CpToolkit/src/domain/contest/latest.ts
-	function parseContestTime(text) {
-		return Date.parse(
-			text
-				.trim()
-				.replace(" ", "T")
-				.replace(/([+-]\d{2})(\d{2})$/, "$1:$2"),
-		);
-	}
-
-	function pickLatestContest(rows, idPattern, now, leadMs) {
-		const contests = rows.filter(({id}) => idPattern.test(id)).toSorted((a, b) => a.startMs - b.startMs);
-		return (contests.findLast(({startMs}) => startMs <= now + leadMs) ?? contests[0])?.id ?? null;
-	}
-
 	// CpToolkit/src/application/contest/latest-contests.ts
 	var CACHE_KEY2 = "latest-contests:cache";
-	var CONTEST_LIST_URL = "/contests/";
+	var HOME_URL = "/home";
 	var MINUTE_MS = 60 * 1000;
-	var HOUR_MS2 = 60 * MINUTE_MS;
-	var isCache = isObjectOf({fetchedAt: isNumber, contests: isRecordOf(isString)});
+	var isCache = isObjectOf({
+		fetchedAt: isNumber,
+		contests: isArrayOf(isObjectOf({category: isString, id: isString, name: isString})),
+	});
 
-	async function loadLatestContests(catalog, {site, state, parse, now}) {
+	async function loadLatestContests(cacheMinutes, {site, state, parse, now}) {
 		const cache = readStored(state, CACHE_KEY2, isCache, null);
-		if (cache && now - cache.fetchedAt < catalog.cacheMinutes * MINUTE_MS) return cache.contests;
-		const fetchRows = async (url) => {
-			const response = await site.send({url});
-			if (response.status !== 200) throw new Error(`Failed to load ${url}`);
-			return parse(response.text);
-		};
-		const leadMs = catalog.leadHours * HOUR_MS2;
-		const rows = await fetchRows(CONTEST_LIST_URL);
-		const entries = await Promise.all(
-			catalog.kinds.map(async ({label, idPattern, archiveUrl}) => {
-				const pattern = new RegExp(idPattern);
-				const id =
-					pickLatestContest(rows, pattern, now, leadMs) ??
-					pickLatestContest(await fetchRows(archiveUrl), pattern, now, leadMs);
-				return id ? [[label, id]] : [];
-			}),
-		);
-		const contests = Object.fromEntries(entries.flat());
-		state.set(CACHE_KEY2, {fetchedAt: now, contests});
+		if (cache && now - cache.fetchedAt < cacheMinutes * MINUTE_MS) return cache.contests;
+		const response = await site.send({url: HOME_URL});
+		if (response.status !== 200) throw new Error(`Failed to load ${HOME_URL}`);
+		const contests = parse(response.text);
+		if (contests.length > 0) state.set(CACHE_KEY2, {fetchedAt: now, contests});
 		return contests;
 	}
 
@@ -8136,6 +8111,8 @@ ${efficient_layout_default}`);
 	left: 0;
 	z-index: 1000;
 	min-width: 120px;
+	max-width: min(480px, 90vw);
+	width: max-content;
 	margin: 0;
 	padding: 5px 0;
 	border: 1px solid rgba(0, 0, 0, .15);
@@ -8164,10 +8141,12 @@ ${efficient_layout_default}`);
 	display: block !important;
 	padding: 3px 20px !important;
 	border: 0 !important;
+	overflow: hidden;
 	color: #333 !important;
 	font-size: 14px !important;
 	line-height: 1.6 !important;
 	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 #header .cp-latest-menu > li > a:hover,
@@ -8176,18 +8155,37 @@ ${efficient_layout_default}`);
 	color: #262626 !important;
 	text-decoration: none;
 }
+
+.cp-latest-message {
+	padding: 3px 20px !important;
+	color: #777;
+	font-size: 14px;
+	white-space: nowrap;
+}
 `;
 
 	// CpToolkit/src/features/latest-contests/index.ts
 	var CONTEST_LIST_PATH = "/contests/";
 
-	function parseContestRows(html) {
+	function parseNextContests(html) {
 		const page = new DOMParser().parseFromString(html, "text/html");
 		return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
-			const id = row.querySelector('a[href^="/contests/"]')?.getAttribute("href")?.split("/")[2];
-			const startMs = parseContestTime(row.querySelector("time")?.textContent ?? "");
-			return id && !Number.isNaN(startMs) ? [{id, startMs}] : [];
+			const heading = row.firstElementChild;
+			if (heading?.tagName !== "TH") return [];
+			const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
+			return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
+				const id = link.getAttribute("href")?.split("/")[2];
+				return id ? [{category, id, name: link.textContent?.trim() ?? id}] : [];
+			});
 		});
+	}
+
+	function createContestItem({category, id, name}) {
+		return h("li", {}, h("a", {href: `${CONTEST_LIST_PATH}${id}`}, h("b", {textContent: category}), ` ${name}`));
+	}
+
+	function createMessage(text) {
+		return h("li", {className: "cp-latest-message", textContent: text});
 	}
 
 	var latestContests = defineFeature({
@@ -8201,37 +8199,30 @@ ${efficient_layout_default}`);
 		options: {},
 		live: true,
 		start({site, state, translate}) {
-			const {latest} = contestCatalog;
-			const target = latest.menuTargets.map((selector) => document.querySelector(selector)).find(Boolean);
+			const {menuTargets, cacheMinutes} = contestCatalog.latest;
+			const target = menuTargets.map((selector) => document.querySelector(selector)).find(Boolean);
 			if (!target)
 				return () => {
 					return;
 				};
 			const style = injectStyle(latest_contests_default);
-			const links = latest.kinds.map(({label, archiveUrl}) => {
-				return {label, link: h("a", {href: archiveUrl, textContent: label})};
-			});
 			const toggle = h(
 				"a",
 				{href: CONTEST_LIST_PATH},
 				h("span", {textContent: translate("latestContests.menu")}),
 			);
-			const menu = h("ul", {className: "cp-latest-menu"}, ...links.map(({link}) => h("li", {}, link)));
+			const menu = h("ul", {className: "cp-latest-menu"}, createMessage(translate("latestContests.loading")));
 			const item = h("li", {className: "cp-latest"}, toggle, menu);
 			target.append(item);
 			const resolve = async () => {
-				const contests = await loadLatestContests(latest, {
+				const contests = await loadLatestContests(cacheMinutes, {
 					site,
 					state,
-					parse: parseContestRows,
+					parse: parseNextContests,
 					now: Date.now(),
-				}).catch(() => null);
-				for (const {label, link} of links) {
-					const id = contests?.[label];
-					if (!id) continue;
-					link.href = `${CONTEST_LIST_PATH}${id}`;
-					link.textContent = id.toUpperCase();
-				}
+				}).catch(() => []);
+				if (contests.length > 0) menu.replaceChildren(...contests.map(createContestItem));
+				else menu.replaceChildren(createMessage(translate("latestContests.failed")));
 			};
 			item.addEventListener("mouseenter", () => void resolve(), {once: true});
 			return () => {

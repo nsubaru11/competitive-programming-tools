@@ -212,6 +212,7 @@ describe("addNavigationEntry", () => {
 
 		const link = document.querySelector<HTMLAnchorElement>(".second a");
 		expect(link?.textContent).toBe("CP Toolkit");
+		expect(link?.querySelector(".cp-settings-entry")).not.toBeNull();
 		expect(document.querySelector(".first a")).toBeNull();
 		link?.click();
 		expect(onOpen).toHaveBeenCalledTimes(1);

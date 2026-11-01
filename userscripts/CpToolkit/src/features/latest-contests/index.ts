@@ -1,5 +1,5 @@
 import {contestCatalog} from "@catalog/tables";
-import {type ContestRow, parseContestTime} from "@domain/contest/latest";
+import type {LatestContest} from "@domain/contest/latest";
 import {loadLatestContests} from "@application/contest/latest-contests";
 import {defineFeature} from "@application/feature/definition";
 import {h, injectStyle} from "@ui/element";
@@ -7,13 +7,26 @@ import css from "./latest-contests.css" with {type: "text"};
 
 const CONTEST_LIST_PATH = "/contests/";
 
-function parseContestRows(html: string): readonly ContestRow[] {
+/** 「次のコンテスト」の表だけが、行の先頭に見出しのセルを持つ。 */
+function parseNextContests(html: string): readonly LatestContest[] {
 	const page = new DOMParser().parseFromString(html, "text/html");
 	return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
-		const id = row.querySelector('a[href^="/contests/"]')?.getAttribute("href")?.split("/")[2];
-		const startMs = parseContestTime(row.querySelector("time")?.textContent ?? "");
-		return id && !Number.isNaN(startMs) ? [{id, startMs}] : [];
+		const heading = row.firstElementChild;
+		if (heading?.tagName !== "TH") return [];
+		const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
+		return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
+			const id = link.getAttribute("href")?.split("/")[2];
+			return id ? [{category, id, name: link.textContent?.trim() ?? id}] : [];
+		});
 	});
+}
+
+function createContestItem({category, id, name}: LatestContest): HTMLElement {
+	return h("li", {}, h("a", {href: `${CONTEST_LIST_PATH}${id}`}, h("b", {textContent: category}), ` ${name}`));
+}
+
+function createMessage(text: string): HTMLElement {
+	return h("li", {className: "cp-latest-message", textContent: text});
 }
 
 export const latestContests = defineFeature({
@@ -27,33 +40,26 @@ export const latestContests = defineFeature({
 	options: {},
 	live: true,
 	start({site, state, translate}) {
-		const {latest} = contestCatalog;
-		const target = latest.menuTargets.map((selector) => document.querySelector(selector)).find(Boolean);
+		const {menuTargets, cacheMinutes} = contestCatalog.latest;
+		const target = menuTargets.map((selector) => document.querySelector(selector)).find(Boolean);
 		if (!target) return () => undefined;
 
 		const style = injectStyle(css);
-		const links = latest.kinds.map(({label, archiveUrl}) => {
-			return {label, link: h("a", {href: archiveUrl, textContent: label})};
-		});
 		const toggle = h("a", {href: CONTEST_LIST_PATH}, h("span", {textContent: translate("latestContests.menu")}));
-		const menu = h("ul", {className: "cp-latest-menu"}, ...links.map(({link}) => h("li", {}, link)));
+		const menu = h("ul", {className: "cp-latest-menu"}, createMessage(translate("latestContests.loading")));
 		const item = h("li", {className: "cp-latest"}, toggle, menu);
 		target.append(item);
 
 		// 表示のたびに通信しないよう、メニューを開くまで取得しない
 		const resolve = async (): Promise<void> => {
-			const contests = await loadLatestContests(latest, {
+			const contests = await loadLatestContests(cacheMinutes, {
 				site,
 				state,
-				parse: parseContestRows,
+				parse: parseNextContests,
 				now: Date.now(),
-			}).catch(() => null);
-			for (const {label, link} of links) {
-				const id = contests?.[label];
-				if (!id) continue;
-				link.href = `${CONTEST_LIST_PATH}${id}`;
-				link.textContent = id.toUpperCase();
-			}
+			}).catch(() => []);
+			if (contests.length > 0) menu.replaceChildren(...contests.map(createContestItem));
+			else menu.replaceChildren(createMessage(translate("latestContests.failed")));
 		};
 		item.addEventListener("mouseenter", () => void resolve(), {once: true});
 

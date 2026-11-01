@@ -309,44 +309,41 @@ describe("loadContestTasks の記憶", () => {
 });
 
 describe("loadLatestContests", () => {
-	const catalog = {
-		menuTargets: [],
-		cacheMinutes: 60,
-		leadHours: 24,
-		kinds: [
-			{label: "ABC", idPattern: "^abc\\d+$", archiveUrl: "/archive/abc"},
-			{label: "AGC", idPattern: "^agc\\d+$", archiveUrl: "/archive/agc"},
-			{label: "AWC", idPattern: "^awc\\d+$", archiveUrl: "/archive/awc"},
-		],
-	};
-	const parse = (html: string) => (html ? html.split(",").map((id, index) => ({id, startMs: -index})) : []);
-	const site = () => new FakeHttpClient(({url}) => {
-		if (url === "/contests/") return {status: 200, text: "abc2,abc1"};
-		return {status: 200, text: url === "/archive/agc" ? "agc1" : ""};
-	});
+	const contest = {category: "ABC", id: "abc2", name: "AtCoder Beginner Contest 2"};
+	const parse = (html: string) => (html === "table" ? [contest] : []);
+	const home = () => new FakeHttpClient(() => ({status: 200, text: "table"}));
 
-	test("一覧にない種類は過去の一覧から探し、見つからなければ省く", async () => {
-		const contests = await loadLatestContests(catalog, {site: site(), state: new MemoryStore(), parse, now: 0});
-		expect(contests).toEqual({ABC: "abc2", AGC: "agc1"});
-	});
-
-	test("一覧を取得できなければ、通信を重ねず記憶もしない", async () => {
+	test("ホームの表を読み、保持期間内は通信しない", async () => {
 		const state = new MemoryStore();
-		const http = new FakeHttpClient(() => ({status: 503, text: ""}));
-		await expect(loadLatestContests(catalog, {site: http, state, parse, now: 0})).rejects.toThrow();
-		expect(http.requests).toHaveLength(1);
+		const site = home();
+		expect(await loadLatestContests(60, {site, state, parse, now: 0})).toEqual([contest]);
+		expect(site.requests.map(({url}) => url)).toEqual(["/home"]);
+
+		await loadLatestContests(60, {site, state, parse, now: 59 * 60 * 1000});
+		expect(site.requests).toHaveLength(1);
+		await loadLatestContests(60, {site, state, parse, now: 60 * 60 * 1000});
+		expect(site.requests).toHaveLength(2);
+	});
+
+	test("取得に失敗したら記憶しない", async () => {
+		const state = new MemoryStore();
+		const site = new FakeHttpClient(() => ({status: 503, text: ""}));
+		await expect(loadLatestContests(60, {site, state, parse, now: 0})).rejects.toThrow();
+		expect(site.requests).toHaveLength(1);
 		expect(state.get("latest-contests:cache")).toBeUndefined();
 	});
 
-	test("保持期間内は通信しない", async () => {
+	test("表を読めなかった結果は記憶しない", async () => {
 		const state = new MemoryStore();
-		const http = site();
-		await loadLatestContests(catalog, {site: http, state, parse, now: 0});
-		const count = http.requests.length;
-		await loadLatestContests(catalog, {site: http, state, parse, now: 59 * 60 * 1000});
-		expect(http.requests).toHaveLength(count);
-		await loadLatestContests(catalog, {site: http, state, parse, now: 60 * 60 * 1000});
-		expect(http.requests.length).toBeGreaterThan(count);
+		const site = new FakeHttpClient(() => ({status: 200, text: "changed"}));
+		expect(await loadLatestContests(60, {site, state, parse, now: 0})).toEqual([]);
+		expect(state.get("latest-contests:cache")).toBeUndefined();
+	});
+
+	test("以前の形式の記憶は使わない", async () => {
+		const state = new MemoryStore();
+		state.set("latest-contests:cache", {fetchedAt: 0, contests: {ABC: "abc1"}});
+		expect(await loadLatestContests(60, {site: home(), state, parse, now: 0})).toEqual([contest]);
 	});
 });
 

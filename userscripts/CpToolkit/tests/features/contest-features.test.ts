@@ -390,35 +390,50 @@ describe("variableHover", () => {
 });
 
 describe("latestContests", () => {
-	const row = (id: string, time: string) => {
-		return `<tr><td><a href="https://example.com"><time>${time}</time></a></td><td><a href="/contests/${id}">${id}</a></td></tr>`;
-	};
-	const tablePage = (rows: string) => `<table><tbody>${rows}</tbody></table>`;
-	const listPage = tablePage(`
-		${row("abc2", "2020-01-08 21:00:00+0900")}
-		${row("abc1", "2020-01-01 21:00:00+0900")}
-		${row("abc3", "2099-01-01 21:00:00+0900")}
-	`);
-
-	test("開くまで取得せず、開くと最新のコンテストへのリンクにする", async () => {
-		document.body.innerHTML = '<div id="header"><ul class="header-sub_page"></ul></div>';
-		const site = new FakeHttpClient(({url}) => {
-			return {status: 200, text: url.includes("ratedType=2") ? tablePage(row("arc9", "2020-01-02 21:00:00+0900")) : listPage};
-		});
-		const dispose = await run(latestContests, {site, state: new MemoryStore()});
-		expect(site.requests).toHaveLength(0);
-		expect(document.querySelector(".cp-latest-menu a")?.textContent).toBe("ABC");
-
+	const homePage = `<table><thead><tr class="active"><th>カテゴリ</th></tr></thead><tbody>
+		<tr><th>ABC <span class="glyphicon"></span></th><td><time>11/7</time></td>
+			<td><span>Ⓐ</span> <a href="/contests/abc2">AtCoder Beginner Contest 2</a><br></td></tr>
+		<tr><th>ADT <span class="glyphicon"></span></th><td><time>11/2</time></td>
+			<td><a href="/contests/adt_easy_1">EASY</a><br><a href="/contests/adt_all_1">ALL</a><br></td></tr>
+	</tbody></table>
+	<table><tbody><tr><td><a href="/contests/abc1">AtCoder Beginner Contest 1</a></td></tr></tbody></table>`;
+	const openMenu = async () => {
 		document.querySelector(".cp-latest")?.dispatchEvent(new MouseEvent("mouseenter"));
 		await flush();
 		await flush();
+	};
+	const menuItems = () => [...document.querySelectorAll(".cp-latest-menu li")].map((item) => item.textContent);
 
-		const links = [...document.querySelectorAll<HTMLAnchorElement>(".cp-latest-menu a")];
-		expect(links.map((link) => link.textContent).slice(0, 2)).toEqual(["ABC2", "ARC9"]);
-		expect(links[0]?.getAttribute("href")).toBe("/contests/abc2");
+	beforeEach(() => {
+		document.body.innerHTML = '<div id="header"><ul class="header-sub_page"></ul></div>';
+	});
+
+	test("開くまで取得せず、開くと次のコンテストの表を並べる", async () => {
+		const site = new FakeHttpClient(() => ({status: 200, text: homePage}));
+		const dispose = await run(latestContests, {site, state: new MemoryStore()});
+		expect(site.requests).toHaveLength(0);
+		expect(menuItems()).toEqual(["読み込み中..."]);
+
+		await openMenu();
+
+		expect(site.requests.map(({url}) => url)).toEqual(["/home"]);
+		expect(menuItems()).toEqual(["ABC AtCoder Beginner Contest 2", "ADT EASY", "ADT ALL"]);
+		const links = [...document.querySelectorAll(".cp-latest-menu a")];
+		expect(links.map((link) => link.getAttribute("href"))).toEqual([
+			"/contests/abc2",
+			"/contests/adt_easy_1",
+			"/contests/adt_all_1",
+		]);
 
 		dispose?.();
 		expect(document.querySelector(".cp-latest")).toBeNull();
+	});
+
+	test("取得できなければ知らせる", async () => {
+		const site = new FakeHttpClient(() => ({status: 503, text: ""}));
+		await run(latestContests, {site, state: new MemoryStore()});
+		await openMenu();
+		expect(menuItems()).toEqual(["取得できませんでした"]);
 	});
 });
 

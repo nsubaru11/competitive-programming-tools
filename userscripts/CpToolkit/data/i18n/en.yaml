@@ -130,8 +130,10 @@ editorialList.description: Shows the editorials of every task on the editorial p
 variableHover.title: Variable highlighting
 variableHover.description: Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.
 latestContests.title: Latest contests
-latestContests.description: Adds links to the latest ABC, ARC and other contests to the header.
+latestContests.description: Adds a header menu with the upcoming contests listed on the home page.
 latestContests.menu: Latest contests
+latestContests.loading: "Loading..."
+latestContests.failed: Could not load the list
 contestCalendar.title: Add to calendar
 contestCalendar.description: Adds a link to contest pages that registers the contest in Google Calendar.
 contestCalendar.add: Add to calendar

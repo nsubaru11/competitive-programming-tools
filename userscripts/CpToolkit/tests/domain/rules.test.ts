@@ -17,7 +17,6 @@ import {
 } from "@domain/source/comment";
 import {isJudging, summarizeJudgeCases} from "@domain/submission/status";
 import {buildCalendarUrl} from "@domain/contest/calendar";
-import {parseContestTime, pickLatestContest} from "@domain/contest/latest";
 import {formatClock, virtualClock} from "@domain/contest/virtual";
 
 describe("問題文の字句分割", () => {
@@ -186,36 +185,6 @@ describe("レーティング", () => {
 			{IsRated: false, Performance: 900},
 			{IsRated: true, Performance: -5},
 		])).toEqual([1200, 0]);
-	});
-});
-
-describe("最新のコンテスト", () => {
-	const rows = [
-		{id: "abc1", startMs: 100},
-		{id: "abc2", startMs: 200},
-		{id: "abc3", startMs: 300},
-		{id: "arc1", startMs: 150},
-	];
-
-	test("開始済みのうち最も新しいものを選ぶ", () => {
-		expect(pickLatestContest(rows, /^abc/, 250, 0)).toBe("abc2");
-	});
-
-	test("開始が迫っていれば、それを選ぶ", () => {
-		expect(pickLatestContest(rows, /^abc/, 250, 100)).toBe("abc3");
-	});
-
-	test("開始済みがなければ次に開かれるものを選ぶ", () => {
-		expect(pickLatestContest(rows, /^abc/, 0, 0)).toBe("abc1");
-	});
-
-	test("該当がなければ null を返す", () => {
-		expect(pickLatestContest(rows, /^agc/, 250, 0)).toBeNull();
-	});
-
-	test("一覧の時刻を読む", () => {
-		expect(parseContestTime(" 2026-10-31 21:00:00+0900 ")).toBe(Date.UTC(2026, 9, 31, 12));
-		expect(parseContestTime("")).toBeNaN();
 	});
 });
 

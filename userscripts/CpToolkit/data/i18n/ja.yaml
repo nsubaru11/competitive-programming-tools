@@ -131,8 +131,10 @@ editorialList.description: 解説ページで、すべての問題の解説を�
 variableHover.title: 変数の強調
 variableHover.description: 問題文の変数に重ねると、同じ変数をすべて強調します。クリックで固定し、Esc で解除します。
 latestContests.title: 最新のコンテスト
-latestContests.description: ヘッダーに ABC や ARC などの最新のコンテストへのリンクを追加します。
+latestContests.description: ホームの「次のコンテスト」の一覧を、ヘッダーのメニューから開けるようにします。
 latestContests.menu: 最新のコンテスト
+latestContests.loading: "読み込み中..."
+latestContests.failed: 取得できませんでした
 contestCalendar.title: カレンダーへの登録
 contestCalendar.description: コンテストのページに、Google カレンダーへ登録するリンクを追加します。
 contestCalendar.add: カレンダーに追加

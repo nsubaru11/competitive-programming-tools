@@ -8,18 +8,10 @@ maxTabsAtOnce: 20
 # 問題一覧のキャッシュの保持期間(日)
 taskCacheDays: 10
 
-# ヘッダーの「最新のコンテスト」。コンテスト一覧にない種類は archiveUrl から探す。AWC は過去の一覧を検索できない
+# ヘッダーの「最新のコンテスト」。内容はホームの「次のコンテスト」の表から取得する
 latest:
   menuTargets:
     - '#navbar-collapse .navbar-nav:not(.navbar-right)'  # コンテストのページ
     - '#header .header-sub_page'                         # それ以外のページ
     - '#header .header-page'                             # サブメニューのないページ
   cacheMinutes: 60
-  # 開始がこの時間以内に迫っていれば、終了したものより優先する
-  leadHours: 24
-  kinds:
-    - {label: ABC, idPattern: '^abc\d+$', archiveUrl: 'https://atcoder.jp/contests/archive?ratedType=1&category=0&keyword='}
-    - {label: ARC, idPattern: '^arc\d+$', archiveUrl: 'https://atcoder.jp/contests/archive?ratedType=2&category=0&keyword='}
-    - {label: AGC, idPattern: '^agc\d+$', archiveUrl: 'https://atcoder.jp/contests/archive?ratedType=3&category=0&keyword='}
-    - {label: AHC, idPattern: '^ahc\d+$', archiveUrl: 'https://atcoder.jp/contests/archive?ratedType=4&category=0&keyword='}
-    - {label: AWC, idPattern: '^awc\d+$', archiveUrl: 'https://atcoder.jp/contests/'}
