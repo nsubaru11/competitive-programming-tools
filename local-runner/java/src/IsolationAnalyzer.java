@@ -28,8 +28,8 @@ final class IsolationAnalyzer {
 	 * </ul>
 	 * <p>
 	 * スレッド生成（{@code Thread} / {@code Executors} 等）は、競プロで多用される大スタック再帰イディオム
-	 * （{@code new Thread(...,1<<26).start()} + {@code join()}）が join 済みで安全なため、あえて検出対象から
-	 * 外している（隔離の遅い経路へ送らない）。join しない残存スレッドという稀なリスクは受容する。
+	 * （{@code new Thread(...,1<<26).start()}）を隔離の遅い経路へ送らないよう、あえて検出対象から外している。
+	 * 非デーモンスレッドは {@link ProgramRunner} が終了を待ち、残ったスレッドは JVM の再生成で片付ける。
 	 * </p>
 	 */
 	private static final Set<String> DANGEROUS_MEMBERS = Set.of("java/lang/System.exit", "java/lang/System.setOut", "java/lang/System.setErr", "java/lang/System.setIn", "java/lang/System.setProperty", "java/lang/System.setProperties", "java/lang/System.clearProperty", "java/lang/System.setSecurityManager", "java/lang/Runtime.exit", "java/lang/Runtime.halt", "java/lang/Runtime.addShutdownHook", "java/lang/Runtime.removeShutdownHook", "java/lang/Runtime.exec", "java/lang/ProcessBuilder.<init>", "java/util/Locale.setDefault", "java/util/TimeZone.setDefault", "java/io/FileDescriptor.in", "java/io/FileDescriptor.out", "java/io/FileDescriptor.err");

@@ -12,6 +12,6 @@
 		"build:userscripts": "bun run --cwd userscripts build",
 		"typecheck:runner": "bun run --cwd local-runner typecheck",
 		"typecheck:shared": "bun run --cwd shared typecheck",
-		"test:runner": "bun run --cwd local-runner test:unit && bun run --cwd local-runner test:transform"
+		"test:runner": "bun run --cwd local-runner test:unit && bun run --cwd local-runner test:java"
 	}
 }

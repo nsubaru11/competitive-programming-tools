@@ -5,6 +5,7 @@ import java.net.*;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.sun.management.ThreadMXBean;
@@ -40,10 +41,9 @@ final class ProgramRunner {
 	 */
 	private static final long RUN_THREAD_STACK_BYTES = resolveRunThreadStackBytes();
 	/**
-	 * 直近の実行で「join されずに残った非デーモンスレッド」が常駐 JVM に生き残ったか。
-	 * {@link Dispatcher} がこれを見て JVM の再生成（halt→再起動）を判断する。
+	 * 共通プールの処理が終わるのを待つ上限（ミリ秒）。ワーカーがアイドルへ戻るまでの僅かな間を吸収する。
 	 */
-	private static volatile boolean lastRunLeftoverThreads = false;
+	private static final long QUIESCENCE_WAIT_MILLIS = 100L;
 
 	private static ThreadMXBean resolveThreadMx() {
 		final java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
@@ -75,24 +75,35 @@ final class ProgramRunner {
 	}
 
 	/**
-	 * 直近実行の残存スレッド有無を読み取り、フラグをクリアする（Dispatcher から実行後に一度だけ呼ぶ）。
+	 * 提出コードが作ったスレッドを返す。スレッドは親のグループを継承するので、実行ごとのグループで見分けられる。
 	 */
-	static boolean consumeLeftoverThreadFlag() {
-		final boolean value = lastRunLeftoverThreads;
-		lastRunLeftoverThreads = false;
-		return value;
+	private static Thread[] liveThreads(final ThreadGroup group) {
+		final Thread[] threads = new Thread[group.activeCount() + 16];
+		return Arrays.copyOf(threads, group.enumerate(threads));
 	}
 
 	/**
-	 * 実行前スナップショットに無い、生存中の非デーモンスレッドがあれば true（＝残存スレッド）。
+	 * JVM は非デーモンスレッドがすべて終わるまで終了しないので、提出先と同じく main の後もそれらの終了を待つ。
+	 * 終わらないスレッドは提出先でも TLE になる。ここでも TS 側のタイムアウトで打ち切られる。
 	 */
-	private static boolean hasLeftoverNonDaemonThreads(final Set<Thread> baseline) {
-		for (final Thread thread : Thread.getAllStackTraces().keySet()) {
-			if (thread.isAlive() && !thread.isDaemon() && !baseline.contains(thread)) {
-				return true;
+	private static void awaitNonDaemonThreads(final ThreadGroup group) throws InterruptedException {
+		boolean waited;
+		do {
+			waited = false;
+			for (final Thread thread : liveThreads(group)) {
+				if (thread.isDaemon()) continue;
+				thread.join();
+				waited = true;
 			}
-		}
-		return false;
+		} while (waited);
+	}
+
+	/**
+	 * 実行後も動き続けるスレッドがあれば true。提出先では JVM の終了とともに消えるが、常駐 JVM には生き残る。
+	 * 共通プールのワーカーは専用のグループに属し、アイドルのまま残るのが正常なので、処理の有無で判断する。
+	 */
+	private static boolean hasLeftoverThreads(final ThreadGroup group) {
+		return liveThreads(group).length > 0 || !ForkJoinPool.commonPool().awaitQuiescence(QUIESCENCE_WAIT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -164,14 +175,14 @@ final class ProgramRunner {
 		final PrintStream redirectedOut = new PrintStream(stdoutBuffer, true, StandardCharsets.UTF_8);
 		final PrintStream redirectedErr = new PrintStream(stderrBuffer, true, StandardCharsets.UTF_8);
 
-		// 実行前に生存していたスレッド集合。実行後にここに無い非デーモンスレッドが残っていれば
-		// 「join されなかった残存スレッド」とみなし、汚染防止に JVM を再生成する（Dispatcher が halt）。
-		final Set<Thread> baselineThreads = Thread.getAllStackTraces().keySet();
-		// アロケーション量は実行スレッドの開始直後と終了時の差分で測る（従来は main スレッドで測っていたため
+		final ThreadGroup runGroup = new ThreadGroup("atcoder-run");
+		// アロケーション量は実行スレッドの開始直後と全スレッドの終了後の差分で測る（従来は main スレッドで測っていたため
 		// プロトコル処理分が混ざっていた）。[0]=開始前 / [1]=終了後、計測不可なら -1。
 		final long[] allocSnapshot = {-1L, -1L};
+		boolean leftoverThreads = false;
 
 		final long startTime = System.nanoTime();
+		long endTime = -1L;
 		try (StandardStreamsGuard guard = new StandardStreamsGuard(standardInput, redirectedOut, redirectedErr, uncaughtError); URLClassLoader classLoader = new URLClassLoader(new URL[]{classDirectory.toUri().toURL()}, ClassLoader.getSystemClassLoader())) {
 			guard.setContextClassLoader(classLoader);
 			final Runnable body = () -> {
@@ -180,27 +191,30 @@ final class ProgramRunner {
 					invokeMain(classLoader, mainClassName);
 				} catch (final Throwable throwable) {
 					uncaughtError.compareAndSet(null, throwable);
-				} finally {
-					allocSnapshot[1] = totalAllocatedBytes();
 				}
 			};
 			// 大きめのスタックを持つ専用スレッドで実行する。これにより
 			// (1) 競プロで多い深い再帰が StackOverflow になりにくく（大スタックスレッドのイディオム不要）、
 			// (2) StackOverflow がディスパッチャ本体スレッドではなく実行スレッド側に閉じる。
-			final Thread runThread = new Thread(null, body, "atcoder-run", RUN_THREAD_STACK_BYTES);
-			runThread.setDaemon(true);
+			// 提出コードのスレッドはこのスレッドの属性を継承するので、通常の main と同じ非デーモンにする。
+			final Thread runThread = new Thread(runGroup, body, "atcoder-run", RUN_THREAD_STACK_BYTES);
 			runThread.setContextClassLoader(classLoader);
 			runThread.start();
 			runThread.join();
+			awaitNonDaemonThreads(runGroup);
+			endTime = System.nanoTime();
+			allocSnapshot[1] = totalAllocatedBytes();
+			// 残ったスレッドが復元後の標準入出力（＝プロトコル経路）に触れないよう、差し替えたままにする。
+			// この JVM は結果を返した直後に終了する（Dispatcher が halt）。
+			leftoverThreads = hasLeftoverThreads(runGroup);
+			if (leftoverThreads) guard.keepStreamsRedirected();
 		} catch (final Throwable throwable) {
 			uncaughtError.compareAndSet(null, throwable);
 		}
-		final long timeMillis = (System.nanoTime() - startTime) / NANOS_PER_MILLI;
+		final long timeMillis = ((endTime >= 0 ? endTime : System.nanoTime()) - startTime) / NANOS_PER_MILLI;
 		final long allocBefore = allocSnapshot[0];
 		final long allocAfter = allocSnapshot[1];
 		final long memoryBytes = (allocBefore >= 0 && allocAfter >= 0) ? Math.max(0L, allocAfter - allocBefore) : -1L;
-
-		lastRunLeftoverThreads = hasLeftoverNonDaemonThreads(baselineThreads);
 
 		int exitCode = 0;
 		final Throwable error = uncaughtError.get();
@@ -211,6 +225,6 @@ final class ProgramRunner {
 		redirectedOut.flush();
 		redirectedErr.flush();
 
-		return new ExecutionResult(exitCode, timeMillis, stdoutBuffer.toByteArray(), stderrBuffer.toByteArray(), stdoutBuffer.isTruncated(), stderrBuffer.isTruncated(), memoryBytes);
+		return new ExecutionResult(exitCode, timeMillis, stdoutBuffer.toByteArray(), stderrBuffer.toByteArray(), stdoutBuffer.isTruncated(), stderrBuffer.isTruncated(), memoryBytes, leftoverThreads);
 	}
 }

@@ -61,9 +61,10 @@ record ErrorResponse(String requestId, String message) implements Response {}
  * @param stdoutTruncated 標準出力が切り詰められたかどうかです。
  * @param stderrTruncated 標準エラー出力が切り詰められたかどうかです。
  * @param memoryBytes     JVM 全体の累積アロケーション量の実行中の増分（バイト）。近似値。計測不可なら {@code -1}。
+ * @param leftoverThreads 提出コードのスレッドが実行後も残ったかどうかです。残れば JVM は結果の送信後に終了します。
  */
 record ExecutionResult(int exitCode, long timeMillis, byte[] stdout, byte[] stderr, boolean stdoutTruncated,
-                       boolean stderrTruncated, long memoryBytes) {}
+                       boolean stderrTruncated, long memoryBytes, boolean leftoverThreads) {}
 
 /**
  * コンパイル結果を保持する値オブジェクトです。

@@ -43,12 +43,12 @@ public final class Dispatcher {
 				if (request instanceof Run) {
 					channel.send(new RunAck());
 				}
-				channel.send(executor.handle(request));
-				// 提出コードが join せず残した非デーモンスレッドが常駐 JVM に生き残っている場合、
-				// 次回以降の実行を汚染したり、復元後の標準出力（＝プロトコル経路）へ書き込んで
-				// 通信を壊す恐れがある。結果を返し終えた直後に JVM を落とし、daemon 側の
-				// 次要求で新しい JVM を起動させる（RESULT は send 内で flush 済み）。
-				if (request instanceof Run && ProgramRunner.consumeLeftoverThreadFlag()) {
+				final Response response = executor.handle(request);
+				channel.send(response);
+				// 提出コードのスレッドが常駐 JVM に生き残っている場合、次回以降の実行を汚染する恐れがある。
+				// 結果を返し終えた直後に JVM を落とし、daemon 側の次要求で新しい JVM を起動させる
+				// （RESULT は send 内で flush 済み。daemon は RESULT のフラグでこの終了を知る）。
+				if (response instanceof Result result && result.result().leftoverThreads()) {
 					Runtime.getRuntime().halt(0);
 				}
 			}

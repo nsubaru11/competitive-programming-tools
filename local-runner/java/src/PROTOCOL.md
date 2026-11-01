@@ -28,7 +28,7 @@ daemon（Bun/Node 側、`local-runner/src/daemon/dispatcher.ts`）と常駐 JVM�
 要求と応答は `id` で突き合わせる。
 
 - daemon は要求ごとに **単調増加の整数を文字列化**して採番する（`"1"`, `"2"`, …）。
-- 応答には対応する要求と同じ `id` が載る。daemon は `id` 不一致を検出するとその要求を失敗扱いにする。
+- 応答には対応する要求と同じ `id` が載る。daemon は `id` 不一致を検出するとその要求を失敗扱いにし、通信を信頼できないので JVM を再起動する。要求を待っていないときに行が届いた場合も同様に再起動する。
 - プロトコル違反（不正・未知コマンド）に対する `ERROR` 応答だけは、JVM 側が固定値 `protocol` を `id` として用いる。
 
 ## 3. メッセージ一覧
@@ -82,16 +82,17 @@ RUN
 実行が完了すると **結果**を返す。
 
 ```
-RESULT \t <id> \t <exitCode> \t <timeMillis> \t b64(stdout) \t b64(stderr) \t <stdoutTruncated> \t <stderrTruncated> \t <memory>
+RESULT \t <id> \t <exitCode> \t <timeMillis> \t b64(stdout) \t b64(stderr) \t <stdoutTruncated> \t <stderrTruncated> \t <memory> \t <leftoverThreads>
 ```
 
 | フィールド                            | 内容                                                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `exitCode`                            | `0` = 正常終了 / `1` = 実行中に捕捉されない例外が発生                                                   |
-| `timeMillis`                          | 実行に要した時間（ミリ秒）                                                                              |
+| `timeMillis`                          | 実行に要した時間（ミリ秒）。非デーモンスレッドの終了までを含む                                          |
 | `stdout` / `stderr`                   | 実行対象が出力した標準出力・標準エラー                                                                  |
 | `stdoutTruncated` / `stderrTruncated` | 出力が上限超過で切り詰められたら `1`、そうでなければ `0`                                                |
 | `memory`                              | 実行中に増えた累積アロケーション量（バイト・十進）。**ピークではなく近似値**。計測不可なら `-1`（§6.1） |
+| `leftoverThreads`                     | 実行対象のスレッドが残り、JVM がこの応答の直後に終了するなら `1`、そうでなければ `0`（§6.3）            |
 
 ### 3.4 `COMPILE`：ソースのコンパイル
 
@@ -163,7 +164,7 @@ transform-req = "TRANSFORM" TAB id TAB b64 TAB b64 TAB flag TAB flag [ TAB flag 
 ready        = "READY"
 pong         = "PONG"
 run-ack      = "RUN"
-result       = "RESULT"   TAB id TAB int TAB int TAB b64 TAB b64 TAB flag TAB flag TAB int
+result       = "RESULT"   TAB id TAB int TAB int TAB b64 TAB b64 TAB flag TAB flag TAB int TAB flag
 compiled     = "COMPILED" TAB id TAB int TAB flag TAB b64 TAB b64
 transformed  = "TRANSFORMED" TAB id TAB int TAB b64 TAB b64 TAB b64 TAB b64 TAB b64
 error        = "ERROR"    TAB id TAB b64
@@ -202,7 +203,17 @@ TAB          = %x09
 - 次回実行へ漏れる JVM グローバル状態: `System.setProperty` 系 / `Locale.setDefault` / `TimeZone.setDefault` / `System.setSecurityManager`
 - シャットダウンフック・外部プロセス: `Runtime.addShutdownHook` / `removeShutdownHook` / `Runtime.exec` / `ProcessBuilder`
 
-なお、 **スレッド生成（`Thread` / `Executors` 等）は検出対象から除外**している。 競プロで多用される大スタック再帰イディオム（`new Thread(..., 1<<26).start()` + `join()`）は join 済みで安全であり、これを隔離の遅い経路へ送らないための判断。 join しない残存スレッドという稀なリスクは受容する。
+なお、 **スレッド生成（`Thread` / `Executors` 等）は検出対象から除外**している。 競プロで多用される大スタック再帰イディオム（`new Thread(..., 1<<26).start()`）を隔離の経路へ送らないための判断で、スレッドの扱いは §6.3 のとおり。
+
+隔離の経路でも、スタックは常駐 JVM と同じ `LOCAL_RUNNER_RUN_STACK_BYTES`（既定 256 MiB）で、JIT の設定も常駐 JVM と揃える。`memory` は測定しない。
+
+### 6.3 実行対象のスレッド
+
+実行対象の `main` は非デーモンの専用スレッドで動く。実行対象が作るスレッドはこの属性と実行ごとの `ThreadGroup` を継承するので、スレッドの扱いは通常の JVM と同じになる。
+
+- **非デーモンスレッド**: `join` の有無によらず、すべて終わるまで待ってから `RESULT` を返す。提出先の JVM と同じ動作で、終わらないスレッドは `RUN` のタイムアウトで打ち切られる。
+- **実行後も動くスレッド**: デーモンスレッド、または処理の残った共通プールは、提出先なら JVM の終了とともに消えるが、常駐 JVM には生き残る。標準入出力を差し替えたままにして通信経路を守り、`RESULT` の `leftoverThreads` を `1` にして、JVM は応答の直後に終了する。daemon はこの応答を受けて JVM を切り離し、次の要求で新しい JVM を起動する。
+- **共通プールのアイドルなワーカー**: `parallel()` の後に残るのが正常なので、再起動の対象にしない。
 
 ## 7. タイムアウトとプロセス寿命（プロトコル外・daemon 側の挙動）
 
@@ -232,10 +243,10 @@ RUN	7	Y2xhc3Nlcw==	TWFpbg==	MyA1Cg==
 RUN
 ```
 
-応答（結果。終了コード 0、12 ms、標準出力 `8\n`、標準エラー空、切り詰めなし、メモリ約 256 KiB）:
+応答（結果。終了コード 0、12 ms、標準出力 `8\n`、標準エラー空、切り詰めなし、メモリ約 256 KiB、残存スレッドなし）:
 
 ```
-RESULT	7	0	12	OAo=		0	0	262144
+RESULT	7	0	12	OAo=		0	0	262144	0
 ```
 
 ---

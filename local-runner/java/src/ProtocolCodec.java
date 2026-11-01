@@ -139,7 +139,7 @@ final class ProtocolCodec {
 
 	private static String encodeResult(final Result response) {
 		final ExecutionResult result = response.result();
-		return new StringJoiner(SEPARATOR).add("RESULT").add(response.requestId()).add(Integer.toString(result.exitCode())).add(Long.toString(result.timeMillis())).add(ENCODER.encodeToString(result.stdout())).add(ENCODER.encodeToString(result.stderr())).add(result.stdoutTruncated() ? "1" : "0").add(result.stderrTruncated() ? "1" : "0").add(Long.toString(result.memoryBytes())).toString();
+		return new StringJoiner(SEPARATOR).add("RESULT").add(response.requestId()).add(Integer.toString(result.exitCode())).add(Long.toString(result.timeMillis())).add(ENCODER.encodeToString(result.stdout())).add(ENCODER.encodeToString(result.stderr())).add(result.stdoutTruncated() ? "1" : "0").add(result.stderrTruncated() ? "1" : "0").add(Long.toString(result.memoryBytes())).add(result.leftoverThreads() ? "1" : "0").toString();
 	}
 
 	private static String decode(final String base64) {

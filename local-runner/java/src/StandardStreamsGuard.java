@@ -16,6 +16,7 @@ final class StandardStreamsGuard implements AutoCloseable {
 	private final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
 	private final Thread currentThread = Thread.currentThread();
 	private final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
+	private boolean restoreStreams = true;
 
 	/**
 	 * グローバル状態を退避し、標準入出力と uncaught ハンドラを差し替えます。
@@ -41,11 +42,20 @@ final class StandardStreamsGuard implements AutoCloseable {
 		currentThread.setContextClassLoader(classLoader);
 	}
 
+	/**
+	 * 標準入出力を差し替えたままにします。提出コードのスレッドが残り、JVM を再利用しないときに使います。
+	 */
+	void keepStreamsRedirected() {
+		restoreStreams = false;
+	}
+
 	@Override
 	public void close() {
-		System.setIn(originalIn);
-		System.setOut(originalOut);
-		System.setErr(originalErr);
+		if (restoreStreams) {
+			System.setIn(originalIn);
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		}
 		Thread.setDefaultUncaughtExceptionHandler(originalHandler);
 		currentThread.setContextClassLoader(originalContextClassLoader);
 	}

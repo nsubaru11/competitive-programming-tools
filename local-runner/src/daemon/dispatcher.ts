@@ -104,18 +104,22 @@ function handleDispatcherResponse(line: string) {
 	const responseType = parts[0];
 	if (responseType === "PONG" || responseType === "RUN") return;
 	const pendingRequest = dispatcherState.currentRequest;
+	// 応答以外の行が混ざった JVM は通信を信頼できないので、作り直して以降の要求を巻き込まない。
 	if (!pendingRequest) {
 		logging.logWarn(`[Dispatcher] Unexpected response without a pending request: ${line}`);
+		stopDispatcher();
 		return;
 	}
 	if (parts[1] !== pendingRequest.id) {
 		pendingRequest.reject(new Error(`Dispatcher response ID mismatch: ${line}`));
 		dispatcherState.currentRequest = null;
+		stopDispatcher();
 		return;
 	}
 	if (responseType === "RESULT") {
 		const stdoutTruncated = Number(parts[6] || "0") !== 0;
 		const stderrTruncated = Number(parts[7] || "0") !== 0;
+		const leftoverThreads = Number(parts[9] || "0") !== 0;
 		pendingRequest.resolve({
 			kind: "run",
 			exitCode: Number(parts[2]),
@@ -127,6 +131,8 @@ function handleDispatcherResponse(line: string) {
 			memory: Number(parts[8] || "-1"),
 		});
 		dispatcherState.currentRequest = null;
+		// JVM は RESULT の直後に自ら終了する。次の要求が終了中の JVM に届かないよう、ここで切り離す。
+		if (leftoverThreads) stopDispatcher();
 		return;
 	}
 	if (responseType === "COMPILED") {

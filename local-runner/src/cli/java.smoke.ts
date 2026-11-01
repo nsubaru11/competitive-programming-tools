@@ -6,20 +6,24 @@ import {fileURLToPath} from "node:url";
 
 const runnerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const sourceDir = path.join(runnerRoot, "java", "src");
-const testFile = path.join(runnerRoot, "java", "test", "JavaSourceTransformerTest.java");
-const output = fs.mkdtempSync(path.join(os.tmpdir(), "java-source-transformer-smoke-"));
+const testDir = path.join(runnerRoot, "java", "test");
+const testClasses = ["JavaSourceTransformerTest", "ProgramRunnerTest"];
+const output = fs.mkdtempSync(path.join(os.tmpdir(), "java-smoke-"));
 
 try {
 	const javaSources = fs.readdirSync(sourceDir)
 		.filter((name) => name.endsWith(".java") && name !== "WarmUp.java")
 		.map((name) => path.join(sourceDir, name));
-	const compile = spawnSync("javac", ["--release", "24", "-encoding", "UTF-8", "-d", output, ...javaSources, testFile], {
+	const testFiles = testClasses.map((name) => path.join(testDir, `${name}.java`));
+	const compile = spawnSync("javac", ["--release", "24", "-encoding", "UTF-8", "-d", output, ...javaSources, ...testFiles], {
 		encoding: "utf8",
 		stdio: "inherit",
 	});
 	if (compile.status !== 0) process.exit(compile.status ?? 1);
-	const run = spawnSync("java", ["-cp", output, "JavaSourceTransformerTest"], {encoding: "utf8", stdio: "inherit"});
-	if (run.status !== 0) process.exit(run.status ?? 1);
+	for (const testClass of testClasses) {
+		const run = spawnSync("java", ["-cp", output, testClass], {encoding: "utf8", stdio: "inherit"});
+		if (run.status !== 0) process.exit(run.status ?? 1);
+	}
 } finally {
 	fs.rmSync(output, {recursive: true, force: true});
 }
