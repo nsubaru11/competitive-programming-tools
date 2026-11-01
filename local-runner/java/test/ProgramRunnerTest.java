@@ -84,17 +84,24 @@ public final class ProgramRunnerTest {
 				check(System.out == ORIGINAL_OUT, "streams were not restored");
 			}
 
+			final long runnerThreadId = Thread.currentThread().threadId();
 			final ExecutionResult async = run(root, "async", """
-					import java.util.concurrent.CompletableFuture;
+					import java.util.concurrent.ForkJoinPool;
 					public class Main {
 						public static void main(String[] args) {
-							CompletableFuture.runAsync(() -> {
-								try { Thread.sleep(2000); } catch (InterruptedException e) {}
-							});
+							// ワーカーをすべて埋めて、待ち行列にもタスクを残す
+							for (int i = ForkJoinPool.getCommonPoolParallelism() + 2; i > 0; i--) {
+								ForkJoinPool.commonPool().execute(() -> {
+									System.out.println(Thread.currentThread().threadId());
+									try { Thread.sleep(2000); } catch (InterruptedException e) {}
+								});
+							}
 						}
 					}
 					""");
 			check(async.leftoverThreads(), "running common pool task was not reported");
+			check(async.timeMillis() < 1000, "runner waited for common pool tasks: " + async.timeMillis());
+			check(text(async.stdout()).lines().noneMatch(Long.toString(runnerThreadId)::equals), "common pool task ran on the runner thread");
 			restoreStreams();
 			ORIGINAL_OUT.println("program runner smoke test: OK");
 		} finally {

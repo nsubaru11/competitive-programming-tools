@@ -41,9 +41,9 @@ final class ProgramRunner {
 	 */
 	private static final long RUN_THREAD_STACK_BYTES = resolveRunThreadStackBytes();
 	/**
-	 * 共通プールの処理が終わるのを待つ上限（ミリ秒）。ワーカーがアイドルへ戻るまでの僅かな間を吸収する。
+	 * 共通プールの処理が終わるのを待つ上限（ナノ秒）。ワーカーがアイドルへ戻るまでの僅かな間を吸収する。
 	 */
-	private static final long QUIESCENCE_WAIT_MILLIS = 100L;
+	private static final long QUIESCENCE_WAIT_NANOS = 100L * NANOS_PER_MILLI;
 
 	private static ThreadMXBean resolveThreadMx() {
 		final java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
@@ -102,8 +102,21 @@ final class ProgramRunner {
 	 * 実行後も動き続けるスレッドがあれば true。提出先では JVM の終了とともに消えるが、常駐 JVM には生き残る。
 	 * 共通プールのワーカーは専用のグループに属し、アイドルのまま残るのが正常なので、処理の有無で判断する。
 	 */
-	private static boolean hasLeftoverThreads(final ThreadGroup group) {
-		return liveThreads(group).length > 0 || !ForkJoinPool.commonPool().awaitQuiescence(QUIESCENCE_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+	private static boolean hasLeftoverThreads(final ThreadGroup group) throws InterruptedException {
+		return liveThreads(group).length > 0 || commonPoolHasWork();
+	}
+
+	/**
+	 * awaitQuiescence は待ち行列のタスクを呼び出し元で実行するので使わない。提出コードがこのスレッドで動いてしまう。
+	 */
+	private static boolean commonPoolHasWork() throws InterruptedException {
+		final ForkJoinPool commonPool = ForkJoinPool.commonPool();
+		final long deadline = System.nanoTime() + QUIESCENCE_WAIT_NANOS;
+		while (!commonPool.isQuiescent()) {
+			if (System.nanoTime() >= deadline) return true;
+			Thread.sleep(1L);
+		}
+		return false;
 	}
 
 	/**
