@@ -4,7 +4,8 @@ import {defineFeature} from "@application/feature/definition";
 import {injectStyle} from "@ui/element";
 import css from "./task-status.css" with {type: "text"};
 
-const TASK_LINKS = '#main-container tbody a[href*="/tasks/"], .cp-task-menu a[href*="/tasks/"]';
+const TASK_TABLE_LINKS = '#main-container tbody a[href*="/tasks/"]';
+const TASK_MENU_LINKS = '.cp-task-menu a[href*="/tasks/"]';
 const ACCEPTED_CLASS = "cp-task-accepted";
 const REJECTED_CLASS = "cp-task-rejected";
 const NOT_SUBMITTED = "-";
@@ -28,8 +29,8 @@ function parseScorePage(html: string): TaskStatuses {
 	}));
 }
 
-function paint(statuses: TaskStatuses): void {
-	for (const link of document.querySelectorAll(TASK_LINKS)) {
+function paint(statuses: TaskStatuses, links: string): void {
+	for (const link of document.querySelectorAll(links)) {
 		const status = statuses.get(taskIdOf(link) ?? "");
 		if (status) link.closest("tr, li")?.classList.add(status);
 	}
@@ -58,12 +59,14 @@ export const taskStatus = defineFeature({
 		document.documentElement.style.setProperty("--cp-task-accepted", options.acceptedColor);
 		document.documentElement.style.setProperty("--cp-task-rejected", options.rejectedColor);
 
+		// 提出一覧などの表にも問題へのリンクがあるので、表を塗るのは問題一覧のページだけにする
+		const links = isOnRoute("atcoder:tasks") ? `${TASK_TABLE_LINKS}, ${TASK_MENU_LINKS}` : TASK_MENU_LINKS;
 		let statuses: Promise<TaskStatuses> | null = null;
 		const paintAll = (): void => {
 			statuses ??= site.send({url: `/contests/${contestId}/score`})
 				.then((response) => (response.status === 200 ? parseScorePage(response.text) : new Map()))
 				.catch(() => new Map());
-			void statuses.then(paint);
+			void statuses.then((loaded) => paint(loaded, links));
 		};
 
 		if (isOnRoute("atcoder:tasks")) paintAll();

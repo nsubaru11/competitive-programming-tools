@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.9
+// @version        1.0.10
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -9858,7 +9858,8 @@ li.cp-task-rejected > a {
 `;
 
 	// CpToolkit/src/features/task-status/index.ts
-	var TASK_LINKS = '#main-container tbody a[href*="/tasks/"], .cp-task-menu a[href*="/tasks/"]';
+	var TASK_TABLE_LINKS = '#main-container tbody a[href*="/tasks/"]';
+	var TASK_MENU_LINKS = '.cp-task-menu a[href*="/tasks/"]';
 	var ACCEPTED_CLASS = "cp-task-accepted";
 	var REJECTED_CLASS = "cp-task-rejected";
 	var NOT_SUBMITTED = "-";
@@ -9880,8 +9881,8 @@ li.cp-task-rejected > a {
 		);
 	}
 
-	function paint(statuses) {
-		for (const link of document.querySelectorAll(TASK_LINKS)) {
+	function paint(statuses, links) {
+		for (const link of document.querySelectorAll(links)) {
 			const status = statuses.get(taskIdOf(link) ?? "");
 			if (status) link.closest("tr, li")?.classList.add(status);
 		}
@@ -9908,13 +9909,14 @@ li.cp-task-rejected > a {
 			injectStyle(task_status_default);
 			document.documentElement.style.setProperty("--cp-task-accepted", options.acceptedColor);
 			document.documentElement.style.setProperty("--cp-task-rejected", options.rejectedColor);
+			const links = isOnRoute("atcoder:tasks") ? `${TASK_TABLE_LINKS}, ${TASK_MENU_LINKS}` : TASK_MENU_LINKS;
 			let statuses = null;
 			const paintAll = () => {
 				statuses ??= site
 					.send({url: `/contests/${contestId}/score`})
 					.then((response) => (response.status === 200 ? parseScorePage(response.text) : new Map()))
 					.catch(() => new Map());
-				statuses.then(paint);
+				statuses.then((loaded) => paint(loaded, links));
 			};
 			if (isOnRoute("atcoder:tasks")) paintAll();
 			document.querySelector("#contest-nav-tabs")?.addEventListener("mouseover", (event) => {

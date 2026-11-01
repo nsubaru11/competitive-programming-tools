@@ -306,6 +306,23 @@ describe("taskStatus", () => {
 		expect(classOf(".cp-task-menu li")).toBe("cp-task-accepted");
 	});
 
+	test("提出一覧の表は、ドロップダウンを開いても色分けしない", async () => {
+		history.replaceState(null, "", "/contests/abc1/submissions/me");
+		document.body.innerHTML = `<div id="contest-nav-tabs"><ul><li class="dropdown">
+			<a id="toggle" href="#">Tasks</a>
+			<ul class="cp-task-menu"><li id="item"><a href="/contests/abc1/tasks/abc1_a">A</a></li></ul>
+		</li></ul></div>
+		<div id="main-container"><table><tbody>${taskRow("a")}</tbody></table></div>`;
+		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		await run(taskStatus, {isOnRoute: () => false, page: createFakePage(), site});
+
+		document.querySelector("#toggle")?.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}));
+		await flush();
+
+		expect(classOf("#item")).toBe("cp-task-accepted");
+		expect(classOf("#main-container tr")).toBe("");
+	});
+
 	test("混み合う開始直後は取得しない", async () => {
 		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
 		const period = {startMs: Date.now() - 60 * 1000, endMs: Date.now() + HOUR_MS};
