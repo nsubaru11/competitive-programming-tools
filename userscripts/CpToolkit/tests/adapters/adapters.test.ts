@@ -299,6 +299,30 @@ describe("実行環境", () => {
 		expect((await new LocalRunnerProvider(client).runnersFor(java)).map(({label}) => label)).toEqual(["Java 24 [Local]"]);
 	});
 
+	test("Local Runner の計測値は累積の割り当て量として返し、計測できないときは返さない", async () => {
+		const runWith = async (memory: number) => {
+			const client = new LocalRunnerClient(new FakeHttpClient(({body}) => {
+				if (body?.includes('"list"')) {
+					return {
+						status: 200,
+						text: JSON.stringify([{language: "Java", compilerName: "java24", label: "Java 24"}]),
+					};
+				}
+				const response = body?.includes('"run"')
+					? {status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory}
+					: {status: "success", programId: "p1", sourceCode: "", diagnostics: ""};
+				return {status: 200, text: JSON.stringify(response)};
+			}), () => "http://localhost:8080");
+			const [runner] = await new LocalRunnerProvider(client).runnersFor(java);
+			return runner!.run("code", "", {});
+		};
+
+		const measured = await runWith(2048);
+		expect(measured.allocatedMemory).toBe(2048);
+		expect(measured.memory).toBeUndefined();
+		expect((await runWith(0)).allocatedMemory).toBeUndefined();
+	});
+
 	test("Local Runner を使わない設定なら候補にしない", async () => {
 		const client = new LocalRunnerClient(noHttp, () => null);
 		expect(await new LocalRunnerProvider(client).runnersFor(java)).toEqual([]);
@@ -335,6 +359,18 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 		settings.setOption("wide-layout", "width", "60%");
 		importLegacySettings(new LocalStorageLegacyInbox(), settings);
 		expect(settings.storedOptions("wide-layout")).toEqual({width: "60%"});
+	});
+
+	test("旧 Easy Test の利用者には Easy Test を有効にし、選び直した ON/OFF は変えない", () => {
+		const settings = new SettingsService(new MemoryStore());
+		write("AtCoderEasyTestForJava", {});
+		importLegacySettings(new LocalStorageLegacyInbox(), settings);
+		expect(settings.isEnabled("easy-test", false)).toBe(true);
+
+		settings.setEnabled("easy-test", false);
+		write("AtCoderEasyTestForJava", {});
+		importLegacySettings(new LocalStorageLegacyInbox(), settings);
+		expect(settings.isEnabled("easy-test", true)).toBe(false);
 	});
 
 	test("書き出しがなければ何もしない", () => {

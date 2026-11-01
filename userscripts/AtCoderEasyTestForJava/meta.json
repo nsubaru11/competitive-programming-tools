@@ -1,7 +1,7 @@
 {
 	"name": "AtCoder Easy Test for Java",
 	"name:en": "AtCoder Easy Test for Java",
-	"version": "1.8.2",
+	"version": "1.8.3",
 	"description": "【更新終了】CP Toolkit へ統合しました。AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。",
 	"description:ja": "【更新終了】CP Toolkit へ統合しました。AtCoder, yukicoder, Codeforces でのサンプルテストを自動化します。Java 向けに最適化されています。",
 	"description:en": "[Discontinued] Merged into CP Toolkit. Automates sample testing on AtCoder, yukicoder, and Codeforces. Optimized for Java.",

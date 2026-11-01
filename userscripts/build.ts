@@ -287,6 +287,8 @@ async function discoverScripts(explicitNames: string[]): Promise<string[]> {
 	for (const entry of entries) {
 		if (!entry.isDirectory()) continue;
 		if (ignoredDirectoryNames.includes(entry.name) || entry.name.startsWith(".")) continue;
+		// 更新を終了したスクリプトの配布物は shared の変更に追従させない。作り直すときは名前を指定する。
+		if (entry.name in RETIRED_SCRIPTS) continue;
 		if (await isUserscriptDirectory(entry.name)) names.push(entry.name);
 	}
 	return names.sort();

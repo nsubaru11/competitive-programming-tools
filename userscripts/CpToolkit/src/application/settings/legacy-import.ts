@@ -8,12 +8,13 @@ export interface LegacySettingsInbox {
 	take(scriptId: string): unknown;
 }
 
-/** 書き出された設定を取り込む。すでに設定してある機能は上書きしない。 */
+/** 書き出された設定を取り込む。すでに設定してある機能と、ON/OFF を選んだ機能は上書きしない。 */
 export function importLegacySettings(inbox: LegacySettingsInbox, settings: SettingsService): void {
 	for (const [scriptId, migrate] of Object.entries(LEGACY_SCRIPTS)) {
 		const stored = inbox.take(scriptId);
 		if (stored === undefined) continue;
-		for (const {featureId, options} of migrate(parseStoredObject<Record<string, unknown>>(stored))) {
+		for (const {featureId, options, enable} of migrate(parseStoredObject<Record<string, unknown>>(stored))) {
+			if (enable && !settings.hasEnabledChoice(featureId)) settings.setEnabled(featureId, true);
 			if (Object.keys(parseStoredObject(settings.storedOptions(featureId))).length > 0) continue;
 			for (const [key, value] of Object.entries(options)) settings.setOption(featureId, key, value);
 		}

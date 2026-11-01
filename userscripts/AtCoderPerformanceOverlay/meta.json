@@ -1,7 +1,7 @@
 {
 	"name": "AtCoder Performance Overlay",
 	"name:en": "AtCoder Performance Overlay",
-	"version": "1.1.12",
+	"version": "1.1.13",
 	"description": "【更新終了】CP Toolkit へ統合しました。レーティンググラフにパフォーマンスのグラフを重ねて表示します。",
 	"description:ja": "【更新終了】CP Toolkit へ統合しました。レーティンググラフにパフォーマンスのグラフを重ねて表示します。",
 	"description:en": "[Discontinued] Merged into CP Toolkit. Overlays performance charts on the AtCoder rating graph.",

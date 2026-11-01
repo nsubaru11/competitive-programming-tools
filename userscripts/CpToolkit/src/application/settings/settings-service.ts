@@ -16,6 +16,11 @@ export class SettingsService {
 		return this.settings.features[featureId]?.enabled ?? defaultEnabled;
 	}
 
+	/** 機能の ON/OFF が保存されているか。既定値のままなら偽。 */
+	hasEnabledChoice(featureId: string): boolean {
+		return this.settings.features[featureId]?.enabled !== undefined;
+	}
+
 	storedOptions(featureId: string): unknown {
 		return this.settings.features[featureId]?.options;
 	}

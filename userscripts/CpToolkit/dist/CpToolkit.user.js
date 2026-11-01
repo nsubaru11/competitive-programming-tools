@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.11
+// @version        1.0.12
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -886,6 +886,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				{featureId: "local-runner", options: defined({url: config["codeRunner.localRunnerURL"] || undefined})},
 				{
 					featureId: "easy-test",
+					enable: true,
 					options: defined({
 						precompile: parseFlag(config["codeRunner.precompile.enable"]),
 						keyboardShortcuts: parseFlag(config["ui.useKeyboardShortcut"]),
@@ -900,7 +901,8 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		for (const [scriptId, migrate] of Object.entries(LEGACY_SCRIPTS)) {
 			const stored = inbox.take(scriptId);
 			if (stored === undefined) continue;
-			for (const {featureId, options} of migrate(parseStoredObject(stored))) {
+			for (const {featureId, options, enable} of migrate(parseStoredObject(stored))) {
+				if (enable && !settings.hasEnabledChoice(featureId)) settings.setEnabled(featureId, true);
 				if (Object.keys(parseStoredObject(settings.storedOptions(featureId))).length > 0) continue;
 				for (const [key, value] of Object.entries(options)) settings.setOption(featureId, key, value);
 			}
@@ -959,6 +961,10 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 
 		isEnabled(featureId, defaultEnabled) {
 			return this.settings.features[featureId]?.enabled ?? defaultEnabled;
+		}
+
+		hasEnabledChoice(featureId) {
+			return this.settings.features[featureId]?.enabled !== undefined;
 		}
 
 		storedOptions(featureId) {
@@ -2148,6 +2154,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.exitCode": "Exit code",
 		"easyTest.execTime": "Time",
 		"easyTest.memory": "Memory",
+		"easyTest.allocated": "allocated in total",
 		"easyTest.noSavedCode": "No saved code was found for this task.",
 		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
 		"paizaLanguage.title": "paiza language selection",
@@ -2348,6 +2355,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.exitCode": "終了コード",
 		"easyTest.execTime": "実行時間",
 		"easyTest.memory": "メモリ",
+		"easyTest.allocated": "累積の割り当て",
 		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
 		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
 		"paizaLanguage.title": "paiza の言語選択",
@@ -4831,7 +4839,7 @@ ${body}
 				status: toEasyTestStatus(response.status, response.exitCode),
 				exitCode: String(response.exitCode),
 				execTime: Number(response.time),
-				memory: Number(response.memory),
+				...(response.memory > 0 ? {allocatedMemory: Number(response.memory)} : {}),
 				input,
 				output: response.stdout ?? "",
 				error: response.stderr ?? "",
@@ -7308,7 +7316,11 @@ summary {
 				exitCode.textContent = String(result.exitCode ?? "");
 				exitCode.dataset.tone = String(result.exitCode) === "0" ? "success" : "danger";
 				execTime.textContent = result.execTime === undefined ? "" : `${result.execTime} ms`;
-				memory.textContent = result.memory === undefined ? "" : `${result.memory} KB`;
+				if (result.allocatedMemory !== undefined) {
+					memory.textContent = `${result.allocatedMemory} KB (${translate("easyTest.allocated")})`;
+				} else {
+					memory.textContent = result.memory === undefined ? "" : `${result.memory} KB`;
+				}
 			},
 		};
 	}

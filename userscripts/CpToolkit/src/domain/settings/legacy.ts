@@ -4,6 +4,8 @@ import {parseStoredObject} from "@atcoder-tools/shared";
 export type MigratedOptions = {
 	readonly featureId: string;
 	readonly options: Readonly<Record<string, unknown>>;
+	/** 既定で OFF の機能を、旧スクリプトの利用者には有効にする。 */
+	readonly enable?: boolean;
 };
 
 type Stored = Record<string, unknown>;
@@ -37,6 +39,7 @@ export const LEGACY_SCRIPTS: Readonly<Record<string, (stored: Stored) => readonl
 			{featureId: "local-runner", options: defined({url: config["codeRunner.localRunnerURL"] || undefined})},
 			{
 				featureId: "easy-test",
+				enable: true,
 				options: defined({
 					precompile: parseFlag(config["codeRunner.precompile.enable"]),
 					keyboardShortcuts: parseFlag(config["ui.useKeyboardShortcut"]),

@@ -2,7 +2,7 @@
 // @name           AtCoder Listing Tasks
 // @name:en        AtCoder Listing Tasks
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.5.11
+// @version        1.5.12
 // @description    【更新終了】CP Toolkit へ統合しました。「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en [Discontinued] Merged into CP Toolkit. Hover on the "Tasks" tab to open a drop-down list that takes you to the page for each problem in the contest.
 // @description:ja 【更新終了】CP Toolkit へ統合しました。「問題」タブにマウスカーソルを置くと、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
@@ -27,6 +27,8 @@ const cpToolkitRetirement = (() => {
 	const settingKeys = [];
 	const installUrl =
 		"https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js";
+	const migrationUrl =
+		"https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit#旧スクリプトからの移行";
 	const noticeKey = `cp-toolkit:retired-notice:${scriptId}`;
 
 	// スクリプトごとの保存領域は新版から読めないので、サイトの localStorage を経由して渡す
@@ -42,17 +44,26 @@ const cpToolkitRetirement = (() => {
 		notice.style.cssText =
 			"position:fixed;right:16px;bottom:16px;z-index:2147483000;max-width:360px;padding:12px;" +
 			"border:1px solid #999;border-radius:8px;background:#fff;color:#222;font-size:14px;";
-		const link = document.createElement("a");
-		link.href = installUrl;
-		link.target = "_blank";
-		link.rel = "noopener";
-		link.textContent = "CP Toolkit";
+		const createLink = (href, text) => {
+			const link = document.createElement("a");
+			link.href = href;
+			link.target = "_blank";
+			link.rel = "noopener";
+			link.textContent = text;
+			return link;
+		};
 		const close = document.createElement("button");
 		close.type = "button";
 		close.textContent = "×";
 		close.style.cssText = "float:right;border:0;background:none;cursor:pointer;";
 		close.addEventListener("click", () => notice.remove());
-		notice.append(close, `${scriptId} の更新は終了しました。機能は `, link, " に統合されています。");
+		notice.append(
+			close,
+			`${scriptId} の更新は終了しました。機能は `,
+			createLink(installUrl, "CP Toolkit"),
+			" に統合されています。",
+			createLink(migrationUrl, "移行の手順"),
+		);
 		document.body.append(notice);
 	};
 	if (document.readyState === "complete") showNotice();

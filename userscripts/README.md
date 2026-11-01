@@ -70,7 +70,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 利用中の環境へ最終版が届くまでの間だけフォルダを残し、その後に削除します。
 
-最終版は `build.ts` の `RETIRED_SCRIPTS` に載せたスクリプトの先頭へ `retirement.js` を埋め込んだものです。
+最終版は `build.ts` の `RETIRED_SCRIPTS` に載せたスクリプトの先頭へ `retirement.js` を埋め込んだものです。配布物が `shared` の変更で変わらないよう、`RETIRED_SCRIPTS` のスクリプトは通常のビルドから外しています。作り直すときは名前を指定し、`meta.json` の `version` も上げます。
 
 - ページの `data-cp-toolkit` の印で CP Toolkit の動作を判定し、動いていれば本体を実行しない
 - 動いていなければ本体を今までどおり実行し、CP Toolkit への移行を1回だけ案内する

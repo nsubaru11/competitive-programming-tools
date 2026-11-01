@@ -33,6 +33,7 @@ describe("更新を終了したスクリプト", () => {
 		await runRetired("AtCoderWidenContainer");
 		expect(document.documentElement.querySelector("style")).not.toBeNull();
 		expect(document.body.textContent).toContain("更新は終了しました");
+		expect(document.body.textContent).toContain("移行の手順");
 
 		document.body.replaceChildren();
 		await runRetired("AtCoderWidenContainer");
