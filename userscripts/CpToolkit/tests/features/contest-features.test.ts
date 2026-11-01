@@ -452,6 +452,7 @@ describe("contestCalendar", () => {
 	test("開催前のコンテストに登録のリンクを追加する", async () => {
 		const dispose = await run(contestCalendar, {page: createFakePage({contestPeriod: () => period})});
 		const link = document.querySelector<HTMLAnchorElement>(".contest-duration a");
+		expect(link?.classList.contains("btn")).toBe(true);
 		const query = new URL(link?.href ?? "").searchParams;
 		expect(query.get("text")).toBe("ABC 1");
 		expect(query.get("dates")).toBe("20990101T120000Z/20990101T140000Z");

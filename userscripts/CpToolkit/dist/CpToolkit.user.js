@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.15
+// @version        1.0.16
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -6671,6 +6671,12 @@ ${toast_default}`,
 		return `${GOOGLE_CALENDAR_URL}?${query2}`;
 	}
 
+	// CpToolkit/src/features/contest-calendar/contest-calendar.css
+	var contest_calendar_default = `.cp-calendar-link {
+	margin-left: 8px;
+}
+`;
+
 	// CpToolkit/src/features/contest-calendar/index.ts
 	var contestCalendar = defineFeature({
 		id: "contest-calendar",
@@ -6695,6 +6701,7 @@ ${toast_default}`,
 			const link = h(
 				"a",
 				{
+					className: "btn btn-default btn-xs cp-calendar-link",
 					href: buildCalendarUrl({title, ...period, location: contestLink.href}),
 					target: "_blank",
 					rel: "noopener noreferrer",
@@ -6702,9 +6709,12 @@ ${toast_default}`,
 				icon,
 				` ${translate("contestCalendar.add")}`,
 			);
-			const wrapper = h("span", {}, " ", link);
-			duration.append(wrapper);
-			return () => wrapper.remove();
+			const style = injectStyle(contest_calendar_default);
+			duration.append(link);
+			return () => {
+				link.remove();
+				style.remove();
+			};
 		},
 	});
 
