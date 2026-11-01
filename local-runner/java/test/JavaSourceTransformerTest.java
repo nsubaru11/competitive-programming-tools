@@ -27,6 +27,21 @@ public final class JavaSourceTransformerTest {
 					}
 					""", StandardCharsets.UTF_8);
 
+			final Path math = Files.createDirectories(root.resolve("lib/math"));
+			Files.writeString(math.resolve("Mint.java"), """
+					package lib.math;
+					public final class Mint {
+						public static int one() { return 1; }
+					}
+					""", StandardCharsets.UTF_8);
+			final Path io = Files.createDirectories(root.resolve("lib/io"));
+			Files.writeString(io.resolve("Input.java"), """
+					package lib.io;
+					public final class Input {
+						public static int read() { return 0; }
+					}
+					""", StandardCharsets.UTF_8);
+
 			final JavaSourceTransformer transformer = new JavaSourceTransformer();
 			final String wildcardSource = """
 					import java.util.*;
@@ -60,6 +75,24 @@ public final class JavaSourceTransformerTest {
 					""", root, false, true);
 			check(transitive.exitCode() == 0, transitive.diagnostics());
 			check(transitive.inlinedClasses().equals(java.util.List.of("lib.graph.Kruskal", "lib.ds.UnionFind")), "transitive classpath dependency was not collected: " + transitive.inlinedClasses());
+
+			final java.util.List<String> expectedOrder = java.util.List.of("lib.graph.Kruskal", "lib.ds.UnionFind", "lib.math.Mint", "lib.io.Input");
+			final String orderSource = """
+					import lib.ds.*;
+					import lib.graph.*;
+					import lib.io.*;
+					import lib.math.*;
+					public final class A {
+						public static void main(String[] args) { new UnionFind(1); Input.read(); Mint.one(); Kruskal.create(); }
+					}
+					""";
+			final SourceTransformResult ordered = transformer.transform(orderSource, root, false, true);
+			check(ordered.exitCode() == 0, ordered.diagnostics());
+			check(ordered.inlinedClasses().equals(expectedOrder), "dependencies should follow their user and lib.io should come last: " + ordered.inlinedClasses());
+			check(ordered.sourceCode().indexOf("// ===== inlined: lib.math.Mint") < ordered.sourceCode().indexOf("// ===== inlined: lib.io.Input"), "source order does not match inlined classes");
+			final SourceTransformResult reordered = transformer.transform(orderSource.replace("new UnionFind(1); Input.read(); Mint.one(); Kruskal.create();", "Kruskal.create(); Mint.one(); Input.read(); new UnionFind(1);"), root, false, true);
+			check(reordered.exitCode() == 0, reordered.diagnostics());
+			check(reordered.inlinedClasses().equals(expectedOrder), "inline order depends on reference order: " + reordered.inlinedClasses());
 
 			final String implicitSource = wildcardSource.replace("import lib.ds.*;\n", "");
 			final SourceTransformResult implicit = transformer.transform(implicitSource, root, false, true);

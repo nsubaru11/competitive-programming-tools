@@ -55,7 +55,7 @@ final class JavaSourceTransformer {
 			}
 
 			if (analysis.hasErrors()) return failure(source, analysis);
-			final List<Path> dependencies = collectDependencies(analysis, index);
+			final List<Path> dependencies = collectDependencies(analysis, index, root);
 			final BundleOutput bundled = bundle(source, analysis, dependencies, root, debug);
 			if (validate) {
 				final Analysis validation = analyze(bundled.source(), null);
@@ -183,17 +183,37 @@ final class JavaSourceTransformer {
 		return source.substring(0, (int) insertion) + block + source.substring((int) insertion);
 	}
 
-	private List<Path> collectDependencies(final Analysis analysis, final LibraryIndex index) throws IOException {
-		final LinkedHashSet<Path> ordered = new LinkedHashSet<>();
+	/**
+	 * 展開順を決めます。依存先は使う型の直後に置き、大きくて毎回同じ {@code lib.io} は末尾へ回します。
+	 * ほかの型から使われない型を起点に名前順でたどるので、同じ型の組み合わせなら常に同じ順序になります。
+	 */
+	private List<Path> collectDependencies(final Analysis analysis, final LibraryIndex index, final Path root) throws IOException {
+		final TreeSet<Path> required = new TreeSet<>();
+		final Set<Path> usedByLibrary = new HashSet<>();
 		final ArrayDeque<Path> queue = new ArrayDeque<>(referencedLibrarySources(analysis.solution(), analysis.trees(), index));
 		while (!queue.isEmpty()) {
 			final Path path = queue.removeFirst();
-			if (!ordered.add(path)) continue;
-			for (final Path dependency : libraryDependencies(path, index)) {
-				if (!ordered.contains(dependency)) queue.addLast(dependency);
-			}
+			if (!required.add(path)) continue;
+			final Set<Path> dependencies = libraryDependencies(path, index);
+			usedByLibrary.addAll(dependencies);
+			queue.addAll(dependencies);
 		}
-		return List.copyOf(ordered);
+
+		final LinkedHashSet<Path> ordered = new LinkedHashSet<>();
+		for (final Path path : required) {
+			if (!usedByLibrary.contains(path)) visitDependency(path, index, ordered);
+		}
+		// 循環依存には起点がないので、残った型もたどる
+		for (final Path path : required) visitDependency(path, index, ordered);
+		final Path ioPackage = root.resolve("lib").resolve("io");
+		return ordered.stream().sorted(Comparator.comparing(path -> path.startsWith(ioPackage))).toList();
+	}
+
+	private void visitDependency(final Path path, final LibraryIndex index, final Set<Path> ordered) throws IOException {
+		if (!ordered.add(path)) return;
+		for (final Path dependency : new TreeSet<>(libraryDependencies(path, index))) {
+			visitDependency(dependency, index, ordered);
+		}
 	}
 
 	private Set<Path> libraryDependencies(final Path source, final LibraryIndex index) throws IOException {
