@@ -1,10 +1,15 @@
+import type {CommentSyntax} from "@domain/source/comment";
+
 export type LanguageFamily = {
 	readonly id: string;
 	readonly name: string;
 	readonly match: readonly string[];
+	/** comments のキー。コメントを書けない言語にはない。 */
+	readonly comment?: string;
 };
 
 export type LanguageCatalog = {
+	readonly comments: Readonly<Record<string, CommentSyntax>>;
 	readonly families: readonly LanguageFamily[];
 };
 
@@ -29,6 +34,11 @@ function compile(catalog: LanguageCatalog): readonly CompiledFamily[] {
 /** サイトの言語の表記から、言語の種類を判定する。 */
 export function resolveFamily(catalog: LanguageCatalog, label: string): string | null {
 	return compile(catalog).find(({patterns}) => patterns.some((pattern) => pattern.test(label)))?.id ?? null;
+}
+
+export function commentSyntaxOf(catalog: LanguageCatalog, familyId: string): CommentSyntax | null {
+	const comment = catalog.families.find(({id}) => id === familyId)?.comment;
+	return comment === undefined ? null : catalog.comments[comment] ?? null;
 }
 
 /** 表記の違いの大きさを返す。小さいほど似ている。 */

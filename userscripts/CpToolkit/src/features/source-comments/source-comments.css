@@ -1,0 +1,39 @@
+.cp-source-comments {
+	margin-top: 8px;
+}
+
+.cp-source-comments summary {
+	cursor: pointer;
+	user-select: none;
+}
+
+.cp-comment-slot {
+	margin-top: 10px;
+}
+
+.cp-comment-slot textarea {
+	font-family: Menlo, Monaco, Consolas, monospace;
+	font-size: 12px;
+}
+
+.cp-comment-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin-top: 4px;
+}
+
+.cp-comment-row label {
+	margin: 0;
+	font-weight: normal;
+}
+
+.cp-comment-row select {
+	width: auto;
+	max-width: 220px;
+}
+
+.cp-source-comments .help-block {
+	margin: 8px 0 0;
+}

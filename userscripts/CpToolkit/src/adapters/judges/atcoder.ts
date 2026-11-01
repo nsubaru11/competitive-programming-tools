@@ -84,7 +84,7 @@ export class AtCoderSite extends JudgeSiteBase {
 
 	setSourceCode(code: string): void {
 		const element = document.querySelector("#editor");
-		if (element) pageGlobals().ace?.edit(element).setValue(code);
+		if (element) pageGlobals().ace?.edit(element).setValue(code, -1);
 		const textarea = document.querySelector<HTMLTextAreaElement>("#plain-textarea");
 		if (textarea) textarea.value = code;
 	}

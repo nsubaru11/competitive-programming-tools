@@ -1,5 +1,7 @@
 import {describe, expect, test} from "bun:test";
 import {judges} from "@catalog/judges";
+import {languageCatalog} from "@catalog/tables";
+import {commentSyntaxOf, resolveFamily} from "@domain/execution/language";
 import en from "@data/i18n/en.yaml";
 import ja from "@data/i18n/ja.yaml";
 import {features} from "@app/registry";
@@ -34,6 +36,42 @@ describe("judges", () => {
 				expect(() => document.querySelector(selector)).not.toThrow();
 			}
 		}
+	});
+});
+
+describe("languages", () => {
+	const {comments, families} = languageCatalog;
+
+	test("コメントの書き方は単一行か、複数行の両端のどちらかを持つ", () => {
+		for (const {line, open, close} of Object.values(comments)) {
+			expect(open === undefined).toBe(close === undefined);
+			expect(line !== undefined || open !== undefined).toBe(true);
+		}
+	});
+
+	test("言語が指すコメントの書き方が存在する", () => {
+		for (const {comment} of families) {
+			if (comment !== undefined) expect(comments[comment]).toBeDefined();
+		}
+	});
+
+	test("コメントの書き方の正規表現が正しい", () => {
+		for (const {preamble, trailer} of Object.values(comments)) {
+			expect(() => new RegExp(preamble ?? "")).not.toThrow();
+			expect(() => new RegExp(trailer ?? "")).not.toThrow();
+		}
+	});
+
+	test("主な言語の表記からコメントの書き方を引ける", () => {
+		const lineOf = (label: string) => {
+			const family = resolveFamily(languageCatalog, label);
+			return family ? commentSyntaxOf(languageCatalog, family)?.line : undefined;
+		};
+		expect(lineOf("Java (OpenJDK 24.0.2)")).toBe("//");
+		expect(lineOf("C++ 23 (gcc 15.2.0)")).toBe("//");
+		expect(lineOf("Python (CPython 3.13.7)")).toBe("#");
+		expect(lineOf("Rust (rustc 1.89.0)")).toBe("//");
+		expect(lineOf("Text (cat 9.4)")).toBeUndefined();
 	});
 });
 

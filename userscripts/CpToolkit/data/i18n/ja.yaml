@@ -88,6 +88,25 @@ submissionTimer.cancel: 取り消す
 submissionTimer.canceled: タイマーを取り消しました。
 submissionTimer.scheduled: "{time} ごろに提出します。"
 
+sourceComments.title: ソースコードのコメント
+sourceComments.description: 貼り付けたコードの先頭と末尾へ、参照元の URL などのコメントを追記します。言語を変えるとコメントの書き方も切り替えます。
+sourceComments.style: コメントの形式
+sourceComments.styleLine: 単一行コメントを並べる
+sourceComments.styleBlock: 複数行コメント
+sourceComments.panel: ヘッダーとフッター
+sourceComments.header: ヘッダー(コードの先頭)
+sourceComments.footer: フッター(コードの末尾)
+sourceComments.placeholder: 参照元の URL など
+sourceComments.taskOnly: この問題のみ
+sourceComments.commentOut: 挿入時にコメントアウトする
+sourceComments.restoreHistory: 履歴から復元
+sourceComments.restorePreset: 名前付きから呼び出す
+sourceComments.savePreset: 名前を付けて保存
+sourceComments.removePreset: 削除
+sourceComments.presetName: 保存する名前
+sourceComments.apply: コードへ反映
+sourceComments.variables: "{url} は問題の URL、{task} は問題の ID、{contest} はコンテストの ID に置き換えます。"
+sourceComments.unsupported: この言語はコメントの書き方が分からないので、挿入していません。
 taskStatus.title: 問題の提出状況
 taskStatus.description: 問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。
 taskStatus.acceptedColor: 正解した問題の色
@@ -158,8 +177,8 @@ javaSubmit.addHeader: 提出用のヘッダーを付ける
 javaSubmit.headerName: ヘッダーの名前(空欄なら既定)
 javaSubmit.foldOnPaste: 貼り付け後にクラスとコメントを折りたたむ
 
-easyTest.title: Easy Test
-easyTest.description: 問題ページからサンプルを実行し、結果を確認します。
+easyTest.title: Easy Test(Java 向け)
+easyTest.description: Java の解答向けに、問題ページからサンプルを実行して結果を確認します。他の言語では AtCoder Easy Test v2 を単独で入れることを勧めます。両方を有効にするとボタンが重なります。
 easyTest.precompile: Local Runner で編集中のコードを事前にコンパイルする
 easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)
 easyTest.savedCodeLimit: 保存するコードの数

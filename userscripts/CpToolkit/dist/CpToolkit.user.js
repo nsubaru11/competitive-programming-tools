@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.6
+// @version        1.0.7
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2008,6 +2008,26 @@ ${settings_panel_default}`,
 		"submissionTimer.cancel": "Cancel",
 		"submissionTimer.canceled": "The timer was canceled.",
 		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
+		"sourceComments.title": "Source comments",
+		"sourceComments.description":
+			"Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.",
+		"sourceComments.style": "Comment style",
+		"sourceComments.styleLine": "Single-line comments",
+		"sourceComments.styleBlock": "Multi-line comment",
+		"sourceComments.panel": "Header and footer",
+		"sourceComments.header": "Header (top of the code)",
+		"sourceComments.footer": "Footer (bottom of the code)",
+		"sourceComments.placeholder": "Reference URLs and so on",
+		"sourceComments.taskOnly": "This task only",
+		"sourceComments.commentOut": "Comment out when inserting",
+		"sourceComments.restoreHistory": "Restore from history",
+		"sourceComments.restorePreset": "Load a saved entry",
+		"sourceComments.savePreset": "Save with a name",
+		"sourceComments.removePreset": "Delete",
+		"sourceComments.presetName": "Name to save as",
+		"sourceComments.apply": "Apply to the code",
+		"sourceComments.variables": "{url} becomes the task URL, {task} the task ID and {contest} the contest ID.",
+		"sourceComments.unsupported": "Nothing was inserted because the comment syntax of this language is unknown.",
 		"taskStatus.title": "Task status colors",
 		"taskStatus.description":
 			"Colors the task list and the dropdown by your results. A task with a score counts as accepted.",
@@ -2073,8 +2093,9 @@ ${settings_panel_default}`,
 		"javaSubmit.addHeader": "Add the submission header",
 		"javaSubmit.headerName": "Header name (empty for the default)",
 		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
-		"easyTest.title": "Easy Test",
-		"easyTest.description": "Runs samples from the task page and shows the results.",
+		"easyTest.title": "Easy Test (for Java)",
+		"easyTest.description":
+			"Runs samples from the task page for Java solutions. For other languages, install AtCoder Easy Test v2 on its own. Enabling both duplicates the buttons.",
 		"easyTest.precompile": "Precompile edited code with Local Runner",
 		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
 		"easyTest.savedCodeLimit": "Number of saved codes",
@@ -2179,6 +2200,27 @@ ${settings_panel_default}`,
 		"submissionTimer.cancel": "取り消す",
 		"submissionTimer.canceled": "タイマーを取り消しました。",
 		"submissionTimer.scheduled": "{time} ごろに提出します。",
+		"sourceComments.title": "ソースコードのコメント",
+		"sourceComments.description":
+			"貼り付けたコードの先頭と末尾へ、参照元の URL などのコメントを追記します。言語を変えるとコメントの書き方も切り替えます。",
+		"sourceComments.style": "コメントの形式",
+		"sourceComments.styleLine": "単一行コメントを並べる",
+		"sourceComments.styleBlock": "複数行コメント",
+		"sourceComments.panel": "ヘッダーとフッター",
+		"sourceComments.header": "ヘッダー(コードの先頭)",
+		"sourceComments.footer": "フッター(コードの末尾)",
+		"sourceComments.placeholder": "参照元の URL など",
+		"sourceComments.taskOnly": "この問題のみ",
+		"sourceComments.commentOut": "挿入時にコメントアウトする",
+		"sourceComments.restoreHistory": "履歴から復元",
+		"sourceComments.restorePreset": "名前付きから呼び出す",
+		"sourceComments.savePreset": "名前を付けて保存",
+		"sourceComments.removePreset": "削除",
+		"sourceComments.presetName": "保存する名前",
+		"sourceComments.apply": "コードへ反映",
+		"sourceComments.variables":
+			"{url} は問題の URL、{task} は問題の ID、{contest} はコンテストの ID に置き換えます。",
+		"sourceComments.unsupported": "この言語はコメントの書き方が分からないので、挿入していません。",
 		"taskStatus.title": "問題の提出状況",
 		"taskStatus.description":
 			"問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。",
@@ -2244,8 +2286,9 @@ ${settings_panel_default}`,
 		"javaSubmit.addHeader": "提出用のヘッダーを付ける",
 		"javaSubmit.headerName": "ヘッダーの名前(空欄なら既定)",
 		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
-		"easyTest.title": "Easy Test",
-		"easyTest.description": "問題ページからサンプルを実行し、結果を確認します。",
+		"easyTest.title": "Easy Test(Java 向け)",
+		"easyTest.description":
+			"Java の解答向けに、問題ページからサンプルを実行して結果を確認します。他の言語では AtCoder Easy Test v2 を単独で入れることを勧めます。両方を有効にするとボタンが重なります。",
 		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
 		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
 		"easyTest.savedCodeLimit": "保存するコードの数",
@@ -2369,166 +2412,282 @@ ${settings_panel_default}`,
 	};
 	// CpToolkit/data/languages.yaml
 	var languages_default = {
+		comments: {
+			c: {
+				line: "//",
+				open: "/*",
+				close: "*/",
+			},
+			slash: {
+				line: "//",
+			},
+			hash: {
+				line: "#",
+			},
+			dash: {
+				line: "--",
+			},
+			semicolon: {
+				line: ";",
+			},
+			percent: {
+				line: "%",
+			},
+			ruby: {
+				line: "#",
+				open: "=begin",
+				close: "=end",
+			},
+			haskell: {
+				line: "--",
+				open: "{-",
+				close: "-}",
+			},
+			lua: {
+				line: "--",
+				open: "--[[",
+				close: "]]",
+			},
+			nim: {
+				line: "#",
+				open: "#[",
+				close: "]#",
+			},
+			julia: {
+				line: "#",
+				open: "#=",
+				close: "=#",
+			},
+			ocaml: {
+				open: "(*",
+				close: "*)",
+			},
+			fsharp: {
+				line: "//",
+				open: "(*",
+				close: "*)",
+			},
+			lisp: {
+				line: ";",
+				open: "#|",
+				close: "|#",
+			},
+			pascal: {
+				line: "//",
+				open: "{",
+				close: "}",
+			},
+			prolog: {
+				line: "%",
+				open: "/*",
+				close: "*/",
+			},
+			fortran: {
+				line: "!",
+			},
+			basic: {
+				line: "'",
+			},
+			php: {
+				line: "//",
+				open: "/*",
+				close: "*/",
+				preamble: "^<\\?(php)?[^\\n]*\\n",
+				trailer: "\\?>\\s*$",
+			},
+		},
 		families: [
 			{
 				id: "cpp",
 				name: "C++",
 				match: ["^C\\+\\+", "G\\+\\+", "Clang\\+\\+", "Visual C\\+\\+", "^cLay"],
+				comment: "c",
 			},
 			{
 				id: "csharp",
 				name: "C#",
 				match: ["^C#"],
+				comment: "c",
 			},
 			{
 				id: "c",
 				name: "C",
 				match: ["^C\\d*(\\s|\\(|$)", "GCC C\\d"],
+				comment: "c",
 			},
 			{
 				id: "python2",
 				name: "Python2",
 				match: ["^Python ?2", "^PyPy ?2"],
+				comment: "hash",
 			},
 			{
 				id: "python3",
 				name: "Python3",
 				match: ["^Python", "^PyPy", "^CPython"],
+				comment: "hash",
 			},
 			{
 				id: "java",
 				name: "Java",
 				match: ["^Java(?!Script)"],
+				comment: "c",
 			},
 			{
 				id: "javascript",
 				name: "JavaScript",
 				match: ["^JavaScript", "^Node\\.js"],
+				comment: "c",
 			},
 			{
 				id: "typescript",
 				name: "TypeScript",
 				match: ["^TypeScript"],
+				comment: "c",
 			},
 			{
 				id: "kotlin",
 				name: "Kotlin",
 				match: ["^Kotlin"],
+				comment: "c",
 			},
 			{
 				id: "rust",
 				name: "Rust",
 				match: ["^Rust"],
+				comment: "c",
 			},
 			{
 				id: "go",
 				name: "Go",
 				match: ["^Go\\b"],
+				comment: "c",
 			},
 			{
 				id: "ruby",
 				name: "Ruby",
 				match: ["^Ruby"],
+				comment: "ruby",
 			},
 			{
 				id: "haskell",
 				name: "Haskell",
 				match: ["^Haskell"],
+				comment: "haskell",
 			},
 			{
 				id: "d",
 				name: "D",
 				match: ["^D(\\s|\\(|$)"],
+				comment: "c",
 			},
 			{
 				id: "scala",
 				name: "Scala",
 				match: ["^Scala"],
+				comment: "c",
 			},
 			{
 				id: "swift",
 				name: "Swift",
 				match: ["^Swift"],
+				comment: "c",
 			},
 			{
 				id: "php",
 				name: "PHP",
 				match: ["^PHP"],
+				comment: "php",
 			},
 			{
 				id: "perl",
 				name: "Perl",
 				match: ["^Perl"],
+				comment: "hash",
 			},
 			{
 				id: "bash",
 				name: "Bash",
 				match: ["^Bash"],
+				comment: "hash",
 			},
 			{
 				id: "lua",
 				name: "Lua",
 				match: ["^Lua"],
+				comment: "lua",
 			},
 			{
 				id: "nim",
 				name: "Nim",
 				match: ["^Nim"],
+				comment: "nim",
 			},
 			{
 				id: "ocaml",
 				name: "OCaml",
 				match: ["^OCaml"],
+				comment: "ocaml",
 			},
 			{
 				id: "crystal",
 				name: "Crystal",
 				match: ["^Crystal"],
+				comment: "hash",
 			},
 			{
 				id: "julia",
 				name: "Julia",
 				match: ["^Julia"],
+				comment: "julia",
 			},
 			{
 				id: "elixir",
 				name: "Elixir",
 				match: ["^Elixir"],
+				comment: "hash",
 			},
 			{
 				id: "erlang",
 				name: "Erlang",
 				match: ["^Erlang"],
+				comment: "percent",
 			},
 			{
 				id: "clojure",
 				name: "Clojure",
 				match: ["^Clojure"],
+				comment: "semicolon",
 			},
 			{
 				id: "fsharp",
 				name: "F#",
 				match: ["^F#"],
+				comment: "fsharp",
 			},
 			{
 				id: "scheme",
 				name: "Scheme",
 				match: ["^Scheme"],
+				comment: "lisp",
 			},
 			{
 				id: "lisp",
 				name: "Lisp",
 				match: ["Lisp"],
+				comment: "lisp",
 			},
 			{
 				id: "pascal",
 				name: "Pascal",
 				match: ["Pascal", "^Delphi"],
+				comment: "pascal",
 			},
 			{
 				id: "fortran",
 				name: "Fortran",
 				match: ["^Fortran", "^FORTRAN"],
+				comment: "fortran",
 			},
 			{
 				id: "cobol",
@@ -2539,11 +2698,91 @@ ${settings_panel_default}`,
 				id: "objective-c",
 				name: "Objective-C",
 				match: ["^Objective-C"],
+				comment: "c",
 			},
 			{
 				id: "basic",
 				name: "Visual Basic",
 				match: ["^Visual Basic", "^Basic"],
+				comment: "basic",
+			},
+			{
+				id: "dart",
+				name: "Dart",
+				match: ["^Dart"],
+				comment: "c",
+			},
+			{
+				id: "zig",
+				name: "Zig",
+				match: ["^Zig"],
+				comment: "slash",
+			},
+			{
+				id: "r",
+				name: "R",
+				match: ["^R(\\s|\\(|$)"],
+				comment: "hash",
+			},
+			{
+				id: "awk",
+				name: "Awk",
+				match: ["^AWK", "^Awk", "Awk"],
+				comment: "hash",
+			},
+			{
+				id: "sed",
+				name: "Sed",
+				match: ["^Sed", "^sed"],
+				comment: "hash",
+			},
+			{
+				id: "fish",
+				name: "Fish",
+				match: ["^Fish", "^fish"],
+				comment: "hash",
+			},
+			{
+				id: "powershell",
+				name: "PowerShell",
+				match: ["^PowerShell"],
+				comment: "hash",
+			},
+			{
+				id: "raku",
+				name: "Raku",
+				match: ["^Raku"],
+				comment: "hash",
+			},
+			{
+				id: "sagemath",
+				name: "SageMath",
+				match: ["^Sage"],
+				comment: "hash",
+			},
+			{
+				id: "octave",
+				name: "Octave",
+				match: ["^Octave"],
+				comment: "percent",
+			},
+			{
+				id: "prolog",
+				name: "Prolog",
+				match: ["Prolog"],
+				comment: "prolog",
+			},
+			{
+				id: "ada",
+				name: "Ada",
+				match: ["^Ada"],
+				comment: "dash",
+			},
+			{
+				id: "lean",
+				name: "Lean",
+				match: ["^Lean"],
+				comment: "dash",
 			},
 			{
 				id: "text",
@@ -3037,6 +3276,11 @@ ${settings_panel_default}`,
 		return compile(catalog).find(({patterns}) => patterns.some((pattern) => pattern.test(label)))?.id ?? null;
 	}
 
+	function commentSyntaxOf(catalog, familyId) {
+		const comment = catalog.families.find(({id}) => id === familyId)?.comment;
+		return comment === undefined ? null : (catalog.comments[comment] ?? null);
+	}
+
 	function labelDistance(a, b) {
 		let previous = new Float64Array(b.length + 1);
 		let current = new Float64Array(b.length + 1);
@@ -3113,6 +3357,46 @@ ${settings_panel_default}`,
 				if (result.status !== "IE") return judgeResult(result, testCase.output, options);
 			}
 			return result;
+		}
+	}
+
+	// CpToolkit/src/application/source/paste-pipeline.ts
+	class PastePipeline {
+		editors;
+		steps = [];
+		watching = false;
+
+		constructor(editors) {
+			this.editors = editors;
+		}
+
+		add(target, lookup, step) {
+			this.steps.push(step);
+			this.steps.sort((a, b) => a.order - b.order);
+			if (this.watching) return;
+			this.watching = true;
+			this.editors.locate(target, lookup).then((editor) => {
+				editor?.onPaste(
+					(pasted) =>
+						void this.run(editor, pasted).catch(() => {
+							return;
+						}),
+				);
+			});
+		}
+
+		async run(editor, pasted) {
+			const original = editor.getValue();
+			const changedBy = [];
+			let code = original;
+			for (const step of this.steps) {
+				const next = await step.transform(code, {editor, pasted, original});
+				if (next !== code) changedBy.push(step);
+				code = next;
+			}
+			if (code === original || editor.getValue() !== original) return;
+			editor.setValue(code);
+			for (const step of changedBy) step.applied?.(editor);
 		}
 	}
 
@@ -3632,7 +3916,7 @@ ${settings_panel_default}`,
 
 		setSourceCode(code) {
 			const element = document.querySelector("#editor");
-			if (element) pageGlobals().ace?.edit(element).setValue(code);
+			if (element) pageGlobals().ace?.edit(element).setValue(code, -1);
 			const textarea = document.querySelector("#plain-textarea");
 			if (textarea) textarea.value = code;
 		}
@@ -3938,7 +4222,7 @@ ${settings_panel_default}`,
 		}
 
 		onPaste(listener) {
-			this.editor.on("paste", () => setTimeout(listener));
+			this.editor.on("paste", ({text}) => setTimeout(() => listener(text)));
 		}
 
 		onChange(listener) {
@@ -3993,11 +4277,11 @@ ${settings_panel_default}`,
 
 		onPaste(listener) {
 			try {
-				this.editor.onDidPaste(listener);
+				this.editor.onDidPaste(({range}) => listener(this.model.getValueInRange(range)));
 			} catch {
 				this.model.onDidChangeContent(({isFlush, changes}) => {
-					if (!isFlush && changes.length === 1 && (changes[0]?.text.length ?? 0) >= MIN_PASTED_LENGTH)
-						listener();
+					const text = changes[0]?.text ?? "";
+					if (!isFlush && changes.length === 1 && text.length >= MIN_PASTED_LENGTH) listener(text);
 				});
 			}
 		}
@@ -4530,6 +4814,7 @@ ${body}
 	}
 
 	// CpToolkit/src/domain/validation/guards.ts
+	var isBoolean = (value) => typeof value === "boolean";
 	var isString = (value) => typeof value === "string";
 	var isNumber = (value) => typeof value === "number";
 
@@ -5992,6 +6277,7 @@ ${inner}
 		const site = new SameOriginHttpClient();
 		const scripts = new ElementScriptLoader();
 		const bridge = new UnsafeWindowPageBridge();
+		const editors = new PageCodeEditorLocator();
 		const localRunnerEndpoint = () => {
 			const {id, defaultEnabled, options} = localRunner;
 			if (!settings.isEnabled(id, defaultEnabled)) return null;
@@ -6029,7 +6315,8 @@ ${inner}
 			site,
 			scripts,
 			page: bridge,
-			editors: new PageCodeEditorLocator(),
+			editors,
+			paste: new PastePipeline(editors),
 			localRunner: localRunner2,
 			runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
 			judgeSite: getJudgeSite,
@@ -7370,7 +7657,7 @@ ${label}`,
 		title: "easyTest.title",
 		description: "easyTest.description",
 		category: "category.execution",
-		defaultEnabled: true,
+		defaultEnabled: false,
 		routes: ["atcoder:task", "atcoder:submit", "yukicoder:problem", "codeforces:problem"],
 		phase: "ready",
 		options: featureOptions,
@@ -7622,6 +7909,9 @@ ${efficient_layout_default}`);
 			});
 	}
 
+	// CpToolkit/src/application/ports/code-editor.ts
+	var EDITOR_SETUP_DELAY_MS = 500;
+
 	// CpToolkit/src/application/source/transform-java.ts
 	async function transformJava(code, localRunner2, options) {
 		if (localRunner2.isAvailable()) {
@@ -7638,7 +7928,7 @@ ${efficient_layout_default}`);
 	var FOLD_SHORTCUT = "Ctrl+Shift+M";
 	var MIN_SOURCE_LENGTH = 30;
 	var FOLD_DELAY_MS = 100;
-	var EDITOR_SETUP_DELAY_MS = 500;
+	var PASTE_ORDER = 10;
 
 	function findSubmitButton({submitButtons, labeledSubmit}) {
 		for (const selector of submitButtons) {
@@ -7673,7 +7963,7 @@ ${efficient_layout_default}`);
 			headerName: option.text("", "javaSubmit.headerName"),
 			foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 		},
-		start({options, judge, editors, localRunner: localRunner2}) {
+		start({options, judge, editors, localRunner: localRunner2, paste}) {
 			const target = judge?.submission;
 			if (!target) return;
 			registerShortcut(target.shortcut, () => {
@@ -7682,22 +7972,24 @@ ${efficient_layout_default}`);
 				return button !== null;
 			});
 			const header = options.addHeader ? options.headerName || true : false;
-			editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((editor) => {
+			const lookup = {delayMs: EDITOR_SETUP_DELAY_MS};
+			const fold = (editor) => editor.foldLines(findFoldStartLines(editor.getValue()));
+			editors.locate(target, lookup).then((editor) => {
 				if (!editor) return;
-				const fold = () => editor.foldLines(findFoldStartLines(editor.getValue()));
 				registerShortcut(FOLD_SHORTCUT, () => {
-					fold();
+					fold(editor);
 					return true;
 				});
-				editor.onPaste(() => {
-					const code = editor.getValue();
-					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return;
-					transformJava(code, localRunner2, {...options, header}).then((transformed) => {
-						if (transformed === code || editor.getValue() !== code) return;
-						editor.setValue(transformed);
-						if (options.foldOnPaste) setTimeout(fold, FOLD_DELAY_MS);
-					});
-				});
+			});
+			paste.add(target, lookup, {
+				order: PASTE_ORDER,
+				transform(code, {editor}) {
+					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
+					return transformJava(code, localRunner2, {...options, header});
+				},
+				applied(editor) {
+					if (options.foldOnPaste) setTimeout(() => fold(editor), FOLD_DELAY_MS);
+				},
 			});
 		},
 	});
@@ -8200,6 +8492,445 @@ ${efficient_layout_default}`);
 				stopTicker?.();
 				stopTicker = null;
 			};
+		},
+	});
+
+	// CpToolkit/src/domain/source/comment.ts
+	var SHEBANG_PATTERN = /^#![^\n]*\n/;
+	var VARIABLE_PATTERN = /\{(\w+)\}/g;
+	var LINE_BREAK_PATTERN = /\r\n?/g;
+
+	function fillVariables(text, values) {
+		return text.replace(VARIABLE_PATTERN, (match, name) => values[name] ?? match);
+	}
+
+	function toComment(text, {line, open, close}, style) {
+		const lines = text.split(`
+`);
+		const canUseBlock = open !== undefined && close !== undefined && !text.includes(close);
+		if (canUseBlock && style === "block")
+			return [open, ...lines, close].join(`
+`);
+		if (line !== undefined)
+			return lines.map((item) => (item ? `${line} ${item}` : line)).join(`
+`);
+		return canUseBlock
+			? lines.map((item) => `${open} ${item} ${close}`).join(`
+`)
+			: null;
+	}
+
+	function isWholeCode(code, pasted) {
+		return (
+			code.trim() ===
+			pasted
+				.replace(
+					LINE_BREAK_PATTERN,
+					`
+`,
+				)
+				.trim()
+		);
+	}
+
+	function insertHeader(code, block, {preamble}) {
+		const head = SHEBANG_PATTERN.exec(code) ?? (preamble === undefined ? null : new RegExp(preamble).exec(code));
+		const offset = head?.[0].length ?? 0;
+		return `${code.slice(0, offset)}${block}${code.slice(offset)}`;
+	}
+
+	function insertFooter(code, block, {trailer}) {
+		const end = (trailer === undefined ? null : new RegExp(trailer).exec(code))?.index ?? code.length;
+		const body = code.slice(0, end).trimEnd();
+		return `${body}${
+			body
+				? `
+`
+				: ""
+		}${block}${code.slice(end)}`;
+	}
+
+	function replaceBlock(code, current, next2, fromEnd) {
+		const index = fromEnd ? code.lastIndexOf(current) : code.indexOf(current);
+		return index < 0 ? null : `${code.slice(0, index)}${next2}${code.slice(index + current.length)}`;
+	}
+
+	// CpToolkit/src/application/source/source-comments.ts
+	var HISTORY_LIMIT = 20;
+	var EMPTY_ENTRY = {text: "", commentOut: true};
+	var isEntry = isObjectOf({text: isString, commentOut: isBoolean});
+	var isNamed = isObjectOf({name: isString, text: isString, commentOut: isBoolean});
+
+	class SourceComments {
+		state;
+
+		constructor(state) {
+			this.state = state;
+		}
+
+		content(slot, task) {
+			const taskEntry = this.taskEntries(slot)[task];
+			if (taskEntry) return {...taskEntry, taskOnly: true};
+			return {...readStored(this.state, this.key(slot, "last"), isEntry, EMPTY_ENTRY), taskOnly: false};
+		}
+
+		save(slot, task, {text, commentOut, taskOnly}) {
+			const entry = {text, commentOut};
+			const {[task]: _replaced, ...others} = this.taskEntries(slot);
+			this.state.set(this.key(slot, "tasks"), taskOnly ? {...others, [task]: entry} : others);
+			if (!taskOnly) this.state.set(this.key(slot, "last"), entry);
+			if (text.trim()) this.remember(slot, entry);
+		}
+
+		history(slot) {
+			return readStored(this.state, this.key(slot, "history"), isArrayOf(isEntry), []);
+		}
+
+		presets(slot) {
+			return readStored(this.state, this.key(slot, "presets"), isArrayOf(isNamed), []);
+		}
+
+		savePreset(slot, preset) {
+			const others = this.presets(slot).filter(({name}) => name !== preset.name);
+			const presets = [...others, preset].toSorted((a, b) => a.name.localeCompare(b.name));
+			this.state.set(this.key(slot, "presets"), presets);
+		}
+
+		removePreset(slot, name) {
+			this.state.set(
+				this.key(slot, "presets"),
+				this.presets(slot).filter((preset) => preset.name !== name),
+			);
+		}
+
+		remember(slot, entry) {
+			const others = this.history(slot).filter(({text, commentOut}) => {
+				return text !== entry.text || commentOut !== entry.commentOut;
+			});
+			this.state.set(this.key(slot, "history"), [entry, ...others].slice(0, HISTORY_LIMIT));
+		}
+
+		taskEntries(slot) {
+			return readStored(this.state, this.key(slot, "tasks"), isRecordOf(isEntry), {});
+		}
+
+		key(slot, name) {
+			return `source-comments:${slot}:${name}`;
+		}
+	}
+
+	// CpToolkit/src/features/source-comments/panel.ts
+	var OPEN_KEY = "source-comments:open";
+	var SLOT_LABELS = {
+		header: "sourceComments.header",
+		footer: "sourceComments.footer",
+	};
+	var LABEL_LENGTH = 40;
+
+	function summarize({text}) {
+		const line =
+			text.trim().split(`
+`)[0] ?? "";
+		return line.length > LABEL_LENGTH ? `${line.slice(0, LABEL_LENGTH)}...` : line;
+	}
+
+	function createCheckbox(label, onChange) {
+		const input = h("input", {type: "checkbox", onchange: onChange});
+		return {element: h("label", {}, input, ` ${label}`), input};
+	}
+
+	function createSlot(slot, {comments, translate, task, onChange}) {
+		const textarea = h("textarea", {
+			className: "form-control",
+			rows: 3,
+			spellcheck: false,
+			placeholder: translate("sourceComments.placeholder"),
+		});
+		const content = () => ({
+			text: textarea.value,
+			commentOut: commentOut.input.checked,
+			taskOnly: taskOnly.input.checked,
+		});
+		const save = () => {
+			comments.save(slot, task(), content());
+			refreshLists();
+			onChange();
+		};
+		const taskOnly = createCheckbox(translate("sourceComments.taskOnly"), save);
+		const commentOut = createCheckbox(translate("sourceComments.commentOut"), save);
+		const history = h("select", {className: "form-control input-sm"});
+		const presets = h("select", {className: "form-control input-sm"});
+		const saveButton = h("button", {
+			type: "button",
+			className: "btn btn-default btn-sm",
+			textContent: translate("sourceComments.savePreset"),
+		});
+		const removeButton = h("button", {
+			type: "button",
+			className: "btn btn-default btn-sm",
+			textContent: translate("sourceComments.removePreset"),
+		});
+		const fill = (entry) => {
+			textarea.value = entry.text;
+			commentOut.input.checked = entry.commentOut;
+			save();
+		};
+		const refreshLists = () => {
+			const selected = presets.value;
+			history.replaceChildren(
+				h("option", {value: "", textContent: translate("sourceComments.restoreHistory")}),
+				...comments.history(slot).map((entry, index) =>
+					h("option", {
+						value: String(index),
+						textContent: summarize(entry),
+					}),
+				),
+			);
+			presets.replaceChildren(
+				h("option", {value: "", textContent: translate("sourceComments.restorePreset")}),
+				...comments.presets(slot).map(({name}) => h("option", {value: name, textContent: name})),
+			);
+			presets.value = selected;
+			if (presets.selectedIndex < 0) presets.value = "";
+		};
+		textarea.addEventListener("change", save);
+		history.addEventListener("change", () => {
+			const entry = comments.history(slot)[Number(history.value)];
+			if (history.value && entry) fill(entry);
+		});
+		presets.addEventListener("change", () => {
+			const preset = comments.presets(slot).find(({name}) => name === presets.value);
+			if (preset) fill(preset);
+		});
+		saveButton.addEventListener("click", () => {
+			const name = window.prompt(translate("sourceComments.presetName"), presets.value)?.trim();
+			if (!name) return;
+			comments.savePreset(slot, {name, text: textarea.value, commentOut: commentOut.input.checked});
+			refreshLists();
+			presets.value = name;
+		});
+		removeButton.addEventListener("click", () => {
+			if (!presets.value) return;
+			comments.removePreset(slot, presets.value);
+			presets.value = "";
+			refreshLists();
+		});
+		return {
+			element: h(
+				"div",
+				{className: "cp-comment-slot"},
+				h("b", {textContent: translate(SLOT_LABELS[slot])}),
+				textarea,
+				h("div", {className: "cp-comment-row"}, taskOnly.element, commentOut.element),
+				h("div", {className: "cp-comment-row"}, history, presets, saveButton, removeButton),
+			),
+			reload() {
+				const stored = comments.content(slot, task());
+				textarea.value = stored.text;
+				commentOut.input.checked = stored.commentOut;
+				taskOnly.input.checked = stored.taskOnly;
+				refreshLists();
+			},
+		};
+	}
+
+	function createCommentPanel(options) {
+		const {state, translate, onApply} = options;
+		const slots = [createSlot("header", options), createSlot("footer", options)];
+		const warning = h("span", {
+			className: "text-danger",
+			textContent: translate("sourceComments.unsupported"),
+			hidden: true,
+		});
+		const applyButton = h("button", {
+			type: "button",
+			className: "btn btn-default btn-sm",
+			textContent: translate("sourceComments.apply"),
+			onclick: onApply,
+		});
+		const element = h(
+			"details",
+			{className: "cp-source-comments", open: state.get(OPEN_KEY) === true},
+			h("summary", {textContent: translate("sourceComments.panel")}),
+			...slots.map((slot) => slot.element),
+			h("p", {className: "help-block", textContent: translate("sourceComments.variables")}),
+			h("div", {className: "cp-comment-row"}, applyButton, warning),
+		);
+		element.addEventListener("toggle", () => state.set(OPEN_KEY, element.open));
+		const reload = () => {
+			for (const slot of slots) slot.reload();
+		};
+		reload();
+		return {
+			element,
+			reload,
+			setUnsupported(unsupported) {
+				warning.hidden = !unsupported;
+			},
+		};
+	}
+
+	// CpToolkit/src/features/source-comments/source-comments.css
+	var source_comments_default = `.cp-source-comments {
+	margin-top: 8px;
+}
+
+.cp-source-comments summary {
+	cursor: pointer;
+	user-select: none;
+}
+
+.cp-comment-slot {
+	margin-top: 10px;
+}
+
+.cp-comment-slot textarea {
+	font-family: Menlo, Monaco, Consolas, monospace;
+	font-size: 12px;
+}
+
+.cp-comment-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin-top: 4px;
+}
+
+.cp-comment-row label {
+	margin: 0;
+	font-weight: normal;
+}
+
+.cp-comment-row select {
+	width: auto;
+	max-width: 220px;
+}
+
+.cp-source-comments .help-block {
+	margin: 8px 0 0;
+}
+`;
+
+	// CpToolkit/src/features/source-comments/index.ts
+	var PASTE_ORDER2 = 20;
+	var SLOTS = ["header", "footer"];
+	var sourceComments = defineFeature({
+		id: "source-comments",
+		title: "sourceComments.title",
+		description: "sourceComments.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:task", "atcoder:submit"],
+		phase: "ready",
+		options: {
+			style: option.select("line", "sourceComments.style", [
+				{value: "line", label: "sourceComments.styleLine"},
+				{value: "block", label: "sourceComments.styleBlock"},
+			]),
+		},
+		async start({options, judge, judgeSite, page, paste, state, translate}) {
+			const target = judge?.submission;
+			const site = await judgeSite();
+			const editorButtons = document.querySelector(".editor-buttons");
+			if (!target || !site || !editorButtons?.parentElement) return;
+			const comments = new SourceComments(state);
+			const style = options.style === "block" ? "block" : "line";
+			const inserted = new Map();
+			const syntaxOf = () => {
+				const family = site.language()?.family;
+				return family ? commentSyntaxOf(languageCatalog, family) : null;
+			};
+			const variables = () => {
+				const url = site.taskUri();
+				return {url, task: url.split("/").at(-1) ?? "", contest: contestIdOf(location.pathname) ?? ""};
+			};
+			const render = (slot) => {
+				const {text, commentOut} = comments.content(slot, site.taskUri());
+				const filled = fillVariables(text.trimEnd(), variables());
+				if (!filled) return "";
+				if (!commentOut)
+					return `${filled}
+`;
+				const syntax = syntaxOf();
+				const comment = syntax && toComment(filled, syntax, style);
+				return comment === null
+					? null
+					: `${comment}
+`;
+			};
+			const insertAll = (code) => {
+				const syntax = syntaxOf() ?? {};
+				let result = code;
+				let writable = true;
+				for (const slot of SLOTS) {
+					const block = render(slot);
+					if (block === null) writable = false;
+					if (!block) continue;
+					if (!result.includes(block)) {
+						result =
+							slot === "header"
+								? insertHeader(result, block, syntax)
+								: insertFooter(result, block, syntax);
+					}
+					inserted.set(slot, block);
+				}
+				panel.setUnsupported(!writable);
+				return result;
+			};
+			const refresh = () => {
+				const original = site.sourceCode();
+				let code = original;
+				let writable = true;
+				for (const [slot, current] of inserted) {
+					const next2 = render(slot);
+					if (next2 === null) {
+						writable = false;
+						continue;
+					}
+					const replaced = replaceBlock(code, current, next2, slot === "footer");
+					if (replaced === null || !next2) inserted.delete(slot);
+					else inserted.set(slot, next2);
+					code = replaced ?? code;
+				}
+				panel.setUnsupported(!writable);
+				if (code !== original) site.setSourceCode(code);
+			};
+			const panel = createCommentPanel({
+				comments,
+				state,
+				translate,
+				task: () => site.taskUri(),
+				onChange: refresh,
+				onApply() {
+					refresh();
+					const code = site.sourceCode();
+					const next2 = insertAll(code);
+					if (next2 !== code) site.setSourceCode(next2);
+				},
+			});
+			injectStyle(source_comments_default);
+			editorButtons.parentElement.append(panel.element);
+			site.onLanguageChange(refresh);
+			const taskSelect = document.querySelector("#select-task");
+			if (taskSelect) {
+				page.onChange(taskSelect, () => {
+					panel.reload();
+					refresh();
+				});
+			}
+			paste.add(
+				target,
+				{delayMs: EDITOR_SETUP_DELAY_MS},
+				{
+					order: PASTE_ORDER2,
+					transform(code, {pasted, original}) {
+						if (!isWholeCode(original, pasted)) return code;
+						inserted.clear();
+						return insertAll(code);
+					},
+				},
+			);
 		},
 	});
 
@@ -9393,6 +10124,7 @@ ${wide_layout_default}`);
 		efficientLayout,
 		submissionQuery,
 		submissionShortcuts,
+		sourceComments,
 		resultNotifier,
 		clarNotifier,
 		averageResult,

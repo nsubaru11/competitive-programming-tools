@@ -45,6 +45,8 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 | AC 提出への近道  | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                   | ktnyori   | MIT        |
 |                  | 参照 | [AtCoder Add Submissions Shortcuts](https://greasyfork.org/scripts/463453)                    | xero_cats | MIT        |
 |                  | 参照 | [AtCoder quickly check fastest codes](https://greasyfork.org/scripts/499102)                  | zica87    | GPL-3.0-only |
+| ソースコードのコメント | 参照 | [AtCoder Template](https://greasyfork.org/scripts/438105)(言語ごとの保存)              | magurofly | CC0-1.0    |
+|                  | 参照 | [AtCoder Code Template](https://greasyfork.org/scripts/584183)(名前付きの保存、挿入内容の記憶) | kirameku | MIT      |
 | 提出結果の通知   | 模倣 | [AtCoderResultNotifier](https://greasyfork.org/scripts/371225)                                | satanic0258 | MIT      |
 |                  | 参照 | [comfortable-atcoder](https://github.com/urneighbor1/comfortable-atcoder)(判定の監視)        | urneighbor1 | 記載なし |
 | 実行結果の平均   | 模倣 | [AtCoderAverageResult](https://greasyfork.org/scripts/429155)                                 | merom686  | 記載なし   |
@@ -105,12 +107,12 @@ Paiza Language Selector に類似する公開スクリプトは見つかりま�
 
 ## 統合しなかったスクリプト
 
-外部のスクリプトのまま使うか、導入しないと決めたものです。
+外部のスクリプトのまま使うか、導入しないと決めたものです。単独で入れるスクリプトは [RECOMMENDED.md](./RECOMMENDED.md) にまとめています。
 
 | スクリプト                                                             | 作者    | ライセンス | 扱い                         |
 |------------------------------------------------------------------------|---------|------------|------------------------------|
 | [atcoder-difficulty-display](https://greasyfork.org/scripts/397185)    | hotarunw | MIT       | 外部のスクリプトのまま使う   |
-| [ac-predictor](https://greasyfork.org/scripts/369954)                  | keymoon | MIT        | 導入しない                   |
-| [AtCoderStandingsAnalysis](https://greasyfork.org/scripts/398439)      | RTnF    | CC0-1.0    | 導入しない                   |
+| [ac-predictor](https://greasyfork.org/scripts/369954)                  | keymoon | MIT        | 外部のスクリプトのまま使う   |
+| [AtCoderStandingsAnalysis](https://greasyfork.org/scripts/398439)      | RTnF    | CC0-1.0    | 外部のスクリプトのまま使う   |
 | AtCoder History Exporter                                               | 記載なし | 記載なし  | 導入しない                   |
 | AtCoder Problems Advanced Summary Exporter                             | 記載なし | 記載なし  | 導入しない                   |

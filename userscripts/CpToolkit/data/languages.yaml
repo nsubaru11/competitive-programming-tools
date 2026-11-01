@@ -1,39 +1,75 @@
+# 言語ごとのコメントの書き方。line は単一行コメント、open と close は複数行コメント
+# preamble と trailer は、コードの先頭と末尾に残す部分の正規表現
+comments:
+  c: {line: '//', open: '/*', close: '*/'}
+  slash: {line: '//'}
+  hash: {line: '#'}
+  dash: {line: '--'}
+  semicolon: {line: ';'}
+  percent: {line: '%'}
+  ruby: {line: '#', open: '=begin', close: '=end'}
+  haskell: {line: '--', open: '{-', close: '-}'}
+  lua: {line: '--', open: '--[[', close: ']]'}
+  nim: {line: '#', open: '#[', close: ']#'}
+  julia: {line: '#', open: '#=', close: '=#'}
+  ocaml: {open: '(*', close: '*)'}
+  fsharp: {line: '//', open: '(*', close: '*)'}
+  lisp: {line: ';', open: '#|', close: '|#'}
+  pascal: {line: '//', open: '{', close: '}'}
+  prolog: {line: '%', open: '/*', close: '*/'}
+  fortran: {line: '!'}
+  basic: {line: "'"}
+  php: {line: '//', open: '/*', close: '*/', preamble: '^<\?(php)?[^\n]*\n', trailer: '\?>\s*$'}
+
 # 言語の種類と、サイトの表記から種類を判定する正規表現。上から順に判定する
 # 版や ID はサイトの選択肢から取得するので、ここには書かない
 families:
-  - {id: cpp, name: C++, match: ['^C\+\+', 'G\+\+', 'Clang\+\+', 'Visual C\+\+', '^cLay']}
-  - {id: csharp, name: 'C#', match: ['^C#']}
-  - {id: c, name: C, match: ['^C\d*(\s|\(|$)', 'GCC C\d']}
-  - {id: python2, name: Python2, match: ['^Python ?2', '^PyPy ?2']}
-  - {id: python3, name: Python3, match: ['^Python', '^PyPy', '^CPython']}
-  - {id: java, name: Java, match: ['^Java(?!Script)']}
-  - {id: javascript, name: JavaScript, match: ['^JavaScript', '^Node\.js']}
-  - {id: typescript, name: TypeScript, match: ['^TypeScript']}
-  - {id: kotlin, name: Kotlin, match: ['^Kotlin']}
-  - {id: rust, name: Rust, match: ['^Rust']}
-  - {id: go, name: Go, match: ['^Go\b']}
-  - {id: ruby, name: Ruby, match: ['^Ruby']}
-  - {id: haskell, name: Haskell, match: ['^Haskell']}
-  - {id: d, name: D, match: ['^D(\s|\(|$)']}
-  - {id: scala, name: Scala, match: ['^Scala']}
-  - {id: swift, name: Swift, match: ['^Swift']}
-  - {id: php, name: PHP, match: ['^PHP']}
-  - {id: perl, name: Perl, match: ['^Perl']}
-  - {id: bash, name: Bash, match: ['^Bash']}
-  - {id: lua, name: Lua, match: ['^Lua']}
-  - {id: nim, name: Nim, match: ['^Nim']}
-  - {id: ocaml, name: OCaml, match: ['^OCaml']}
-  - {id: crystal, name: Crystal, match: ['^Crystal']}
-  - {id: julia, name: Julia, match: ['^Julia']}
-  - {id: elixir, name: Elixir, match: ['^Elixir']}
-  - {id: erlang, name: Erlang, match: ['^Erlang']}
-  - {id: clojure, name: Clojure, match: ['^Clojure']}
-  - {id: fsharp, name: 'F#', match: ['^F#']}
-  - {id: scheme, name: Scheme, match: ['^Scheme']}
-  - {id: lisp, name: Lisp, match: ['Lisp']}
-  - {id: pascal, name: Pascal, match: ['Pascal', '^Delphi']}
-  - {id: fortran, name: Fortran, match: ['^Fortran', '^FORTRAN']}
+  - {id: cpp, name: C++, match: ['^C\+\+', 'G\+\+', 'Clang\+\+', 'Visual C\+\+', '^cLay'], comment: c}
+  - {id: csharp, name: 'C#', match: ['^C#'], comment: c}
+  - {id: c, name: C, match: ['^C\d*(\s|\(|$)', 'GCC C\d'], comment: c}
+  - {id: python2, name: Python2, match: ['^Python ?2', '^PyPy ?2'], comment: hash}
+  - {id: python3, name: Python3, match: ['^Python', '^PyPy', '^CPython'], comment: hash}
+  - {id: java, name: Java, match: ['^Java(?!Script)'], comment: c}
+  - {id: javascript, name: JavaScript, match: ['^JavaScript', '^Node\.js'], comment: c}
+  - {id: typescript, name: TypeScript, match: ['^TypeScript'], comment: c}
+  - {id: kotlin, name: Kotlin, match: ['^Kotlin'], comment: c}
+  - {id: rust, name: Rust, match: ['^Rust'], comment: c}
+  - {id: go, name: Go, match: ['^Go\b'], comment: c}
+  - {id: ruby, name: Ruby, match: ['^Ruby'], comment: ruby}
+  - {id: haskell, name: Haskell, match: ['^Haskell'], comment: haskell}
+  - {id: d, name: D, match: ['^D(\s|\(|$)'], comment: c}
+  - {id: scala, name: Scala, match: ['^Scala'], comment: c}
+  - {id: swift, name: Swift, match: ['^Swift'], comment: c}
+  - {id: php, name: PHP, match: ['^PHP'], comment: php}
+  - {id: perl, name: Perl, match: ['^Perl'], comment: hash}
+  - {id: bash, name: Bash, match: ['^Bash'], comment: hash}
+  - {id: lua, name: Lua, match: ['^Lua'], comment: lua}
+  - {id: nim, name: Nim, match: ['^Nim'], comment: nim}
+  - {id: ocaml, name: OCaml, match: ['^OCaml'], comment: ocaml}
+  - {id: crystal, name: Crystal, match: ['^Crystal'], comment: hash}
+  - {id: julia, name: Julia, match: ['^Julia'], comment: julia}
+  - {id: elixir, name: Elixir, match: ['^Elixir'], comment: hash}
+  - {id: erlang, name: Erlang, match: ['^Erlang'], comment: percent}
+  - {id: clojure, name: Clojure, match: ['^Clojure'], comment: semicolon}
+  - {id: fsharp, name: 'F#', match: ['^F#'], comment: fsharp}
+  - {id: scheme, name: Scheme, match: ['^Scheme'], comment: lisp}
+  - {id: lisp, name: Lisp, match: ['Lisp'], comment: lisp}
+  - {id: pascal, name: Pascal, match: ['Pascal', '^Delphi'], comment: pascal}
+  - {id: fortran, name: Fortran, match: ['^Fortran', '^FORTRAN'], comment: fortran}
   - {id: cobol, name: COBOL, match: ['^COBOL']}
-  - {id: objective-c, name: Objective-C, match: ['^Objective-C']}
-  - {id: basic, name: Visual Basic, match: ['^Visual Basic', '^Basic']}
+  - {id: objective-c, name: Objective-C, match: ['^Objective-C'], comment: c}
+  - {id: basic, name: Visual Basic, match: ['^Visual Basic', '^Basic'], comment: basic}
+  - {id: dart, name: Dart, match: ['^Dart'], comment: c}
+  - {id: zig, name: Zig, match: ['^Zig'], comment: slash}
+  - {id: r, name: R, match: ['^R(\s|\(|$)'], comment: hash}
+  - {id: awk, name: Awk, match: ['^AWK', '^Awk', 'Awk'], comment: hash}
+  - {id: sed, name: Sed, match: ['^Sed', '^sed'], comment: hash}
+  - {id: fish, name: Fish, match: ['^Fish', '^fish'], comment: hash}
+  - {id: powershell, name: PowerShell, match: ['^PowerShell'], comment: hash}
+  - {id: raku, name: Raku, match: ['^Raku'], comment: hash}
+  - {id: sagemath, name: SageMath, match: ['^Sage'], comment: hash}
+  - {id: octave, name: Octave, match: ['^Octave'], comment: percent}
+  - {id: prolog, name: Prolog, match: ['Prolog'], comment: prolog}
+  - {id: ada, name: Ada, match: ['^Ada'], comment: dash}
+  - {id: lean, name: Lean, match: ['^Lean'], comment: dash}
   - {id: text, name: Text, match: ['^Text']}

@@ -32,8 +32,8 @@ class AceCodeEditor implements CodeEditor {
 		this.editor.setReadOnly(false);
 	}
 
-	onPaste(listener: () => void): void {
-		this.editor.on("paste", () => setTimeout(listener));
+	onPaste(listener: (pasted: string) => void): void {
+		this.editor.on("paste", ({text}) => setTimeout(() => listener(text)));
 	}
 
 	onChange(listener: () => void): void {
@@ -84,13 +84,14 @@ class MonacoCodeEditor implements CodeEditor {
 	setWritable(): void {
 	}
 
-	onPaste(listener: () => void): void {
+	onPaste(listener: (pasted: string) => void): void {
 		try {
-			this.editor.onDidPaste(listener);
+			this.editor.onDidPaste(({range}) => listener(this.model.getValueInRange(range)));
 		} catch {
 			// onDidPaste がない版では、まとまった入力を貼り付けとして扱う
 			this.model.onDidChangeContent(({isFlush, changes}) => {
-				if (!isFlush && changes.length === 1 && (changes[0]?.text.length ?? 0) >= MIN_PASTED_LENGTH) listener();
+				const text = changes[0]?.text ?? "";
+				if (!isFlush && changes.length === 1 && text.length >= MIN_PASTED_LENGTH) listener(text);
 			});
 		}
 	}

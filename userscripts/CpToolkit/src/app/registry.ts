@@ -13,6 +13,7 @@ import {localRunner} from "@features/local-runner/index";
 import {paizaLanguage} from "@features/paiza-language/index";
 import {ratingGraph} from "@features/rating-graph/index";
 import {resultNotifier} from "@features/result-notifier/index";
+import {sourceComments} from "@features/source-comments/index";
 import {statementCopy} from "@features/statement-copy/index";
 import {statementHighlight} from "@features/statement-highlight/index";
 import {submissionQuery} from "@features/submission-query/index";
@@ -36,6 +37,7 @@ export const features: readonly Feature[] = [
 	efficientLayout,
 	submissionQuery,
 	submissionShortcuts,
+	sourceComments,
 	resultNotifier,
 	clarNotifier,
 	averageResult,

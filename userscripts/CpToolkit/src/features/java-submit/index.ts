@@ -2,14 +2,14 @@ import type {SubmissionTarget} from "@domain/page/route";
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
+import {type CodeEditor, EDITOR_SETUP_DELAY_MS} from "@application/ports/code-editor";
 import {transformJava} from "@application/source/transform-java";
 import {registerShortcut} from "@ui/shortcuts";
 
 const FOLD_SHORTCUT = "Ctrl+Shift+M";
 const MIN_SOURCE_LENGTH = 30;
 const FOLD_DELAY_MS = 100;
-/** ace.edit を先に呼ぶとサイトの初期化の設定が無視されるので、サイトの処理を待つ。 */
-const EDITOR_SETUP_DELAY_MS = 500;
+const PASTE_ORDER = 10;
 
 function findSubmitButton({submitButtons, labeledSubmit}: SubmissionTarget): HTMLElement | null {
 	for (const selector of submitButtons) {
@@ -44,7 +44,7 @@ export const javaSubmit = defineFeature({
 		headerName: option.text("", "javaSubmit.headerName"),
 		foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 	},
-	start({options, judge, editors, localRunner}) {
+	start({options, judge, editors, localRunner, paste}) {
 		const target = judge?.submission;
 		if (!target) return;
 
@@ -56,23 +56,24 @@ export const javaSubmit = defineFeature({
 
 		// エディタのないページも多いので、見つかるのを待たずに起動を終える
 		const header = options.addHeader ? options.headerName || true : false;
-		void editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((editor) => {
+		const lookup = {delayMs: EDITOR_SETUP_DELAY_MS};
+		const fold = (editor: CodeEditor): void => editor.foldLines(findFoldStartLines(editor.getValue()));
+		void editors.locate(target, lookup).then((editor) => {
 			if (!editor) return;
-			const fold = (): void => editor.foldLines(findFoldStartLines(editor.getValue()));
 			registerShortcut(FOLD_SHORTCUT, () => {
-				fold();
+				fold(editor);
 				return true;
 			});
-			editor.onPaste(() => {
-				const code = editor.getValue();
-				if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return;
-				void transformJava(code, localRunner, {...options, header}).then((transformed) => {
-					// 変換中に編集された場合は、その内容を上書きしない
-					if (transformed === code || editor.getValue() !== code) return;
-					editor.setValue(transformed);
-					if (options.foldOnPaste) setTimeout(fold, FOLD_DELAY_MS);
-				});
-			});
+		});
+		paste.add(target, lookup, {
+			order: PASTE_ORDER,
+			transform(code, {editor}) {
+				if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
+				return transformJava(code, localRunner, {...options, header});
+			},
+			applied(editor) {
+				if (options.foldOnPaste) setTimeout(() => fold(editor), FOLD_DELAY_MS);
+			},
 		});
 	},
 });

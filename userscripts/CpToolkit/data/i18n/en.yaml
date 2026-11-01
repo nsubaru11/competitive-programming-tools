@@ -87,6 +87,25 @@ submissionTimer.cancel: Cancel
 submissionTimer.canceled: The timer was canceled.
 submissionTimer.scheduled: "Your code will be submitted around {time}."
 
+sourceComments.title: Source comments
+sourceComments.description: Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.
+sourceComments.style: Comment style
+sourceComments.styleLine: Single-line comments
+sourceComments.styleBlock: Multi-line comment
+sourceComments.panel: Header and footer
+sourceComments.header: Header (top of the code)
+sourceComments.footer: Footer (bottom of the code)
+sourceComments.placeholder: Reference URLs and so on
+sourceComments.taskOnly: This task only
+sourceComments.commentOut: Comment out when inserting
+sourceComments.restoreHistory: Restore from history
+sourceComments.restorePreset: Load a saved entry
+sourceComments.savePreset: Save with a name
+sourceComments.removePreset: Delete
+sourceComments.presetName: Name to save as
+sourceComments.apply: Apply to the code
+sourceComments.variables: "{url} becomes the task URL, {task} the task ID and {contest} the contest ID."
+sourceComments.unsupported: Nothing was inserted because the comment syntax of this language is unknown.
 taskStatus.title: Task status colors
 taskStatus.description: Colors the task list and the dropdown by your results. A task with a score counts as accepted.
 taskStatus.acceptedColor: Color of accepted tasks
@@ -157,8 +176,8 @@ javaSubmit.addHeader: Add the submission header
 javaSubmit.headerName: Header name (empty for the default)
 javaSubmit.foldOnPaste: Fold classes and comments after pasting
 
-easyTest.title: Easy Test
-easyTest.description: Runs samples from the task page and shows the results.
+easyTest.title: Easy Test (for Java)
+easyTest.description: Runs samples from the task page for Java solutions. For other languages, install AtCoder Easy Test v2 on its own. Enabling both duplicates the buttons.
 easyTest.precompile: Precompile edited code with Local Runner
 easyTest.keyboardShortcuts: "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)"
 easyTest.savedCodeLimit: Number of saved codes

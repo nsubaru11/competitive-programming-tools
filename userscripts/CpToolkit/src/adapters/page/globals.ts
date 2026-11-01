@@ -16,14 +16,16 @@ export type AceSession = {
 export type AceEditor = {
 	getSession(): AceSession;
 	getValue(): string;
-	setValue(value: string): void;
+	/** cursor が -1 なら先頭へカーソルを移す。省略すると全体を選択する。 */
+	setValue(value: string, cursor?: number): void;
 	getReadOnly(): boolean;
 	setReadOnly(readOnly: boolean): void;
-	on(event: string, listener: () => void): void;
+	on(event: "paste", listener: (event: {text: string}) => void): void;
 };
 
 export type MonacoModel = {
 	getValue(): string;
+	getValueInRange(range: unknown): string;
 	setValue(value: string): void;
 	getLanguageId(): string;
 	onDidChangeContent(listener: (event: {isFlush: boolean; changes: ReadonlyArray<{text: string}>}) => void): void;
@@ -34,7 +36,7 @@ export type MonacoEditor = {
 	getPosition(): unknown;
 	setPosition(position: unknown): void;
 	getAction(id: string): {run(): Promise<void>} | null;
-	onDidPaste(listener: () => void): void;
+	onDidPaste(listener: (event: {range: unknown}) => void): void;
 };
 
 type JQueryObject = {

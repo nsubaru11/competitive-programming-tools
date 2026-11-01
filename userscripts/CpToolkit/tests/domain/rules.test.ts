@@ -7,6 +7,14 @@ import {parseRecentRange, ratedPerformances, recentCount} from "@domain/rating/h
 import {backgroundOf, crownImageOf, tierOf, tierProgress} from "@domain/rating/scale";
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {isPureNumber, splitLimitValue, splitNumbers} from "@domain/statement/tokens";
+import {
+	fillVariables,
+	insertFooter,
+	insertHeader,
+	isWholeCode,
+	replaceBlock,
+	toComment,
+} from "@domain/source/comment";
 import {isJudging, summarizeJudgeCases} from "@domain/submission/status";
 import {buildCalendarUrl} from "@domain/contest/calendar";
 import {parseContestTime, pickLatestContest} from "@domain/contest/latest";
@@ -208,6 +216,63 @@ describe("最新のコンテスト", () => {
 	test("一覧の時刻を読む", () => {
 		expect(parseContestTime(" 2026-10-31 21:00:00+0900 ")).toBe(Date.UTC(2026, 9, 31, 12));
 		expect(parseContestTime("")).toBeNaN();
+	});
+});
+
+describe("ソースコードのコメント", () => {
+	const c = {line: "//", open: "/*", close: "*/"};
+	const python = {line: "#"};
+	const ocaml = {open: "(*", close: "*)"};
+	const php = {line: "//", preamble: "^<\\?(php)?[^\\n]*\\n", trailer: "\\?>\\s*$"};
+
+	test("単一行コメントを並べる。空行は記号だけにする", () => {
+		expect(toComment("a\n\nb", c, "line")).toBe("// a\n//\n// b");
+	});
+
+	test("複数行コメントで囲む", () => {
+		expect(toComment("a\nb", c, "block")).toBe("/*\na\nb\n*/");
+	});
+
+	test("複数行コメントがない言語では単一行コメントで書く", () => {
+		expect(toComment("a", python, "block")).toBe("# a");
+	});
+
+	test("閉じる記号を含む文字列は単一行コメントで書く", () => {
+		expect(toComment("a */ b", c, "block")).toBe("// a */ b");
+	});
+
+	test("単一行コメントがない言語では行ごとに囲み、書けなければ null を返す", () => {
+		expect(toComment("a\nb", ocaml, "line")).toBe("(* a *)\n(* b *)");
+		expect(toComment("a *) b", ocaml, "line")).toBeNull();
+	});
+
+	test("変数を置き換え、知らない名前は残す", () => {
+		expect(fillVariables("{task} {x}", {task: "abc1_a"})).toBe("abc1_a {x}");
+	});
+
+	test("貼り付けでコード全体が置き換わったか判定する", () => {
+		expect(isWholeCode("a\nb\n", "a\r\nb\r\n")).toBe(true);
+		expect(isWholeCode("a\nb\n", "b")).toBe(false);
+	});
+
+	test("シェバンの後ろにヘッダーを置く", () => {
+		expect(insertHeader("#!/bin/sh\necho\n", "# h\n", python)).toBe("#!/bin/sh\n# h\necho\n");
+	});
+
+	test("PHP の開始タグの後ろにヘッダーを、終了タグの前にフッターを置く", () => {
+		expect(insertHeader("<?php\necho 1;\n", "// h\n", php)).toBe("<?php\n// h\necho 1;\n");
+		expect(insertFooter("<?php\necho 1;\n?>\n", "// f\n", php)).toBe("<?php\necho 1;\n// f\n?>\n");
+	});
+
+	test("末尾の改行の有無によらずフッターを行の頭に置く", () => {
+		expect(insertFooter("code", "// f\n", c)).toBe("code\n// f\n");
+		expect(insertFooter("code\n\n", "// f\n", c)).toBe("code\n// f\n");
+	});
+
+	test("挿入した部分を置き換える。見つからなければ null を返す", () => {
+		expect(replaceBlock("// a\ncode\n", "// a\n", "# a\n", false)).toBe("# a\ncode\n");
+		expect(replaceBlock("x\ny\nx\n", "x\n", "z\n", true)).toBe("x\ny\nz\n");
+		expect(replaceBlock("code\n", "// a\n", "", false)).toBeNull();
 	});
 });
 

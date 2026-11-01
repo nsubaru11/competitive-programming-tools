@@ -8,6 +8,7 @@ import {RunnerCatalogService, type RunnerProvider} from "@application/execution/
 import type {FeatureServices} from "@application/feature/definition";
 import type {JudgeSite} from "@application/ports/judge-site";
 import type {SettingsService} from "@application/settings/settings-service";
+import {PastePipeline} from "@application/source/paste-pipeline";
 import {CreateJsRatingGraph} from "@adapters/atcoder/rating-graph";
 import {createJudgeSite} from "@adapters/judges/index";
 import {PageCodeEditorLocator} from "@adapters/page/code-editors";
@@ -40,6 +41,7 @@ export function createServices(
 	const site = new SameOriginHttpClient();
 	const scripts = new ElementScriptLoader();
 	const bridge = new UnsafeWindowPageBridge();
+	const editors = new PageCodeEditorLocator();
 
 	const localRunnerEndpoint = (): string | null => {
 		const {id, defaultEnabled, options} = localRunnerFeature;
@@ -82,7 +84,8 @@ export function createServices(
 		site,
 		scripts,
 		page: bridge,
-		editors: new PageCodeEditorLocator(),
+		editors,
+		paste: new PastePipeline(editors),
 		localRunner,
 		runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
 		judgeSite: getJudgeSite,

@@ -268,7 +268,7 @@ export const easyTest = defineFeature({
 	title: "easyTest.title",
 	description: "easyTest.description",
 	category: "category.execution",
-	defaultEnabled: true,
+	defaultEnabled: false,
 	routes: ["atcoder:task", "atcoder:submit", "yukicoder:problem", "codeforces:problem"],
 	phase: "ready",
 	options: featureOptions,

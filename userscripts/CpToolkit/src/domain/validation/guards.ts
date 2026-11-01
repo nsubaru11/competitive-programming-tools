@@ -1,6 +1,7 @@
 /** 保存値など、形が保証されない値を確かめる関数。 */
 export type Guard<T> = (value: unknown) => value is T;
 
+export const isBoolean: Guard<boolean> = (value): value is boolean => typeof value === "boolean";
 export const isString: Guard<string> = (value): value is string => typeof value === "string";
 export const isNumber: Guard<number> = (value): value is number => typeof value === "number";
 

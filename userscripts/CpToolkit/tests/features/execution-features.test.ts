@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, mock, test} from "bun:test";
 import type {JudgeLanguage, RunResult} from "@domain/execution/result";
 import {LocalRunnerClient} from "@application/execution/local-runner";
+import {PastePipeline} from "@application/source/paste-pipeline";
 import {type CodeRunner, RunnerCatalogService} from "@application/execution/runner-catalog";
 import type {CodeEditor} from "@application/ports/code-editor";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
@@ -274,7 +275,7 @@ describe("javaSubmit", () => {
 
 	function createEditor(initial: string) {
 		let value = initial;
-		let paste = (): void => undefined;
+		let paste = (_pasted: string): void => undefined;
 		const editor: CodeEditor = {
 			getValue: () => value,
 			setValue(next) {
@@ -289,9 +290,13 @@ describe("javaSubmit", () => {
 			onChange: () => undefined,
 			foldLines: mock(() => undefined),
 		};
-		return {editor, paste: () => paste()};
+		return {editor, paste: () => paste(value)};
 	}
 
+	const editorServices = (editor: CodeEditor | null) => {
+		const editors = {locate: async () => editor};
+		return {editors, paste: new PastePipeline(editors)};
+	};
 	const source = "package a;\npublic class Solution {\n\tpublic static void main(String[] args) {}\n}\n";
 	const offline = new LocalRunnerClient(new FakeHttpClient(() => ({status: 500, text: ""})), () => null);
 
@@ -300,7 +305,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
 			judge,
 			localRunner: offline,
-			editors: {locate: async () => editor},
+			...editorServices(editor),
 		}));
 		await wait();
 		paste();
@@ -318,7 +323,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
 			judge,
 			localRunner: new LocalRunnerClient(http, () => "http://localhost:8080"),
-			editors: {locate: async () => editor},
+			...editorServices(editor),
 		}));
 		await wait();
 		paste();
@@ -331,7 +336,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run(undefined, createFakeServices({
 			judge,
 			localRunner: offline,
-			editors: {locate: async () => editor},
+			...editorServices(editor),
 		}));
 		await wait();
 		paste();
@@ -346,7 +351,7 @@ describe("javaSubmit", () => {
 		await javaSubmit.run(undefined, createFakeServices({
 			judge,
 			localRunner: offline,
-			editors: {locate: async () => null},
+			...editorServices(null),
 		}));
 
 		pressKey("Enter", {ctrlKey: true});
