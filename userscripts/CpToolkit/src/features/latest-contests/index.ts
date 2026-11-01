@@ -1,11 +1,24 @@
 import {contestCatalog} from "@catalog/tables";
-import type {LatestContest} from "@domain/contest/latest";
+import type {ContestMark, LatestContest} from "@domain/contest/latest";
 import {loadLatestContests} from "@application/contest/latest-contests";
 import {defineFeature} from "@application/feature/definition";
 import {h, injectStyle} from "@ui/element";
 import css from "./latest-contests.css" with {type: "text"};
 
 const CONTEST_LIST_PATH = "/contests/";
+
+/** リンクの直前に並ぶ印を読む。ADT は1つのセルに複数のコンテストがあり、`br` で区切られる。 */
+function marksBefore(link: Element): readonly ContestMark[] {
+	const marks: ContestMark[] = [];
+	for (let mark = link.previousElementSibling; mark?.tagName === "SPAN"; mark = mark.previousElementSibling) {
+		marks.unshift({
+			text: mark.textContent ?? "",
+			className: mark.className,
+			title: mark.getAttribute("title") ?? "",
+		});
+	}
+	return marks;
+}
 
 /** 「次のコンテスト」の表だけが、行の先頭に見出しのセルを持つ。 */
 function parseNextContests(html: string): readonly LatestContest[] {
@@ -16,13 +29,21 @@ function parseNextContests(html: string): readonly LatestContest[] {
 		const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
 		return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
 			const id = link.getAttribute("href")?.split("/")[2];
-			return id ? [{category, id, name: link.textContent?.trim() ?? id}] : [];
+			return id ? [{category, id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
 		});
 	});
 }
 
-function createContestItem({category, id, name}: LatestContest): HTMLElement {
-	return h("li", {}, h("a", {href: `${CONTEST_LIST_PATH}${id}`}, h("b", {textContent: category}), ` ${name}`));
+function createContestItem({category, id, name, marks}: LatestContest): HTMLElement {
+	return h("li", {}, h(
+		"a",
+		{href: `${CONTEST_LIST_PATH}${id}`},
+		h("b", {textContent: category}),
+		" ",
+		...marks.map(({text, className, title}) => h("span", {textContent: text, className, title})),
+		" ",
+		h("span", {className: "cp-latest-name", textContent: name}),
+	));
 }
 
 function createMessage(text: string): HTMLElement {

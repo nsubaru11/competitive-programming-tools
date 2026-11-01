@@ -1,4 +1,4 @@
-import type {LatestContest} from "@domain/contest/latest";
+import type {ContestMark, LatestContest} from "@domain/contest/latest";
 import {type Guard, isArrayOf, isNumber, isObjectOf, isString} from "@domain/validation/guards";
 import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 import type {HttpClient} from "@application/ports/services";
@@ -14,7 +14,12 @@ type Cache = {
 
 const isCache: Guard<Cache> = isObjectOf<Cache>({
 	fetchedAt: isNumber,
-	contests: isArrayOf(isObjectOf<LatestContest>({category: isString, id: isString, name: isString})),
+	contests: isArrayOf(isObjectOf<LatestContest>({
+		category: isString,
+		id: isString,
+		name: isString,
+		marks: isArrayOf(isObjectOf<ContestMark>({text: isString, className: isString, title: isString})),
+	})),
 });
 
 /** ホームの「次のコンテスト」の表を読む。 */

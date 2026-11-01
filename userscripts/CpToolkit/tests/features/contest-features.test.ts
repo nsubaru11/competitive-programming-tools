@@ -392,9 +392,10 @@ describe("variableHover", () => {
 describe("latestContests", () => {
 	const homePage = `<table><thead><tr class="active"><th>カテゴリ</th></tr></thead><tbody>
 		<tr><th>ABC <span class="glyphicon"></span></th><td><time>11/7</time></td>
-			<td><span>Ⓐ</span> <a href="/contests/abc2">AtCoder Beginner Contest 2</a><br></td></tr>
+			<td><span title="Algorithm">Ⓐ</span><span class="user-blue">◉</span> <a href="/contests/abc2">AtCoder Beginner Contest 2</a><br></td></tr>
 		<tr><th>ADT <span class="glyphicon"></span></th><td><time>11/2</time></td>
-			<td><a href="/contests/adt_easy_1">EASY</a><br><a href="/contests/adt_all_1">ALL</a><br></td></tr>
+			<td><span title="Algorithm">Ⓐ</span><span class="">◉</span> <a href="/contests/adt_easy_1">EASY</a><br>
+				<span title="Algorithm">Ⓐ</span><span class="">◉</span> <a href="/contests/adt_all_1">ALL</a><br></td></tr>
 	</tbody></table>
 	<table><tbody><tr><td><a href="/contests/abc1">AtCoder Beginner Contest 1</a></td></tr></tbody></table>`;
 	const openMenu = async () => {
@@ -417,7 +418,10 @@ describe("latestContests", () => {
 		await openMenu();
 
 		expect(site.requests.map(({url}) => url)).toEqual(["/home"]);
-		expect(menuItems()).toEqual(["ABC AtCoder Beginner Contest 2", "ADT EASY", "ADT ALL"]);
+		expect(menuItems()).toEqual(["ABC Ⓐ◉ AtCoder Beginner Contest 2", "ADT Ⓐ◉ EASY", "ADT Ⓐ◉ ALL"]);
+		const mark = document.querySelector(".cp-latest-menu .user-blue");
+		expect(mark?.textContent).toBe("◉");
+		expect(mark?.previousElementSibling?.getAttribute("title")).toBe("Algorithm");
 		const links = [...document.querySelectorAll(".cp-latest-menu a")];
 		expect(links.map((link) => link.getAttribute("href"))).toEqual([
 			"/contests/abc2",

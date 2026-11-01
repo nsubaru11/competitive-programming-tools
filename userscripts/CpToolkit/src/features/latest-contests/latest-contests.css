@@ -54,6 +54,18 @@
 	text-decoration: none;
 }
 
+.cp-latest-name {
+	color: #337ab7;
+}
+
+.cp-latest-menu a:hover .cp-latest-name {
+	color: #23527c;
+}
+
+.cp-latest-menu .label {
+	margin-right: 4px;
+}
+
 .cp-latest-message {
 	padding: 3px 20px !important;
 	color: #777;

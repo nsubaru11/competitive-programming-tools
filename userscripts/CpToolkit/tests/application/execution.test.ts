@@ -309,7 +309,12 @@ describe("loadContestTasks の記憶", () => {
 });
 
 describe("loadLatestContests", () => {
-	const contest = {category: "ABC", id: "abc2", name: "AtCoder Beginner Contest 2"};
+	const contest = {
+		category: "ABC",
+		id: "abc2",
+		name: "AtCoder Beginner Contest 2",
+		marks: [{text: "◉", className: "user-blue", title: ""}],
+	};
 	const parse = (html: string) => (html === "table" ? [contest] : []);
 	const home = () => new FakeHttpClient(() => ({status: 200, text: "table"}));
 
@@ -344,6 +349,12 @@ describe("loadLatestContests", () => {
 		const state = new MemoryStore();
 		state.set("latest-contests:cache", {fetchedAt: 0, contests: {ABC: "abc1"}});
 		expect(await loadLatestContests(60, {site: home(), state, parse, now: 0})).toEqual([contest]);
+
+		const {marks: _, ...withoutMarks} = contest;
+		state.set("latest-contests:cache", {fetchedAt: 0, contests: [withoutMarks]});
+		const site = home();
+		await loadLatestContests(60, {site, state, parse, now: 0});
+		expect(site.requests).toHaveLength(1);
 	});
 });
 

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.14
+// @version        1.0.15
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -8104,7 +8104,14 @@ ${efficient_layout_default}`);
 	var MINUTE_MS = 60 * 1000;
 	var isCache = isObjectOf({
 		fetchedAt: isNumber,
-		contests: isArrayOf(isObjectOf({category: isString, id: isString, name: isString})),
+		contests: isArrayOf(
+			isObjectOf({
+				category: isString,
+				id: isString,
+				name: isString,
+				marks: isArrayOf(isObjectOf({text: isString, className: isString, title: isString})),
+			}),
+		),
 	});
 
 	async function loadLatestContests(cacheMinutes, {site, state, parse, now}) {
@@ -8174,6 +8181,18 @@ ${efficient_layout_default}`);
 	text-decoration: none;
 }
 
+.cp-latest-name {
+	color: #337ab7;
+}
+
+.cp-latest-menu a:hover .cp-latest-name {
+	color: #23527c;
+}
+
+.cp-latest-menu .label {
+	margin-right: 4px;
+}
+
 .cp-latest-message {
 	padding: 3px 20px !important;
 	color: #777;
@@ -8185,6 +8204,18 @@ ${efficient_layout_default}`);
 	// CpToolkit/src/features/latest-contests/index.ts
 	var CONTEST_LIST_PATH = "/contests/";
 
+	function marksBefore(link) {
+		const marks = [];
+		for (let mark = link.previousElementSibling; mark?.tagName === "SPAN"; mark = mark.previousElementSibling) {
+			marks.unshift({
+				text: mark.textContent ?? "",
+				className: mark.className,
+				title: mark.getAttribute("title") ?? "",
+			});
+		}
+		return marks;
+	}
+
 	function parseNextContests(html) {
 		const page = new DOMParser().parseFromString(html, "text/html");
 		return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
@@ -8193,13 +8224,25 @@ ${efficient_layout_default}`);
 			const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
 			return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
 				const id = link.getAttribute("href")?.split("/")[2];
-				return id ? [{category, id, name: link.textContent?.trim() ?? id}] : [];
+				return id ? [{category, id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
 			});
 		});
 	}
 
-	function createContestItem({category, id, name}) {
-		return h("li", {}, h("a", {href: `${CONTEST_LIST_PATH}${id}`}, h("b", {textContent: category}), ` ${name}`));
+	function createContestItem({category, id, name, marks}) {
+		return h(
+			"li",
+			{},
+			h(
+				"a",
+				{href: `${CONTEST_LIST_PATH}${id}`},
+				h("b", {textContent: category}),
+				" ",
+				...marks.map(({text, className, title}) => h("span", {textContent: text, className, title})),
+				" ",
+				h("span", {className: "cp-latest-name", textContent: name}),
+			),
+		);
 	}
 
 	function createMessage(text) {
