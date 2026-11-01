@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.13
+// @version        1.0.14
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -8731,7 +8731,7 @@ ${efficient_layout_default}`);
 
 .comment-slots {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	grid-template-columns: minmax(0, 1fr);
 	gap: 20px;
 }
 
@@ -8750,7 +8750,7 @@ ${efficient_layout_default}`);
 
 .comment-slot textarea {
 	width: 100%;
-	min-height: 200px;
+	min-height: 160px;
 	padding: 8px;
 	border: 1px solid var(--cp-border);
 	border-radius: 6px;
@@ -8890,8 +8890,7 @@ ${efficient_layout_default}`);
 				h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 				textarea,
 				h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
-				h("div", {className: "comment-row"}, history),
-				h("div", {className: "comment-row"}, presets, saveButton, removeButton),
+				h("div", {className: "comment-row"}, history, presets, saveButton, removeButton),
 			),
 			hasText: () => textarea.value.trim() !== "",
 			reload() {
@@ -9863,6 +9862,14 @@ li.cp-task-accepted > a {
 tr.cp-task-rejected > td,
 li.cp-task-rejected > a {
 	background-color: var(--cp-task-rejected) !important;
+}
+
+li.cp-task-accepted > a:is(:hover, :focus) {
+	background-color: color-mix(in srgb, var(--cp-task-accepted) 80%, #000) !important;
+}
+
+li.cp-task-rejected > a:is(:hover, :focus) {
+	background-color: color-mix(in srgb, var(--cp-task-rejected) 80%, #000) !important;
 }
 `;
 

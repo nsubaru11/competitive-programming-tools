@@ -110,8 +110,7 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 			h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 			textarea,
 			h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
-			h("div", {className: "comment-row"}, history),
-			h("div", {className: "comment-row"}, presets, saveButton, removeButton),
+			h("div", {className: "comment-row"}, history, presets, saveButton, removeButton),
 		),
 		hasText: (): boolean => textarea.value.trim() !== "",
 		reload(): void {

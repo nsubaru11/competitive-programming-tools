@@ -7,3 +7,11 @@ tr.cp-task-rejected > td,
 li.cp-task-rejected > a {
 	background-color: var(--cp-task-rejected) !important;
 }
+
+li.cp-task-accepted > a:is(:hover, :focus) {
+	background-color: color-mix(in srgb, var(--cp-task-accepted) 80%, #000) !important;
+}
+
+li.cp-task-rejected > a:is(:hover, :focus) {
+	background-color: color-mix(in srgb, var(--cp-task-rejected) 80%, #000) !important;
+}

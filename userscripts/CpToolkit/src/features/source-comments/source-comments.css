@@ -4,7 +4,7 @@ dialog {
 
 .comment-slots {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	grid-template-columns: minmax(0, 1fr);
 	gap: 20px;
 }
 
@@ -23,7 +23,7 @@ dialog {
 
 .comment-slot textarea {
 	width: 100%;
-	min-height: 200px;
+	min-height: 160px;
 	padding: 8px;
 	border: 1px solid var(--cp-border);
 	border-radius: 6px;
