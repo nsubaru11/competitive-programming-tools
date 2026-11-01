@@ -2,7 +2,7 @@
 
 競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるようにする UserScript です。
 
-- [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js)
+- [インストール](https://greasyfork.org/scripts/603262-cp-toolkit)
 
 ## 使い方
 

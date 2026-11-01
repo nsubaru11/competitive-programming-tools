@@ -228,7 +228,7 @@ function printUsage(): void {
 Examples:
   bun ./build.ts
   bun ./build.ts --watch
-  bun ./build.ts AtCoderHighlighter`);
+  bun ./build.ts CpToolkit`);
 }
 
 function parseArgs(args: string[]): BuildOptions {
@@ -287,8 +287,6 @@ async function discoverScripts(explicitNames: string[]): Promise<string[]> {
 	for (const entry of entries) {
 		if (!entry.isDirectory()) continue;
 		if (ignoredDirectoryNames.includes(entry.name) || entry.name.startsWith(".")) continue;
-		// 更新を終了したスクリプトの配布物は shared の変更に追従させない。作り直すときは名前を指定する。
-		if (entry.name in RETIRED_SCRIPTS) continue;
 		if (await isUserscriptDirectory(entry.name)) names.push(entry.name);
 	}
 	return names.sort();
@@ -336,35 +334,12 @@ async function loadMeta(name: string): Promise<ScriptMeta> {
 // endregion
 
 // region ビルド
-/** CP Toolkit へ統合したスクリプトと、新版へ引き継ぐ GM の設定キー。 */
-const RETIRED_SCRIPTS: Readonly<Record<string, readonly string[]>> = {
-	AtCoderCustomDefaultSubmissions: [],
-	AtCoderEasyTestForJava: ["config"],
-	AtCoderHighlighter: ["numColor", "varColor", "timeLimitColor", "memoryLimitColor"],
-	AtCoderListingTasks: [],
-	AtCoderMarkdownCopier: [],
-	AtCoderPerformanceOverlay: [],
-	AtCoderWidenContainer: ["containerWidth"],
-	JavaCodeSubmitter: [],
-};
-
-/** 更新を終了したスクリプトは、CP Toolkit が動いていれば本体を実行しない。 */
-async function wrapRetiredScript(name: string, body: string): Promise<string> {
-	const settingKeys = RETIRED_SCRIPTS[name];
-	if (!settingKeys) return body;
-	const template = await readFile(join(scriptDir, "retirement.js"), "utf8");
-	const retirement = template
-		.replaceAll("__SCRIPT_ID__", name)
-		.replaceAll("__SETTING_KEYS__", JSON.stringify(settingKeys));
-	return `${retirement}\nif (!cpToolkitRetirement.replaced) {\n${body}\n}\n`;
-}
-
-async function formatUserscriptOutput(outfile: string, banner: string, notices: string, name: string): Promise<void> {
+async function formatUserscriptOutput(outfile: string, banner: string, notices: string): Promise<void> {
 	const raw = await readFile(outfile, "utf8");
 	if (!raw.startsWith(banner)) {
 		throw new Error(`Generated output does not start with the expected UserScript metadata: ${outfile}`);
 	}
-	const body = await wrapRetiredScript(name, raw.slice(banner.length).trimStart());
+	const body = raw.slice(banner.length).trimStart();
 	await writeFile(outfile, `${banner}\n// @formatter:off\n${notices}${await formatOutput(body)}`, "utf8");
 }
 
@@ -391,7 +366,7 @@ async function buildOne(name: string): Promise<void> {
 		throw new Error(`Build failed: ${name}`);
 	}
 
-	await formatUserscriptOutput(outfile, banner, await loadNotices(name), name);
+	await formatUserscriptOutput(outfile, banner, await loadNotices(name));
 
 	const output = await stat(outfile);
 	console.log(`  -> ${name}/dist/${name}.user.js (${output.size} bytes)`);

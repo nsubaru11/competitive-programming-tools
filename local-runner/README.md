@@ -140,7 +140,7 @@ EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られ�
 
 ### 提出用ヘッダー
 
-ヘッダーは解答に書かず、提出物を作るときに付けます。`submit` / `tomain` / `toclip` と JavaCodeSubmitter の貼り付け変換は、バンドル後のソースの先頭に `templates/header/java.txt` を付けます。
+ヘッダーは解答に書かず、提出物を作るときに付けます。`submit` / `tomain` / `toclip` と CP Toolkit の Java の提出補助の貼り付け変換は、バンドル後のソースの先頭に `templates/header/java.txt` を付けます。
 
 - `--no-header` で付けずに出力し、`--header=<name>` で `templates/header/<name>.txt` を選べます。
 - 既定のファイルは `ATCODER_HEADER_FILE` で差し替えられます。既定のファイルが無い場合は付けず、`--header` で選んだファイルが無い場合はエラーで止まります。
