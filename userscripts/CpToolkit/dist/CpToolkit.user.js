@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.4
+// @version        1.0.5
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1332,11 +1332,12 @@ ${css}`,
 				normalize: (value) => (typeof value === "boolean" ? value : undefined),
 			};
 		},
-		text(defaultValue, label, {validate} = {}) {
+		text(defaultValue, label, {validate, invalidMessage} = {}) {
 			return {
 				kind: "text",
 				defaultValue,
 				label,
+				...(invalidMessage !== undefined && {invalidMessage}),
 				normalize(value) {
 					if (typeof value !== "string") return;
 					const text = value.trim();
@@ -1410,7 +1411,7 @@ ${css}`,
 	}
 
 	// CpToolkit/src/features/settings-panel/option-field.ts
-	function createControl(definition, value, translate, commit) {
+	function createControl(definition, value, translate, {validate, commit}) {
 		switch (definition.kind) {
 			case "boolean": {
 				const input = h("input", {type: "checkbox", checked: value === true});
@@ -1421,6 +1422,7 @@ ${css}`,
 				const input = h("input", {type: "number", value: String(value)});
 				if (definition.min !== undefined) input.min = String(definition.min);
 				if (definition.max !== undefined) input.max = String(definition.max);
+				input.addEventListener("input", () => validate(input.valueAsNumber));
 				input.addEventListener("change", () => commit(input.valueAsNumber));
 				return input;
 			}
@@ -1439,6 +1441,7 @@ ${css}`,
 			case "color":
 			case "text": {
 				const input = h("input", {type: definition.kind, value: String(value)});
+				input.addEventListener("input", () => validate(input.value));
 				input.addEventListener("change", () => commit(input.value));
 				return input;
 			}
@@ -1446,13 +1449,20 @@ ${css}`,
 	}
 
 	function createOptionField({definition, value, translate, onChange}) {
-		const commit = (rawValue) => {
+		const check = (rawValue) => {
 			const normalized = definition.normalize(rawValue);
 			field.setInvalid(normalized === undefined);
-			if (normalized !== undefined) onChange(normalized);
+			return normalized;
 		};
-		const control = createControl(definition, value, translate, commit);
-		const field = createField(translate(definition.label), control, translate("settings.invalidValue"));
+		const control = createControl(definition, value, translate, {
+			validate: check,
+			commit(rawValue) {
+				const normalized = check(rawValue);
+				if (normalized !== undefined) onChange(normalized);
+			},
+		});
+		const invalidMessage = translate(definition.invalidMessage ?? "settings.invalidValue");
+		const field = createField(translate(definition.label), control, invalidMessage);
 		return field.element;
 	}
 
@@ -2002,6 +2012,8 @@ ${settings_panel_default}`,
 		"ratingGraph.title": "Performance graph",
 		"ratingGraph.description": "Overlays performance on the rating graph.",
 		"ratingGraph.recentByDefault": "Show only recent results at first",
+		"ratingGraph.recentRange": "Recent range (e.g. 20 for the last 20 contests, 50% for the latest half)",
+		"ratingGraph.recentRangeInvalid": "Enter a whole number of 1 or more, or a percentage from 1% to 100%.",
 		"ratingGraph.togglePerformance": "Toggle performance",
 		"ratingGraph.showAll": "all",
 		"ratingGraph.showRecent": "recent",
@@ -2147,6 +2159,8 @@ ${settings_panel_default}`,
 		"ratingGraph.title": "パフォーマンスのグラフ",
 		"ratingGraph.description": "レーティンググラフにパフォーマンスを重ねて表示します。",
 		"ratingGraph.recentByDefault": "最初は最近の結果だけを表示する",
+		"ratingGraph.recentRange": "最近の結果の範囲(例: 20 で直近20回、50% で直近の半分)",
+		"ratingGraph.recentRangeInvalid": "1 以上の整数か、1% から 100% の割合を入力してください。",
 		"ratingGraph.togglePerformance": "パフォーマンス ON/OFF切り替え",
 		"ratingGraph.showAll": "all",
 		"ratingGraph.showRecent": "recent",
@@ -3005,10 +3019,20 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/domain/rating/history.ts
-	var HIDDEN_ENTRIES = 3;
+	var RECENT_RANGE_PATTERN = /^(\d+)\s*(%?)$/;
+	var MAX_PERCENT = 100;
 
-	function dropOldest(entries) {
-		return entries.length > HIDDEN_ENTRIES ? entries.slice(HIDDEN_ENTRIES) : entries;
+	function parseRecentRange(text) {
+		const [, digits, percent] = RECENT_RANGE_PATTERN.exec(text.normalize("NFKC").trim()) ?? [];
+		const value = Number(digits);
+		const unit = percent ? "percent" : "count";
+		if (!Number.isSafeInteger(value) || value < 1 || (unit === "percent" && value > MAX_PERCENT)) return null;
+		return {unit, value};
+	}
+
+	function recentCount({unit, value}, total) {
+		const count = unit === "percent" ? Math.ceil((total * value) / MAX_PERCENT) : value;
+		return Math.min(count, total);
 	}
 
 	function ratedPerformances(history) {
@@ -3136,11 +3160,13 @@ ${settings_panel_default}`,
 			return history.length > 0;
 		}
 
-		draw({showPerformance, recentOnly}) {
+		draw({showPerformance, recent}) {
 			if (!this.prepared) return;
 			const {cj, graphCanvas, statusCanvas} = this.prepared;
-			const history = recentOnly ? dropOldest(this.prepared.history) : this.prepared.history;
-			const performances = recentOnly ? dropOldest(this.prepared.performances) : this.prepared.performances;
+			const total = this.prepared.history.length;
+			const shown = recent ? recentCount(recent, total) : total;
+			const history = this.prepared.history.slice(-shown);
+			const performances = this.prepared.performances.slice(-shown);
 			const count = history.length;
 			if (count === 0) return;
 			const stageGraph = new cj.Stage(graphCanvas);
@@ -7393,6 +7419,10 @@ ${efficient_layout_default}`);
 		phase: "load",
 		options: {
 			recentByDefault: option.boolean(true, "ratingGraph.recentByDefault"),
+			recentRange: option.text("20", "ratingGraph.recentRange", {
+				validate: (value) => parseRecentRange(value) !== null,
+				invalidMessage: "ratingGraph.recentRangeInvalid",
+			}),
 		},
 		async start({options, ratingGraph: graph, site, translate}) {
 			const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
@@ -7403,12 +7433,13 @@ ${efficient_layout_default}`);
 			const response = await site.send({url});
 			const history = safeJsonParse(response.text, []);
 			if (!(await graph.prepare(ratedPerformances(history)))) return;
+			const recentRange = parseRecentRange(options.recentRange);
 			const view = {showPerformance: true, recentOnly: options.recentByDefault};
 			const redraw = () => {
 				periodButton.textContent = translate(
 					view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent",
 				);
-				graph.draw(view);
+				graph.draw({showPerformance: view.showPerformance, recent: view.recentOnly ? recentRange : null});
 			};
 			const periodButton = createGraphButton("10px", () => {
 				view.recentOnly = !view.recentOnly;

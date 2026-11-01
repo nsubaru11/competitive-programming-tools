@@ -1,5 +1,5 @@
 import {safeJsonParse} from "@atcoder-tools/shared";
-import {type ContestHistoryEntry, ratedPerformances} from "@domain/rating/history";
+import {type ContestHistoryEntry, parseRecentRange, ratedPerformances} from "@domain/rating/history";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
 import {h} from "@ui/element";
@@ -28,6 +28,10 @@ export const ratingGraph = defineFeature({
 	phase: "load",
 	options: {
 		recentByDefault: option.boolean(true, "ratingGraph.recentByDefault"),
+		recentRange: option.text("20", "ratingGraph.recentRange", {
+			validate: (value) => parseRecentRange(value) !== null,
+			invalidMessage: "ratingGraph.recentRangeInvalid",
+		}),
 	},
 	async start({options, ratingGraph: graph, site, translate}) {
 		const userName = /^\/users\/([^/?#]+)/.exec(location.pathname)?.[1];
@@ -40,10 +44,11 @@ export const ratingGraph = defineFeature({
 		const history = safeJsonParse<ContestHistoryEntry[]>(response.text, []);
 		if (!(await graph.prepare(ratedPerformances(history)))) return;
 
+		const recentRange = parseRecentRange(options.recentRange);
 		const view = {showPerformance: true, recentOnly: options.recentByDefault};
 		const redraw = (): void => {
 			periodButton.textContent = translate(view.recentOnly ? "ratingGraph.showAll" : "ratingGraph.showRecent");
-			graph.draw(view);
+			graph.draw({showPerformance: view.showPerformance, recent: view.recentOnly ? recentRange : null});
 		};
 		const periodButton = createGraphButton("10px", () => {
 			view.recentOnly = !view.recentOnly;

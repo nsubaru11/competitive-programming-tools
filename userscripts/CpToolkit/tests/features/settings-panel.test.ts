@@ -150,6 +150,37 @@ describe("設定画面", () => {
 		expect(settings.storedOptions("live")).toEqual({width: "80%"});
 	});
 
+	test("入力の途中でも不正な値を知らせ、保存はしない", async () => {
+		const root = await openPanel([liveFeature]);
+		const input = query<HTMLInputElement>(root, ".feature-fields input");
+		const error = query<HTMLElement>(root, ".field-error");
+
+		input.value = "1200px";
+		input.dispatchEvent(new Event("input", {bubbles: true}));
+		expect(error.hidden).toBe(false);
+		expect(input.getAttribute("aria-invalid")).toBe("true");
+
+		input.value = "80%";
+		input.dispatchEvent(new Event("input", {bubbles: true}));
+		expect(error.hidden).toBe(true);
+		expect(settings.storedOptions("live")).toBeUndefined();
+	});
+
+	test("機能が用意した案内があれば、不正な値のときに表示する", async () => {
+		const root = await openPanel([defineFeature({
+			...metadata,
+			id: "messaged",
+			title: "wideLayout.title",
+			options: {
+				range: option.text("20", "ratingGraph.recentRange", {invalidMessage: "ratingGraph.recentRangeInvalid"}),
+			},
+			live: true,
+			start: () => () => {
+			},
+		})]);
+		expect(query<HTMLElement>(root, ".field-error").textContent).toBe(translate("ratingGraph.recentRangeInvalid"));
+	});
+
 	test("初期化すると入力欄も既定値に戻る", async () => {
 		const confirmMock = mock(() => true);
 		const originalConfirm = window.confirm;

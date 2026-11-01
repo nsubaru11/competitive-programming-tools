@@ -3,6 +3,8 @@ import {parseStoredObject} from "@atcoder-tools/shared";
 type OptionBase<T, L extends string> = {
 	readonly defaultValue: T;
 	readonly label: L;
+	/** 不正な値を入力したときの案内。省略すると共通の文言を表示する。 */
+	readonly invalidMessage?: L;
 	/** 保存値や入力値を検証して正規化する。不正な値は undefined を返す。 */
 	normalize(value: unknown): T | undefined;
 };
@@ -58,12 +60,13 @@ export const option = {
 	text<L extends string>(
 		defaultValue: string,
 		label: L,
-		{validate}: {validate?: (value: string) => boolean} = {},
+		{validate, invalidMessage}: {validate?: (value: string) => boolean; invalidMessage?: L} = {},
 	): TextOption<L> {
 		return {
 			kind: "text",
 			defaultValue,
 			label,
+			...(invalidMessage !== undefined && {invalidMessage}),
 			normalize(value) {
 				if (typeof value !== "string") return undefined;
 				const text = value.trim();

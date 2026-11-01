@@ -1,6 +1,9 @@
+import type {RecentRange} from "@domain/rating/history";
+
 export type RatingGraphView = {
 	readonly showPerformance: boolean;
-	readonly recentOnly: boolean;
+	/** 表示する最近の範囲。null ならすべて表示する。 */
+	readonly recent: RecentRange | null;
 };
 
 export interface RatingGraph {

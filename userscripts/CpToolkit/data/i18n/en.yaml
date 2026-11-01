@@ -110,6 +110,8 @@ tessokuDifficulty.sortById: Sort by task number
 ratingGraph.title: Performance graph
 ratingGraph.description: Overlays performance on the rating graph.
 ratingGraph.recentByDefault: Show only recent results at first
+ratingGraph.recentRange: "Recent range (e.g. 20 for the last 20 contests, 50% for the latest half)"
+ratingGraph.recentRangeInvalid: "Enter a whole number of 1 or more, or a percentage from 1% to 100%."
 ratingGraph.togglePerformance: Toggle performance
 ratingGraph.showAll: all
 ratingGraph.showRecent: recent

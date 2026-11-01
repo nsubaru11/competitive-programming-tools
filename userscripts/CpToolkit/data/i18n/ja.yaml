@@ -111,6 +111,8 @@ tessokuDifficulty.sortById: 問題番号順で並べ替え
 ratingGraph.title: パフォーマンスのグラフ
 ratingGraph.description: レーティンググラフにパフォーマンスを重ねて表示します。
 ratingGraph.recentByDefault: 最初は最近の結果だけを表示する
+ratingGraph.recentRange: "最近の結果の範囲(例: 20 で直近20回、50% で直近の半分)"
+ratingGraph.recentRangeInvalid: "1 以上の整数か、1% から 100% の割合を入力してください。"
 ratingGraph.togglePerformance: パフォーマンス ON/OFF切り替え
 ratingGraph.showAll: all
 ratingGraph.showRecent: recent

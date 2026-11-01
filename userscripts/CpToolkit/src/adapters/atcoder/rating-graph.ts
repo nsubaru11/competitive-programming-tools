@@ -1,6 +1,6 @@
 import {sleep} from "@atcoder-tools/shared";
 import {ratingScale} from "@catalog/tables";
-import {dropOldest} from "@domain/rating/history";
+import {recentCount} from "@domain/rating/history";
 import {tierOf, tierProgress} from "@domain/rating/scale";
 import type {RatingGraph, RatingGraphView} from "@application/ports/rating-graph";
 import {pageGlobals, type RatingEntry} from "@adapters/page/globals";
@@ -117,11 +117,13 @@ export class CreateJsRatingGraph implements RatingGraph {
 		return history.length > 0;
 	}
 
-	draw({showPerformance, recentOnly}: RatingGraphView): void {
+	draw({showPerformance, recent}: RatingGraphView): void {
 		if (!this.prepared) return;
 		const {cj, graphCanvas, statusCanvas} = this.prepared;
-		const history = recentOnly ? dropOldest(this.prepared.history) : this.prepared.history;
-		const performances = recentOnly ? dropOldest(this.prepared.performances) : this.prepared.performances;
+		const total = this.prepared.history.length;
+		const shown = recent ? recentCount(recent, total) : total;
+		const history = this.prepared.history.slice(-shown);
+		const performances = this.prepared.performances.slice(-shown);
 		const count = history.length;
 		if (count === 0) return;
 

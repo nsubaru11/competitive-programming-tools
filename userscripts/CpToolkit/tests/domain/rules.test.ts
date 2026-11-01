@@ -3,7 +3,7 @@ import {contestCatalog, languageCatalog, ratingScale} from "@catalog/tables";
 import {adjustRange, contestCategory, defaultRange, rangeIndices} from "@domain/contest/category";
 import {isLanguageOption, labelDistance, resolveFamily} from "@domain/execution/language";
 import {judgeResult} from "@domain/execution/result";
-import {dropOldest, ratedPerformances} from "@domain/rating/history";
+import {parseRecentRange, ratedPerformances, recentCount} from "@domain/rating/history";
 import {backgroundOf, crownImageOf, tierOf, tierProgress} from "@domain/rating/scale";
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {isPureNumber, splitLimitValue, splitNumbers} from "@domain/statement/tokens";
@@ -150,9 +150,23 @@ describe("レーティング", () => {
 		expect(tierProgress(ratingScale, 600)).toBe(0.5);
 	});
 
-	test("最近の表示では古い3回を除く", () => {
-		expect(dropOldest([1, 2, 3, 4, 5])).toEqual([4, 5]);
-		expect(dropOldest([1, 2, 3])).toEqual([1, 2, 3]);
+	test("最近の範囲は回数か割合で指定できる", () => {
+		expect(parseRecentRange("20")).toEqual({unit: "count", value: 20});
+		expect(parseRecentRange(" 50% ")).toEqual({unit: "percent", value: 50});
+		expect(parseRecentRange("１００％")).toEqual({unit: "percent", value: 100});
+		expect(parseRecentRange("50 %")).toEqual({unit: "percent", value: 50});
+	});
+
+	test.each(["", "0", "0%", "101%", "-5", "1.5", "50%%", "abc", "99999999999999999999"])("不正な範囲は読み取らない: %s", (text) => {
+		expect(parseRecentRange(text)).toBeNull();
+	});
+
+	test("最近の範囲から表示する回数を決める", () => {
+		expect(recentCount({unit: "count", value: 20}, 37)).toBe(20);
+		expect(recentCount({unit: "count", value: 50}, 37)).toBe(37);
+		expect(recentCount({unit: "percent", value: 50}, 37)).toBe(19);
+		expect(recentCount({unit: "percent", value: 100}, 37)).toBe(37);
+		expect(recentCount({unit: "percent", value: 1}, 3)).toBe(1);
 	});
 
 	test("レート変動のあった回だけを取り出す", () => {
