@@ -7,6 +7,7 @@ import {historyColors} from "@features/history-colors/index";
 import {statementCopy} from "@features/statement-copy/index";
 import {statementHighlight} from "@features/statement-highlight/index";
 import {submissionDefaults} from "@features/submission-defaults/index";
+import {submissionShortcuts} from "@features/submission-shortcuts/index";
 import {tessokuDifficulty} from "@features/tessoku-difficulty/index";
 import {topLinks} from "@features/top-links/index";
 import {createFakeServices} from "../support/fakes";
@@ -49,6 +50,43 @@ describe("statementHighlight", () => {
 		const dispose = await run(statementHighlight, {numberColor: "#112233"});
 		expect(document.querySelector("style")?.textContent).toContain("--cp-number-color: #112233;");
 		dispose?.();
+	});
+});
+
+describe("submissionShortcuts", () => {
+	const renderTitle = (): void => {
+		history.replaceState(null, "", "/contests/abc420/tasks/abc420_a");
+		document.body.innerHTML = '<span class="h2">A - Sample<a class="btn btn-default btn-sm">解説</a></span>';
+	};
+
+	test("AC 提出への近道であることが分かるようにまとめて表示する", async () => {
+		renderTitle();
+		await run(submissionShortcuts, {language: "Java"});
+		const control = document.querySelector(".cp-title-control");
+		expect(control?.firstElementChild?.textContent).toBe("AC提出:");
+		const links = [...(control?.querySelectorAll<HTMLAnchorElement>(".btn-group a") ?? [])];
+		expect(links.map(({textContent}) => textContent)).toEqual(["実行時間順", "コード長順"]);
+		expect(links[0]?.getAttribute("href")).toContain("orderBy=time_consumption");
+		expect(links[0]?.getAttribute("href")).toContain("f.LanguageName=Java");
+		expect(links[1]?.getAttribute("href")).toContain("orderBy=source_length");
+		expect(links[1]?.getAttribute("href")).toContain("f.Task=abc420_a");
+	});
+
+	test("後始末で取り除く", async () => {
+		renderTitle();
+		const dispose = await run(submissionShortcuts);
+		dispose?.();
+		expect(document.querySelector(".cp-title-control")).toBeNull();
+	});
+
+	test("すべてコピーの見出しに含めない", async () => {
+		renderTitle();
+		document.body.insertAdjacentHTML("beforeend", '<div id="task-statement"></div>');
+		const write = mock((_text: string) => undefined);
+		await run(submissionShortcuts);
+		await run(statementCopy, undefined, {clipboard: {write}, statementConverter: new TurndownStatementConverter()});
+		document.querySelector<HTMLElement>(".pull-right button")?.click();
+		expect(write.mock.calls[0]?.[0]).toStartWith("# A - Sample\n");
 	});
 });
 

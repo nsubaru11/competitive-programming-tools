@@ -27,21 +27,33 @@ export const submissionShortcuts = defineFeature({
 				orderBy,
 				task: task.taskId,
 			});
-			const link = h("a", {
+			return h("a", {
 				className: "btn btn-default btn-sm",
 				href: `/contests/${task.contestId}/submissions?${query}`,
 				textContent: label,
 			});
-			link.style.marginLeft = "10px";
-			return link;
 		};
 
+		const label = h("span", {textContent: `${translate("submissionShortcuts.label")}:`});
+		label.style.marginRight = "6px";
 		const wrapper = h(
 			"span",
-			{},
-			createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
-			createLink(translate("submissionShortcuts.shortest"), "source_length"),
+			{className: "cp-title-control"},
+			label,
+			h(
+				"span",
+				{className: "btn-group"},
+				createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
+				createLink(translate("submissionShortcuts.shortest"), "source_length"),
+			),
 		);
+		Object.assign(wrapper.style, {
+			marginLeft: "16px",
+			fontSize: "14px",
+			fontWeight: "normal",
+			verticalAlign: "middle",
+			whiteSpace: "nowrap",
+		});
 		title.append(wrapper);
 		return () => wrapper.remove();
 	},

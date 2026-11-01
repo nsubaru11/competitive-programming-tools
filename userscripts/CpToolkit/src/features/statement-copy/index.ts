@@ -4,7 +4,7 @@ import {defineFeature} from "@application/feature/definition";
 import {h} from "@ui/element";
 
 const COPIED_LABEL_MS = 1500;
-const EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right";
+const EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right, .cp-title-control";
 
 function isSampleHeading(section: Element): boolean {
 	const title = section.querySelector("h3")?.textContent ?? "";

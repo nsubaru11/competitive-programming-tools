@@ -72,6 +72,7 @@ submissionDefaults.keepQuery: Keep search filters between All and My submissions
 submissionShortcuts.title: Shortcuts to AC submissions
 submissionShortcuts.description: Adds links to AC submissions sorted by time and by code size.
 submissionShortcuts.language: Language (empty for all)
+submissionShortcuts.label: AC submissions
 submissionShortcuts.fastest: Fastest
 submissionShortcuts.shortest: Shortest
 

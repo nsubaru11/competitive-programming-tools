@@ -73,6 +73,7 @@ submissionDefaults.keepQuery: 「すべての提出」と「自分の提出」�
 submissionShortcuts.title: AC 提出への近道
 submissionShortcuts.description: 問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。
 submissionShortcuts.language: 言語(空欄ならすべて)
+submissionShortcuts.label: AC提出
 submissionShortcuts.fastest: 実行時間順
 submissionShortcuts.shortest: コード長順
 

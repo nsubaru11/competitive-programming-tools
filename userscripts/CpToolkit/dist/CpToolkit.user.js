@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.2
+// @version        1.0.3
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1986,6 +1986,7 @@ ${settings_panel_default}`,
 		"submissionShortcuts.title": "Shortcuts to AC submissions",
 		"submissionShortcuts.description": "Adds links to AC submissions sorted by time and by code size.",
 		"submissionShortcuts.language": "Language (empty for all)",
+		"submissionShortcuts.label": "AC submissions",
 		"submissionShortcuts.fastest": "Fastest",
 		"submissionShortcuts.shortest": "Shortest",
 		"resultNotifier.title": "Submission notifications",
@@ -2139,6 +2140,7 @@ ${settings_panel_default}`,
 		"submissionShortcuts.title": "AC 提出への近道",
 		"submissionShortcuts.description": "問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
+		"submissionShortcuts.label": "AC提出",
 		"submissionShortcuts.fastest": "実行時間順",
 		"submissionShortcuts.shortest": "コード長順",
 		"resultNotifier.title": "提出結果の通知",
@@ -7685,7 +7687,7 @@ ${toast_default}`,
 
 	// CpToolkit/src/features/statement-copy/index.ts
 	var COPIED_LABEL_MS = 1500;
-	var EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right";
+	var EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right, .cp-title-control";
 
 	function isSampleHeading(section) {
 		const title = section.querySelector("h3")?.textContent ?? "";
@@ -8047,27 +8049,39 @@ ${statement_highlight_default}`);
 				return () => {
 					return;
 				};
-			const createLink = (label, orderBy) => {
+			const createLink = (label2, orderBy) => {
 				const query2 = buildAtCoderSubmissionsQuery({
 					language: options.language || undefined,
 					status: "AC",
 					orderBy,
 					task: task.taskId,
 				});
-				const link = h("a", {
+				return h("a", {
 					className: "btn btn-default btn-sm",
 					href: `/contests/${task.contestId}/submissions?${query2}`,
-					textContent: label,
+					textContent: label2,
 				});
-				link.style.marginLeft = "10px";
-				return link;
 			};
+			const label = h("span", {textContent: `${translate("submissionShortcuts.label")}:`});
+			label.style.marginRight = "6px";
 			const wrapper = h(
 				"span",
-				{},
-				createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
-				createLink(translate("submissionShortcuts.shortest"), "source_length"),
+				{className: "cp-title-control"},
+				label,
+				h(
+					"span",
+					{className: "btn-group"},
+					createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
+					createLink(translate("submissionShortcuts.shortest"), "source_length"),
+				),
 			);
+			Object.assign(wrapper.style, {
+				marginLeft: "16px",
+				fontSize: "14px",
+				fontWeight: "normal",
+				verticalAlign: "middle",
+				whiteSpace: "nowrap",
+			});
 			title.append(wrapper);
 			return () => wrapper.remove();
 		},
