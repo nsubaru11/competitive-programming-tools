@@ -48,7 +48,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 ### CP Toolkit
 
-競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるスクリプトです。機能の一覧と構成は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。 各機能の出典は [CpToolkit/SOURCES.md](./CpToolkit/SOURCES.md) を参照してください。
+競技プログラミングの補助機能を1本にまとめ、機能ごとに ON/OFF できるスクリプトです。機能の一覧と構成は [CpToolkit/README.md](./CpToolkit/README.md) を参照してください。 各機能の出典は [CpToolkit/SOURCES.md](./CpToolkit/SOURCES.md)、併用するスクリプトは [CpToolkit/RECOMMENDED.md](./CpToolkit/RECOMMENDED.md) を参照してください。
 
 - [インストール](https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js)
 - ローカル実行: [local-runner/README.md](../local-runner/README.md)
