@@ -405,9 +405,9 @@ export async function runCodeInIsolatedJvm(entry: CompileEntry, standardInput: s
 	const execStart = Date.now();
 	const result = await runProcessCommand(
 		JAVA_PATH,
+		// 常駐 JVM と同じスタックと最適化で動かし、実行経路によって結果が変わらないようにする。
 		[
-			"-XX:+TieredCompilation",
-			"-XX:TieredStopAtLevel=1",
+			`-Xss${config.RUNNER_CONFIG.runStackBytes}`,
 			"-cp",
 			entry.classDir,
 			entry.mainClass,

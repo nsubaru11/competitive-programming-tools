@@ -201,6 +201,7 @@ bun run --cwd local-runner localtest D.java
 | `LOCAL_RUNNER_URL`               | Local Runner API                                   | `http://localhost:8080`        |
 | `LOCAL_RUNNER_PORT`              | 待受ポート                                         | `8080`                         |
 | `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐javacを無効化し外部javacにフォールバック | 有効                           |
+| `LOCAL_RUNNER_RUN_STACK_BYTES`   | 解答を実行するスレッドのスタックサイズ(バイト)     | `268435456`（256 MiB）         |
 | `LOCAL_RUNNER_START_TIMEOUT_MS`  | auto-start の ready 待ちタイムアウト(ms)           | `60000`                        |
 | `LOCAL_RUNNER_BACKEND`           | Windowsで`native`を明示する診断用上書き            | `wsl`                          |
 | `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                          |
@@ -214,7 +215,7 @@ bun run --cwd local-runner localtest D.java
 
 `ATCODER_JAVA_VER` は auto-start で使う JDK を選びます。起動した JDK の方が新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
 
-既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
+既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`LOCAL_RUNNER_RUN_STACK_BYTES`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
 
 ## セッションファイル例
 

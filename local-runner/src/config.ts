@@ -75,6 +75,15 @@ export const CLI_CONFIG = {
 	sampleCacheMaxEntries: Number(process.env.ATCODER_SAMPLE_CACHE_MAX || 2000),
 };
 
+// 提出コードのスタックサイズ。常駐 JVM の ProgramRunner と同じ環境変数と既定値を使う。
+const DEFAULT_RUN_STACK_BYTES = 256 * 1024 * 1024;
+const MAX_JVM_STACK_BYTES = 1024 * 1024 * 1024;
+
+function resolveRunStackBytes() {
+	const parsed = Number(process.env.LOCAL_RUNNER_RUN_STACK_BYTES);
+	return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, MAX_JVM_STACK_BYTES) : DEFAULT_RUN_STACK_BYTES;
+}
+
 const defaultRunnerBaseDir = process.platform === "linux"
 	? "/dev/shm/atcoder-local-runner"
 	: path.join(os.tmpdir(), "atcoder-local-runner");
@@ -100,6 +109,7 @@ export const RUNNER_CONFIG = {
 	maxCacheSize: 10,
 	compileTimeoutMs: 30000,
 	runTimeoutMs: 10000,
+	runStackBytes: resolveRunStackBytes(),
 	dispatcherStartupTimeoutMs: 10000,
 	dispatcherCaptureLimitBytes: Number(process.env.LOCAL_RUNNER_CAPTURE_LIMIT_BYTES || (2 << 20)),
 	baseDir: process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir,
