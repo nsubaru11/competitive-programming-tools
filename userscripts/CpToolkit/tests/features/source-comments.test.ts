@@ -88,11 +88,20 @@ async function open(options?: unknown) {
 	const context = createContext();
 	await sourceComments.run(options, createFakeServices(context.services));
 	await flush();
+	openPanel();
 	return context;
 }
 
+const panelRoot = (): ShadowRoot => {
+	const root = [...document.body.children].flatMap((element) => element.shadowRoot ?? []).findLast((candidate) => candidate.querySelector(".comment-slots"));
+	if (!root) throw new Error("panel is not open");
+	return root;
+};
+
+const openPanel = (): void => document.querySelector<HTMLButtonElement>(".editor-buttons button")?.click();
+
 const slot = (index: number) => {
-	const element = document.querySelectorAll(".cp-comment-slot")[index];
+	const element = panelRoot().querySelectorAll(".comment-slot")[index];
 	if (!element) throw new Error("slot not found");
 	const [taskOnly, commentOut] = element.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
 	const [history, presets] = element.querySelectorAll("select");
@@ -124,7 +133,7 @@ function select(element: HTMLSelectElement, value: string): void {
 
 beforeEach(() => {
 	document.head.replaceChildren();
-	document.body.innerHTML = '<form class="form-code-submit"><div><div class="editor-buttons"></div></div></form>';
+	document.body.innerHTML = '<div class="editor-buttons"></div>';
 	history.replaceState(null, "", "/contests/abc1/tasks/abc1_a");
 });
 
@@ -171,11 +180,11 @@ describe("sourceComments", () => {
 
 		context.changeLanguage(text);
 		expect(context.code()).toBe("// header\ncode\n");
-		expect(document.querySelector<HTMLElement>(".text-danger")?.hidden).toBe(false);
+		expect(panelRoot().querySelector<HTMLElement>(".comment-warning")?.hidden).toBe(false);
 
 		context.changeLanguage(python);
 		expect(context.code()).toBe("# header\ncode\n");
-		expect(document.querySelector<HTMLElement>(".text-danger")?.hidden).toBe(true);
+		expect(panelRoot().querySelector<HTMLElement>(".comment-warning")?.hidden).toBe(true);
 	});
 
 	test("単一行コメントのない言語では行ごとに囲む", async () => {
@@ -250,7 +259,7 @@ describe("sourceComments", () => {
 		const context = await open();
 		setText(0, "header");
 		context.setCode("typed\n");
-		document.querySelector<HTMLButtonElement>(".cp-source-comments > .cp-comment-row button")?.click();
+		panelRoot().querySelector<HTMLButtonElement>(".modal-footer .primary")?.click();
 		expect(context.code()).toBe("// header\ntyped\n");
 	});
 
@@ -258,13 +267,15 @@ describe("sourceComments", () => {
 		const first = createContext();
 		await sourceComments.run(undefined, createFakeServices(first.services));
 		await flush();
+		openPanel();
 		setText(0, "shared header");
 
-		document.body.innerHTML = '<div><div class="editor-buttons"></div></div>';
+		document.body.innerHTML = '<div class="editor-buttons"></div>';
 		const second = createContext();
 		second.setTask(`${taskUrl}x`);
 		await sourceComments.run(undefined, createFakeServices({...second.services, state: first.state}));
 		await flush();
+		openPanel();
 
 		expect(slot(0).textarea.value).toBe("shared header");
 		expect(slot(1).textarea.value).toBe("");
@@ -276,18 +287,20 @@ describe("sourceComments", () => {
 		toggle(slot(0).taskOnly, true);
 		setText(0, "only here");
 
-		document.body.innerHTML = '<div><div class="editor-buttons"></div></div>';
+		document.body.innerHTML = '<div class="editor-buttons"></div>';
 		const other = createContext();
 		other.setTask(`${taskUrl}x`);
 		await sourceComments.run(undefined, createFakeServices({...other.services, state: context.state}));
 		await flush();
+		openPanel();
 		expect(slot(0).textarea.value).toBe("shared");
 		expect(slot(0).taskOnly.checked).toBe(false);
 
-		document.body.innerHTML = '<div><div class="editor-buttons"></div></div>';
+		document.body.innerHTML = '<div class="editor-buttons"></div>';
 		const same = createContext();
 		await sourceComments.run(undefined, createFakeServices({...same.services, state: context.state}));
 		await flush();
+		openPanel();
 		expect(slot(0).textarea.value).toBe("only here");
 		expect(slot(0).taskOnly.checked).toBe(true);
 	});
@@ -321,9 +334,32 @@ describe("sourceComments", () => {
 		expect([...slot(0).presets.options].map((option) => option.value)).toEqual([""]);
 	});
 
+	test("内容があるとボタンの色を変える", async () => {
+		await open();
+		const button = document.querySelector(".editor-buttons button");
+		expect(button?.classList.contains("btn-default")).toBe(true);
+
+		setText(1, "footer");
+		expect(button?.classList.contains("btn-info")).toBe(true);
+		expect(button?.classList.contains("btn-default")).toBe(false);
+
+		setText(1, "");
+		expect(button?.classList.contains("btn-default")).toBe(true);
+	});
+
+	test("書けない言語では通知でも知らせる", async () => {
+		const context = await open();
+		context.changeLanguage(text);
+		setText(0, "header");
+		await context.pasteCode("code\n");
+
+		const toasts = [...document.body.children].map((element) => element.shadowRoot?.textContent ?? "").join("");
+		expect(toasts).toContain("コメントを挿入していません");
+	});
+
 	test("提出欄のないページでは何も表示しない", async () => {
 		document.body.innerHTML = "";
 		await open();
-		expect(document.querySelector(".cp-source-comments")).toBeNull();
+		expect(document.querySelector("button")).toBeNull();
 	});
 });

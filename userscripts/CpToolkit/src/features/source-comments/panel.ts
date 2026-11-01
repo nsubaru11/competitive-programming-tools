@@ -1,18 +1,19 @@
 import type {MessageKey, Translate} from "@catalog/messages";
-import type {KeyValueStore} from "@application/ports/key-value-store";
 import type {CommentEntry, CommentSlot, SlotContent, SourceComments} from "@application/source/source-comments";
+import {createModal} from "@ui/dialog/modal";
 import {h} from "@ui/element";
+import {showToast} from "@ui/toast/toast";
+import css from "./source-comments.css" with {type: "text"};
 
-const OPEN_KEY = "source-comments:open";
 const SLOT_LABELS: Readonly<Record<CommentSlot, MessageKey>> = {
 	header: "sourceComments.header",
 	footer: "sourceComments.footer",
 };
 const LABEL_LENGTH = 40;
+const TOAST_DURATION_MS = 10_000;
 
 type PanelOptions = {
 	readonly comments: SourceComments;
-	readonly state: KeyValueStore;
 	readonly translate: Translate;
 	readonly task: () => string;
 	readonly onChange: () => void;
@@ -20,7 +21,8 @@ type PanelOptions = {
 };
 
 export type CommentPanel = {
-	readonly element: HTMLElement;
+	/** 入力画面を開くボタン。 */
+	readonly button: HTMLElement;
 	/** 問題が変わったときに、保存した内容を表示し直す。 */
 	reload(): void;
 	setUnsupported(unsupported: boolean): void;
@@ -33,16 +35,11 @@ function summarize({text}: CommentEntry): string {
 
 function createCheckbox(label: string, onChange: () => void): {element: HTMLElement; input: HTMLInputElement} {
 	const input = h("input", {type: "checkbox", onchange: onChange});
-	return {element: h("label", {}, input, ` ${label}`), input};
+	return {element: h("label", {}, input, label), input};
 }
 
 function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: PanelOptions) {
-	const textarea = h("textarea", {
-		className: "form-control",
-		rows: 3,
-		spellcheck: false,
-		placeholder: translate("sourceComments.placeholder"),
-	});
+	const textarea = h("textarea", {spellcheck: false, placeholder: translate("sourceComments.placeholder")});
 	const content = (): SlotContent => ({
 		text: textarea.value,
 		commentOut: commentOut.input.checked,
@@ -55,18 +52,10 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 	};
 	const taskOnly = createCheckbox(translate("sourceComments.taskOnly"), save);
 	const commentOut = createCheckbox(translate("sourceComments.commentOut"), save);
-	const history = h("select", {className: "form-control input-sm"});
-	const presets = h("select", {className: "form-control input-sm"});
-	const saveButton = h("button", {
-		type: "button",
-		className: "btn btn-default btn-sm",
-		textContent: translate("sourceComments.savePreset"),
-	});
-	const removeButton = h("button", {
-		type: "button",
-		className: "btn btn-default btn-sm",
-		textContent: translate("sourceComments.removePreset"),
-	});
+	const history = h("select");
+	const presets = h("select");
+	const saveButton = h("button", {type: "button", textContent: translate("sourceComments.savePreset")});
+	const removeButton = h("button", {type: "button", textContent: translate("sourceComments.removePreset")});
 
 	const fill = (entry: CommentEntry): void => {
 		textarea.value = entry.text;
@@ -116,13 +105,15 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 
 	return {
 		element: h(
-			"div",
-			{className: "cp-comment-slot"},
-			h("b", {textContent: translate(SLOT_LABELS[slot])}),
+			"section",
+			{className: "comment-slot"},
+			h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 			textarea,
-			h("div", {className: "cp-comment-row"}, taskOnly.element, commentOut.element),
-			h("div", {className: "cp-comment-row"}, history, presets, saveButton, removeButton),
+			h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
+			h("div", {className: "comment-row"}, history),
+			h("div", {className: "comment-row"}, presets, saveButton, removeButton),
 		),
+		hasText: (): boolean => textarea.value.trim() !== "",
 		reload(): void {
 			const stored = comments.content(slot, task());
 			textarea.value = stored.text;
@@ -133,39 +124,70 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 	};
 }
 
-/** 提出欄の下に置く、ヘッダーとフッターの入力欄。 */
+/** ヘッダーとフッターの入力画面と、それを開くボタン。内容があるとボタンの色を変える。 */
 export function createCommentPanel(options: PanelOptions): CommentPanel {
-	const {state, translate, onApply} = options;
-	const slots = [createSlot("header", options), createSlot("footer", options)];
+	const {translate, onApply} = options;
+	const modal = createModal({
+		title: translate("sourceComments.panel"),
+		closeLabel: translate("settings.close"),
+		css,
+	});
+	const button = h("button", {
+		type: "button",
+		className: "btn btn-default btn-sm",
+		textContent: translate("sourceComments.panel"),
+		onclick: () => modal.open(),
+	});
+	const updateButton = (): void => {
+		const filled = slots.some((slot) => slot.hasText());
+		button.classList.toggle("btn-info", filled);
+		button.classList.toggle("btn-default", !filled);
+	};
+	const slotOptions = {
+		...options,
+		onChange() {
+			updateButton();
+			options.onChange();
+		},
+	};
+	const slots = [createSlot("header", slotOptions), createSlot("footer", slotOptions)];
 	const warning = h("span", {
-		className: "text-danger",
+		className: "comment-warning",
 		textContent: translate("sourceComments.unsupported"),
 		hidden: true,
 	});
-	const applyButton = h("button", {
-		type: "button",
-		className: "btn btn-default btn-sm",
-		textContent: translate("sourceComments.apply"),
-		onclick: onApply,
-	});
-	const element = h(
-		"details",
-		{className: "cp-source-comments", open: state.get(OPEN_KEY) === true},
-		h("summary", {textContent: translate("sourceComments.panel")}),
-		...slots.map((slot) => slot.element),
-		h("p", {className: "help-block", textContent: translate("sourceComments.variables")}),
-		h("div", {className: "cp-comment-row"}, applyButton, warning),
+
+	modal.body.append(
+		h("div", {className: "comment-slots"}, ...slots.map((slot) => slot.element)),
+		h("p", {className: "comment-help", textContent: translate("sourceComments.variables")}),
 	);
-	element.addEventListener("toggle", () => state.set(OPEN_KEY, element.open));
+	modal.footer.append(warning, h("span", {className: "comment-spacer"}), h("button", {
+		type: "button",
+		className: "primary",
+		textContent: translate("sourceComments.apply"),
+		onclick() {
+			onApply();
+			modal.close();
+		},
+	}));
 
 	const reload = (): void => {
 		for (const slot of slots) slot.reload();
+		updateButton();
 	};
 	reload();
 	return {
-		element,
+		button,
 		reload,
 		setUnsupported(unsupported) {
+			if (unsupported && warning.hidden) {
+				showToast({
+					title: translate("sourceComments.notInserted"),
+					detail: translate("sourceComments.unsupported"),
+					tone: "warning",
+					durationMs: TOAST_DURATION_MS,
+				});
+			}
 			warning.hidden = !unsupported;
 		},
 	};

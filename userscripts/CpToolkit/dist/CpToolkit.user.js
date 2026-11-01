@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.8
+// @version        1.0.9
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2028,6 +2028,7 @@ ${settings_panel_default}`,
 		"sourceComments.presetName": "Name to save as",
 		"sourceComments.apply": "Apply to the code",
 		"sourceComments.variables": "{url} becomes the task URL, {task} the task ID and {contest} the contest ID.",
+		"sourceComments.notInserted": "Comments were not inserted",
 		"sourceComments.unsupported": "Nothing was inserted because the comment syntax of this language is unknown.",
 		"taskStatus.title": "Task status colors",
 		"taskStatus.description":
@@ -2225,6 +2226,7 @@ ${settings_panel_default}`,
 		"sourceComments.apply": "コードへ反映",
 		"sourceComments.variables":
 			"{url} は問題の URL、{task} は問題の ID、{contest} はコンテストの ID に置き換えます。",
+		"sourceComments.notInserted": "コメントを挿入していません",
 		"sourceComments.unsupported": "この言語はコメントの書き方が分からないので、挿入していません。",
 		"taskStatus.title": "問題の提出状況",
 		"taskStatus.description":
@@ -8713,13 +8715,89 @@ ${efficient_layout_default}`);
 		}
 	}
 
+	// CpToolkit/src/features/source-comments/source-comments.css
+	var source_comments_default = `dialog {
+	width: min(960px, calc(100vw - 32px));
+}
+
+.comment-slots {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 20px;
+}
+
+.comment-slot {
+	display: grid;
+	align-content: start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.comment-slot h3 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.comment-slot textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: 13px/1.5 Consolas, Monaco, "Courier New", monospace;
+	resize: vertical;
+}
+
+.comment-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+}
+
+.comment-row label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.comment-row select {
+	flex: 1 1 160px;
+	min-width: 0;
+	padding: 4px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.comment-help {
+	margin: 16px 0 0;
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.comment-warning {
+	color: var(--cp-danger);
+	font-size: 13px;
+}
+
+.comment-spacer {
+	margin-left: auto;
+}
+`;
+
 	// CpToolkit/src/features/source-comments/panel.ts
-	var OPEN_KEY = "source-comments:open";
 	var SLOT_LABELS = {
 		header: "sourceComments.header",
 		footer: "sourceComments.footer",
 	};
 	var LABEL_LENGTH = 40;
+	var TOAST_DURATION_MS3 = 1e4;
 
 	function summarize({text}) {
 		const line =
@@ -8730,16 +8808,11 @@ ${efficient_layout_default}`);
 
 	function createCheckbox(label, onChange) {
 		const input = h("input", {type: "checkbox", onchange: onChange});
-		return {element: h("label", {}, input, ` ${label}`), input};
+		return {element: h("label", {}, input, label), input};
 	}
 
 	function createSlot(slot, {comments, translate, task, onChange}) {
-		const textarea = h("textarea", {
-			className: "form-control",
-			rows: 3,
-			spellcheck: false,
-			placeholder: translate("sourceComments.placeholder"),
-		});
+		const textarea = h("textarea", {spellcheck: false, placeholder: translate("sourceComments.placeholder")});
 		const content = () => ({
 			text: textarea.value,
 			commentOut: commentOut.input.checked,
@@ -8752,18 +8825,10 @@ ${efficient_layout_default}`);
 		};
 		const taskOnly = createCheckbox(translate("sourceComments.taskOnly"), save);
 		const commentOut = createCheckbox(translate("sourceComments.commentOut"), save);
-		const history = h("select", {className: "form-control input-sm"});
-		const presets = h("select", {className: "form-control input-sm"});
-		const saveButton = h("button", {
-			type: "button",
-			className: "btn btn-default btn-sm",
-			textContent: translate("sourceComments.savePreset"),
-		});
-		const removeButton = h("button", {
-			type: "button",
-			className: "btn btn-default btn-sm",
-			textContent: translate("sourceComments.removePreset"),
-		});
+		const history = h("select");
+		const presets = h("select");
+		const saveButton = h("button", {type: "button", textContent: translate("sourceComments.savePreset")});
+		const removeButton = h("button", {type: "button", textContent: translate("sourceComments.removePreset")});
 		const fill = (entry) => {
 			textarea.value = entry.text;
 			commentOut.input.checked = entry.commentOut;
@@ -8811,13 +8876,15 @@ ${efficient_layout_default}`);
 		});
 		return {
 			element: h(
-				"div",
-				{className: "cp-comment-slot"},
-				h("b", {textContent: translate(SLOT_LABELS[slot])}),
+				"section",
+				{className: "comment-slot"},
+				h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 				textarea,
-				h("div", {className: "cp-comment-row"}, taskOnly.element, commentOut.element),
-				h("div", {className: "cp-comment-row"}, history, presets, saveButton, removeButton),
+				h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
+				h("div", {className: "comment-row"}, history),
+				h("div", {className: "comment-row"}, presets, saveButton, removeButton),
 			),
+			hasText: () => textarea.value.trim() !== "",
 			reload() {
 				const stored = comments.content(slot, task());
 				textarea.value = stored.text;
@@ -8829,82 +8896,74 @@ ${efficient_layout_default}`);
 	}
 
 	function createCommentPanel(options) {
-		const {state, translate, onApply} = options;
-		const slots = [createSlot("header", options), createSlot("footer", options)];
+		const {translate, onApply} = options;
+		const modal = createModal({
+			title: translate("sourceComments.panel"),
+			closeLabel: translate("settings.close"),
+			css: source_comments_default,
+		});
+		const button = h("button", {
+			type: "button",
+			className: "btn btn-default btn-sm",
+			textContent: translate("sourceComments.panel"),
+			onclick: () => modal.open(),
+		});
+		const updateButton = () => {
+			const filled = slots.some((slot) => slot.hasText());
+			button.classList.toggle("btn-info", filled);
+			button.classList.toggle("btn-default", !filled);
+		};
+		const slotOptions = {
+			...options,
+			onChange() {
+				updateButton();
+				options.onChange();
+			},
+		};
+		const slots = [createSlot("header", slotOptions), createSlot("footer", slotOptions)];
 		const warning = h("span", {
-			className: "text-danger",
+			className: "comment-warning",
 			textContent: translate("sourceComments.unsupported"),
 			hidden: true,
 		});
-		const applyButton = h("button", {
-			type: "button",
-			className: "btn btn-default btn-sm",
-			textContent: translate("sourceComments.apply"),
-			onclick: onApply,
-		});
-		const element = h(
-			"details",
-			{className: "cp-source-comments", open: state.get(OPEN_KEY) === true},
-			h("summary", {textContent: translate("sourceComments.panel")}),
-			...slots.map((slot) => slot.element),
-			h("p", {className: "help-block", textContent: translate("sourceComments.variables")}),
-			h("div", {className: "cp-comment-row"}, applyButton, warning),
+		modal.body.append(
+			h("div", {className: "comment-slots"}, ...slots.map((slot) => slot.element)),
+			h("p", {className: "comment-help", textContent: translate("sourceComments.variables")}),
 		);
-		element.addEventListener("toggle", () => state.set(OPEN_KEY, element.open));
+		modal.footer.append(
+			warning,
+			h("span", {className: "comment-spacer"}),
+			h("button", {
+				type: "button",
+				className: "primary",
+				textContent: translate("sourceComments.apply"),
+				onclick() {
+					onApply();
+					modal.close();
+				},
+			}),
+		);
 		const reload = () => {
 			for (const slot of slots) slot.reload();
+			updateButton();
 		};
 		reload();
 		return {
-			element,
+			button,
 			reload,
 			setUnsupported(unsupported) {
+				if (unsupported && warning.hidden) {
+					showToast({
+						title: translate("sourceComments.notInserted"),
+						detail: translate("sourceComments.unsupported"),
+						tone: "warning",
+						durationMs: TOAST_DURATION_MS3,
+					});
+				}
 				warning.hidden = !unsupported;
 			},
 		};
 	}
-
-	// CpToolkit/src/features/source-comments/source-comments.css
-	var source_comments_default = `.cp-source-comments {
-	margin-top: 8px;
-}
-
-.cp-source-comments summary {
-	cursor: pointer;
-	user-select: none;
-}
-
-.cp-comment-slot {
-	margin-top: 10px;
-}
-
-.cp-comment-slot textarea {
-	font-family: Menlo, Monaco, Consolas, monospace;
-	font-size: 12px;
-}
-
-.cp-comment-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 4px 12px;
-	margin-top: 4px;
-}
-
-.cp-comment-row label {
-	margin: 0;
-	font-weight: normal;
-}
-
-.cp-comment-row select {
-	width: auto;
-	max-width: 220px;
-}
-
-.cp-source-comments .help-block {
-	margin: 8px 0 0;
-}
-`;
 
 	// CpToolkit/src/features/source-comments/index.ts
 	var PASTE_ORDER2 = 20;
@@ -8927,7 +8986,7 @@ ${efficient_layout_default}`);
 			const target = judge?.submission;
 			const site = await judgeSite();
 			const editorButtons = document.querySelector(".editor-buttons");
-			if (!target || !site || !editorButtons?.parentElement) return;
+			if (!target || !site || !editorButtons) return;
 			const comments = new SourceComments(state);
 			const style = options.style === "block" ? "block" : "line";
 			const inserted = new Map();
@@ -8992,7 +9051,6 @@ ${efficient_layout_default}`);
 			};
 			const panel = createCommentPanel({
 				comments,
-				state,
 				translate,
 				task: () => site.taskUri(),
 				onChange: refresh,
@@ -9003,8 +9061,7 @@ ${efficient_layout_default}`);
 					if (next2 !== code) site.setSourceCode(next2);
 				},
 			});
-			injectStyle(source_comments_default);
-			editorButtons.parentElement.append(panel.element);
+			editorButtons.append(panel.button);
 			site.onLanguageChange(refresh);
 			const taskSelect = document.querySelector("#select-task");
 			if (taskSelect) {
@@ -10190,6 +10247,11 @@ li.cp-task-rejected > a {
 	width: var(--cp-main-width) !important;
 	max-width: 100% !important;
 	transition: none !important;
+}
+
+/* エディタは背景と同じ白なので、広げると右端が分からなくなる */
+#editor {
+	border: 1px solid #ccc;
 }
 `;
 

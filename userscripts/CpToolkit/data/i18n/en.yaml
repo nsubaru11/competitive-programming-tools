@@ -105,6 +105,7 @@ sourceComments.removePreset: Delete
 sourceComments.presetName: Name to save as
 sourceComments.apply: Apply to the code
 sourceComments.variables: "{url} becomes the task URL, {task} the task ID and {contest} the contest ID."
+sourceComments.notInserted: Comments were not inserted
 sourceComments.unsupported: Nothing was inserted because the comment syntax of this language is unknown.
 taskStatus.title: Task status colors
 taskStatus.description: Colors the task list and the dropdown by your results. A task with a score counts as accepted.

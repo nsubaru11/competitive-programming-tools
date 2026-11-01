@@ -106,6 +106,7 @@ sourceComments.removePreset: 削除
 sourceComments.presetName: 保存する名前
 sourceComments.apply: コードへ反映
 sourceComments.variables: "{url} は問題の URL、{task} は問題の ID、{contest} はコンテストの ID に置き換えます。"
+sourceComments.notInserted: コメントを挿入していません
 sourceComments.unsupported: この言語はコメントの書き方が分からないので、挿入していません。
 taskStatus.title: 問題の提出状況
 taskStatus.description: 問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。

@@ -14,9 +14,7 @@ import {
 import {defineFeature} from "@application/feature/definition";
 import {EDITOR_SETUP_DELAY_MS} from "@application/ports/code-editor";
 import {type CommentSlot, SourceComments} from "@application/source/source-comments";
-import {injectStyle} from "@ui/element";
 import {createCommentPanel} from "./panel";
-import css from "./source-comments.css" with {type: "text"};
 
 /** Java の変換が付け足す部分より外側に置く。 */
 const PASTE_ORDER = 20;
@@ -40,7 +38,7 @@ export const sourceComments = defineFeature({
 		const target = judge?.submission;
 		const site = await judgeSite();
 		const editorButtons = document.querySelector(".editor-buttons");
-		if (!target || !site || !editorButtons?.parentElement) return;
+		if (!target || !site || !editorButtons) return;
 
 		const comments = new SourceComments(state);
 		const style: CommentStyle = options.style === "block" ? "block" : "line";
@@ -107,7 +105,6 @@ export const sourceComments = defineFeature({
 
 		const panel = createCommentPanel({
 			comments,
-			state,
 			translate,
 			task: () => site.taskUri(),
 			onChange: refresh,
@@ -118,8 +115,7 @@ export const sourceComments = defineFeature({
 				if (next !== code) site.setSourceCode(next);
 			},
 		});
-		injectStyle(css);
-		editorButtons.parentElement.append(panel.element);
+		editorButtons.append(panel.button);
 
 		site.onLanguageChange(refresh);
 		const taskSelect = document.querySelector("#select-task");
