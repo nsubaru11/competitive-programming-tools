@@ -406,6 +406,20 @@ describe("paizaLanguage", () => {
 		expect(document.querySelector<HTMLInputElement>("#programming_language_id")?.value).toBe("2");
 		expect(triggerChange).toHaveBeenCalled();
 	});
+
+	test("言語が未設定なら何もしない", async () => {
+		document.body.innerHTML = `<select id="language_id">
+			<option value=""></option><option value="1">JavaScript</option><option value="2">Java (OpenJDK 21)</option>
+		</select>`;
+		const triggerChange = mock(() => undefined);
+		const locate = mock(async () => null);
+		void paizaLanguage.run({language: " "}, createFakeServices({page: createFakePage({triggerChange}), judge: null, editors: {locate}}));
+		await wait();
+
+		expect(document.querySelector<HTMLSelectElement>("#language_id")?.value).toBe("");
+		expect(triggerChange).not.toHaveBeenCalled();
+		expect(locate).not.toHaveBeenCalled();
+	});
 });
 
 describe("taskDropdown", () => {

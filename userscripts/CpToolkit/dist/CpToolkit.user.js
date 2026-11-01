@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.16
+// @version        1.0.17
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2164,7 +2164,8 @@ a:focus > .cp-settings-entry {
 		"easyTest.noSavedCode": "No saved code was found for this task.",
 		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
 		"paizaLanguage.title": "paiza language selection",
-		"paizaLanguage.description": "Selects the specified language on paiza submission pages.",
+		"paizaLanguage.description":
+			"Selects the specified language on paiza submission pages. It does nothing until you set a language.",
 		"paizaLanguage.language": "Language (e.g. c++, java, python3)",
 	};
 
@@ -2365,7 +2366,8 @@ a:focus > .cp-settings-entry {
 		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
 		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
 		"paizaLanguage.title": "paiza の言語選択",
-		"paizaLanguage.description": "paiza の提出ページで、指定した言語を自動で選びます。",
+		"paizaLanguage.description":
+			"paiza の提出ページで、指定した言語を自動で選びます。言語を設定するまでは動きません。",
 		"paizaLanguage.language": "言語(例: c++, java, python3)",
 	};
 
@@ -8370,10 +8372,11 @@ ${efficient_layout_default}`);
 		routes: ["paiza:page"],
 		phase: "ready",
 		options: {
-			language: option.text("c++", "paizaLanguage.language"),
+			language: option.text("", "paizaLanguage.language"),
 		},
 		async start(context) {
-			const target = context.options.language.toLowerCase();
+			const target = context.options.language.trim().toLowerCase();
+			if (!target) return;
 			for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
 				if (selectLanguage(target, context.page)) break;
 				await sleep(RETRY_INTERVAL_MS);

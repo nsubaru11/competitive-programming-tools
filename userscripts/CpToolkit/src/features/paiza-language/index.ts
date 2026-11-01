@@ -72,10 +72,11 @@ export const paizaLanguage = defineFeature({
 	routes: ["paiza:page"],
 	phase: "ready",
 	options: {
-		language: option.text("c++", "paizaLanguage.language"),
+		language: option.text("", "paizaLanguage.language"),
 	},
 	async start(context) {
-		const target = context.options.language.toLowerCase();
+		const target = context.options.language.trim().toLowerCase();
+		if (!target) return;
 		for (let attempt = 0; attempt < RETRY_COUNT; attempt++) {
 			if (selectLanguage(target, context.page)) break;
 			await sleep(RETRY_INTERVAL_MS);

@@ -207,5 +207,5 @@ easyTest.noSavedCode: この問題の保存済みコードはありません。
 easyTest.restoreConfirm: 現在のコードを置き換えます。よろしいですか?
 
 paizaLanguage.title: paiza の言語選択
-paizaLanguage.description: paiza の提出ページで、指定した言語を自動で選びます。
+paizaLanguage.description: paiza の提出ページで、指定した言語を自動で選びます。言語を設定するまでは動きません。
 paizaLanguage.language: "言語(例: c++, java, python3)"

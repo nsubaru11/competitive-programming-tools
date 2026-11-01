@@ -206,5 +206,5 @@ easyTest.noSavedCode: No saved code was found for this task.
 easyTest.restoreConfirm: Your current code will be replaced. Continue?
 
 paizaLanguage.title: paiza language selection
-paizaLanguage.description: Selects the specified language on paiza submission pages.
+paizaLanguage.description: Selects the specified language on paiza submission pages. It does nothing until you set a language.
 paizaLanguage.language: "Language (e.g. c++, java, python3)"

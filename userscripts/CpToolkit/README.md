@@ -40,7 +40,7 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 | 実行環境   | Local Runner                 | Java の変換と実行に使う手元のサーバーへ接続する                                                |
 | 実行環境   | Java の提出補助              | 貼り付けたコードの変換とショートカットでの提出                                                 |
 | 実行環境   | Easy Test(Java 向け、OFF)    | Java の解答向けに問題ページからサンプルを実行する                                              |
-| 実行環境   | paiza の言語選択             | paiza の提出ページで言語を自動で選ぶ                                                           |
+| 実行環境   | paiza の言語選択             | paiza の提出ページで言語を自動で選ぶ。言語を設定するまでは動かない                             |
 
 対象サイトは AtCoder が中心です。Easy Test は yukicoder と Codeforces、Java の提出補助は Codeforces、AOJ、Library Checker、paiza でも動きます。
 
