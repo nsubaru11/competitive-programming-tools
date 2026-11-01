@@ -25,6 +25,9 @@ function resolveProjectRoot() {
 
 export const PROJECT_ROOT = resolveProjectRoot();
 
+// 提出先の Java バージョン。これより新しい JDK では javac の --release で揃える。
+export const TARGET_JAVA_VERSION = process.env.ATCODER_JAVA_VER || "24";
+
 let preparedLibrarySourceRoot: string | null = null;
 
 function findLibrarySourceRoot(): string {

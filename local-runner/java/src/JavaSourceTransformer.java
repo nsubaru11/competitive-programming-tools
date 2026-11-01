@@ -119,7 +119,9 @@ final class JavaSourceTransformer {
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, Locale.ROOT, UTF_8)) {
 			final Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromPaths(sources);
-			final Boolean success = compiler.getTask(null, fileManager, diagnostics, List.of("-encoding", "UTF-8", "-proc:none", "-implicit:none", "-d", classPath.toString()), null, units).call();
+			final List<String> options = new ArrayList<>(List.of("-encoding", "UTF-8", "-proc:none", "-implicit:none", "-d", classPath.toString()));
+			options.addAll(JavaCompilerService.RELEASE_OPTIONS);
+			final Boolean success = compiler.getTask(null, fileManager, diagnostics, options, null, units).call();
 			if (!Boolean.TRUE.equals(success)) {
 				throw new IOException("library classpath compilation failed:\n" + diagnostics.getDiagnostics().stream().map(diagnostic -> diagnostic.getKind() + " " + diagnostic.getMessage(Locale.ROOT)).collect(Collectors.joining("\n")));
 			}
@@ -314,7 +316,6 @@ final class JavaSourceTransformer {
 
 	private void addMainAndDebugEdits(final String source, final Analysis analysis, final boolean debug, final List<Edit> edits) {
 		final MainClass main = findMainClass(analysis);
-		if (main == null) return;
 		final String oldName = main.tree().getSimpleName().toString();
 		if (!"Main".equals(oldName)) {
 			final Set<Span> spans = new LinkedHashSet<>();
@@ -352,24 +353,31 @@ final class JavaSourceTransformer {
 		}
 	}
 
+	/**
+	 * 提出先が起動するクラスを決めます。候補が複数なら {@code Main} という名前のものを選び、決められなければ失敗します。
+	 */
 	private MainClass findMainClass(final Analysis analysis) {
-		final MainClass[] found = {null};
-		new TreePathScanner<Void, Void>() {
-			@Override
-			public Void visitClass(final ClassTree node, final Void unused) {
-				if (found[0] != null) return null;
-				for (final Tree member : node.getMembers()) {
-					if (!(member instanceof MethodTree method) || !method.getName().contentEquals("main")) continue;
-					final Set<Modifier> flags = method.getModifiers().getFlags();
-					if (!flags.contains(Modifier.PUBLIC) || !flags.contains(Modifier.STATIC) || method.getParameters().size() != 1)
-						continue;
-					final Element element = analysis.trees().getElement(getCurrentPath());
-					if (element instanceof TypeElement type) found[0] = new MainClass(node, type);
-				}
-				return found[0] == null ? super.visitClass(node, unused) : null;
-			}
-		}.scan(analysis.solution(), null);
-		return found[0];
+		final List<MainClass> candidates = new ArrayList<>();
+		for (final Tree declaration : analysis.solution().getTypeDecls()) {
+			if (!(declaration instanceof ClassTree type)) continue;
+			final TreePath path = TreePath.getPath(analysis.solution(), type);
+			if (!(analysis.trees().getElement(path) instanceof TypeElement element)) continue;
+			if (type.getMembers().stream().anyMatch(member -> isMainMethod(member, path, analysis.trees())))
+				candidates.add(new MainClass(type, element));
+		}
+		if (candidates.isEmpty())
+			throw new IllegalStateException("no top-level type declares public static void main(String[])");
+		if (candidates.size() == 1) return candidates.getFirst();
+		return candidates.stream().filter(candidate -> candidate.tree().getSimpleName().contentEquals("Main")).findFirst().orElseThrow(() -> new IllegalStateException("main method is ambiguous: " + candidates.stream().map(candidate -> candidate.tree().getSimpleName().toString()).collect(Collectors.joining(", "))));
+	}
+
+	private boolean isMainMethod(final Tree member, final TreePath classPath, final Trees trees) {
+		if (!(member instanceof MethodTree method) || !method.getName().contentEquals("main")) return false;
+		if (!(trees.getElement(new TreePath(classPath, method)) instanceof ExecutableElement element)) return false;
+		final Set<Modifier> flags = element.getModifiers();
+		if (!flags.contains(Modifier.PUBLIC) || !flags.contains(Modifier.STATIC)) return false;
+		if (element.getReturnType().getKind() != TypeKind.VOID || element.getParameters().size() != 1) return false;
+		return element.getParameters().getFirst().asType() instanceof ArrayType array && array.getComponentType().toString().equals("java.lang.String");
 	}
 
 	private String transformLibraryUnit(final String source, final Parsed parsed) {
@@ -401,6 +409,7 @@ final class JavaSourceTransformer {
 		final List<CompilationUnitTree> units = new ArrayList<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, Locale.ROOT, UTF_8)) {
 			final List<String> options = new ArrayList<>(List.of("-encoding", "UTF-8", "-proc:none", "-implicit:none"));
+			options.addAll(JavaCompilerService.RELEASE_OPTIONS);
 			if (classPath != null) options.addAll(List.of("-classpath", classPath.toString()));
 			final JavacTask task = (JavacTask) compiler.getTask(output, fileManager, diagnostics, options, null, List.of(unit));
 			task.setTaskListener(new TaskListener() {
@@ -438,10 +447,14 @@ final class JavaSourceTransformer {
 	private String primaryTypeName(final String source) {
 		try {
 			final Parsed parsed = parse(source, URI.create("string:///Submission.java"));
+			String first = null;
 			for (final Tree declaration : parsed.unit().getTypeDecls()) {
-				if (declaration instanceof ClassTree type && !type.getSimpleName().isEmpty())
-					return type.getSimpleName().toString();
+				if (!(declaration instanceof ClassTree type) || type.getSimpleName().isEmpty()) continue;
+				// public な型はファイル名と一致している必要があるので、先頭の型より優先する
+				if (type.getModifiers().getFlags().contains(Modifier.PUBLIC)) return type.getSimpleName().toString();
+				if (first == null) first = type.getSimpleName().toString();
 			}
+			if (first != null) return first;
 		} catch (final Exception ignored) {
 		}
 		return "Submission";

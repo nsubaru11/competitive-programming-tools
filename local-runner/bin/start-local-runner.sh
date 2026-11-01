@@ -40,6 +40,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_PATH="$SCRIPT_DIR/../src/daemon/server.ts"
 
 JAVA_VER="${1:-24}"
+export ATCODER_JAVA_VER="$JAVA_VER"
 
 JAVA_HOME_VAR="JAVA_HOME_${JAVA_VER}"
 JAVA_PATH="${!JAVA_HOME_VAR:-${JAVA_HOME:-}}"

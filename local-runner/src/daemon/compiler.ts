@@ -95,6 +95,8 @@ export function getJavaVersion() {
 }
 
 export const JAVA_VERSION = getJavaVersion();
+/** JDK が提出先より新しいときに javac の --release へ渡す値。それ以外は空文字列。 */
+export const JAVAC_RELEASE = Number(JAVA_VERSION) > Number(config.TARGET_JAVA_VERSION) ? config.TARGET_JAVA_VERSION : "";
 export const RUNNER_LABEL = process.platform === "linux"
 	? `Java ${JAVA_VERSION} (WSL Daemon Local)`
 	: `Java ${JAVA_VERSION} (Daemon Local)`;
@@ -331,7 +333,7 @@ async function compileSource(sourceCode: string, hash: string): Promise<CompileE
 	} else {
 		const result = await runProcessCommand(
 			JAVAC_PATH,
-			["-encoding", "UTF-8", "-g", "-d", "classes", "Main.java"],
+			["-encoding", "UTF-8", "-g", ...(JAVAC_RELEASE ? ["--release", JAVAC_RELEASE] : []), "-d", "classes", "Main.java"],
 			{cwd: rootDir, env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs},
 		);
 		timedOut = result.timedOut;

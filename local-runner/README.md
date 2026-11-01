@@ -17,7 +17,7 @@ tools/local-runner/
 └── java/              # README + src/（Dispatcher ほか常駐 JVM のクラス群・PROTOCOL.md・WarmUp.java）
 ```
 
-`@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は userscript の AtCoder Easy Test for Java と同じ `evaluateEasyTestOutput` です。
+`@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は CP Toolkit の Easy Test と同じ `evaluateEasyTestOutput` です。
 
 ## セキュリティ
 
@@ -56,6 +56,8 @@ tools/local-runner/
 ### `lib.*` の自動バンドル
 
 提出前処理はTSの正規表現ではなく、常駐JVM内のJava Compiler API（`JavacTask` / `Trees` / `SourcePositions`）を使います。型解決、Main対象、コンストラクタ・自己参照、DEBUGフィールド、package/import範囲をjavacの構文木とシンボルから決定し、生成後の単一ソースも再解析します。
+
+提出用の`Main`にするのは、`public static void main(String[])`を持つトップレベルの型です。複数あるときは`Main`という名前の型を選び、それも無いときや候補が無いときはエラーで止まります。
 
 解答では通常のJavaコードとして競プロライブラリをimportできます。
 
@@ -203,12 +205,14 @@ bun run --cwd local-runner localtest D.java
 | `LOCAL_RUNNER_BACKEND`           | Windowsで`native`を明示する診断用上書き            | `wsl`                          |
 | `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                          |
 | `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                           |
-| `ATCODER_JAVA_VER`               | auto-start で渡す Java バージョン                  | `24`                           |
+| `ATCODER_JAVA_VER`               | 提出先の Java バージョン（下記）                   | `24`                           |
 | `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`          |
 | `ATCODER_HEADER_FILE`            | 提出物の先頭に付ける既定のヘッダーファイル         | `../templates/header/java.txt` |
 | `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                              |
 | `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                              |
 | `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`       |
+
+`ATCODER_JAVA_VER` は auto-start で使う JDK を選びます。起動した JDK の方が新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
 
 既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
 

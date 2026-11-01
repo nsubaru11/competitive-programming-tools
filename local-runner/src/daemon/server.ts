@@ -374,6 +374,9 @@ async function bootstrap() {
 	logging.logInfo(`Prepared library source: ${libraryRoots.prepared}`);
 	logging.logInfo(`Log file: ${config.LOG_FILE_PATH}`);
 	logging.logInfo(`Log rotation size: ${config.RUNNER_CONFIG.maxLogFileSize} bytes`);
+	if (compiler.JAVA_VERSION !== config.TARGET_JAVA_VERSION) {
+		logging.logWarn(`Java ${compiler.JAVA_VERSION} differs from the submission target Java ${config.TARGET_JAVA_VERSION}.`);
+	}
 	logging.logInfo(`Dispatcher capture limit: ${config.RUNNER_CONFIG.dispatcherCaptureLimitBytes} bytes`);
 	logging.logInfo(`WarmUp profile: ${config.RUNNER_CONFIG.warmUpProfile} (repeat=${config.WARMUP_REPEAT_COUNT}, timeout=${config.RUNNER_CONFIG.warmUpRunTimeoutMs}ms)`);
 	dispatcher.logCaptureAndBodySizeBalance();

@@ -1,10 +1,9 @@
 import {spawn, spawnSync} from "node:child_process";
 import path from "node:path";
-import {CLI_CONFIG, PROJECT_ROOT} from "../config";
+import {CLI_CONFIG, PROJECT_ROOT, TARGET_JAVA_VERSION} from "../config";
 
 const READY_TIMEOUT_MS = Number(process.env.LOCAL_RUNNER_START_TIMEOUT_MS || 60000);
 const POLL_INTERVAL_MS = 500;
-const JAVA_VER = process.env.ATCODER_JAVA_VER || "24";
 
 /** ヘルスチェック: POST {mode:"list"} が 200 を返せば daemon は利用可能（warmUp 済み）。 */
 async function pingServer(timeoutMs = 1500): Promise<boolean> {
@@ -63,7 +62,7 @@ function startServer(): void {
 		// cmd /k により .sh 終了後も窓が残り、エラーログを読める。
 		const child = spawn(
 			"cmd.exe",
-			["/c", "start", "Local Runner", "cmd", "/k", "wsl.exe", "--cd", binDir, "--", "bash", "./start-local-runner.sh", JAVA_VER],
+			["/c", "start", "Local Runner", "cmd", "/k", "wsl.exe", "--cd", binDir, "--", "bash", "./start-local-runner.sh", TARGET_JAVA_VERSION],
 			{stdio: "ignore"},
 		);
 		child.unref();
@@ -79,7 +78,7 @@ function startServer(): void {
 		`mkdir -p "$HOME/.atcoder" && ` +
 		`echo "=== autostart $(date) ===" >> "$HOME/.atcoder/runner-autostart.log" && ` +
 		`cd ${shq(binDir)} && chmod +x ./start-local-runner.sh && ` +
-		`{ ${exportsPart}setsid nohup ./start-local-runner.sh ${shq(JAVA_VER)} < /dev/null >> "$HOME/.atcoder/runner-autostart.log" 2>&1 & }`;
+		`{ ${exportsPart}setsid nohup ./start-local-runner.sh ${shq(TARGET_JAVA_VERSION)} < /dev/null >> "$HOME/.atcoder/runner-autostart.log" 2>&1 & }`;
 	const child = spawn("bash", ["-lc", inner], {stdio: "ignore"});
 	child.unref();
 }

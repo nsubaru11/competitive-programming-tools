@@ -167,7 +167,7 @@ async function startDispatcher() {
 	await new Promise<void>((resolve, reject) => {
 		const proc = spawn(compiler.JAVA_PATH, ["-cp", RUNNER_CONFIG.dispatcherBuildDir, "Dispatcher"], {
 			cwd: RUNNER_CONFIG.dispatcherBuildDir,
-			env: compiler.JAVA_ENV,
+			env: {...compiler.JAVA_ENV, LOCAL_RUNNER_JAVAC_RELEASE: compiler.JAVAC_RELEASE},
 			stdio: ["pipe", "pipe", "pipe"],
 		});
 		const lineReader = readline.createInterface({

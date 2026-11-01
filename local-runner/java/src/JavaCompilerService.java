@@ -11,8 +11,21 @@ import java.util.*;
  * </p>
  */
 final class JavaCompilerService {
+	/**
+	 * javac の {@code --release} に渡す値の環境変数名（JDK が提出先より新しいときだけ server が設定する）
+	 */
+	private static final String RELEASE_ENV = "LOCAL_RUNNER_JAVAC_RELEASE";
+	/**
+	 * 解析とコンパイルを提出先の Java バージョンに揃える javac オプション
+	 */
+	static final List<String> RELEASE_OPTIONS = resolveReleaseOptions();
 	private static final Charset UTF_8 = StandardCharsets.UTF_8;
 	private final JavaCompiler compiler;
+
+	private static List<String> resolveReleaseOptions() {
+		final String raw = System.getenv(RELEASE_ENV);
+		return raw == null || raw.isBlank() ? List.of() : List.of("--release", raw.trim());
+	}
 
 	public JavaCompilerService() {
 		compiler = ToolProvider.getSystemJavaCompiler();
@@ -35,7 +48,8 @@ final class JavaCompilerService {
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, UTF_8)) {
 			Files.createDirectories(outputDirectory);
 			final Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjects(sourceFile.toFile());
-			final List<String> options = List.of("-encoding", "UTF-8", "-g:lines,source", "-proc:none", "-implicit:none", "-d", outputDirectory.toString());
+			final List<String> options = new ArrayList<>(List.of("-encoding", "UTF-8", "-g:lines,source", "-proc:none", "-implicit:none", "-d", outputDirectory.toString()));
+			options.addAll(RELEASE_OPTIONS);
 			final boolean ok = compiler.getTask(additionalOutput, fileManager, diagnostics, options, null, units).call();
 			final StringBuilder message = new StringBuilder();
 			for (final Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {

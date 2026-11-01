@@ -86,6 +86,53 @@ public final class JavaSourceTransformerTest {
 			check(renamed.sourceCode().contains("new Main()"), "class reference was not renamed");
 			check(renamed.sourceCode().contains("String Solver ="), "unrelated identifier was renamed");
 
+			final SourceTransformResult overloaded = transformer.transform("""
+					final class Helper {
+						public static int main(int[] values) { return values.length; }
+					}
+					public final class Solver {
+						public static void main(String... args) {}
+					}
+					""", root, false, true);
+			check(overloaded.exitCode() == 0, overloaded.diagnostics());
+			check(overloaded.sourceCode().contains("class Helper"), "class without a real main was renamed");
+			check(overloaded.sourceCode().contains("public final class Main"), "class with a real main was not renamed");
+
+			final SourceTransformResult preferred = transformer.transform("""
+					final class Tool {
+						public static void main(String[] args) {}
+					}
+					public final class Main {
+						public static void main(String[] args) {}
+					}
+					""", root, false, true);
+			check(preferred.exitCode() == 0, preferred.diagnostics());
+			check(preferred.sourceCode().contains("class Tool"), "Main was not preferred among main methods");
+
+			final SourceTransformResult ambiguous = transformer.transform("""
+					final class First {
+						public static void main(String[] args) {}
+					}
+					final class Second {
+						public static void main(String[] args) {}
+					}
+					""", root, false, true);
+			check(ambiguous.exitCode() != 0, "ambiguous main unexpectedly succeeded");
+			check(ambiguous.diagnostics().contains("First, Second"), ambiguous.diagnostics());
+
+			final SourceTransformResult nested = transformer.transform("""
+					public final class Outer {
+						static final class Inner {
+							public static void main(String[] args) {}
+						}
+					}
+					""", root, false, true);
+			check(nested.exitCode() != 0, "nested main unexpectedly succeeded");
+
+			final SourceTransformResult noMain = transformer.transform("public final class Helper {}", root, false, true);
+			check(noMain.exitCode() != 0, "source without main unexpectedly succeeded");
+			check(noMain.diagnostics().contains("main(String[])"), noMain.diagnostics());
+
 			final SourceTransformResult broken = transformer.transform("public class Broken { MissingType value; }", root, false, true);
 			check(broken.exitCode() != 0, "broken source unexpectedly succeeded");
 			check(!broken.diagnosticItems().isEmpty(), "structured diagnostics are empty");
