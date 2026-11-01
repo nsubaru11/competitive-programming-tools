@@ -12,7 +12,7 @@ import {ratingGraph} from "@features/rating-graph/index";
 import {resultNotifier} from "@features/result-notifier/index";
 import {statementCopy} from "@features/statement-copy/index";
 import {statementHighlight} from "@features/statement-highlight/index";
-import {submissionDefaults} from "@features/submission-defaults/index";
+import {submissionQuery} from "@features/submission-query/index";
 import {submissionShortcuts} from "@features/submission-shortcuts/index";
 import {submissionTimer} from "@features/submission-timer/index";
 import {taskDropdown} from "@features/task-dropdown/index";
@@ -27,7 +27,7 @@ export const features: readonly Feature[] = [
 	statementHighlight,
 	statementCopy,
 	efficientLayout,
-	submissionDefaults,
+	submissionQuery,
 	submissionShortcuts,
 	resultNotifier,
 	averageResult,

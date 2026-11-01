@@ -31,18 +31,6 @@ export const LEGACY_SCRIPTS: Readonly<Record<string, (stored: Stored) => readonl
 		featureId: "wide-layout",
 		options: defined({width: stored.containerWidth}),
 	}],
-	AtCoderCustomDefaultSubmissions: (stored) => {
-		const config = parseStoredObject<Stored>(stored.config);
-		return [{
-			featureId: "submission-defaults",
-			options: defined({
-				language: config.language,
-				status: config.status,
-				orderBy: config.orderBy,
-				taskFilter: config.includeTaskFilter,
-			}),
-		}];
-	},
 	AtCoderEasyTestForJava: (stored) => {
 		const config = parseStoredObject<Stored>(stored.config);
 		return [

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.3
+// @version        1.0.4
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -868,20 +868,6 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				options: defined({width: stored.containerWidth}),
 			},
 		],
-		AtCoderCustomDefaultSubmissions: (stored) => {
-			const config = parseStoredObject(stored.config);
-			return [
-				{
-					featureId: "submission-defaults",
-					options: defined({
-						language: config.language,
-						status: config.status,
-						orderBy: config.orderBy,
-						taskFilter: config.includeTaskFilter,
-					}),
-				},
-			];
-		},
 		AtCoderEasyTestForJava: (stored) => {
 			const config = parseStoredObject(stored.config);
 			return [
@@ -1972,17 +1958,8 @@ ${settings_panel_default}`,
 		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen)",
 		"efficientLayout.samples": "Samples",
 		"efficientLayout.ioFormat": "Input and output",
-		"submissionDefaults.title": "Default submission filters",
-		"submissionDefaults.description": "Applies language, status, and sort defaults to the submission tabs.",
-		"submissionDefaults.language": "Language (e.g. Java, C++, Python)",
-		"submissionDefaults.status": "Status (e.g. AC, or empty for all)",
-		"submissionDefaults.orderBy": "Sort by",
-		"submissionDefaults.orderTime": "Execution time",
-		"submissionDefaults.orderMemory": "Memory",
-		"submissionDefaults.orderLength": "Code size",
-		"submissionDefaults.orderScore": "Score",
-		"submissionDefaults.taskFilter": "Also filter by task on task pages",
-		"submissionDefaults.keepQuery": "Keep search filters between All and My submissions",
+		"submissionQuery.title": "Keep search filters",
+		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
 		"submissionShortcuts.title": "Shortcuts to AC submissions",
 		"submissionShortcuts.description": "Adds links to AC submissions sorted by time and by code size.",
 		"submissionShortcuts.language": "Language (empty for all)",
@@ -2126,17 +2103,8 @@ ${settings_panel_default}`,
 		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %)",
 		"efficientLayout.samples": "入出力例",
 		"efficientLayout.ioFormat": "入出力形式",
-		"submissionDefaults.title": "提出一覧の既定の絞り込み",
-		"submissionDefaults.description": "提出タブのリンクに、言語や結果の絞り込みと並び順を設定します。",
-		"submissionDefaults.language": "言語(例: Java, C++, Python)",
-		"submissionDefaults.status": "結果(例: AC。空欄ならすべて)",
-		"submissionDefaults.orderBy": "並び順",
-		"submissionDefaults.orderTime": "実行時間",
-		"submissionDefaults.orderMemory": "メモリ",
-		"submissionDefaults.orderLength": "コード長",
-		"submissionDefaults.orderScore": "得点",
-		"submissionDefaults.taskFilter": "問題ページでは問題でも絞り込む",
-		"submissionDefaults.keepQuery": "「すべての提出」と「自分の提出」の間で検索条件を保持する",
+		"submissionQuery.title": "検索条件の保持",
+		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
 		"submissionShortcuts.title": "AC 提出への近道",
 		"submissionShortcuts.description": "問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
@@ -7972,60 +7940,23 @@ ${statement_highlight_default}`);
 		},
 	});
 
-	// CpToolkit/src/features/submission-defaults/index.ts
-	var SUBMISSION_PATH_PATTERN = /\/submissions(?:\/me)?\/?$/;
+	// CpToolkit/src/features/submission-query/index.ts
 	var SUBMISSION_PAGE_TABS = "#main-container > div.row > div:nth-child(2) > ul > li > a";
-
-	function applyDefaultQuery(query2) {
-		for (const link of document.querySelectorAll("#contest-nav-tabs a")) {
-			const href = link.getAttribute("href");
-			if (!href) continue;
-			const url = new URL(href, location.origin);
-			if (!SUBMISSION_PATH_PATTERN.test(url.pathname)) continue;
-			url.search = query2;
-			link.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
-		}
-	}
-
-	function keepSearchQuery() {
-		for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
-			const url = new URL(tab.getAttribute("href") ?? "", location.origin);
-			url.search = location.search;
-			tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
-		}
-	}
-
-	var submissionDefaults = defineFeature({
-		id: "submission-defaults",
-		title: "submissionDefaults.title",
-		description: "submissionDefaults.description",
+	var submissionQuery = defineFeature({
+		id: "submission-query",
+		title: "submissionQuery.title",
+		description: "submissionQuery.description",
 		category: "category.submission",
 		defaultEnabled: true,
-		routes: ["atcoder:contest"],
+		routes: ["atcoder:submissions"],
 		phase: "ready",
-		options: {
-			language: option.text("Java", "submissionDefaults.language"),
-			status: option.text("AC", "submissionDefaults.status"),
-			orderBy: option.select("time_consumption", "submissionDefaults.orderBy", [
-				{value: "time_consumption", label: "submissionDefaults.orderTime"},
-				{value: "memory_consumption", label: "submissionDefaults.orderMemory"},
-				{value: "source_length", label: "submissionDefaults.orderLength"},
-				{value: "score", label: "submissionDefaults.orderScore"},
-			]),
-			taskFilter: option.boolean(true, "submissionDefaults.taskFilter"),
-			keepQuery: option.boolean(true, "submissionDefaults.keepQuery"),
-		},
-		start({options, isOnRoute}) {
-			const task = options.taskFilter ? parseAtCoderTaskUrl(location.href)?.taskId : undefined;
-			applyDefaultQuery(
-				buildAtCoderSubmissionsQuery({
-					language: options.language,
-					status: options.status,
-					orderBy: options.orderBy,
-					task,
-				}),
-			);
-			if (options.keepQuery && isOnRoute("atcoder:submissions")) keepSearchQuery();
+		options: {},
+		start() {
+			for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
+				const url = new URL(tab.getAttribute("href") ?? "", location.origin);
+				url.search = location.search;
+				tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+			}
 		},
 	});
 
@@ -8592,7 +8523,7 @@ ${wide_layout_default}`);
 		statementHighlight,
 		statementCopy,
 		efficientLayout,
-		submissionDefaults,
+		submissionQuery,
 		submissionShortcuts,
 		resultNotifier,
 		averageResult,

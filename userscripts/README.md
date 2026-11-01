@@ -59,7 +59,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 | スクリプト                         | CP Toolkit の機能        |
 |------------------------------------|--------------------------|
-| AtCoder Custom Default Submissions | 提出一覧の既定の絞り込み |
+| AtCoder Custom Default Submissions | AC 提出への近道(既定の絞り込みは廃止) |
 | AtCoder Easy Test for Java         | Easy Test、Local Runner  |
 | AtCoder Highlighter                | 問題文の強調表示         |
 | AtCoder Listing Tasks              | 問題のドロップダウン     |

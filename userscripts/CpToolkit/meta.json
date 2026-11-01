@@ -1,7 +1,7 @@
 {
 	"name": "CP Toolkit",
 	"name:en": "CP Toolkit",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。",
 	"description:ja": "競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。",
 	"description:en": "A toolkit of competitive programming helpers that can be switched on and off individually.",

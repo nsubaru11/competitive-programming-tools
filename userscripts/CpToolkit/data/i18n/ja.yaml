@@ -58,17 +58,8 @@ efficientLayout.sampleWidth: サンプル1組の幅(画面幅に対する %)
 efficientLayout.samples: 入出力例
 efficientLayout.ioFormat: 入出力形式
 
-submissionDefaults.title: 提出一覧の既定の絞り込み
-submissionDefaults.description: 提出タブのリンクに、言語や結果の絞り込みと並び順を設定します。
-submissionDefaults.language: "言語(例: Java, C++, Python)"
-submissionDefaults.status: "結果(例: AC。空欄ならすべて)"
-submissionDefaults.orderBy: 並び順
-submissionDefaults.orderTime: 実行時間
-submissionDefaults.orderMemory: メモリ
-submissionDefaults.orderLength: コード長
-submissionDefaults.orderScore: 得点
-submissionDefaults.taskFilter: 問題ページでは問題でも絞り込む
-submissionDefaults.keepQuery: 「すべての提出」と「自分の提出」の間で検索条件を保持する
+submissionQuery.title: 検索条件の保持
+submissionQuery.description: 提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。
 
 submissionShortcuts.title: AC 提出への近道
 submissionShortcuts.description: 問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。

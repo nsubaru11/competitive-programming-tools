@@ -57,17 +57,8 @@ efficientLayout.sampleWidth: Width of each sample pair (% of the screen)
 efficientLayout.samples: Samples
 efficientLayout.ioFormat: Input and output
 
-submissionDefaults.title: Default submission filters
-submissionDefaults.description: Applies language, status, and sort defaults to the submission tabs.
-submissionDefaults.language: "Language (e.g. Java, C++, Python)"
-submissionDefaults.status: "Status (e.g. AC, or empty for all)"
-submissionDefaults.orderBy: Sort by
-submissionDefaults.orderTime: Execution time
-submissionDefaults.orderMemory: Memory
-submissionDefaults.orderLength: Code size
-submissionDefaults.orderScore: Score
-submissionDefaults.taskFilter: Also filter by task on task pages
-submissionDefaults.keepQuery: Keep search filters between All and My submissions
+submissionQuery.title: Keep search filters
+submissionQuery.description: Keeps search filters when switching between All and My submissions.
 
 submissionShortcuts.title: Shortcuts to AC submissions
 submissionShortcuts.description: Adds links to AC submissions sorted by time and by code size.

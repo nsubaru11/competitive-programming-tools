@@ -336,7 +336,7 @@ async function loadMeta(name: string): Promise<ScriptMeta> {
 // region ビルド
 /** CP Toolkit へ統合したスクリプトと、新版へ引き継ぐ GM の設定キー。 */
 const RETIRED_SCRIPTS: Readonly<Record<string, readonly string[]>> = {
-	AtCoderCustomDefaultSubmissions: ["config"],
+	AtCoderCustomDefaultSubmissions: [],
 	AtCoderEasyTestForJava: ["config"],
 	AtCoderHighlighter: ["numColor", "varColor", "timeLimitColor", "memoryLimitColor"],
 	AtCoderListingTasks: [],

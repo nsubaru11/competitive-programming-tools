@@ -23,7 +23,7 @@
 // 更新を終了したスクリプトの先頭に埋め込む処理。build.ts がスクリプト名と設定キーを置き換える。
 const cpToolkitRetirement = (() => {
 	const scriptId = "AtCoderCustomDefaultSubmissions";
-	const settingKeys = ["config"];
+	const settingKeys = [];
 	const installUrl =
 		"https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/main/userscripts/CpToolkit/dist/CpToolkit.user.js";
 	const noticeKey = `cp-toolkit:retired-notice:${scriptId}`;

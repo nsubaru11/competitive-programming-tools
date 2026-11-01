@@ -6,7 +6,7 @@ import {efficientLayout} from "@features/efficient-layout/index";
 import {historyColors} from "@features/history-colors/index";
 import {statementCopy} from "@features/statement-copy/index";
 import {statementHighlight} from "@features/statement-highlight/index";
-import {submissionDefaults} from "@features/submission-defaults/index";
+import {submissionQuery} from "@features/submission-query/index";
 import {submissionShortcuts} from "@features/submission-shortcuts/index";
 import {tessokuDifficulty} from "@features/tessoku-difficulty/index";
 import {topLinks} from "@features/top-links/index";
@@ -148,18 +148,20 @@ describe("statementCopy", () => {
 	});
 });
 
-describe("submissionDefaults", () => {
-	test("提出タブのリンクに絞り込みを設定する", async () => {
-		document.body.innerHTML = `<ul id="contest-nav-tabs">
+describe("submissionQuery", () => {
+	test("検索条件を提出ページのタブへ引き継ぐ", async () => {
+		history.replaceState(null, "", "/contests/abc420/submissions?f.Task=abc420_a&f.Status=AC");
+		document.body.innerHTML = `<div id="main-container"><div class="row"><div></div><div><ul>
+			<li><a href="/contests/abc420/submissions">すべての提出</a></li>
 			<li><a href="/contests/abc420/submissions/me">自分の提出</a></li>
-			<li><a href="/contests/abc420/standings">順位表</a></li>
-		</ul>`;
-		await run(submissionDefaults, {language: "Rust", status: "", taskFilter: false});
+		</ul></div></div></div>`;
+		await run(submissionQuery);
 
-		const href = document.querySelector("a")?.getAttribute("href") ?? "";
-		expect(href).toContain("f.LanguageName=Rust");
-		expect(href).toContain("orderBy=time_consumption");
-		expect(document.querySelectorAll("a")[1]?.getAttribute("href")).toBe("/contests/abc420/standings");
+		const hrefs = [...document.querySelectorAll("a")].map((link) => link.getAttribute("href"));
+		expect(hrefs).toEqual([
+			"/contests/abc420/submissions?f.Task=abc420_a&f.Status=AC",
+			"/contests/abc420/submissions/me?f.Task=abc420_a&f.Status=AC",
+		]);
 	});
 });
 
