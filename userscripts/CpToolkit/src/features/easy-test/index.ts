@@ -115,15 +115,17 @@ class EasyTest {
 		});
 	}
 
+	/** 選んでいる言語を Local Runner が扱えるときだけ、編集中のコードをコンパイルしておく。 */
 	private watchSource(): void {
-		const {localRunner} = this.context;
 		let timer: ReturnType<typeof setTimeout> | undefined;
+		const prepare = (): void => {
+			const code = this.site.sourceCode();
+			const runner = this.candidates.find(({kind}) => kind === "local");
+			if (code) void runner?.prepare?.(code)?.catch(() => undefined);
+		};
 		const schedule = (): void => {
 			clearTimeout(timer);
-			timer = setTimeout(() => {
-				const code = this.site.sourceCode();
-				if (code && localRunner.isAvailable()) void localRunner.prepare(code).catch(() => undefined);
-			}, PRECOMPILE_DELAY_MS);
+			timer = setTimeout(() => void this.refreshing.then(prepare), PRECOMPILE_DELAY_MS);
 		};
 		this.site.onSourceChange(schedule);
 		schedule();

@@ -41,8 +41,10 @@ export const editorialList = defineFeature({
 	phase: "ready",
 	options: {},
 	async start(context) {
+		// 読み込んだ内容をページへ入れるので、AtCoder の解説だけを対象にする
 		const links = [...document.querySelectorAll("a")].filter((link) => {
-			return EDITORIAL_LINK_PATTERN.test(link.href) && !link.classList.contains("spoiler");
+			const isOwnEditorial = link.origin === location.origin && EDITORIAL_LINK_PATTERN.test(link.pathname);
+			return isOwnEditorial && !link.classList.contains("spoiler");
 		});
 		if (links.length === 0) return;
 		injectStyle(css);

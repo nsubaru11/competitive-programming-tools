@@ -164,11 +164,13 @@ historyColors.modeText: Text
 historyColors.modeBackground: Background
 
 localRunner.title: Local Runner
-localRunner.description: Connects to the local server used to transform and run Java code.
+localRunner.description: Connects to the local server used to transform and run code.
 localRunner.url: Server URL
 
 javaSubmit.title: Java submission helper
-javaSubmit.description: Transforms pasted code for submission and adds submit shortcuts.
+javaSubmit.description: Transforms pasted code for submission and adds submit shortcuts. Removing packages, renaming the class and disabling DEBUG work without Local Runner. Expanding lib.*, completing imports and adding the header need Local Runner.
+javaSubmit.localRunnerRequired: Expanding lib.* needs Local Runner
+javaSubmit.localRunnerGuide: Could not connect to Local Runner, so only the basic transform was applied. Submitting this code causes a compile error. The link shows how to set it up.
 javaSubmit.removePackage: Remove package declarations without Local Runner
 javaSubmit.renameClass: Rename the class to Main without Local Runner
 javaSubmit.fixDebug: Set DEBUG to false without Local Runner

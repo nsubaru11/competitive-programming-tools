@@ -6,6 +6,7 @@ import {CodeforcesSite} from "@adapters/judges/codeforces";
 import {languagesOf} from "@adapters/judges/languages";
 import {YukicoderSite} from "@adapters/judges/yukicoder";
 import {LocalStorageLegacyInbox} from "@adapters/page/local-storage-legacy-inbox";
+import {SameOriginHttpClient} from "@adapters/page/same-origin-http-client";
 import {WorkerTicker} from "@adapters/page/worker-ticker";
 import {LocalRunnerProvider, PaizaRunnerProvider} from "@adapters/runners/simple-runners";
 import {WandboxRunnerProvider} from "@adapters/runners/wandbox";
@@ -45,6 +46,35 @@ describe("問題文の変換", () => {
 		expect(text).toContain("$M$");
 		expect(text).toContain("$$\n\\sum_{i=1}^N A_i\n$$");
 		expect(text).not.toContain("描画結果");
+	});
+});
+
+describe("SameOriginHttpClient", () => {
+	test("別のサイトへは送らない", async () => {
+		const client = new SameOriginHttpClient();
+		await expect(client.send({url: "https://evil.example/data"})).rejects.toThrow("Cross-origin");
+	});
+});
+
+describe("PaizaRunnerProvider の確認", () => {
+	const java = {id: "1", label: "Python", family: "python3"};
+
+	test("実行中は間隔を空けて確認する", async () => {
+		const times: number[] = [];
+		let checks = 0;
+		const http = new FakeHttpClient(({url}) => {
+			if (url.includes("/create")) return {status: 200, text: '{"id": "x", "status": "running"}'};
+			if (url.includes("/get_status")) {
+				times.push(Date.now());
+				return {status: 200, text: `{"status": "${++checks < 2 ? "running" : "completed"}"}`};
+			}
+			return {status: 200, text: '{"exit_code": 0, "time": "0", "memory": "0", "stdout": "1", "result": "success"}'};
+		});
+		const [runner] = await new PaizaRunnerProvider(http).runnersFor(java);
+		const result = await runner?.run("print(1)", "", {});
+
+		expect(result?.output).toBe("1");
+		expect((times[1] ?? 0) - (times[0] ?? 0)).toBeGreaterThanOrEqual(900);
 	});
 });
 

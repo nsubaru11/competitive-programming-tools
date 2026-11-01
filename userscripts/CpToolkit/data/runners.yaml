@@ -4,6 +4,9 @@ order: [local, judge, browser, paiza, wandbox]
 # 実行環境が内部エラーを返したときに、次の候補へ切り替える回数
 maxRetry: 3
 
+# コードを外部のサービスへ送る実行環境。利用者が選んだときだけ使い、自動では切り替えない
+external: [paiza, wandbox]
+
 # Tampermonkey の @connect に出力する
 connect:
   - localhost
@@ -46,3 +49,5 @@ wandbox:
 
 pyodide:
   baseUrl: https://cdn.jsdelivr.net/pyodide/v0.24.0/full/
+  # pyodide.js の integrity。版を変えたら計算し直す
+  integrity: sha384-hxqITTjjSqs/ZNr6/q1sP+9wWFKuZ0jBiNJCqnaaiGb2/Qnq+d5DEiN3/oHDLGkk

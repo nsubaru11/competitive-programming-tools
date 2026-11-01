@@ -248,6 +248,7 @@ describe("ソースコードのコメント", () => {
 
 	test("変数を置き換え、知らない名前は残す", () => {
 		expect(fillVariables("{task} {x}", {task: "abc1_a"})).toBe("abc1_a {x}");
+		expect(fillVariables("{constructor} {__proto__}", {})).toBe("{constructor} {__proto__}");
 	});
 
 	test("貼り付けでコード全体が置き換わったか判定する", () => {

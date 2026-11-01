@@ -26,6 +26,7 @@ export class LocalRunnerError extends Error {
 export class LocalRunnerClient {
 	private prepared: {
 		endpoint: string;
+		compilerName: string;
 		sourceCode: string;
 		response: Promise<LocalRunnerPrepareResponse>
 	} | null = null;
@@ -49,12 +50,15 @@ export class LocalRunnerClient {
 	}
 
 	/** 同じソースはコンパイルし直さない。 */
-	prepare(sourceCode: string): Promise<LocalRunnerPrepareResponse> {
+	prepare(sourceCode: string, compilerName: string): Promise<LocalRunnerPrepareResponse> {
 		const endpoint = this.endpoint() ?? "";
-		if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode) return this.prepared.response;
-		const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false);
+		const previous = this.prepared;
+		if (previous?.endpoint === endpoint && previous.compilerName === compilerName && previous.sourceCode === sourceCode) {
+			return previous.response;
+		}
+		const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false, false, compilerName);
 		const response = this.post<LocalRunnerPrepareResponse>(request);
-		this.prepared = {endpoint, sourceCode, response};
+		this.prepared = {endpoint, compilerName, sourceCode, response};
 		response.catch(() => {
 			if (this.prepared?.response === response) this.prepared = null;
 		});
@@ -69,7 +73,7 @@ export class LocalRunnerClient {
 	): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
 		let prepared: LocalRunnerPrepareResponse;
 		try {
-			prepared = await this.prepare(sourceCode);
+			prepared = await this.prepare(sourceCode, compilerName);
 		} catch (error) {
 			if (error instanceof LocalRunnerError && error.status === 400) {
 				return this.post(buildLocalRunnerRunRequest(sourceCode, input, compilerName));
@@ -81,7 +85,7 @@ export class LocalRunnerClient {
 		if (response.status !== "badRequest" || !response.stderr?.startsWith(STALE_PROGRAM_MESSAGE)) return response;
 
 		this.prepared = null;
-		prepared = await this.prepare(sourceCode);
+		prepared = await this.prepare(sourceCode, compilerName);
 		if (prepared.status !== "success" || !prepared.programId) return prepared;
 		return this.runProgram(prepared.programId, input, compilerName);
 	}

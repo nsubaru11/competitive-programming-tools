@@ -10,6 +10,9 @@ import {showToast} from "@ui/toast/toast";
 const MIN_POLL_INTERVAL_MS = 1000;
 /** 確認の時刻を逃さないよう、間隔より短い周期で調べる。 */
 const TICK_INTERVAL_MS = 100;
+/** 確認に失敗したときの待ち時間。失敗が続くほど長くする。 */
+const FIRST_BACKOFF_MS = 5000;
+const MAX_BACKOFF_MS = 60_000;
 const TOAST_DURATION_MS = 10_000;
 const SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
 
@@ -72,11 +75,12 @@ export const resultNotifier = defineFeature({
 			if (options.desktop && !document.hasFocus()) notifier.notify({title, text: detail, url});
 		};
 
-		const checkContest = async (id: string, submissions: readonly PendingSubmission[]): Promise<void> => {
+		/** 結果を読めたら真を返す。ログインが切れると、ログインのページが 200 で返る。 */
+		const checkContest = async (id: string, submissions: readonly PendingSubmission[]): Promise<boolean> => {
 			const url = buildAtCoderSubmissionStatusJsonUrl(id, submissions.map((submission) => submission.id));
 			const response = await site.send({url});
-			if (response.status !== 200) return;
-			const {Result: results = {}, Interval: interval} = safeJsonParse<StatusResponse>(response.text, {});
+			const {Result: results, Interval: interval} = safeJsonParse<StatusResponse>(response.text, {});
+			if (response.status !== 200 || !results) return false;
 			const now = Date.now();
 			// 同時に確認した別のタブが先に通知していれば、重ねて通知しない
 			const waiting = new Set(pending.list(now).map((submission) => submission.id));
@@ -88,10 +92,12 @@ export const resultNotifier = defineFeature({
 				return [submission.id];
 			});
 			pending.remove(finished, now);
-			if (interval !== undefined) pending.postponePoll(now + interval);
+			if (typeof interval === "number") pending.postponePoll(now + interval);
+			return submissions.every((submission) => results[submission.id] !== undefined);
 		};
 
 		let checking = false;
+		let failures = 0;
 		let stopTicker: (() => void) | null = null;
 
 		const poll = (): void => {
@@ -108,8 +114,13 @@ export const resultNotifier = defineFeature({
 			checking = true;
 			const groups = Map.groupBy(submissions, (submission) => submission.contestId);
 			const checks = [...groups].map(([id, contestSubmissions]) => checkContest(id, contestSubmissions));
-			void Promise.allSettled(checks).then(() => {
+			void Promise.allSettled(checks).then((results) => {
 				checking = false;
+				const succeeded = results.every((result) => result.status === "fulfilled" && result.value);
+				failures = succeeded ? 0 : failures + 1;
+				if (succeeded) return;
+				const backoff = Math.min(FIRST_BACKOFF_MS * 2 ** (failures - 1), MAX_BACKOFF_MS);
+				pending.postponePoll(Date.now() + backoff);
 			});
 		};
 

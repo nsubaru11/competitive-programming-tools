@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, mock, test} from "bun:test";
 import type {JudgeLanguage, RunResult} from "@domain/execution/result";
 import {LocalRunnerClient} from "@application/execution/local-runner";
 import {PastePipeline} from "@application/source/paste-pipeline";
+import {usesLibrary} from "@application/source/transform-java";
 import {type CodeRunner, RunnerCatalogService} from "@application/execution/runner-catalog";
 import type {CodeEditor} from "@application/ports/code-editor";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
@@ -342,6 +343,34 @@ describe("javaSubmit", () => {
 		paste();
 		await wait();
 		expect(editor.getValue()).toBe("short");
+	});
+
+	test("Local Runner に接続できず lib を使うコードなら、導入方法を案内する", async () => {
+		const code = "import lib.ds.UnionFind;\npublic class Solution {\n\tpublic static void main(String[] args) {}\n}\n";
+		const {editor, paste} = createEditor(code);
+		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner: offline, ...editorServices(editor)}));
+		await wait();
+		paste();
+		await wait();
+
+		const text = shadowRoots().map((root) => root.textContent).join("");
+		expect(text).toContain("lib.* の展開には Local Runner が必要です");
+		expect(editor.getValue()).toContain("public class Main");
+	});
+
+	test("lib を使わないコードなら Local Runner がなくても案内しない", async () => {
+		const {editor, paste} = createEditor(source);
+		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner: offline, ...editorServices(editor)}));
+		await wait();
+		paste();
+		await wait();
+
+		expect(shadowRoots().map((root) => root.textContent).join("")).not.toContain("Local Runner");
+	});
+
+	test("コメントの中の lib は案内の対象にしない", () => {
+		expect(usesLibrary("// import lib.ds.UnionFind;\nclass Main {}\n")).toBe(false);
+		expect(usesLibrary("import static lib.math.Mod.pow;\nclass Main {}\n")).toBe(true);
 	});
 
 	test("ショートカットで提出ボタンを押す", async () => {

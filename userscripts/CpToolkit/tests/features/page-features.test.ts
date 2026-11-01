@@ -3,6 +3,7 @@ import type {Feature} from "@application/feature/definition";
 import type {RatingGraphView} from "@application/ports/rating-graph";
 import {TurndownStatementConverter} from "@adapters/statement/statement-converter";
 import {averageResult} from "@features/average-result/index";
+import {editorialList} from "@features/editorial-list/index";
 import {efficientLayout} from "@features/efficient-layout/index";
 import {historyColors} from "@features/history-colors/index";
 import {ratingGraph} from "@features/rating-graph/index";
@@ -287,6 +288,33 @@ describe("tessokuDifficulty", () => {
 		document.querySelector("button")?.click();
 		expect(links()[0]).toBe("【☆1】 正方形");
 		expect(links()[1]).toBe("【☆4】 二次元累積和");
+	});
+});
+
+describe("editorialList", () => {
+	const observed: Element[] = [];
+
+	class FakeObserver {
+		observe(target: Element): void {
+			observed.push(target);
+		}
+
+		unobserve(): void {
+		}
+	}
+
+	test("別のサイトのリンクは、同じ形のパスでも読み込まない", async () => {
+		observed.length = 0;
+		const original = globalThis.IntersectionObserver;
+		globalThis.IntersectionObserver = FakeObserver as unknown as typeof IntersectionObserver;
+		document.body.innerHTML = `<a id="own" href="${location.origin}/contests/abc1/editorial/1">own</a>
+			<a id="other" href="https://evil.example/contests/abc1/editorial/2">other</a>`;
+		await run(editorialList, undefined, {
+			scripts: {loadScript: async () => undefined, loadStylesheet: async () => undefined},
+		});
+		globalThis.IntersectionObserver = original;
+
+		expect(observed.map(({id}) => id)).toEqual(["own"]);
 	});
 });
 

@@ -25,10 +25,10 @@ describe("LocalRunnerClient", () => {
 	test("同じソースはコンパイルし直さない", async () => {
 		const http = new FakeHttpClient(() => JSON_OK(success));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		await client.prepare("code");
-		await client.prepare("code");
+		await client.prepare("code", "java");
+		await client.prepare("code", "java");
 		expect(http.requests).toHaveLength(1);
-		await client.prepare("other");
+		await client.prepare("other", "java");
 		expect(http.requests).toHaveLength(2);
 	});
 
@@ -97,6 +97,36 @@ describe("RunnerCatalogService", () => {
 			{trim: true, split: true},
 		);
 		expect(failing).toHaveBeenCalledTimes(1);
+		expect(result.status).toBe("AC");
+	});
+
+	test("内部エラーでも、外部のサービスへは自動で切り替えない", async () => {
+		const failing = mock(async (): Promise<RunResult> => ({status: "IE", input: ""}));
+		const external = mock(ok);
+		const service = new RunnerCatalogService(() => [], ["local", "paiza"], 3, ["paiza"]);
+		const result = await service.test(
+			[runner("a", "local", failing), runner("b", "paiza", external)],
+			"a",
+			"code",
+			{title: "t", input: "", output: "1"},
+			{trim: true, split: true},
+		);
+		expect(external).not.toHaveBeenCalled();
+		expect(failing).toHaveBeenCalledTimes(3);
+		expect(result.status).toBe("IE");
+	});
+
+	test("外部のサービスを選んだときは、そのサービスで実行する", async () => {
+		const external = mock(ok);
+		const service = new RunnerCatalogService(() => [], ["local", "paiza"], 3, ["paiza"]);
+		const result = await service.test(
+			[runner("a", "local", ok), runner("b", "paiza", external)],
+			"b",
+			"code",
+			{title: "t", input: "", output: "1"},
+			{trim: true, split: true},
+		);
+		expect(external).toHaveBeenCalledTimes(1);
 		expect(result.status).toBe("AC");
 	});
 
@@ -267,6 +297,17 @@ describe("VirtualParticipations", () => {
 	});
 });
 
+describe("loadContestTasks の記憶", () => {
+	test("空の一覧は記憶せず、次回に取得し直す", async () => {
+		const state = new MemoryStore();
+		const site = new FakeHttpClient(() => ({status: 200, text: ""}));
+		const parse = () => [];
+		await loadContestTasks("abc1", {site, state, parse, cacheDays: 10});
+		await loadContestTasks("abc1", {site, state, parse, cacheDays: 10});
+		expect(site.requests).toHaveLength(2);
+	});
+});
+
 describe("loadLatestContests", () => {
 	const catalog = {
 		menuTargets: [],
@@ -287,6 +328,14 @@ describe("loadLatestContests", () => {
 	test("一覧にない種類は過去の一覧から探し、見つからなければ省く", async () => {
 		const contests = await loadLatestContests(catalog, {site: site(), state: new MemoryStore(), parse, now: 0});
 		expect(contests).toEqual({ABC: "abc2", AGC: "agc1"});
+	});
+
+	test("一覧を取得できなければ、通信を重ねず記憶もしない", async () => {
+		const state = new MemoryStore();
+		const http = new FakeHttpClient(() => ({status: 503, text: ""}));
+		await expect(loadLatestContests(catalog, {site: http, state, parse, now: 0})).rejects.toThrow();
+		expect(http.requests).toHaveLength(1);
+		expect(state.get("latest-contests:cache")).toBeUndefined();
 	});
 
 	test("保持期間内は通信しない", async () => {

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.7
+// @version        1.0.8
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -812,8 +812,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		autoImport = true,
 		validate = false,
 		header = false,
+		compilerName,
 	) {
-		return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
+		return {mode: "prepare", compilerName, sourceCode, debug, autoImport, validate, header};
 	}
 
 	function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
@@ -2083,10 +2084,14 @@ ${settings_panel_default}`,
 		"historyColors.modeText": "Text",
 		"historyColors.modeBackground": "Background",
 		"localRunner.title": "Local Runner",
-		"localRunner.description": "Connects to the local server used to transform and run Java code.",
+		"localRunner.description": "Connects to the local server used to transform and run code.",
 		"localRunner.url": "Server URL",
 		"javaSubmit.title": "Java submission helper",
-		"javaSubmit.description": "Transforms pasted code for submission and adds submit shortcuts.",
+		"javaSubmit.description":
+			"Transforms pasted code for submission and adds submit shortcuts. Removing packages, renaming the class and disabling DEBUG work without Local Runner. Expanding lib.*, completing imports and adding the header need Local Runner.",
+		"javaSubmit.localRunnerRequired": "Expanding lib.* needs Local Runner",
+		"javaSubmit.localRunnerGuide":
+			"Could not connect to Local Runner, so only the basic transform was applied. Submitting this code causes a compile error. The link shows how to set it up.",
 		"javaSubmit.removePackage": "Remove package declarations without Local Runner",
 		"javaSubmit.renameClass": "Rename the class to Main without Local Runner",
 		"javaSubmit.fixDebug": "Set DEBUG to false without Local Runner",
@@ -2276,10 +2281,14 @@ ${settings_panel_default}`,
 		"historyColors.modeText": "文字",
 		"historyColors.modeBackground": "背景",
 		"localRunner.title": "Local Runner",
-		"localRunner.description": "Java の変換と実行に使う、手元のサーバーへ接続します。",
+		"localRunner.description": "コードの変換と実行に使う、手元のサーバーへ接続します。",
 		"localRunner.url": "接続先の URL",
 		"javaSubmit.title": "Java の提出補助",
-		"javaSubmit.description": "貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。",
+		"javaSubmit.description":
+			"貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。 パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。",
+		"javaSubmit.localRunnerRequired": "lib.* の展開には Local Runner が必要です",
+		"javaSubmit.localRunnerGuide":
+			"Local Runner に接続できなかったので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから導入方法を確認できます。",
 		"javaSubmit.removePackage": "Local Runner がないときにパッケージ宣言を削除する",
 		"javaSubmit.renameClass": "Local Runner がないときにクラス名を Main にする",
 		"javaSubmit.fixDebug": "Local Runner がないときに DEBUG を false にする",
@@ -2793,10 +2802,22 @@ ${settings_panel_default}`,
 	};
 	// CpToolkit/data/libraries.yaml
 	var libraries_default = {
-		katexScript: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js",
-		katexAutoRender: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js",
-		katexStylesheet: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css",
-		prettify: "https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.min.js",
+		katexScript: {
+			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js",
+			integrity: "sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz",
+		},
+		katexAutoRender: {
+			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js",
+			integrity: "sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05",
+		},
+		katexStylesheet: {
+			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css",
+			integrity: "sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X",
+		},
+		prettify: {
+			url: "https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.min.js",
+			integrity: "sha384-FdDXhXktS7qbSx5SLuIH0p/V4mGwTw7hiWJsJeP0Mk8kCyd3hH+yv2UmzSn++Ghh",
+		},
 	};
 	// CpToolkit/data/rating.yaml
 	var rating_default = {
@@ -2869,6 +2890,7 @@ ${settings_panel_default}`,
 	var runners_default = {
 		order: ["local", "judge", "browser", "paiza", "wandbox"],
 		maxRetry: 3,
+		external: ["paiza", "wandbox"],
 		connect: ["localhost", "127.0.0.1", "api.paiza.io", "wandbox.org", "cdn.jsdelivr.net"],
 		paiza: {
 			apiBase: "https://api.paiza.io/runners",
@@ -2988,6 +3010,7 @@ ${settings_panel_default}`,
 		},
 		pyodide: {
 			baseUrl: "https://cdn.jsdelivr.net/pyodide/v0.24.0/full/",
+			integrity: "sha384-hxqITTjjSqs/ZNr6/q1sP+9wWFKuZ0jBiNJCqnaaiGb2/Qnq+d5DEiN3/oHDLGkk",
 		},
 	};
 	// CpToolkit/data/statement.yaml
@@ -3205,13 +3228,19 @@ ${settings_panel_default}`,
 			);
 		}
 
-		prepare(sourceCode) {
+		prepare(sourceCode, compilerName) {
 			const endpoint = this.endpoint() ?? "";
-			if (this.prepared?.endpoint === endpoint && this.prepared.sourceCode === sourceCode)
-				return this.prepared.response;
-			const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false);
+			const previous = this.prepared;
+			if (
+				previous?.endpoint === endpoint &&
+				previous.compilerName === compilerName &&
+				previous.sourceCode === sourceCode
+			) {
+				return previous.response;
+			}
+			const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false, false, compilerName);
 			const response = this.post(request);
-			this.prepared = {endpoint, sourceCode, response};
+			this.prepared = {endpoint, compilerName, sourceCode, response};
 			response.catch(() => {
 				if (this.prepared?.response === response) this.prepared = null;
 			});
@@ -3221,7 +3250,7 @@ ${settings_panel_default}`,
 		async run(sourceCode, input, compilerName) {
 			let prepared;
 			try {
-				prepared = await this.prepare(sourceCode);
+				prepared = await this.prepare(sourceCode, compilerName);
 			} catch (error) {
 				if (error instanceof LocalRunnerError && error.status === 400) {
 					return this.post(buildLocalRunnerRunRequest(sourceCode, input, compilerName));
@@ -3233,7 +3262,7 @@ ${settings_panel_default}`,
 			if (response.status !== "badRequest" || !response.stderr?.startsWith(STALE_PROGRAM_MESSAGE))
 				return response;
 			this.prepared = null;
-			prepared = await this.prepare(sourceCode);
+			prepared = await this.prepare(sourceCode, compilerName);
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
 			return this.runProgram(prepared.programId, input, compilerName);
 		}
@@ -3321,11 +3350,13 @@ ${settings_panel_default}`,
 		providers;
 		order;
 		maxRetry;
+		external;
 
-		constructor(providers, order, maxRetry) {
+		constructor(providers, order, maxRetry, external = []) {
 			this.providers = providers;
 			this.order = order;
 			this.maxRetry = maxRetry;
+			this.external = external;
 		}
 
 		async candidates(language) {
@@ -3345,9 +3376,11 @@ ${settings_panel_default}`,
 				0,
 				candidates.findIndex(({id}) => id === firstRunnerId),
 			);
+			const [first, ...rest] = [...candidates.slice(start), ...candidates.slice(0, start)];
+			const runners = first ? [first, ...rest.filter(({kind}) => !this.external.includes(kind))] : [];
 			let result = {status: "IE", input: testCase.input};
 			for (let retry = 0; retry < this.maxRetry; retry++) {
-				const runner = candidates[(start + retry) % candidates.length];
+				const runner = runners[retry % runners.length];
 				if (!runner) break;
 				try {
 					result = await runner.run(sourceCode, testCase.input, options);
@@ -4355,12 +4388,23 @@ ${settings_panel_default}`,
 	}
 
 	class ElementScriptLoader {
-		loadScript(url) {
-			return waitForLoad(Object.assign(document.createElement("script"), {src: url}), url);
+		loadScript({url, integrity}) {
+			const script = Object.assign(document.createElement("script"), {
+				src: url,
+				integrity,
+				crossOrigin: "anonymous",
+			});
+			return waitForLoad(script, url);
 		}
 
-		loadStylesheet(url) {
-			return waitForLoad(Object.assign(document.createElement("link"), {rel: "stylesheet", href: url}), url);
+		loadStylesheet({url, integrity}) {
+			const link = Object.assign(document.createElement("link"), {
+				rel: "stylesheet",
+				href: url,
+				integrity,
+				crossOrigin: "anonymous",
+			});
+			return waitForLoad(link, url);
 		}
 	}
 
@@ -4427,6 +4471,7 @@ ${settings_panel_default}`,
 	// CpToolkit/src/adapters/page/same-origin-http-client.ts
 	class SameOriginHttpClient {
 		async send({url, method = "GET", headers, body}) {
+			if (new URL(url, location.href).origin !== location.origin) throw new Error(`Cross-origin request: ${url}`);
 			const response = await fetch(url, {
 				method,
 				credentials: "include",
@@ -4627,8 +4672,8 @@ ${body}
 		}
 
 		async load() {
-			const {baseUrl} = runnerCatalog.pyodide;
-			await this.scripts.loadScript(`${baseUrl}pyodide.js`);
+			const {baseUrl, integrity} = runnerCatalog.pyodide;
+			await this.scripts.loadScript({url: `${baseUrl}pyodide.js`, integrity});
 			const pyodide = await pageGlobals().loadPyodide?.({indexURL: baseUrl});
 			if (!pyodide) throw new Error("Pyodide was not loaded.");
 			await pyodide.runPythonAsync(SETUP_CODE);
@@ -4679,6 +4724,9 @@ ${body}
 	}
 
 	// CpToolkit/src/adapters/runners/simple-runners.ts
+	var PAIZA_STATUS_INTERVAL_MS = 1000;
+	var PAIZA_MAX_STATUS_CHECKS = 60;
+
 	class PaizaRunner {
 		http;
 		language;
@@ -4705,7 +4753,9 @@ ${body}
 				},
 				"POST",
 			);
-			while (status === "running") {
+			for (let check = 0; status === "running"; check++) {
+				if (check === PAIZA_MAX_STATUS_CHECKS) throw new Error("PaizaIO timed out.");
+				await sleep(PAIZA_STATUS_INTERVAL_MS);
 				({status} = await this.request("get_status", {id}));
 			}
 			const details = await this.request("get_details", {id});
@@ -4762,6 +4812,10 @@ ${body}
 			this.compilerName = compilerName;
 			this.id = `local:${compilerName}`;
 			this.label = `${label} [Local]`;
+		}
+
+		prepare(sourceCode) {
+			return this.client.prepare(sourceCode, this.compilerName);
 		}
 
 		async run(sourceCode, input) {
@@ -6208,6 +6262,7 @@ ${inner}
 				GM_xmlhttpRequest({
 					url,
 					method,
+					anonymous: true,
 					...(headers && {headers: {...headers}}),
 					...(body !== undefined && {data: body}),
 					...(timeoutMs !== undefined && {timeout: timeoutMs}),
@@ -6318,7 +6373,12 @@ ${inner}
 			editors,
 			paste: new PastePipeline(editors),
 			localRunner: localRunner2,
-			runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
+			runners: new RunnerCatalogService(
+				getProviders,
+				runnerCatalog.order,
+				runnerCatalog.maxRetry,
+				runnerCatalog.external,
+			),
 			judgeSite: getJudgeSite,
 			openSettings,
 			get statementConverter() {
@@ -7483,17 +7543,18 @@ summary {
 		}
 
 		watchSource() {
-			const {localRunner: localRunner2} = this.context;
 			let timer;
+			const prepare = () => {
+				const code = this.site.sourceCode();
+				const runner = this.candidates.find(({kind}) => kind === "local");
+				if (code)
+					runner?.prepare?.(code)?.catch(() => {
+						return;
+					});
+			};
 			const schedule = () => {
 				clearTimeout(timer);
-				timer = setTimeout(() => {
-					const code = this.site.sourceCode();
-					if (code && localRunner2.isAvailable())
-						localRunner2.prepare(code).catch(() => {
-							return;
-						});
-				}, PRECOMPILE_DELAY_MS);
+				timer = setTimeout(() => void this.refreshing.then(prepare), PRECOMPILE_DELAY_MS);
 			};
 			this.site.onSourceChange(schedule);
 			schedule();
@@ -7706,7 +7767,8 @@ pre code {tab-size: 4;}`;
 		options: {},
 		async start(context) {
 			const links = [...document.querySelectorAll("a")].filter((link) => {
-				return EDITORIAL_LINK_PATTERN.test(link.href) && !link.classList.contains("spoiler");
+				const isOwnEditorial = link.origin === location.origin && EDITORIAL_LINK_PATTERN.test(link.pathname);
+				return isOwnEditorial && !link.classList.contains("spoiler");
 			});
 			if (links.length === 0) return;
 			injectStyle(css);
@@ -7913,15 +7975,23 @@ ${efficient_layout_default}`);
 	var EDITOR_SETUP_DELAY_MS = 500;
 
 	// CpToolkit/src/application/source/transform-java.ts
+	var LIBRARY_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?lib\./m;
+
+	function usesLibrary(code) {
+		return LIBRARY_IMPORT_PATTERN.test(createMaskedCode(code));
+	}
+
 	async function transformJava(code, localRunner2, options) {
+		let connected = false;
 		if (localRunner2.isAvailable()) {
 			try {
 				const transformed = await localRunner2.transform(code, options.header);
-				if (transformed.status === "success") return transformed.sourceCode;
+				connected = true;
+				if (transformed.status === "success") return {sourceCode: transformed.sourceCode, connected};
 			} catch {
 			}
 		}
-		return modifyJavaCode(code, options).modified;
+		return {sourceCode: modifyJavaCode(code, options).modified, connected};
 	}
 
 	// CpToolkit/src/features/java-submit/index.ts
@@ -7929,6 +7999,8 @@ ${efficient_layout_default}`);
 	var MIN_SOURCE_LENGTH = 30;
 	var FOLD_DELAY_MS = 100;
 	var PASTE_ORDER = 10;
+	var LOCAL_RUNNER_GUIDE_URL = "https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner";
+	var GUIDE_DURATION_MS = 15000;
 
 	function findSubmitButton({submitButtons, labeledSubmit}) {
 		for (const selector of submitButtons) {
@@ -7963,7 +8035,7 @@ ${efficient_layout_default}`);
 			headerName: option.text("", "javaSubmit.headerName"),
 			foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 		},
-		start({options, judge, editors, localRunner: localRunner2, paste}) {
+		start({options, judge, editors, localRunner: localRunner2, paste, translate}) {
 			const target = judge?.submission;
 			if (!target) return;
 			registerShortcut(target.shortcut, () => {
@@ -7983,9 +8055,19 @@ ${efficient_layout_default}`);
 			});
 			paste.add(target, lookup, {
 				order: PASTE_ORDER,
-				transform(code, {editor}) {
+				async transform(code, {editor}) {
 					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-					return transformJava(code, localRunner2, {...options, header});
+					const {sourceCode, connected} = await transformJava(code, localRunner2, {...options, header});
+					if (!connected && usesLibrary(code)) {
+						showToast({
+							title: translate("javaSubmit.localRunnerRequired"),
+							detail: translate("javaSubmit.localRunnerGuide"),
+							tone: "warning",
+							href: LOCAL_RUNNER_GUIDE_URL,
+							durationMs: GUIDE_DURATION_MS,
+						});
+					}
+					return sourceCode;
 				},
 				applied(editor) {
 					if (options.foldOnPaste) setTimeout(() => fold(editor), FOLD_DELAY_MS);
@@ -8021,7 +8103,8 @@ ${efficient_layout_default}`);
 		if (cache && now - cache.fetchedAt < catalog.cacheMinutes * MINUTE_MS) return cache.contests;
 		const fetchRows = async (url) => {
 			const response = await site.send({url});
-			return response.status === 200 ? parse(response.text) : [];
+			if (response.status !== 200) throw new Error(`Failed to load ${url}`);
+			return parse(response.text);
 		};
 		const leadMs = catalog.leadHours * HOUR_MS2;
 		const rows = await fetchRows(CONTEST_LIST_URL);
@@ -8384,6 +8467,8 @@ ${efficient_layout_default}`);
 	// CpToolkit/src/features/result-notifier/index.ts
 	var MIN_POLL_INTERVAL_MS = 1000;
 	var TICK_INTERVAL_MS2 = 100;
+	var FIRST_BACKOFF_MS = 5000;
+	var MAX_BACKOFF_MS = 60000;
 	var TOAST_DURATION_MS2 = 1e4;
 	var SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
 
@@ -8444,8 +8529,8 @@ ${efficient_layout_default}`);
 					submissions.map((submission) => submission.id),
 				);
 				const response = await site.send({url});
-				if (response.status !== 200) return;
-				const {Result: results = {}, Interval: interval} = safeJsonParse(response.text, {});
+				const {Result: results, Interval: interval} = safeJsonParse(response.text, {});
+				if (response.status !== 200 || !results) return false;
 				const now = Date.now();
 				const waiting = new Set(pending.list(now).map((submission) => submission.id));
 				const finished = submissions.flatMap((submission) => {
@@ -8456,9 +8541,11 @@ ${efficient_layout_default}`);
 					return [submission.id];
 				});
 				pending.remove(finished, now);
-				if (interval !== undefined) pending.postponePoll(now + interval);
+				if (typeof interval === "number") pending.postponePoll(now + interval);
+				return submissions.every((submission) => results[submission.id] !== undefined);
 			};
 			let checking = false;
+			let failures = 0;
 			let stopTicker = null;
 			const poll = () => {
 				const now = Date.now();
@@ -8474,8 +8561,13 @@ ${efficient_layout_default}`);
 				checking = true;
 				const groups = Map.groupBy(submissions, (submission) => submission.contestId);
 				const checks = [...groups].map(([id, contestSubmissions]) => checkContest(id, contestSubmissions));
-				Promise.allSettled(checks).then(() => {
+				Promise.allSettled(checks).then((results) => {
 					checking = false;
+					const succeeded = results.every((result) => result.status === "fulfilled" && result.value);
+					failures = succeeded ? 0 : failures + 1;
+					if (succeeded) return;
+					const backoff = Math.min(FIRST_BACKOFF_MS * 2 ** (failures - 1), MAX_BACKOFF_MS);
+					pending.postponePoll(Date.now() + backoff);
 				});
 			};
 			const watch = () => {
@@ -8501,7 +8593,9 @@ ${efficient_layout_default}`);
 	var LINE_BREAK_PATTERN = /\r\n?/g;
 
 	function fillVariables(text, values) {
-		return text.replace(VARIABLE_PATTERN, (match, name) => values[name] ?? match);
+		return text.replace(VARIABLE_PATTERN, (match, name) =>
+			Object.hasOwn(values, name) ? (values[name] ?? match) : match,
+		);
 	}
 
 	function toComment(text, {line, open, close}, style) {
@@ -9410,7 +9504,8 @@ ${statement_highlight_default}`);
 			if (response.status !== 200) return null;
 			tasks = parse(response.text);
 		}
-		state.set(CACHE_KEY3, {...Object.fromEntries(fresh), [contestId]: {tasks, lastAccess: now}});
+		const entries = tasks.length > 0 ? [...fresh, [contestId, {tasks, lastAccess: now}]] : fresh;
+		state.set(CACHE_KEY3, Object.fromEntries(entries));
 		return tasks;
 	}
 
@@ -9710,6 +9805,7 @@ li.cp-task-rejected > a {
 	var ACCEPTED_CLASS = "cp-task-accepted";
 	var REJECTED_CLASS = "cp-task-rejected";
 	var NOT_SUBMITTED = "-";
+	var START_QUIET_MS = 5 * 60 * 1000;
 
 	function taskIdOf(link) {
 		return link?.getAttribute("href")?.split("/").at(-1);
@@ -9749,6 +9845,9 @@ li.cp-task-rejected > a {
 		start({options, isOnRoute, page, site}) {
 			const contestId = contestIdOf(location.pathname);
 			if (!contestId || !page.isLoggedIn()) return;
+			const period = page.contestPeriod();
+			const sinceStart = period ? page.serverNow() - period.startMs : -1;
+			if (sinceStart >= 0 && sinceStart < START_QUIET_MS) return;
 			injectStyle(task_status_default);
 			document.documentElement.style.setProperty("--cp-task-accepted", options.acceptedColor);
 			document.documentElement.style.setProperty("--cp-task-rejected", options.rejectedColor);

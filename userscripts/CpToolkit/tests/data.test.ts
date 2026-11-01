@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import {judges} from "@catalog/judges";
-import {languageCatalog} from "@catalog/tables";
+import {languageCatalog, libraries, runnerCatalog} from "@catalog/tables";
 import {commentSyntaxOf, resolveFamily} from "@domain/execution/language";
 import en from "@data/i18n/en.yaml";
 import ja from "@data/i18n/ja.yaml";
@@ -72,6 +72,20 @@ describe("languages", () => {
 		expect(lineOf("Python (CPython 3.13.7)")).toBe("#");
 		expect(lineOf("Rust (rustc 1.89.0)")).toBe("//");
 		expect(lineOf("Text (cat 9.4)")).toBeUndefined();
+	});
+});
+
+describe("libraries", () => {
+	test("ページへ読み込むファイルは版を固定し、integrity を持つ", () => {
+		const resources = [...Object.values(libraries), {
+			url: runnerCatalog.pyodide.baseUrl,
+			integrity: runnerCatalog.pyodide.integrity,
+		}];
+		for (const {url, integrity} of resources) {
+			expect(url).toMatch(/^https:\/\//);
+			expect(url).toMatch(/@\d|\/r\d+\/|\/v\d/);
+			expect(integrity).toMatch(/^sha384-[A-Za-z0-9+/]{64}$/);
+		}
 	});
 });
 

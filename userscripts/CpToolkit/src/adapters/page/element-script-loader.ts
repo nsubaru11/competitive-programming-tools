@@ -1,3 +1,4 @@
+import type {ExternalResource} from "@catalog/tables";
 import type {ScriptLoader} from "@application/ports/services";
 
 function waitForLoad(element: HTMLElement, url: string): Promise<void> {
@@ -8,12 +9,20 @@ function waitForLoad(element: HTMLElement, url: string): Promise<void> {
 	});
 }
 
+/** 内容が integrity と一致しなければ、ブラウザが読み込みを止める。 */
 export class ElementScriptLoader implements ScriptLoader {
-	loadScript(url: string): Promise<void> {
-		return waitForLoad(Object.assign(document.createElement("script"), {src: url}), url);
+	loadScript({url, integrity}: ExternalResource): Promise<void> {
+		const script = Object.assign(document.createElement("script"), {src: url, integrity, crossOrigin: "anonymous"});
+		return waitForLoad(script, url);
 	}
 
-	loadStylesheet(url: string): Promise<void> {
-		return waitForLoad(Object.assign(document.createElement("link"), {rel: "stylesheet", href: url}), url);
+	loadStylesheet({url, integrity}: ExternalResource): Promise<void> {
+		const link = Object.assign(document.createElement("link"), {
+			rel: "stylesheet",
+			href: url,
+			integrity,
+			crossOrigin: "anonymous",
+		});
+		return waitForLoad(link, url);
 	}
 }

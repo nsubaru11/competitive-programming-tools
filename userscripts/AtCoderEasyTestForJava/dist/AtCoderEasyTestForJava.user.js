@@ -192,8 +192,9 @@ if (!cpToolkitRetirement.replaced) {
 			autoImport = true,
 			validate = false,
 			header = false,
+			compilerName,
 		) {
-			return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
+			return {mode: "prepare", compilerName, sourceCode, debug, autoImport, validate, header};
 		}
 
 		function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {

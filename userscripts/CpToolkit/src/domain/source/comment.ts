@@ -16,7 +16,7 @@ const LINE_BREAK_PATTERN = /\r\n?/g;
 
 /** `{name}` を値に置き換える。値のない名前はそのまま残す。 */
 export function fillVariables(text: string, values: Readonly<Record<string, string>>): string {
-	return text.replace(VARIABLE_PATTERN, (match, name: string) => values[name] ?? match);
+	return text.replace(VARIABLE_PATTERN, (match, name: string) => (Object.hasOwn(values, name) ? values[name] ?? match : match));
 }
 
 /**

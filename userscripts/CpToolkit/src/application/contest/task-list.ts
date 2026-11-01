@@ -42,6 +42,8 @@ export async function loadContestTasks(
 		if (response.status !== 200) return null;
 		tasks = parse(response.text);
 	}
-	state.set(CACHE_KEY, {...Object.fromEntries(fresh), [contestId]: {tasks, lastAccess: now}});
+	// 開始前は一覧が空のことがあるので、空の結果は記憶しない
+	const entries = tasks.length > 0 ? [...fresh, [contestId, {tasks, lastAccess: now}]] : fresh;
+	state.set(CACHE_KEY, Object.fromEntries(entries));
 	return tasks;
 }

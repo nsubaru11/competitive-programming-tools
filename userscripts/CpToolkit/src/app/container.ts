@@ -87,7 +87,7 @@ export function createServices(
 		editors,
 		paste: new PastePipeline(editors),
 		localRunner,
-		runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry),
+		runners: new RunnerCatalogService(getProviders, runnerCatalog.order, runnerCatalog.maxRetry, runnerCatalog.external),
 		judgeSite: getJudgeSite,
 		openSettings,
 		get statementConverter() {

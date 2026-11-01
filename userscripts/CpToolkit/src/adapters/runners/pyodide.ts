@@ -42,8 +42,8 @@ class PyodideRunner implements CodeRunner {
 	}
 
 	private async load(): Promise<PyodideApi> {
-		const {baseUrl} = runnerCatalog.pyodide;
-		await this.scripts.loadScript(`${baseUrl}pyodide.js`);
+		const {baseUrl, integrity} = runnerCatalog.pyodide;
+		await this.scripts.loadScript({url: `${baseUrl}pyodide.js`, integrity});
 		const pyodide = await pageGlobals().loadPyodide?.({indexURL: baseUrl});
 		if (!pyodide) throw new Error("Pyodide was not loaded.");
 		await pyodide.runPythonAsync(SETUP_CODE);

@@ -1,3 +1,5 @@
+import type {ExternalResource} from "@catalog/tables";
+
 export interface Clipboard {
 	write(text: string): void;
 }
@@ -43,7 +45,7 @@ export interface StatementConverter {
 
 /** ページの文脈で動くライブラリを読み込む。 */
 export interface ScriptLoader {
-	loadScript(url: string): Promise<void>;
+	loadScript(resource: ExternalResource): Promise<void>;
 
-	loadStylesheet(url: string): Promise<void>;
+	loadStylesheet(resource: ExternalResource): Promise<void>;
 }

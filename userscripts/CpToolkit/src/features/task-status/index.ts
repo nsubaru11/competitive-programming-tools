@@ -8,6 +8,8 @@ const TASK_LINKS = '#main-container tbody a[href*="/tasks/"], .cp-task-menu a[hr
 const ACCEPTED_CLASS = "cp-task-accepted";
 const REJECTED_CLASS = "cp-task-rejected";
 const NOT_SUBMITTED = "-";
+/** サイトと同じく、混み合う開始直後は取得しない。 */
+const START_QUIET_MS = 5 * 60 * 1000;
 
 type TaskStatuses = ReadonlyMap<string, string>;
 
@@ -48,6 +50,9 @@ export const taskStatus = defineFeature({
 	start({options, isOnRoute, page, site}) {
 		const contestId = contestIdOf(location.pathname);
 		if (!contestId || !page.isLoggedIn()) return;
+		const period = page.contestPeriod();
+		const sinceStart = period ? page.serverNow() - period.startMs : -1;
+		if (sinceStart >= 0 && sinceStart < START_QUIET_MS) return;
 
 		injectStyle(css);
 		document.documentElement.style.setProperty("--cp-task-accepted", options.acceptedColor);

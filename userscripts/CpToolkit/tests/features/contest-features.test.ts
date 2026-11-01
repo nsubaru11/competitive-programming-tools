@@ -114,6 +114,42 @@ describe("resultNotifier", () => {
 		expect(ticker.listeners.size).toBe(0);
 	});
 
+	test("確認に失敗すると、失敗が続くほど間隔を広げる", async () => {
+		const {services, site, state, ticker} = openSubmissions(() => "");
+		const nextPoll = () => Number(state.get("result-notifier:nextPoll")) - Date.now();
+		await run(resultNotifier, services);
+		await flush();
+		expect(site.requests).toHaveLength(1);
+		const first = nextPoll();
+		expect(first).toBeGreaterThan(4000);
+		expect(first).toBeLessThanOrEqual(5000);
+
+		ticker.tick();
+		await flush();
+		expect(site.requests).toHaveLength(1);
+
+		state.set("result-notifier:nextPoll", 0);
+		ticker.tick();
+		await flush();
+		expect(nextPoll()).toBeGreaterThan(9000);
+	});
+
+	test("ログインが切れてログインのページが返っても、1秒ごとに確認し続けない", async () => {
+		const {services, state} = openSubmissions(() => "<html><body>login</body></html>");
+		await run(resultNotifier, services);
+		await flush();
+		expect(Number(state.get("result-notifier:nextPoll")) - Date.now()).toBeGreaterThan(4000);
+	});
+
+	test("通信のエラーでも間隔を広げる", async () => {
+		const context = openSubmissions(() => {
+			throw new Error("network");
+		});
+		await run(resultNotifier, context.services);
+		await flush();
+		expect(Number(context.state.get("result-notifier:nextPoll")) - Date.now()).toBeGreaterThan(4000);
+	});
+
 	test("他のタブが操作中なら確認を任せる", async () => {
 		const {services, site, state, ticker} = openSubmissions(() => statusJson("AC"));
 		state.set("result-notifier:lastFocus", Date.now());
@@ -268,6 +304,17 @@ describe("taskStatus", () => {
 		await flush();
 		expect(site.requests).toHaveLength(1);
 		expect(classOf(".cp-task-menu li")).toBe("cp-task-accepted");
+	});
+
+	test("混み合う開始直後は取得しない", async () => {
+		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const period = {startMs: Date.now() - 60 * 1000, endMs: Date.now() + HOUR_MS};
+		await run(taskStatus, {
+			isOnRoute: () => true,
+			page: createFakePage({contestPeriod: () => period}),
+			site,
+		});
+		expect(site.requests).toHaveLength(0);
 	});
 
 	test("ログインしていなければ取得しない", async () => {

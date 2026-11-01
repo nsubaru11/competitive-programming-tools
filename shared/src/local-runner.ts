@@ -38,6 +38,7 @@ export type LocalRunnerTransformRequest = {
 
 export type LocalRunnerPrepareRequest = {
 	mode: "prepare";
+	compilerName?: string;
 	sourceCode: string;
 	debug?: boolean;
 	autoImport?: boolean;
@@ -138,8 +139,9 @@ export function buildLocalRunnerPrepareRequest(
 	autoImport = true,
 	validate = false,
 	header: LocalRunnerHeaderOption = false,
+	compilerName?: string,
 ): LocalRunnerPrepareRequest {
-	return {mode: "prepare", sourceCode, debug, autoImport, validate, header};
+	return {mode: "prepare", compilerName, sourceCode, debug, autoImport, validate, header};
 }
 
 export function buildLocalRunnerRunRequest(

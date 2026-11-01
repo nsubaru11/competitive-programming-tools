@@ -3,13 +3,16 @@ import {findFoldStartLines} from "@domain/source/fold-lines";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
 import {type CodeEditor, EDITOR_SETUP_DELAY_MS} from "@application/ports/code-editor";
-import {transformJava} from "@application/source/transform-java";
+import {transformJava, usesLibrary} from "@application/source/transform-java";
 import {registerShortcut} from "@ui/shortcuts";
+import {showToast} from "@ui/toast/toast";
 
 const FOLD_SHORTCUT = "Ctrl+Shift+M";
 const MIN_SOURCE_LENGTH = 30;
 const FOLD_DELAY_MS = 100;
 const PASTE_ORDER = 10;
+const LOCAL_RUNNER_GUIDE_URL = "https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner";
+const GUIDE_DURATION_MS = 15_000;
 
 function findSubmitButton({submitButtons, labeledSubmit}: SubmissionTarget): HTMLElement | null {
 	for (const selector of submitButtons) {
@@ -44,7 +47,7 @@ export const javaSubmit = defineFeature({
 		headerName: option.text("", "javaSubmit.headerName"),
 		foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 	},
-	start({options, judge, editors, localRunner, paste}) {
+	start({options, judge, editors, localRunner, paste, translate}) {
 		const target = judge?.submission;
 		if (!target) return;
 
@@ -67,9 +70,19 @@ export const javaSubmit = defineFeature({
 		});
 		paste.add(target, lookup, {
 			order: PASTE_ORDER,
-			transform(code, {editor}) {
+			async transform(code, {editor}) {
 				if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-				return transformJava(code, localRunner, {...options, header});
+				const {sourceCode, connected} = await transformJava(code, localRunner, {...options, header});
+				if (!connected && usesLibrary(code)) {
+					showToast({
+						title: translate("javaSubmit.localRunnerRequired"),
+						detail: translate("javaSubmit.localRunnerGuide"),
+						tone: "warning",
+						href: LOCAL_RUNNER_GUIDE_URL,
+						durationMs: GUIDE_DURATION_MS,
+					});
+				}
+				return sourceCode;
 			},
 			applied(editor) {
 				if (options.foldOnPaste) setTimeout(() => fold(editor), FOLD_DELAY_MS);

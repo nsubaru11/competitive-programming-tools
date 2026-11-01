@@ -1,10 +1,13 @@
-import {buildQueryString, toEasyTestStatus} from "@atcoder-tools/shared";
+import {buildQueryString, sleep, toEasyTestStatus} from "@atcoder-tools/shared";
 import {languageCatalog, runnerCatalog} from "@catalog/tables";
 import {resolveFamily} from "@domain/execution/language";
 import type {JudgeLanguage, RunOptions, RunResult} from "@domain/execution/result";
 import type {LocalRunnerClient} from "@application/execution/local-runner";
 import type {CodeRunner, RunnerProvider} from "@application/execution/runner-catalog";
 import type {HttpClient} from "@application/ports/services";
+
+const PAIZA_STATUS_INTERVAL_MS = 1000;
+const PAIZA_MAX_STATUS_CHECKS = 60;
 
 type PaizaCreated = {id: string; status: string};
 type PaizaStatus = {status: string};
@@ -39,7 +42,9 @@ class PaizaRunner implements CodeRunner {
 			longpoll: "true",
 			longpoll_timeout: "10",
 		}, "POST");
-		while (status === "running") {
+		for (let check = 0; status === "running"; check++) {
+			if (check === PAIZA_MAX_STATUS_CHECKS) throw new Error("PaizaIO timed out.");
+			await sleep(PAIZA_STATUS_INTERVAL_MS);
 			({status} = await this.request<PaizaStatus>("get_status", {id}));
 		}
 		const details = await this.request<PaizaDetails>("get_details", {id});
@@ -89,6 +94,10 @@ class LocalCodeRunner implements CodeRunner {
 	constructor(private readonly client: LocalRunnerClient, private readonly compilerName: string, label: string) {
 		this.id = `local:${compilerName}`;
 		this.label = `${label} [Local]`;
+	}
+
+	prepare(sourceCode: string): Promise<unknown> {
+		return this.client.prepare(sourceCode, this.compilerName);
 	}
 
 	async run(sourceCode: string, input: string): Promise<RunResult> {

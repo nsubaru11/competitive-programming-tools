@@ -14,6 +14,9 @@ export interface CodeRunner {
 	readonly kind: RunnerKind;
 
 	run(sourceCode: string, input: string, options: RunOptions): Promise<RunResult>;
+
+	/** 実行に備えて、先にコンパイルする。 */
+	prepare?(sourceCode: string): Promise<unknown>;
 }
 
 export interface RunnerProvider {
@@ -27,6 +30,7 @@ export class RunnerCatalogService {
 		private readonly providers: () => readonly RunnerProvider[],
 		private readonly order: readonly RunnerKind[],
 		private readonly maxRetry: number,
+		private readonly external: readonly RunnerKind[] = [],
 	) {
 	}
 
@@ -42,7 +46,7 @@ export class RunnerCatalogService {
 		return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
 	}
 
-	/** 内部エラーのときは、次の候補で実行し直す。 */
+	/** 内部エラーのときは、次の候補で実行し直す。外部のサービスへコードを送るのは、選ばれたときだけにする。 */
 	async test(
 		candidates: readonly CodeRunner[],
 		firstRunnerId: string,
@@ -51,9 +55,11 @@ export class RunnerCatalogService {
 		options: RunOptions,
 	): Promise<RunResult> {
 		const start = Math.max(0, candidates.findIndex(({id}) => id === firstRunnerId));
+		const [first, ...rest] = [...candidates.slice(start), ...candidates.slice(0, start)];
+		const runners = first ? [first, ...rest.filter(({kind}) => !this.external.includes(kind))] : [];
 		let result: RunResult = {status: "IE", input: testCase.input};
 		for (let retry = 0; retry < this.maxRetry; retry++) {
-			const runner = candidates[(start + retry) % candidates.length];
+			const runner = runners[retry % runners.length];
 			if (!runner) break;
 			try {
 				result = await runner.run(sourceCode, testCase.input, options);

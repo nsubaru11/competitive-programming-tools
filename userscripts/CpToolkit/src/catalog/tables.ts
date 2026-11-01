@@ -12,9 +12,16 @@ import type {RatingScale} from "@domain/rating/scale";
 
 export type RunnerKind = "local" | "judge" | "browser" | "paiza" | "wandbox";
 
+/** ページの文脈へ読み込む外部のファイル。 */
+export type ExternalResource = {
+	readonly url: string;
+	readonly integrity: string;
+};
+
 export type RunnerCatalog = {
 	readonly order: readonly RunnerKind[];
 	readonly maxRetry: number;
+	readonly external: readonly RunnerKind[];
 	readonly paiza: {
 		readonly apiBase: string;
 		readonly languages: readonly {readonly family: string; readonly language: string; readonly label: string}[];
@@ -25,7 +32,7 @@ export type RunnerCatalog = {
 		readonly cacheHours: number;
 		readonly aclBaseUrl: string;
 	};
-	readonly pyodide: {readonly baseUrl: string};
+	readonly pyodide: {readonly baseUrl: string; readonly integrity: string};
 };
 
 export type StatementCatalog = {
@@ -54,8 +61,8 @@ export const contestLinks: readonly (readonly ContestLink[])[] = contestLinksDat
 export const tessokuDifficulties: Readonly<Record<string, number>> = tessokuData.difficulties;
 
 export const libraries: {
-	readonly katexScript: string;
-	readonly katexAutoRender: string;
-	readonly katexStylesheet: string;
-	readonly prettify: string;
+	readonly katexScript: ExternalResource;
+	readonly katexAutoRender: ExternalResource;
+	readonly katexStylesheet: ExternalResource;
+	readonly prettify: ExternalResource;
 } = librariesData;

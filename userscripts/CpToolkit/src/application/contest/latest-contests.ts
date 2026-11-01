@@ -28,9 +28,11 @@ export async function loadLatestContests(
 	const cache = readStored<Cache | null>(state, CACHE_KEY, isCache, null);
 	if (cache && now - cache.fetchedAt < catalog.cacheMinutes * MINUTE_MS) return cache.contests;
 
+	// サイトが不調のときに通信を重ねないよう、失敗したら打ち切って記憶しない
 	const fetchRows = async (url: string): Promise<readonly ContestRow[]> => {
 		const response = await site.send({url});
-		return response.status === 200 ? parse(response.text) : [];
+		if (response.status !== 200) throw new Error(`Failed to load ${url}`);
+		return parse(response.text);
 	};
 	const leadMs = catalog.leadHours * HOUR_MS;
 	const rows = await fetchRows(CONTEST_LIST_URL);

@@ -20,13 +20,14 @@ export class GmNotifier implements Notifier {
 	}
 }
 
-/** ページの CORS や Local Network Access の制限を受けない通信。 */
+/** ページの CORS や Local Network Access の制限を受けない通信。Cookie は送らない。 */
 export class GmHttpClient implements HttpClient {
 	send({url, method = "GET", headers, body, timeoutMs}: HttpRequest): Promise<HttpResponse> {
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
 				url,
 				method,
+				anonymous: true,
 				...(headers && {headers: {...headers}}),
 				...(body !== undefined && {data: body}),
 				...(timeoutMs !== undefined && {timeout: timeoutMs}),
