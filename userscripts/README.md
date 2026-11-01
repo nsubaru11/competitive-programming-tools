@@ -74,7 +74,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 - ページの `data-cp-toolkit` の印で CP Toolkit の動作を判定し、動いていれば本体を実行しない
 - 動いていなければ本体を今までどおり実行し、CP Toolkit への移行を1回だけ案内する
-- `RETIRED_SCRIPTS` に書いた設定をサイトの `localStorage` の `cp-toolkit:legacy:<スクリプト名>` へ書き出す。スクリプトごとの保存領域は CP Toolkit から読めないため
+- 引き継ぐ設定をサイトの `localStorage` の `cp-toolkit:legacy:<スクリプト名>` へ書き出す。スクリプトごとの保存領域は CP Toolkit から読めないため
 - CP Toolkit は起動時にこれを読み、設定へ取り込んで受け渡し場所を空にする
 
 ## 使い方（利用者向け）
