@@ -48,4 +48,4 @@ AtCoder Easy Test v2 と CP Toolkit の Easy Test を同時に有効にすると
 | tessoku_display_difficulty                    | 鉄則本の難易度表示           |
 | View All Editorials                           | 解説の一覧表示               |
 
-nsubaru の旧スクリプト8本は最終版へ更新すれば、CP Toolkit が動いている間は本体を実行しません。
+nsubaru の旧スクリプト8本と Paiza Language Selector は最終版へ更新すれば、CP Toolkit が動いている間は本体を実行しません。

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.12
+// @version        1.0.13
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -878,6 +878,12 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			{
 				featureId: "wide-layout",
 				options: defined({width: stored.containerWidth}),
+			},
+		],
+		PaizaLanguageSelector: (stored) => [
+			{
+				featureId: "paiza-language",
+				options: defined({language: stored.paiza_target_language}),
 			},
 		],
 		AtCoderEasyTestForJava: (stored) => {

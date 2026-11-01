@@ -120,6 +120,7 @@ Clar の確認はサイトと同じ1分間隔です。
 | AtCoder Easy Test for Java         | 編集中のコードの事前コンパイルなどの設定、Local Runner の URL |
 | AtCoder Highlighter                | 強調の色                                                      |
 | AtCoder Widen Container            | ページ幅                                                      |
+| Paiza Language Selector            | 自動で選ぶ言語                                                |
 
 次の点は旧スクリプトと異なります。
 

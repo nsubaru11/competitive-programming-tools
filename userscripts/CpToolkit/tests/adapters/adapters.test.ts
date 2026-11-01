@@ -337,6 +337,7 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 	test("書き出された設定を機能の設定へ変換し、受け渡し場所を空にする", () => {
 		write("AtCoderHighlighter", {numColor: "#112233"});
 		write("AtCoderWidenContainer", {containerWidth: "80%"});
+		write("PaizaLanguageSelector", {paiza_target_language: "java"});
 		write("AtCoderEasyTestForJava", {
 			config: JSON.stringify({
 				"codeRunner.localRunnerURL": "http://localhost:9000",
@@ -348,6 +349,7 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 
 		expect(settings.storedOptions("statement-highlight")).toEqual({numberColor: "#112233"});
 		expect(settings.storedOptions("wide-layout")).toEqual({width: "80%"});
+		expect(settings.storedOptions("paiza-language")).toEqual({language: "java"});
 		expect(settings.storedOptions("local-runner")).toEqual({url: "http://localhost:9000"});
 		expect(settings.storedOptions("easy-test")).toEqual({keyboardShortcuts: false});
 		expect(localStorage.getItem("cp-toolkit:legacy:AtCoderHighlighter")).toBeNull();

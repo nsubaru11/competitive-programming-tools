@@ -33,6 +33,10 @@ export const LEGACY_SCRIPTS: Readonly<Record<string, (stored: Stored) => readonl
 		featureId: "wide-layout",
 		options: defined({width: stored.containerWidth}),
 	}],
+	PaizaLanguageSelector: (stored) => [{
+		featureId: "paiza-language",
+		options: defined({language: stored.paiza_target_language}),
+	}],
 	AtCoderEasyTestForJava: (stored) => {
 		const config = parseStoredObject<Stored>(stored.config);
 		return [
