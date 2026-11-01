@@ -642,27 +642,39 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		};
 	}
 
+	var ANNOTATION = String.raw`@[\w.]+(?:\s*\([^)]*\))?`;
+	var MAIN_METHOD_REGEX = new RegExp(
+		String.raw`((?:(?:public|static|final|synchronized|strictfp|${ANNOTATION})\s+)+)void\s+main\s*\(\s*` +
+			String.raw`(?:(?:final|${ANNOTATION})\s+)*String\s*(?:\[\s*]|\.\.\.|\s+[A-Za-z_$][\w$]*\s*\[\s*])`,
+		"g",
+	);
+
+	function findMainMethodIndices(maskedText) {
+		return [...maskedText.matchAll(MAIN_METHOD_REGEX)]
+			.filter((m) => /\bpublic\b/.test(m[1]) && /\bstatic\b/.test(m[1]))
+			.map((m) => m.index);
+	}
+
 	function findMainClassInfo(maskedText) {
-		const mainIndex =
-			/(?:\bpublic\s+static|\bstatic\s+public)\s+void\s+main\s*\(\s*String\s*(?:\[]|\.\.\.)/.exec(maskedText)
-				?.index ?? -1;
+		const mainIndices = findMainMethodIndices(maskedText);
 		const classRegex = /\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b/g;
 		const candidates = [];
 		let m;
 		while ((m = classRegex.exec(maskedText)) !== null) {
 			const info = buildClassInfo(maskedText, m);
-			if (!info) continue;
-			candidates.push(info);
-			if (
-				mainIndex !== -1 &&
-				info.closeBraceIdx !== -1 &&
-				mainIndex > info.classStart &&
-				mainIndex < info.closeBraceIdx
-			) {
-				return info;
-			}
+			if (info) candidates.push(info);
 		}
-		return candidates.find((c) => c.isPublic) ?? candidates[0] ?? null;
+		const declaring = candidates.filter(
+			(c) =>
+				c.closeBraceIdx !== -1 && mainIndices.some((index) => index > c.classStart && index < c.closeBraceIdx),
+		);
+		return (
+			declaring.find((c) => c.name === "Main") ??
+			declaring[0] ??
+			candidates.find((c) => c.isPublic) ??
+			candidates[0] ??
+			null
+		);
 	}
 
 	function removePackageDeclaration(maskedCode, currentCode) {

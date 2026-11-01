@@ -114,9 +114,21 @@ function buildClassInfo(maskedText: string, m: RegExpExecArray): ClassInfo | nul
 	};
 }
 
+const ANNOTATION = String.raw`@[\w.]+(?:\s*\([^)]*\))?`;
+const MAIN_METHOD_REGEX = new RegExp(
+	String.raw`((?:(?:public|static|final|synchronized|strictfp|${ANNOTATION})\s+)+)void\s+main\s*\(\s*` +
+	String.raw`(?:(?:final|${ANNOTATION})\s+)*String\s*(?:\[\s*]|\.\.\.|\s+[A-Za-z_$][\w$]*\s*\[\s*])`,
+	"g",
+);
+
+function findMainMethodIndices(maskedText: string): number[] {
+	return [...maskedText.matchAll(MAIN_METHOD_REGEX)]
+		.filter((m) => /\bpublic\b/.test(m[1]) && /\bstatic\b/.test(m[1]))
+		.map((m) => m.index);
+}
+
 function findMainClassInfo(maskedText: string): ClassInfo | null {
-	const mainIndex =
-		/(?:\bpublic\s+static|\bstatic\s+public)\s+void\s+main\s*\(\s*String\s*(?:\[]|\.\.\.)/.exec(maskedText)?.index ?? -1;
+	const mainIndices = findMainMethodIndices(maskedText);
 
 	const classRegex = /\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b/g;
 	const candidates: ClassInfo[] = [];
@@ -124,15 +136,14 @@ function findMainClassInfo(maskedText: string): ClassInfo | null {
 
 	while ((m = classRegex.exec(maskedText)) !== null) {
 		const info = buildClassInfo(maskedText, m);
-		if (!info) continue;
-		candidates.push(info);
-		if (mainIndex !== -1 && info.closeBraceIdx !== -1
-			&& mainIndex > info.classStart && mainIndex < info.closeBraceIdx) {
-			return info;
-		}
+		if (info) candidates.push(info);
 	}
 
-	return candidates.find((c: {isPublic: any;}) => c.isPublic) ?? candidates[0] ?? null;
+	const declaring = candidates.filter((c) => c.closeBraceIdx !== -1
+		&& mainIndices.some((index) => index > c.classStart && index < c.closeBraceIdx));
+	// Compiler API の変換と同じく、main を持つ型が複数あれば Main という名前の型を選ぶ
+	return declaring.find((c) => c.name === "Main") ?? declaring[0]
+		?? candidates.find((c) => c.isPublic) ?? candidates[0] ?? null;
 }
 
 function removePackageDeclaration(maskedCode: string, currentCode: string): ModifyResult {
