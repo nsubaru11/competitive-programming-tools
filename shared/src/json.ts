@@ -21,7 +21,3 @@ export function parseStoredObject<T extends Record<string, unknown>>(raw: unknow
 	}
 	return {};
 }
-
-export function mergeWithDefaults<T extends Record<string, unknown>>(defaults: T, raw: unknown): T {
-	return Object.assign({}, defaults, parseStoredObject<T>(raw));
-}

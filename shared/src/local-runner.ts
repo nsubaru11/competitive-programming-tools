@@ -108,19 +108,8 @@ export function isHttpUrl(value: string): boolean {
 	return /^https?:\/\//.test(value);
 }
 
-export function buildLocalRunnerKey(info: LocalRunnerCompilerInfo): string {
-	return `${info.language} ${info.compilerName} ${info.label}`;
-}
-
 export function buildLocalRunnerListRequest(): LocalRunnerListRequest {
 	return {mode: "list"};
-}
-
-export function buildLocalRunnerPrecompileRequest(sourceCode: string): LocalRunnerPrecompileRequest {
-	return {
-		mode: "precompile",
-		sourceCode,
-	};
 }
 
 export function buildLocalRunnerTransformRequest(

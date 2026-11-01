@@ -10,7 +10,7 @@
 | `local-runner.ts`    | Local Runner HTTP API の型、リクエストビルダー、`toEasyTestStatus` |
 | `easy-test-judge.ts` | Easy Test 互換の出力比較（trim / split / 誤差許容）                |
 | `java-transform.ts`  | LocalRunner不在時に限るJavaソースの字句変換フォールバック          |
-| `json.ts`            | `safeJsonParse`、`parseStoredObject`、`mergeWithDefaults`          |
+| `json.ts`            | `safeJsonParse`、`parseStoredObject`                               |
 | `query.ts`           | `buildQueryString`                                                 |
 | `utils.ts`           | `normalizeNewlines`                                                |
 | `async.ts`           | `sleep`                                                            |
@@ -25,7 +25,7 @@ import {
 	buildLocalRunnerRunRequest,
 	evaluateEasyTestOutput,
 	modifyJavaCode,
-	mergeWithDefaults,
+	parseStoredObject,
 } from "@atcoder-tools/shared";
 ```
 
