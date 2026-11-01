@@ -57,16 +57,16 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 次の8本は CP Toolkit へ統合しました。今後は更新しません。最終版は [Release](https://github.com/nsubaru11/competitive-programming-tools/releases/tag/legacy-userscripts-final) から入手できます。
 
-| スクリプト                         | CP Toolkit の機能        |
-|------------------------------------|--------------------------|
+| スクリプト                         | CP Toolkit の機能                     |
+|------------------------------------|---------------------------------------|
 | AtCoder Custom Default Submissions | AC 提出への近道(既定の絞り込みは廃止) |
-| AtCoder Easy Test for Java         | Easy Test、Local Runner  |
-| AtCoder Highlighter                | 問題文の強調表示         |
-| AtCoder Listing Tasks              | 問題のドロップダウン     |
-| AtCoder Markdown Copier            | 問題文のコピー           |
-| AtCoder Performance Overlay        | パフォーマンスのグラフ   |
-| AtCoder Widen Container            | ページ幅の拡張           |
-| Java Code Submitter                | Java の提出補助          |
+| AtCoder Easy Test for Java         | Easy Test、Local Runner               |
+| AtCoder Highlighter                | 問題文の強調表示                      |
+| AtCoder Listing Tasks              | 問題のドロップダウン                  |
+| AtCoder Markdown Copier            | 問題文のコピー                        |
+| AtCoder Performance Overlay        | パフォーマンスのグラフ                |
+| AtCoder Widen Container            | ページ幅の拡張                        |
+| Java Code Submitter                | Java の提出補助                       |
 
 別リポジトリの [Paiza Language Selector](https://github.com/nsubaru11/userscripts/blob/main/src/paiza-language-selector.user.js) も paiza の言語選択へ統合しました。
 
