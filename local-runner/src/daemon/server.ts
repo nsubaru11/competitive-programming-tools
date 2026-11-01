@@ -17,6 +17,7 @@ import * as logging from "../utils/logging";
 import * as compiler from "./compiler";
 import * as dispatcher from "./dispatcher";
 import {applySubmissionHeader} from "./header";
+import {ALLOWED_ORIGIN_HOSTS, isAllowedOrigin} from "./origin";
 
 const serverStartedAt = Date.now();
 const PRECOMPILE_IDLE_DELAY_MS = 150;
@@ -25,30 +26,11 @@ let precompileTimer: NodeJS.Timeout | null = null;
 let scheduledPrecompileSource = "";
 const prepareCache = new Map<string, Promise<LocalRunnerPrepareResponse>>();
 
-// ローカルランナーを利用するユーザースクリプトが動作するジャッジサイト（EasyTest の @match と一致）。
-// これらのホスト（およびサブドメイン）からのブラウザ要求のみ許可する。
-const DEFAULT_ALLOWED_ORIGIN_HOSTS = [
-	"atcoder.jp", "yukicoder.me", "codeforces.com", "onlinejudge.u-aizu.ac.jp", "judge.yosupo.jp", "paiza.jp",
-];
-
 // LOCAL_RUNNER_ALLOWED_ORIGINS で完全一致のオリジン許可リストに差し替え可能（カンマ区切り）。
 const ALLOWED_ORIGINS_OVERRIDE = (process.env.LOCAL_RUNNER_ALLOWED_ORIGINS || "")
 	.split(",")
 	.map((s) => s.trim())
 	.filter(Boolean);
-
-/** ブラウザ Origin を検査する。Origin 無し（非ブラウザ＝CLI 等）は許可。 */
-function isAllowedOrigin(origin: string | undefined): boolean {
-	if (!origin) return true;
-	if (ALLOWED_ORIGINS_OVERRIDE.length > 0) return ALLOWED_ORIGINS_OVERRIDE.includes(origin);
-	let host: string;
-	try {
-		host = new URL(origin).hostname;
-	} catch {
-		return false;
-	}
-	return DEFAULT_ALLOWED_ORIGIN_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-}
 
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
 							 validate = true): Promise<LocalRunnerTransformResponse> {
@@ -255,7 +237,7 @@ const server = http.createServer(async (req, res) => {
 	//   CORS 応答ヘッダだけでなくサーバ側で 403 を返して実行そのものを止める必要がある。）
 	// Origin ヘッダの無い要求（CLI/bun の fetch 等、非ブラウザ）は従来どおり許可する。
 	const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
-	const originAllowed = isAllowedOrigin(origin);
+	const originAllowed = isAllowedOrigin(origin, ALLOWED_ORIGINS_OVERRIDE);
 	if (origin && originAllowed) {
 		res.setHeader("Access-Control-Allow-Origin", origin);
 		res.setHeader("Vary", "Origin");
@@ -409,7 +391,7 @@ async function bootstrap() {
 		const message = "✓ LocalRunner server is ready:";
 		const link = `http://${host}:${config.RUNNER_CONFIG.port}`;
 		logging.logInfo(color.supportsRunnerColor() ? `${color.ANSI.GREEN}${message}${color.ANSI.RESET} ${color.ANSI.CYAN}${link}${color.ANSI.RESET}` : `${message} ${link}`);
-		logging.logInfo(`Allowed browser origins: ${ALLOWED_ORIGINS_OVERRIDE.length > 0 ? ALLOWED_ORIGINS_OVERRIDE.join(", ") : DEFAULT_ALLOWED_ORIGIN_HOSTS.map((h) => `*.${h}`).join(", ")}`);
+		logging.logInfo(`Allowed browser origins: ${ALLOWED_ORIGINS_OVERRIDE.length > 0 ? ALLOWED_ORIGINS_OVERRIDE.join(", ") : ALLOWED_ORIGIN_HOSTS.join(", ")}`);
 		logging.logInfo(`Runner label: ${compiler.RUNNER_LABEL}`);
 	});
 }

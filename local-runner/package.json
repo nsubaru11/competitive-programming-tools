@@ -22,7 +22,8 @@
 		"build": "bun run typecheck && bun run build:cli:win",
 		"typecheck": "tsc --noEmit",
 		"test:transform": "bun ./src/cli/java-transform.smoke.ts",
-		"test:bundle": "bun run test:transform"
+		"test:bundle": "bun run test:transform",
+		"test:unit": "bun test src"
 	},
 	"devDependencies": {
 		"@types/node": "^24.12.4",

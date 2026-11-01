@@ -19,6 +19,15 @@ tools/local-runner/
 
 `@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は userscript の AtCoder Easy Test for Java と同じ `evaluateEasyTestOutput` です。
 
+## セキュリティ
+
+サーバーは受け取ったコードを実行するので、次の制限を設けています。
+
+- 既定で `127.0.0.1` にだけバインドする。`LOCAL_RUNNER_HOST` で変更すると同じネットワークの端末から実行できるようになるので、変更しない
+- ブラウザからの要求は Origin を検査し、UserScript が動くジャッジサイトの `https` のオリジンだけを受け付ける。`LOCAL_RUNNER_ALLOWED_ORIGINS` で完全一致の許可リストに差し替えられる
+- Origin のない要求は CLI として受け付ける。同じ PC で動くプログラムからの要求は拒否できない
+- 実行するコードはサンドボックスに入らず、起動したユーザーの権限で動く。内容を確認していないコードは実行しない
+
 ## 前提条件
 
 - Bun
