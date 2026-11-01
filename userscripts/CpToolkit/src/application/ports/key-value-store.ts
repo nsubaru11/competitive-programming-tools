@@ -7,8 +7,8 @@ export interface KeyValueStore {
 
 	set(key: string, value: StoredValue): void;
 
-	/** 他のタブでの変更を通知する。自分のタブでの変更は通知しない。 */
-	subscribeRemote(key: string, listener: (value: unknown) => void): void;
+	/** 他のタブでの変更を通知する。自分のタブでの変更は通知しない。解除する関数を返す。 */
+	subscribeRemote(key: string, listener: (value: unknown) => void): () => void;
 }
 
 /** 保存値を読む。形が違う値は、壊れたものとして既定値に置き換える。 */

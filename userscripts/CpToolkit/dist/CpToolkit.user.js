@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.5
+// @version        1.0.6
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -24,9 +24,11 @@
 // @grant          GM_getValue
 // @grant          GM_setValue
 // @grant          GM_addValueChangeListener
+// @grant          GM_removeValueChangeListener
 // @grant          GM_registerMenuCommand
 // @grant          GM_setClipboard
 // @grant          GM_notification
+// @grant          GM_openInTab
 // @grant          GM_xmlhttpRequest
 // @connect        localhost
 // @connect        127.0.0.1
@@ -442,6 +444,15 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 			contestId: match[1],
 			taskId: match[2],
 		};
+	}
+
+	function buildAtCoderClarificationsUrl(contestId) {
+		return `https://atcoder.jp/contests/${contestId}/clarifications`;
+	}
+
+	function buildAtCoderClarificationCountUrl(contestId, sinceMs) {
+		const since = `${new Date(sinceMs).toISOString().slice(0, 19).replace("T", " ")}+0000`;
+		return `${buildAtCoderClarificationsUrl(contestId)}/count?t=${encodeURIComponent(since)}`;
 	}
 
 	function buildAtCoderSubmissionsQuery(filter) {
@@ -1050,9 +1061,10 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 
 		subscribeRemote(key, listener) {
-			GM_addValueChangeListener(key, (_name, _oldValue, newValue, remote) => {
+			const id = GM_addValueChangeListener(key, (_name, _oldValue, newValue, remote) => {
 				if (remote) listener(newValue);
 			});
+			return () => GM_removeValueChangeListener(id);
 		}
 	}
 
@@ -1767,6 +1779,7 @@ ${settings_panel_default}`,
 			page: "^/[^?]",
 			home: "^/(\\?|$)",
 			contest: "^/contests/(?!archive)[^/?#]+",
+			tasks: "^/contests/[^/]+/tasks/?(\\?|$)",
 			task: "^/contests/[^/]+/tasks/[^/?#]+",
 			tasksPrint: "^/contests/[^/]+/tasks_print",
 			tessokuTasks: "^/contests/tessoku-book/tasks/?(\\?|$)",
@@ -1774,6 +1787,7 @@ ${settings_panel_default}`,
 			submissions: "^/contests/[^/]+/submissions(/me)?/?(\\?|$)",
 			submissionDetail: "^/contests/[^/]+/submissions/\\d+",
 			editorial: "^/contests/[^/]+/editorial/?(\\?|$)",
+			virtual: "^/contests/[^/]+/virtual/?(\\?|$)",
 			user: "^/users/[^/?#]+/?(\\?(?!.*graph=(rank|dist)).*)?$",
 			userHistory: "^/users/[^/]+/history",
 		},
@@ -1977,8 +1991,13 @@ ${settings_panel_default}`,
 		"submissionShortcuts.fastest": "Fastest",
 		"submissionShortcuts.shortest": "Shortest",
 		"resultNotifier.title": "Submission notifications",
-		"resultNotifier.description": "Shows the verdict on any page when judging finishes.",
-		"resultNotifier.desktop": "Use desktop notifications while another tab is active",
+		"resultNotifier.description":
+			"Shows the verdict right after judging finishes, on any page. Keep at least one AtCoder tab open.",
+		"resultNotifier.desktop": "Use desktop notifications while you are away from AtCoder",
+		"clarNotifier.title": "Clarification notifications",
+		"clarNotifier.description": "Notifies you when the organizers post an answer or a correction during a contest.",
+		"clarNotifier.desktop": "Use desktop notifications while you are away from AtCoder",
+		"clarNotifier.arrived": "{count} new clarification(s)",
 		"averageResult.title": "Average results",
 		"averageResult.description": "Shows average time and memory on the submission page.",
 		"averageResult.average": "avg.",
@@ -1989,6 +2008,11 @@ ${settings_panel_default}`,
 		"submissionTimer.cancel": "Cancel",
 		"submissionTimer.canceled": "The timer was canceled.",
 		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
+		"taskStatus.title": "Task status colors",
+		"taskStatus.description":
+			"Colors the task list and the dropdown by your results. A task with a score counts as accepted.",
+		"taskStatus.acceptedColor": "Color of accepted tasks",
+		"taskStatus.rejectedColor": "Color of tasks not accepted",
 		"taskDropdown.title": "Task dropdown",
 		"taskDropdown.description": "Opens tasks from the Tasks tab and opens several tasks at once.",
 		"taskDropdown.newTab": "Open in a new tab",
@@ -2003,6 +2027,20 @@ ${settings_panel_default}`,
 		"taskDropdown.tabLimit": "*Up to {count} tabs can be opened at once.",
 		"editorialList.title": "All editorials",
 		"editorialList.description": "Shows the editorials of every task on the editorial page.",
+		"variableHover.title": "Variable highlighting",
+		"variableHover.description":
+			"Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.",
+		"latestContests.title": "Latest contests",
+		"latestContests.description": "Adds links to the latest ABC, ARC and other contests to the header.",
+		"latestContests.menu": "Latest contests",
+		"contestCalendar.title": "Add to calendar",
+		"contestCalendar.description": "Adds a link to contest pages that registers the contest in Google Calendar.",
+		"contestCalendar.add": "Add to calendar",
+		"virtualTimer.title": "Virtual contest timer",
+		"virtualTimer.description":
+			"Shows the time until the start and the time left of a virtual participation in the corner clock. Open the virtual page once to record the start time.",
+		"virtualTimer.untilStart": "Starts in",
+		"virtualTimer.remaining": "Time left",
 		"topLinks.title": "Contest links on the top page",
 		"topLinks.description": "Replaces the top page list with links to past contests by type.",
 		"tessokuDifficulty.title": "Tessoku difficulty",
@@ -2124,8 +2162,13 @@ ${settings_panel_default}`,
 		"submissionShortcuts.fastest": "実行時間順",
 		"submissionShortcuts.shortest": "コード長順",
 		"resultNotifier.title": "提出結果の通知",
-		"resultNotifier.description": "判定が終わると、どのページにいても結果を通知します。",
-		"resultNotifier.desktop": "別のタブを見ているときはデスクトップ通知も出す",
+		"resultNotifier.description":
+			"判定が終わると、どのページにいても結果をすぐに通知します。AtCoder のタブを1つは開いたままにしてください。",
+		"resultNotifier.desktop": "AtCoder を操作していないときはデスクトップ通知も出す",
+		"clarNotifier.title": "Clar の通知",
+		"clarNotifier.description": "コンテスト中に運営からの回答や訂正(Clar)が届くと通知します。",
+		"clarNotifier.desktop": "AtCoder を操作していないときはデスクトップ通知も出す",
+		"clarNotifier.arrived": "新しい Clar が {count} 件あります",
 		"averageResult.title": "実行結果の平均",
 		"averageResult.description": "提出の詳細に、実行時間とメモリの平均を表示します。",
 		"averageResult.average": "平均",
@@ -2136,6 +2179,11 @@ ${settings_panel_default}`,
 		"submissionTimer.cancel": "取り消す",
 		"submissionTimer.canceled": "タイマーを取り消しました。",
 		"submissionTimer.scheduled": "{time} ごろに提出します。",
+		"taskStatus.title": "問題の提出状況",
+		"taskStatus.description":
+			"問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。",
+		"taskStatus.acceptedColor": "正解した問題の色",
+		"taskStatus.rejectedColor": "正解していない問題の色",
 		"taskDropdown.title": "問題のドロップダウン",
 		"taskDropdown.description": "「問題」タブから各問題へ移動でき、複数の問題をまとめて開けます。",
 		"taskDropdown.newTab": "新しいタブで開く",
@@ -2150,6 +2198,20 @@ ${settings_panel_default}`,
 		"taskDropdown.tabLimit": "※一度に開けるタブは {count} 個までです。",
 		"editorialList.title": "解説の一覧表示",
 		"editorialList.description": "解説ページで、すべての問題の解説をまとめて表示します。",
+		"variableHover.title": "変数の強調",
+		"variableHover.description":
+			"問題文の変数に重ねると、同じ変数をすべて強調します。クリックで固定し、Esc で解除します。",
+		"latestContests.title": "最新のコンテスト",
+		"latestContests.description": "ヘッダーに ABC や ARC などの最新のコンテストへのリンクを追加します。",
+		"latestContests.menu": "最新のコンテスト",
+		"contestCalendar.title": "カレンダーへの登録",
+		"contestCalendar.description": "コンテストのページに、Google カレンダーへ登録するリンクを追加します。",
+		"contestCalendar.add": "カレンダーに追加",
+		"virtualTimer.title": "バーチャル参加のタイマー",
+		"virtualTimer.description":
+			"バーチャル参加の開始までの時間と残り時間を、画面右下の時計に表示します。参加のページを開くと開始時刻を記憶します。",
+		"virtualTimer.untilStart": "開始まであと",
+		"virtualTimer.remaining": "残り時間",
 		"topLinks.title": "トップページのコンテスト一覧",
 		"topLinks.description": "トップページの一覧を、種類ごとの過去問へのリンクに置き換えます。",
 		"tessokuDifficulty.title": "鉄則本の難易度表示",
@@ -2268,6 +2330,42 @@ ${settings_panel_default}`,
 		permanentPrefixes: ["practice", "APG4b", "abs", "practice2", "typical90", "math-and-algorithm", "tessoku-book"],
 		maxTabsAtOnce: 20,
 		taskCacheDays: 10,
+		latest: {
+			menuTargets: [
+				"#navbar-collapse .navbar-nav:not(.navbar-right)",
+				"#header .header-sub_page",
+				"#header .header-page",
+			],
+			cacheMinutes: 60,
+			leadHours: 24,
+			kinds: [
+				{
+					label: "ABC",
+					idPattern: "^abc\\d+$",
+					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=1&category=0&keyword=",
+				},
+				{
+					label: "ARC",
+					idPattern: "^arc\\d+$",
+					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=2&category=0&keyword=",
+				},
+				{
+					label: "AGC",
+					idPattern: "^agc\\d+$",
+					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=3&category=0&keyword=",
+				},
+				{
+					label: "AHC",
+					idPattern: "^ahc\\d+$",
+					archiveUrl: "https://atcoder.jp/contests/archive?ratedType=4&category=0&keyword=",
+				},
+				{
+					label: "AWC",
+					idPattern: "^awc\\d+$",
+					archiveUrl: "https://atcoder.jp/contests/",
+				},
+			],
+		},
 	};
 	// CpToolkit/data/languages.yaml
 	var languages_default = {
@@ -4027,6 +4125,19 @@ ${settings_panel_default}`,
 		highlightCode() {
 			pageGlobals().PR?.prettyPrint();
 		}
+
+		contestPeriod() {
+			const {startTime, endTime} = pageGlobals();
+			return startTime && endTime ? {startMs: startTime.valueOf(), endMs: endTime.valueOf()} : null;
+		}
+
+		serverNow() {
+			return pageGlobals().getServerTime?.().valueOf() ?? Date.now();
+		}
+
+		isLoggedIn() {
+			return Boolean(pageGlobals().userScreenName);
+		}
 	}
 
 	// CpToolkit/src/adapters/page/same-origin-http-client.ts
@@ -4039,6 +4150,38 @@ ${settings_panel_default}`,
 				...(body !== undefined && {body}),
 			});
 			return {status: response.status, text: await response.text()};
+		}
+	}
+
+	// CpToolkit/src/adapters/page/worker-ticker.ts
+	var WORKER_SOURCE = "onmessage = ({data}) => setInterval(() => postMessage(0), data);";
+
+	function tickOnPage(intervalMs, listener) {
+		const timer = setInterval(listener, intervalMs);
+		return () => clearInterval(timer);
+	}
+
+	class WorkerTicker {
+		start(intervalMs, listener) {
+			let stop;
+			const fallBack = () => {
+				stop();
+				stop = tickOnPage(intervalMs, listener);
+			};
+			try {
+				const url = URL.createObjectURL(new Blob([WORKER_SOURCE], {type: "text/javascript"}));
+				const worker = new Worker(url);
+				stop = () => {
+					worker.terminate();
+					URL.revokeObjectURL(url);
+				};
+				worker.onmessage = () => listener();
+				worker.onerror = fallBack;
+				worker.postMessage(intervalMs);
+			} catch {
+				stop = tickOnPage(intervalMs, listener);
+			}
+			return () => stop();
 		}
 	}
 
@@ -5619,16 +5762,40 @@ ${body}
 	function texOf(element, fallback) {
 		const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
 		const attribute = element.getAttribute("data-tex") ?? element.getAttribute("aria-label");
-		const tex = annotation?.textContent ?? attribute ?? fallback;
-		return `$${tex.trim()}$`;
+		return (annotation?.textContent ?? attribute ?? fallback).trim();
+	}
+
+	function inlineMath(element, fallback) {
+		return `$${texOf(element, fallback)}$`;
+	}
+
+	function displayMath(element) {
+		return `$$
+${texOf(element, "")}
+$$`;
+	}
+
+	function hasClass(node, className) {
+		return isElement(node) && node.classList.contains(className);
 	}
 
 	function createTurndown() {
 		const service = new TurndownService({headingStyle: "atx", codeBlockStyle: "fenced", bulletListMarker: "-"});
 		service.use(gfm);
 		service.addRule("math", {
-			filter: "var",
-			replacement: (content, node) => (isElement(node) ? texOf(node, content) : content),
+			filter: (node) => node.nodeName === "VAR" || hasClass(node, "katex"),
+			replacement: (content, node) => (isElement(node) ? inlineMath(node, content) : content),
+		});
+		service.addRule("displayMath", {
+			filter: (node) => hasClass(node, "katex-display"),
+			replacement: (content, node) =>
+				isElement(node)
+					? `
+
+${displayMath(node)}
+
+`
+					: content,
 		});
 		service.addRule("pre", {
 			filter: "pre",
@@ -5685,7 +5852,11 @@ ${content.trim()}
 		if (tag === "BR")
 			return `
 `;
-		if (tag === "VAR") return texOf(node, node.textContent ?? "");
+		if (hasClass(node, "katex-display"))
+			return `
+${displayMath(node)}
+`;
+		if (tag === "VAR" || hasClass(node, "katex")) return inlineMath(node, node.textContent ?? "");
 		if (tag === "CODE") return `\`${node.textContent ?? ""}\``;
 		if (tag === "PRE")
 			return `
@@ -5738,7 +5909,11 @@ ${inner}
 
 	class GmNotifier {
 		notify({title, text, url}) {
-			GM_notification({title, text, ...(url !== undefined && {onclick: () => window.open(url, "_blank")})});
+			GM_notification({
+				title,
+				text,
+				...(url !== undefined && {onclick: () => GM_openInTab(url, {active: true})}),
+			});
 		}
 	}
 
@@ -5849,6 +6024,7 @@ ${inner}
 			state,
 			clipboard: new GmClipboard(),
 			notifier: new GmNotifier(),
+			ticker: new WorkerTicker(),
 			http,
 			site,
 			scripts,
@@ -5945,6 +6121,225 @@ ${inner}
 			);
 			body.prepend(row);
 			return () => row.remove();
+		},
+	});
+
+	// CpToolkit/src/application/contest/clarification-counter.ts
+	var SEEN_KEY = "clar-notifier:seen";
+	var LAST_POLL_KEY = "clar-notifier:lastPoll";
+	var isSeenCounts = isRecordOf(isNumber);
+
+	class ClarificationCounter {
+		state;
+
+		constructor(state) {
+			this.state = state;
+		}
+
+		claimPoll(now, intervalMs) {
+			if (now - readStored(this.state, LAST_POLL_KEY, isNumber, 0) < intervalMs) return false;
+			this.state.set(LAST_POLL_KEY, now);
+			return true;
+		}
+
+		update(contestId, count) {
+			const seen = readStored(this.state, SEEN_KEY, isSeenCounts, {});
+			const previous = seen[contestId] ?? 0;
+			if (count !== previous) this.state.set(SEEN_KEY, {...seen, [contestId]: count});
+			return Math.max(count - previous, 0);
+		}
+	}
+
+	// CpToolkit/src/ui/toast/toast.css
+	var toast_default = `.toasts {
+	position: fixed;
+	top: 120px;
+	left: 20px;
+	z-index: 2147483000;
+	display: grid;
+	gap: 8px;
+	width: min(360px, calc(100vw - 40px));
+}
+
+.toast {
+	padding: 8px 12px;
+	border: 1px solid var(--cp-border);
+	border-left-width: 4px;
+	border-radius: 8px;
+	background: var(--cp-surface);
+	box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+	color: var(--cp-text);
+	cursor: pointer;
+	animation: toast-in 150ms ease-out;
+}
+
+.toast[data-tone="success"] {
+	border-left-color: var(--cp-success);
+}
+
+.toast[data-tone="warning"] {
+	border-left-color: var(--cp-danger);
+}
+
+.toast-title {
+	font-weight: 600;
+}
+
+.toast-detail {
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.toast a {
+	color: var(--cp-accent);
+}
+
+@keyframes toast-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+`;
+
+	// CpToolkit/src/ui/toast/toast.ts
+	var container = null;
+
+	function ensureContainer() {
+		if (container?.isConnected) return container;
+		const list = h("div", {className: "toasts"});
+		const host = h("div");
+		host.attachShadow({mode: "open"}).append(
+			h("style", {
+				textContent: `${theme_default}
+${toast_default}`,
+			}),
+			list,
+		);
+		document.body.append(host);
+		container = list;
+		return list;
+	}
+
+	function showToast({title, detail, tone, href, durationMs}) {
+		const heading = href ? h("a", {href, target: "_blank", rel: "noopener", textContent: title}) : title;
+		const toast = h(
+			"div",
+			{className: "toast"},
+			h("div", {className: "toast-title"}, heading),
+			h("div", {className: "toast-detail", textContent: detail}),
+		);
+		toast.dataset.tone = tone;
+		toast.addEventListener("click", () => toast.remove());
+		setTimeout(() => toast.remove(), durationMs);
+		ensureContainer().append(toast);
+	}
+
+	// CpToolkit/src/features/clar-notifier/index.ts
+	var POLL_INTERVAL_MS2 = 60 * 1000;
+	var TICK_INTERVAL_MS = 5000;
+	var START_DELAY_MS = 5 * 60 * 1000;
+	var START_SPREAD_MS = 60 * 1000;
+	var MAX_CONTEST_MS = 30 * 24 * 60 * 60 * 1000;
+	var TOAST_DURATION_MS = 30 * 1000;
+	var clarNotifier = defineFeature({
+		id: "clar-notifier",
+		title: "clarNotifier.title",
+		description: "clarNotifier.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {
+			desktop: option.boolean(true, "clarNotifier.desktop"),
+		},
+		live: true,
+		start({options, notifier, page, site, state, ticker, translate}) {
+			const contestId = contestIdOf(location.pathname);
+			const period = page.contestPeriod();
+			const hasBadge = document.querySelector("#clar-badge") !== null;
+			if (!contestId || !period || !hasBadge || period.endMs - period.startMs > MAX_CONTEST_MS) {
+				return () => {
+					return;
+				};
+			}
+			const counter = new ClarificationCounter(state);
+			const beginAt = period.startMs + START_DELAY_MS + Math.random() * START_SPREAD_MS;
+			const check = async () => {
+				const response = await site.send({url: buildAtCoderClarificationCountUrl(contestId, period.startMs)});
+				const count = safeJsonParse(response.text, null);
+				if (response.status !== 200 || typeof count !== "number") return;
+				const added = counter.update(contestId, count);
+				if (added === 0) return;
+				const url = buildAtCoderClarificationsUrl(contestId);
+				const title = translate("clarNotifier.arrived").replace("{count}", String(added));
+				const text = document.querySelector(".contest-title")?.textContent?.trim() ?? contestId;
+				showToast({title, detail: text, tone: "warning", href: url, durationMs: TOAST_DURATION_MS});
+				if (options.desktop && !document.hasFocus()) notifier.notify({title, text, url});
+			};
+			const stop = ticker.start(TICK_INTERVAL_MS, () => {
+				const now = page.serverNow();
+				if (now >= period.endMs) stop();
+				else if (now >= beginAt && counter.claimPoll(now, POLL_INTERVAL_MS2))
+					check().catch(() => {
+						return;
+					});
+			});
+			return stop;
+		},
+	});
+
+	// CpToolkit/src/domain/contest/calendar.ts
+	var GOOGLE_CALENDAR_URL = "https://calendar.google.com/calendar/render";
+
+	function toCalendarTime(timeMs) {
+		return new Date(timeMs).toISOString().replace(/[-:]|\.\d{3}/g, "");
+	}
+
+	function buildCalendarUrl({title, startMs, endMs, location: location2}) {
+		const query2 = buildQueryString({
+			action: "TEMPLATE",
+			text: title,
+			dates: `${toCalendarTime(startMs)}/${toCalendarTime(endMs)}`,
+			location: location2,
+		});
+		return `${GOOGLE_CALENDAR_URL}?${query2}`;
+	}
+
+	// CpToolkit/src/features/contest-calendar/index.ts
+	var contestCalendar = defineFeature({
+		id: "contest-calendar",
+		title: "contestCalendar.title",
+		description: "contestCalendar.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {},
+		live: true,
+		start({page, translate}) {
+			const period = page.contestPeriod();
+			const duration = document.querySelector("small.contest-duration");
+			const contestLink = document.querySelector("a.contest-title");
+			if (!period || !duration || !contestLink || page.serverNow() >= period.endMs)
+				return () => {
+					return;
+				};
+			const title = contestLink.textContent?.trim() ?? "";
+			const icon = h("span", {className: "glyphicon glyphicon-calendar", ariaHidden: "true"});
+			const link = h(
+				"a",
+				{
+					href: buildCalendarUrl({title, ...period, location: contestLink.href}),
+					target: "_blank",
+					rel: "noopener noreferrer",
+				},
+				icon,
+				` ${translate("contestCalendar.add")}`,
+			);
+			const wrapper = h("span", {}, " ", link);
+			duration.append(wrapper);
+			return () => wrapper.remove();
 		},
 	});
 
@@ -7006,10 +7401,10 @@ pre code {tab-size: 4;}`;
 		const content = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(1)`);
 		if (!content) throw new Error(`Editorial was not found in ${link.href}`);
 		const history = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(2)`);
-		const container = h("div", {className: "cp-editorial"}, content);
-		if (history) container.append(history);
-		link.parentElement?.append(container);
-		page.renderMath(container);
+		const container2 = h("div", {className: "cp-editorial"}, content);
+		if (history) container2.append(history);
+		link.parentElement?.append(container2);
+		page.renderMath(container2);
 		page.highlightCode();
 	}
 
@@ -7087,11 +7482,11 @@ pre code {tab-size: 4;}`;
 	function createSampleRow(parent, translate) {
 		const existing = parent.querySelector(".cp-samples-row");
 		if (existing) return existing;
-		const container = createDetails(translate("efficientLayout.samples"));
-		container.className = "cp-samples-container";
+		const container2 = createDetails(translate("efficientLayout.samples"));
+		container2.className = "cp-samples-container";
 		const row = h("div", {className: "cp-samples-row"});
-		container.append(row);
-		parent.append(container);
+		container2.append(row);
+		parent.append(container2);
 		return row;
 	}
 
@@ -7307,6 +7702,168 @@ ${efficient_layout_default}`);
 		},
 	});
 
+	// CpToolkit/src/domain/contest/latest.ts
+	function parseContestTime(text) {
+		return Date.parse(
+			text
+				.trim()
+				.replace(" ", "T")
+				.replace(/([+-]\d{2})(\d{2})$/, "$1:$2"),
+		);
+	}
+
+	function pickLatestContest(rows, idPattern, now, leadMs) {
+		const contests = rows.filter(({id}) => idPattern.test(id)).toSorted((a, b) => a.startMs - b.startMs);
+		return (contests.findLast(({startMs}) => startMs <= now + leadMs) ?? contests[0])?.id ?? null;
+	}
+
+	// CpToolkit/src/application/contest/latest-contests.ts
+	var CACHE_KEY2 = "latest-contests:cache";
+	var CONTEST_LIST_URL = "/contests/";
+	var MINUTE_MS = 60 * 1000;
+	var HOUR_MS2 = 60 * MINUTE_MS;
+	var isCache = isObjectOf({fetchedAt: isNumber, contests: isRecordOf(isString)});
+
+	async function loadLatestContests(catalog, {site, state, parse, now}) {
+		const cache = readStored(state, CACHE_KEY2, isCache, null);
+		if (cache && now - cache.fetchedAt < catalog.cacheMinutes * MINUTE_MS) return cache.contests;
+		const fetchRows = async (url) => {
+			const response = await site.send({url});
+			return response.status === 200 ? parse(response.text) : [];
+		};
+		const leadMs = catalog.leadHours * HOUR_MS2;
+		const rows = await fetchRows(CONTEST_LIST_URL);
+		const entries = await Promise.all(
+			catalog.kinds.map(async ({label, idPattern, archiveUrl}) => {
+				const pattern = new RegExp(idPattern);
+				const id =
+					pickLatestContest(rows, pattern, now, leadMs) ??
+					pickLatestContest(await fetchRows(archiveUrl), pattern, now, leadMs);
+				return id ? [[label, id]] : [];
+			}),
+		);
+		const contests = Object.fromEntries(entries.flat());
+		state.set(CACHE_KEY2, {fetchedAt: now, contests});
+		return contests;
+	}
+
+	// CpToolkit/src/features/latest-contests/latest-contests.css
+	var latest_contests_default = `.cp-latest {
+	position: relative;
+}
+
+.cp-latest-menu {
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 1000;
+	min-width: 120px;
+	margin: 0;
+	padding: 5px 0;
+	border: 1px solid rgba(0, 0, 0, .15);
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+	list-style: none;
+}
+
+.cp-latest:hover > .cp-latest-menu,
+.cp-latest:focus-within > .cp-latest-menu {
+	display: block;
+}
+
+/* ヘッダーのメニューの指定を打ち消す */
+.cp-latest-menu > li {
+	display: block !important;
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+}
+
+#header .cp-latest-menu > li > a,
+.cp-latest-menu > li > a {
+	display: block !important;
+	padding: 3px 20px !important;
+	border: 0 !important;
+	color: #333 !important;
+	font-size: 14px !important;
+	line-height: 1.6 !important;
+	white-space: nowrap;
+}
+
+#header .cp-latest-menu > li > a:hover,
+.cp-latest-menu > li > a:hover {
+	background: #f5f5f5;
+	color: #262626 !important;
+	text-decoration: none;
+}
+`;
+
+	// CpToolkit/src/features/latest-contests/index.ts
+	var CONTEST_LIST_PATH = "/contests/";
+
+	function parseContestRows(html) {
+		const page = new DOMParser().parseFromString(html, "text/html");
+		return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
+			const id = row.querySelector('a[href^="/contests/"]')?.getAttribute("href")?.split("/")[2];
+			const startMs = parseContestTime(row.querySelector("time")?.textContent ?? "");
+			return id && !Number.isNaN(startMs) ? [{id, startMs}] : [];
+		});
+	}
+
+	var latestContests = defineFeature({
+		id: "latest-contests",
+		title: "latestContests.title",
+		description: "latestContests.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:page", "atcoder:home"],
+		phase: "ready",
+		options: {},
+		live: true,
+		start({site, state, translate}) {
+			const {latest} = contestCatalog;
+			const target = latest.menuTargets.map((selector) => document.querySelector(selector)).find(Boolean);
+			if (!target)
+				return () => {
+					return;
+				};
+			const style = injectStyle(latest_contests_default);
+			const links = latest.kinds.map(({label, archiveUrl}) => {
+				return {label, link: h("a", {href: archiveUrl, textContent: label})};
+			});
+			const toggle = h(
+				"a",
+				{href: CONTEST_LIST_PATH},
+				h("span", {textContent: translate("latestContests.menu")}),
+			);
+			const menu = h("ul", {className: "cp-latest-menu"}, ...links.map(({link}) => h("li", {}, link)));
+			const item = h("li", {className: "cp-latest"}, toggle, menu);
+			target.append(item);
+			const resolve = async () => {
+				const contests = await loadLatestContests(latest, {
+					site,
+					state,
+					parse: parseContestRows,
+					now: Date.now(),
+				}).catch(() => null);
+				for (const {label, link} of links) {
+					const id = contests?.[label];
+					if (!id) continue;
+					link.href = `${CONTEST_LIST_PATH}${id}`;
+					link.textContent = id.toUpperCase();
+				}
+			};
+			item.addEventListener("mouseenter", () => void resolve(), {once: true});
+			return () => {
+				item.remove();
+				style.remove();
+			};
+		},
+	});
+
 	// CpToolkit/src/features/paiza-language/index.ts
 	var RETRY_COUNT = 30;
 	var RETRY_INTERVAL_MS = 150;
@@ -7465,10 +8022,11 @@ ${efficient_layout_default}`);
 		}),
 	);
 	var PENDING_KEY = "result-notifier:pending";
-	var LAST_POLL_KEY = "result-notifier:lastPoll";
+	var NEXT_POLL_KEY = "result-notifier:nextPoll";
 	var LAST_FOCUS_KEY = "result-notifier:lastFocus";
-	var PENDING_LIFETIME_MS = 10 * 60 * 1000;
-	var INACTIVE_LIMIT_MS = 5 * 60 * 1000;
+	var PENDING_LIFETIME_MS = 30 * 60 * 1000;
+	var FOCUS_REFRESH_MS = 1000;
+	var FOCUS_TIMEOUT_MS = 3000;
 
 	class PendingSubmissions {
 		state;
@@ -7496,107 +8054,45 @@ ${efficient_layout_default}`);
 			);
 		}
 
+		subscribe(listener) {
+			return this.state.subscribeRemote(PENDING_KEY, listener);
+		}
+
 		markFocused(now) {
-			this.state.set(LAST_FOCUS_KEY, now);
+			if (now - this.lastFocus() >= FOCUS_REFRESH_MS) this.state.set(LAST_FOCUS_KEY, now);
+		}
+
+		clearFocus() {
+			this.state.set(LAST_FOCUS_KEY, 0);
+		}
+
+		isFocusedElsewhere(now) {
+			return now - this.lastFocus() < FOCUS_TIMEOUT_MS;
 		}
 
 		claimPoll(now, intervalMs) {
-			const lastFocus = Number(this.state.get(LAST_FOCUS_KEY) ?? 0);
-			const lastPoll = Number(this.state.get(LAST_POLL_KEY) ?? 0);
-			if (now - lastFocus > INACTIVE_LIMIT_MS || now - lastPoll < intervalMs) return false;
-			this.state.set(LAST_POLL_KEY, now);
+			if (now < this.nextPoll()) return false;
+			this.state.set(NEXT_POLL_KEY, now + intervalMs);
 			return true;
+		}
+
+		postponePoll(until) {
+			if (until > this.nextPoll()) this.state.set(NEXT_POLL_KEY, until);
+		}
+
+		lastFocus() {
+			return readStored(this.state, LAST_FOCUS_KEY, isNumber, 0);
+		}
+
+		nextPoll() {
+			return readStored(this.state, NEXT_POLL_KEY, isNumber, 0);
 		}
 	}
 
-	// CpToolkit/src/ui/toast/toast.css
-	var toast_default = `.toasts {
-	position: fixed;
-	top: 120px;
-	left: 20px;
-	z-index: 2147483000;
-	display: grid;
-	gap: 8px;
-	width: min(360px, calc(100vw - 40px));
-}
-
-.toast {
-	padding: 8px 12px;
-	border: 1px solid var(--cp-border);
-	border-left-width: 4px;
-	border-radius: 8px;
-	background: var(--cp-surface);
-	box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
-	color: var(--cp-text);
-	cursor: pointer;
-	animation: toast-in 150ms ease-out;
-}
-
-.toast[data-tone="success"] {
-	border-left-color: var(--cp-success);
-}
-
-.toast[data-tone="warning"] {
-	border-left-color: var(--cp-danger);
-}
-
-.toast-title {
-	font-weight: 600;
-}
-
-.toast-detail {
-	color: var(--cp-text-muted);
-	font-size: 13px;
-}
-
-.toast a {
-	color: var(--cp-accent);
-}
-
-@keyframes toast-in {
-	from {
-		opacity: 0;
-		transform: translateY(-4px);
-	}
-}
-`;
-
-	// CpToolkit/src/ui/toast/toast.ts
-	var container = null;
-
-	function ensureContainer() {
-		if (container?.isConnected) return container;
-		const list = h("div", {className: "toasts"});
-		const host = h("div");
-		host.attachShadow({mode: "open"}).append(
-			h("style", {
-				textContent: `${theme_default}
-${toast_default}`,
-			}),
-			list,
-		);
-		document.body.append(host);
-		container = list;
-		return list;
-	}
-
-	function showToast({title, detail, tone, href, durationMs}) {
-		const heading = href ? h("a", {href, target: "_blank", rel: "noopener", textContent: title}) : title;
-		const toast = h(
-			"div",
-			{className: "toast"},
-			h("div", {className: "toast-title"}, heading),
-			h("div", {className: "toast-detail", textContent: detail}),
-		);
-		toast.dataset.tone = tone;
-		toast.addEventListener("click", () => toast.remove());
-		setTimeout(() => toast.remove(), durationMs);
-		ensureContainer().append(toast);
-	}
-
 	// CpToolkit/src/features/result-notifier/index.ts
-	var POLL_INTERVAL_MS2 = 5000;
-	var TOAST_DURATION_MS = 1e4;
+	var MIN_POLL_INTERVAL_MS = 1000;
+	var TICK_INTERVAL_MS2 = 100;
+	var TOAST_DURATION_MS2 = 1e4;
 	var SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
 
 	function parseResult(html) {
@@ -7626,13 +8122,13 @@ ${toast_default}`,
 		description: "resultNotifier.description",
 		category: "category.submission",
 		defaultEnabled: true,
-		routes: ["atcoder:page"],
+		routes: ["atcoder:page", "atcoder:home"],
 		phase: "ready",
 		options: {
 			desktop: option.boolean(true, "resultNotifier.desktop"),
 		},
 		live: true,
-		start({options, isOnRoute, notifier, site, state}) {
+		start({options, isOnRoute, notifier, site, state, ticker}) {
 			const pending = new PendingSubmissions(state);
 			const contestId = contestIdOf(location.pathname);
 			if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
@@ -7646,9 +8142,9 @@ ${toast_default}`,
 					detail,
 					tone: status === "AC" ? "success" : "warning",
 					href: url,
-					durationMs: TOAST_DURATION_MS,
+					durationMs: TOAST_DURATION_MS2,
 				});
-				if (options.desktop && document.hidden) notifier.notify({title, text: detail, url});
+				if (options.desktop && !document.hasFocus()) notifier.notify({title, text: detail, url});
 			};
 			const checkContest = async (id, submissions) => {
 				const url = buildAtCoderSubmissionStatusJsonUrl(
@@ -7657,30 +8153,53 @@ ${toast_default}`,
 				);
 				const response = await site.send({url});
 				if (response.status !== 200) return;
-				const results = safeJsonParse(response.text, {}).Result ?? {};
+				const {Result: results = {}, Interval: interval} = safeJsonParse(response.text, {});
+				const now = Date.now();
+				const waiting = new Set(pending.list(now).map((submission) => submission.id));
 				const finished = submissions.flatMap((submission) => {
 					const html = results[submission.id]?.Html;
 					const result = html === undefined ? null : parseResult(html);
-					if (!result || isJudging(result.status)) return [];
+					if (!result || isJudging(result.status) || !waiting.has(submission.id)) return [];
 					notify(submission, result);
 					return [submission.id];
 				});
-				pending.remove(finished, Date.now());
+				pending.remove(finished, now);
+				if (interval !== undefined) pending.postponePoll(now + interval);
 			};
+			let checking = false;
+			let stopTicker = null;
 			const poll = () => {
 				const now = Date.now();
-				if (document.hasFocus()) pending.markFocused(now);
 				const submissions = pending.list(now);
-				if (submissions.length === 0 || !pending.claimPoll(now, POLL_INTERVAL_MS2)) return;
-				for (const [id, contestSubmissions] of Map.groupBy(submissions, ({contestId: contest}) => contest)) {
-					checkContest(id, contestSubmissions).catch(() => {
-						return;
-					});
+				if (submissions.length === 0) {
+					stopTicker?.();
+					stopTicker = null;
+					return;
 				}
+				if (document.hasFocus()) pending.markFocused(now);
+				else if (pending.isFocusedElsewhere(now)) return;
+				if (checking || !pending.claimPoll(now, MIN_POLL_INTERVAL_MS)) return;
+				checking = true;
+				const groups = Map.groupBy(submissions, (submission) => submission.contestId);
+				const checks = [...groups].map(([id, contestSubmissions]) => checkContest(id, contestSubmissions));
+				Promise.allSettled(checks).then(() => {
+					checking = false;
+				});
 			};
-			pending.markFocused(Date.now());
-			const timer = setInterval(poll, POLL_INTERVAL_MS2);
-			return () => clearInterval(timer);
+			const watch = () => {
+				stopTicker ??= ticker.start(TICK_INTERVAL_MS2, poll);
+				poll();
+			};
+			const controller = new AbortController();
+			window.addEventListener("blur", () => pending.clearFocus(), {signal: controller.signal});
+			const unsubscribe = pending.subscribe(watch);
+			if (pending.list(Date.now()).length > 0) watch();
+			return () => {
+				controller.abort();
+				unsubscribe();
+				stopTicker?.();
+				stopTicker = null;
+			};
 		},
 	});
 
@@ -8050,7 +8569,7 @@ ${statement_highlight_default}`);
 	});
 
 	// CpToolkit/src/features/submission-timer/index.ts
-	var MINUTE_MS = 60000;
+	var MINUTE_MS2 = 60000;
 	var submissionTimer = defineFeature({
 		id: "submission-timer",
 		title: "submissionTimer.title",
@@ -8083,8 +8602,8 @@ ${statement_highlight_default}`);
 					cancel();
 					return;
 				}
-				timer = setTimeout(() => submitButton.click(), value * MINUTE_MS);
-				const at = new Date(Date.now() + value * MINUTE_MS).toLocaleTimeString();
+				timer = setTimeout(() => submitButton.click(), value * MINUTE_MS2);
+				const at = new Date(Date.now() + value * MINUTE_MS2).toLocaleTimeString();
 				info.textContent = translate("submissionTimer.scheduled").replace("{time}", at);
 			};
 			modal.body.append(
@@ -8147,11 +8666,11 @@ ${statement_highlight_default}`);
 		tasks: isArrayOf(isObjectOf({url: isString, label: isString, name: isString})),
 		lastAccess: isNumber,
 	});
-	var CACHE_KEY2 = "task-dropdown:tasks";
+	var CACHE_KEY3 = "task-dropdown:tasks";
 	var DAY_MS = 24 * 60 * 60 * 1000;
 
 	async function loadContestTasks(contestId, {site, state, parse, cacheDays}) {
-		const cache = readStored(state, CACHE_KEY2, isRecordOf(isCacheEntry), {});
+		const cache = readStored(state, CACHE_KEY3, isRecordOf(isCacheEntry), {});
 		const now = Date.now();
 		const fresh = Object.entries(cache).filter(([, entry]) => now - entry.lastAccess < cacheDays * DAY_MS);
 		let tasks = cache[contestId]?.tasks ?? null;
@@ -8160,7 +8679,7 @@ ${statement_highlight_default}`);
 			if (response.status !== 200) return null;
 			tasks = parse(response.text);
 		}
-		state.set(CACHE_KEY2, {...Object.fromEntries(fresh), [contestId]: {tasks, lastAccess: now}});
+		state.set(CACHE_KEY3, {...Object.fromEntries(fresh), [contestId]: {tasks, lastAccess: now}});
 		return tasks;
 	}
 
@@ -8443,6 +8962,85 @@ button.primary {
 		},
 	});
 
+	// CpToolkit/src/features/task-status/task-status.css
+	var task_status_default = `tr.cp-task-accepted > td,
+li.cp-task-accepted > a {
+	background-color: var(--cp-task-accepted) !important;
+}
+
+tr.cp-task-rejected > td,
+li.cp-task-rejected > a {
+	background-color: var(--cp-task-rejected) !important;
+}
+`;
+
+	// CpToolkit/src/features/task-status/index.ts
+	var TASK_LINKS = '#main-container tbody a[href*="/tasks/"], .cp-task-menu a[href*="/tasks/"]';
+	var ACCEPTED_CLASS = "cp-task-accepted";
+	var REJECTED_CLASS = "cp-task-rejected";
+	var NOT_SUBMITTED = "-";
+
+	function taskIdOf(link) {
+		return link?.getAttribute("href")?.split("/").at(-1);
+	}
+
+	function parseScorePage(html) {
+		const page = new DOMParser().parseFromString(html, "text/html");
+		return new Map(
+			[...page.querySelectorAll("#main-div tbody tr")].flatMap((row) => {
+				const [task, , score, submittedAt] = row.querySelectorAll("td");
+				const id = taskIdOf(task?.querySelector('a[href*="/tasks/"]'));
+				if (!id || submittedAt?.textContent?.trim() === NOT_SUBMITTED) return [];
+				return [[id, Number(score?.textContent) > 0 ? ACCEPTED_CLASS : REJECTED_CLASS]];
+			}),
+		);
+	}
+
+	function paint(statuses) {
+		for (const link of document.querySelectorAll(TASK_LINKS)) {
+			const status = statuses.get(taskIdOf(link) ?? "");
+			if (status) link.closest("tr, li")?.classList.add(status);
+		}
+	}
+
+	var taskStatus = defineFeature({
+		id: "task-status",
+		title: "taskStatus.title",
+		description: "taskStatus.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {
+			acceptedColor: option.color("#c3e6cb", "taskStatus.acceptedColor"),
+			rejectedColor: option.color("#f5c6cb", "taskStatus.rejectedColor"),
+		},
+		start({options, isOnRoute, page, site}) {
+			const contestId = contestIdOf(location.pathname);
+			if (!contestId || !page.isLoggedIn()) return;
+			injectStyle(task_status_default);
+			document.documentElement.style.setProperty("--cp-task-accepted", options.acceptedColor);
+			document.documentElement.style.setProperty("--cp-task-rejected", options.rejectedColor);
+			let statuses = null;
+			const paintAll = () => {
+				statuses ??= site
+					.send({url: `/contests/${contestId}/score`})
+					.then((response) => (response.status === 200 ? parseScorePage(response.text) : new Map()))
+					.catch(() => new Map());
+				statuses.then(paint);
+			};
+			if (isOnRoute("atcoder:tasks")) paintAll();
+			document.querySelector("#contest-nav-tabs")?.addEventListener("mouseover", (event) => {
+				if (
+					event.target instanceof Element &&
+					event.target.closest(".dropdown")?.querySelector(".cp-task-menu")
+				) {
+					paintAll();
+				}
+			});
+		},
+	});
+
 	// CpToolkit/src/features/tessoku-difficulty/index.ts
 	var TASK_LIST = "#main-container > div.row > div:nth-child(2)";
 	var tessokuDifficulty = defineFeature({
@@ -8519,6 +9117,244 @@ button.primary {
 		},
 	});
 
+	// CpToolkit/src/features/variable-hover/variable-hover.css
+	var variable_hover_default = `#task-statement .cp-variable {
+	border-radius: 2px;
+	background-color: rgba(255, 213, 79, .5);
+	box-shadow: 0 0 0 1px rgba(255, 213, 79, .5);
+}
+
+#task-statement .cp-variable-pinned {
+	background-color: rgba(255, 183, 77, .75);
+	box-shadow: 0 0 0 1px rgba(255, 152, 0, .8);
+}
+`;
+
+	// CpToolkit/src/features/variable-hover/index.ts
+	var SYMBOLS = ".katex-html .mathnormal";
+	var HIGHLIGHT_CLASS = "cp-variable";
+	var PINNED_CLASS = "cp-variable-pinned";
+
+	function symbolAt(target) {
+		return target instanceof Element ? target.closest(SYMBOLS) : null;
+	}
+
+	var variableHover = defineFeature({
+		id: "variable-hover",
+		title: "variableHover.title",
+		description: "variableHover.description",
+		category: "category.statement",
+		defaultEnabled: true,
+		routes: ["atcoder:task", "atcoder:tasksPrint"],
+		phase: "ready",
+		options: {},
+		live: true,
+		start() {
+			const statement = document.querySelector("#task-statement");
+			if (!statement)
+				return () => {
+					return;
+				};
+			const style = injectStyle(variable_hover_default);
+			const controller = new AbortController();
+			const {signal} = controller;
+			let pinned = null;
+			let highlighted = [];
+			const highlight = (symbol) => {
+				for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
+				highlighted = [...statement.querySelectorAll(SYMBOLS)].filter(
+					(element) => element.textContent === symbol,
+				);
+				const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
+				for (const element of highlighted) element.classList.add(...names);
+			};
+			statement.addEventListener(
+				"mouseover",
+				(event) => {
+					const symbol = symbolAt(event.target);
+					if (symbol && pinned === null) highlight(symbol.textContent);
+				},
+				{signal},
+			);
+			statement.addEventListener(
+				"mouseout",
+				(event) => {
+					if (symbolAt(event.target) && pinned === null) highlight(null);
+				},
+				{signal},
+			);
+			statement.addEventListener(
+				"click",
+				(event) => {
+					const symbol = symbolAt(event.target)?.textContent ?? null;
+					if (symbol === null) return;
+					pinned = symbol === pinned ? null : symbol;
+					highlight(symbol);
+				},
+				{signal},
+			);
+			document.addEventListener(
+				"keydown",
+				(event) => {
+					if (event.key !== "Escape") return;
+					pinned = null;
+					highlight(null);
+				},
+				{signal},
+			);
+			return () => {
+				controller.abort();
+				pinned = null;
+				highlight(null);
+				style.remove();
+			};
+		},
+	});
+
+	// CpToolkit/src/domain/contest/virtual.ts
+	function virtualClock(now, startMs, durationMs) {
+		if (now < startMs) return {phase: "before", remainingMs: startMs - now};
+		const remainingMs = startMs + durationMs - now;
+		return remainingMs > 0 ? {phase: "running", remainingMs} : {phase: "finished"};
+	}
+
+	function formatClock(remainingMs) {
+		const seconds = Math.ceil(remainingMs / 1000);
+		return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+			.map((value) => String(value).padStart(2, "0"))
+			.join(":");
+	}
+
+	// CpToolkit/src/application/contest/virtual-participation.ts
+	var STARTS_KEY = "virtual-timer:starts";
+	var isStarts = isRecordOf(isNumber);
+
+	class VirtualParticipations {
+		state;
+
+		constructor(state) {
+			this.state = state;
+		}
+
+		startOf(contestId) {
+			return this.starts()[contestId] ?? null;
+		}
+
+		record(contestId, startMs) {
+			this.state.set(STARTS_KEY, {...this.starts(), [contestId]: startMs});
+		}
+
+		forget(contestId) {
+			const {[contestId]: _forgotten, ...rest} = this.starts();
+			this.state.set(STARTS_KEY, rest);
+		}
+
+		starts() {
+			return readStored(this.state, STARTS_KEY, isStarts, {});
+		}
+	}
+
+	// CpToolkit/src/features/virtual-timer/virtual-timer.css
+	var virtual_timer_default = `.cp-virtual-timer {
+	position: fixed;
+	right: 10px;
+	bottom: 0;
+	z-index: 50;
+	width: 160px;
+	height: 80px;
+	margin: 0;
+	padding: 20px 0;
+	background-image: url("//img.atcoder.jp/assets/contest/digitalclock.png");
+	font-size: 15px;
+	line-height: 20px;
+	text-align: center;
+	cursor: pointer;
+	user-select: none;
+}
+
+.cp-virtual-timer[hidden] {
+	display: none;
+}
+`;
+
+	// CpToolkit/src/features/virtual-timer/index.ts
+	var UPDATE_INTERVAL_MS = 200;
+	var PHASE_LABELS = {
+		before: "virtualTimer.untilStart",
+		running: "virtualTimer.remaining",
+	};
+
+	function readVirtualStart() {
+		const startMs = Date.parse(document.querySelector("#main-container time.fixtime-second")?.textContent ?? "");
+		return Number.isNaN(startMs) ? null : startMs;
+	}
+
+	var virtualTimer = defineFeature({
+		id: "virtual-timer",
+		title: "virtualTimer.title",
+		description: "virtualTimer.description",
+		category: "category.contest",
+		defaultEnabled: true,
+		routes: ["atcoder:contest"],
+		phase: "ready",
+		options: {},
+		live: true,
+		start({isOnRoute, page, state, translate}) {
+			const contestId = contestIdOf(location.pathname);
+			const period = page.contestPeriod();
+			const siteTimer = document.querySelector("#fixed-server-timer");
+			if (!contestId || !period || !siteTimer)
+				return () => {
+					return;
+				};
+			const participations = new VirtualParticipations(state);
+			if (isOnRoute("atcoder:virtual")) {
+				const recorded = readVirtualStart();
+				if (recorded === null) participations.forget(contestId);
+				else participations.record(contestId, recorded);
+			}
+			const startMs = participations.startOf(contestId);
+			if (startMs === null)
+				return () => {
+					return;
+				};
+			const style = injectStyle(virtual_timer_default);
+			const controller = new AbortController();
+			const {signal} = controller;
+			const label = h("span");
+			const clock = h("span");
+			const timer = h("p", {className: "contest-timer cp-virtual-timer"}, label, h("br"), clock);
+			document.body.append(timer);
+			const show = (virtual) => {
+				timer.hidden = !virtual;
+				siteTimer.style.display = virtual ? "none" : "";
+			};
+			timer.addEventListener("click", () => show(false), {signal});
+			siteTimer.addEventListener("click", () => show(true), {signal});
+			show(true);
+			const update = () => {
+				const clockState = virtualClock(page.serverNow(), startMs, period.endMs - period.startMs);
+				if (clockState.phase === "finished") {
+					participations.forget(contestId);
+					stop();
+					return;
+				}
+				label.textContent = translate(PHASE_LABELS[clockState.phase]);
+				clock.textContent = formatClock(clockState.remainingMs);
+			};
+			const interval = setInterval(update, UPDATE_INTERVAL_MS);
+			const stop = () => {
+				clearInterval(interval);
+				controller.abort();
+				show(false);
+				timer.remove();
+				style.remove();
+			};
+			update();
+			return stop;
+		},
+	});
+
 	// CpToolkit/src/features/wide-layout/wide-layout.css
 	var wide_layout_default = `#main-container {
 	width: var(--cp-main-width) !important;
@@ -8552,16 +9388,22 @@ ${wide_layout_default}`);
 		wideLayout,
 		hoverMenu,
 		statementHighlight,
+		variableHover,
 		statementCopy,
 		efficientLayout,
 		submissionQuery,
 		submissionShortcuts,
 		resultNotifier,
+		clarNotifier,
 		averageResult,
 		submissionTimer,
 		taskDropdown,
+		taskStatus,
 		editorialList,
 		topLinks,
+		latestContests,
+		contestCalendar,
+		virtualTimer,
 		tessokuDifficulty,
 		ratingGraph,
 		historyColors,

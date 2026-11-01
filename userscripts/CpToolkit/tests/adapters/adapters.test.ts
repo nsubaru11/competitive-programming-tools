@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test} from "bun:test";
+import {afterEach, beforeEach, describe, expect, test} from "bun:test";
 import {importLegacySettings} from "@application/settings/legacy-import";
 import {SettingsService} from "@application/settings/settings-service";
 import {AtCoderSite} from "@adapters/judges/atcoder";
@@ -6,23 +6,110 @@ import {CodeforcesSite} from "@adapters/judges/codeforces";
 import {languagesOf} from "@adapters/judges/languages";
 import {YukicoderSite} from "@adapters/judges/yukicoder";
 import {LocalStorageLegacyInbox} from "@adapters/page/local-storage-legacy-inbox";
+import {WorkerTicker} from "@adapters/page/worker-ticker";
 import {LocalRunnerProvider, PaizaRunnerProvider} from "@adapters/runners/simple-runners";
 import {WandboxRunnerProvider} from "@adapters/runners/wandbox";
+import {TurndownStatementConverter} from "@adapters/statement/statement-converter";
 import {LocalRunnerClient} from "@application/execution/local-runner";
-import {FakeHttpClient, MemoryStore} from "../support/fakes";
+import {createFakePage, FakeHttpClient, MemoryStore} from "../support/fakes";
 
-const bridge = {
-	onChange: () => undefined,
-	triggerChange: () => undefined,
-	renderMath: () => undefined,
-	highlightCode: () => undefined,
-};
+const bridge = createFakePage();
 const noHttp = new FakeHttpClient(() => ({status: 500, text: ""}));
 const java = {id: "1", label: "Java 21", family: "java"};
 
 beforeEach(() => {
 	document.body.replaceChildren();
 	localStorage.clear();
+});
+
+describe("問題文の変換", () => {
+	const katex = (tex: string) => {
+		const mathml = `<span class="katex-mathml"><math><annotation encoding="application/x-tex">${tex}</annotation></math></span>`;
+		return `<span class="katex">${mathml}<span class="katex-html" aria-hidden="true">描画結果</span></span>`;
+	};
+	const statement = `<p>長さ <var>${katex("N")}</var> の数列と ${katex("M")} について</p>
+		<p><span class="katex-display">${katex("\\sum_{i=1}^N A_i")}</span></p>`;
+	const converter = new TurndownStatementConverter();
+
+	test("Markdown では別行立ての数式を $$ で囲み、描画結果を含めない", () => {
+		const markdown = converter.toMarkdown(statement);
+		expect(markdown).toContain("$N$");
+		expect(markdown).toContain("$M$");
+		expect(markdown).toContain("$$\n\\sum_{i=1}^N A_i\n$$");
+		expect(markdown).not.toContain("描画結果");
+	});
+
+	test("テキストでも同じように変換する", () => {
+		const text = converter.toPlainText(statement);
+		expect(text).toContain("$N$");
+		expect(text).toContain("$M$");
+		expect(text).toContain("$$\n\\sum_{i=1}^N A_i\n$$");
+		expect(text).not.toContain("描画結果");
+	});
+});
+
+describe("WorkerTicker", () => {
+	const originalWorker = globalThis.Worker;
+	const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	class FakeWorker {
+		static last: FakeWorker | null = null;
+		onmessage: (() => void) | null = null;
+		onerror: (() => void) | null = null;
+		terminated = false;
+
+		constructor() {
+			FakeWorker.last = this;
+		}
+
+		postMessage(): void {
+		}
+
+		terminate(): void {
+			this.terminated = true;
+		}
+	}
+
+	afterEach(() => {
+		globalThis.Worker = originalWorker;
+	});
+
+	test("Worker の通知で呼び出し、止めると終了する", () => {
+		globalThis.Worker = FakeWorker as unknown as typeof Worker;
+		let ticks = 0;
+		const stop = new WorkerTicker().start(100, () => ticks++);
+		FakeWorker.last?.onmessage?.();
+		expect(ticks).toBe(1);
+		stop();
+		expect(FakeWorker.last?.terminated).toBe(true);
+	});
+
+	test("Worker を作れないページでは通常のタイマーで動く", async () => {
+		globalThis.Worker = class {
+			constructor() {
+				throw new Error("blocked");
+			}
+		} as unknown as typeof Worker;
+		let ticks = 0;
+		const stop = new WorkerTicker().start(1, () => ticks++);
+		await wait(20);
+		stop();
+		expect(ticks).toBeGreaterThan(0);
+	});
+
+	test("Worker の読み込みに失敗したら通常のタイマーへ切り替える", async () => {
+		globalThis.Worker = FakeWorker as unknown as typeof Worker;
+		let ticks = 0;
+		const stop = new WorkerTicker().start(1, () => ticks++);
+		FakeWorker.last?.onerror?.();
+		expect(FakeWorker.last?.terminated).toBe(true);
+		await wait(20);
+		stop();
+		const stopped = ticks;
+		expect(stopped).toBeGreaterThan(0);
+		await wait(20);
+		expect(ticks).toBe(stopped);
+	});
 });
 
 describe("languagesOf", () => {

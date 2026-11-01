@@ -1,10 +1,12 @@
 import {type Guard, isNumber, isObjectOf} from "@domain/validation/guards";
+import type {LatestContestCatalog} from "./latest";
 
 export type ContestCatalog = {
 	readonly regularPrefixes: readonly string[];
 	readonly permanentPrefixes: readonly string[];
 	readonly maxTabsAtOnce: number;
 	readonly taskCacheDays: number;
+	readonly latest: LatestContestCatalog;
 };
 
 export type TaskRange = {

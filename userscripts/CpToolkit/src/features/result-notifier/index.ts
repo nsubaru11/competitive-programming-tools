@@ -6,12 +6,16 @@ import {defineFeature} from "@application/feature/definition";
 import {type PendingSubmission, PendingSubmissions} from "@application/submission/pending-submissions";
 import {showToast} from "@ui/toast/toast";
 
-const POLL_INTERVAL_MS = 5000;
+/** 確認の下限。判定中はサイトが返す間隔に従うので、これより速くは確認しない。 */
+const MIN_POLL_INTERVAL_MS = 1000;
+/** 確認の時刻を逃さないよう、間隔より短い周期で調べる。 */
+const TICK_INTERVAL_MS = 100;
 const TOAST_DURATION_MS = 10_000;
 const SUBMISSION_ID_PATTERN = /\/submissions\/(\d+)/;
 
 type StatusResponse = {
 	readonly Result?: Readonly<Record<string, {readonly Html: string}>>;
+	readonly Interval?: number;
 };
 
 type SubmissionResult = {
@@ -42,13 +46,13 @@ export const resultNotifier = defineFeature({
 	description: "resultNotifier.description",
 	category: "category.submission",
 	defaultEnabled: true,
-	routes: ["atcoder:page"],
+	routes: ["atcoder:page", "atcoder:home"],
 	phase: "ready",
 	options: {
 		desktop: option.boolean(true, "resultNotifier.desktop"),
 	},
 	live: true,
-	start({options, isOnRoute, notifier, site, state}) {
+	start({options, isOnRoute, notifier, site, state, ticker}) {
 		const pending = new PendingSubmissions(state);
 		const contestId = contestIdOf(location.pathname);
 		if (contestId && isOnRoute("atcoder:submissions") && location.pathname.includes("/submissions/me")) {
@@ -65,36 +69,65 @@ export const resultNotifier = defineFeature({
 				href: url,
 				durationMs: TOAST_DURATION_MS,
 			});
-			if (options.desktop && document.hidden) notifier.notify({title, text: detail, url});
+			if (options.desktop && !document.hasFocus()) notifier.notify({title, text: detail, url});
 		};
 
 		const checkContest = async (id: string, submissions: readonly PendingSubmission[]): Promise<void> => {
 			const url = buildAtCoderSubmissionStatusJsonUrl(id, submissions.map((submission) => submission.id));
 			const response = await site.send({url});
 			if (response.status !== 200) return;
-			const results = safeJsonParse<StatusResponse>(response.text, {}).Result ?? {};
+			const {Result: results = {}, Interval: interval} = safeJsonParse<StatusResponse>(response.text, {});
+			const now = Date.now();
+			// 同時に確認した別のタブが先に通知していれば、重ねて通知しない
+			const waiting = new Set(pending.list(now).map((submission) => submission.id));
 			const finished = submissions.flatMap((submission) => {
 				const html = results[submission.id]?.Html;
 				const result = html === undefined ? null : parseResult(html);
-				if (!result || isJudging(result.status)) return [];
+				if (!result || isJudging(result.status) || !waiting.has(submission.id)) return [];
 				notify(submission, result);
 				return [submission.id];
 			});
-			pending.remove(finished, Date.now());
+			pending.remove(finished, now);
+			if (interval !== undefined) pending.postponePoll(now + interval);
 		};
+
+		let checking = false;
+		let stopTicker: (() => void) | null = null;
 
 		const poll = (): void => {
 			const now = Date.now();
-			if (document.hasFocus()) pending.markFocused(now);
 			const submissions = pending.list(now);
-			if (submissions.length === 0 || !pending.claimPoll(now, POLL_INTERVAL_MS)) return;
-			for (const [id, contestSubmissions] of Map.groupBy(submissions, ({contestId: contest}) => contest)) {
-				void checkContest(id, contestSubmissions).catch(() => undefined);
+			if (submissions.length === 0) {
+				stopTicker?.();
+				stopTicker = null;
+				return;
 			}
+			if (document.hasFocus()) pending.markFocused(now);
+			else if (pending.isFocusedElsewhere(now)) return;
+			if (checking || !pending.claimPoll(now, MIN_POLL_INTERVAL_MS)) return;
+			checking = true;
+			const groups = Map.groupBy(submissions, (submission) => submission.contestId);
+			const checks = [...groups].map(([id, contestSubmissions]) => checkContest(id, contestSubmissions));
+			void Promise.allSettled(checks).then(() => {
+				checking = false;
+			});
 		};
 
-		pending.markFocused(Date.now());
-		const timer = setInterval(poll, POLL_INTERVAL_MS);
-		return () => clearInterval(timer);
+		const watch = (): void => {
+			stopTicker ??= ticker.start(TICK_INTERVAL_MS, poll);
+			poll();
+		};
+
+		const controller = new AbortController();
+		window.addEventListener("blur", () => pending.clearFocus(), {signal: controller.signal});
+		const unsubscribe = pending.subscribe(watch);
+		if (pending.list(Date.now()).length > 0) watch();
+
+		return () => {
+			controller.abort();
+			unsubscribe();
+			stopTicker?.();
+			stopTicker = null;
+		};
 	},
 });

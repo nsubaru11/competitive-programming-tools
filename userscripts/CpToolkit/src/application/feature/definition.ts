@@ -10,7 +10,7 @@ import type {KeyValueStore} from "@application/ports/key-value-store";
 import type {PageBridge} from "@application/ports/page-bridge";
 import type {PagePhase} from "@application/ports/page-lifecycle";
 import type {RatingGraph} from "@application/ports/rating-graph";
-import type {Clipboard, HttpClient, Notifier, ScriptLoader, StatementConverter,} from "@application/ports/services";
+import type {Clipboard, HttpClient, Notifier, ScriptLoader, StatementConverter, Ticker} from "@application/ports/services";
 
 export type Disposer = () => void;
 
@@ -24,6 +24,8 @@ export type FeatureServices = {
 	readonly state: KeyValueStore;
 	readonly clipboard: Clipboard;
 	readonly notifier: Notifier;
+	/** 背景のタブでも遅れない時計。 */
+	readonly ticker: Ticker;
 	/** 別のサイトとの通信。 */
 	readonly http: HttpClient;
 	/** 表示中のサイトとの通信。 */

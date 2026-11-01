@@ -10,6 +10,7 @@ routes:
   page: '^/[^?]'  # トップページ以外
   home: '^/(\?|$)'
   contest: '^/contests/(?!archive)[^/?#]+'
+  tasks: '^/contests/[^/]+/tasks/?(\?|$)'
   task: '^/contests/[^/]+/tasks/[^/?#]+'
   tasksPrint: '^/contests/[^/]+/tasks_print'
   tessokuTasks: '^/contests/tessoku-book/tasks/?(\?|$)'
@@ -17,6 +18,7 @@ routes:
   submissions: '^/contests/[^/]+/submissions(/me)?/?(\?|$)'
   submissionDetail: '^/contests/[^/]+/submissions/\d+'
   editorial: '^/contests/[^/]+/editorial/?(\?|$)'
+  virtual: '^/contests/[^/]+/virtual/?(\?|$)'
   user: '^/users/[^/?#]+/?(\?(?!.*graph=(rank|dist)).*)?$'
   userHistory: '^/users/[^/]+/history'
 

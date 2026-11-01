@@ -9,9 +9,10 @@ export class GmKeyValueStore implements KeyValueStore {
 		GM_setValue(key, value);
 	}
 
-	subscribeRemote(key: string, listener: (value: unknown) => void): void {
-		GM_addValueChangeListener(key, (_name, _oldValue, newValue, remote) => {
+	subscribeRemote(key: string, listener: (value: unknown) => void): () => void {
+		const id = GM_addValueChangeListener(key, (_name, _oldValue, newValue, remote) => {
 			if (remote) listener(newValue);
 		});
+		return () => GM_removeValueChangeListener(id);
 	}
 }

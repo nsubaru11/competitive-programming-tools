@@ -29,6 +29,11 @@ export interface HttpClient {
 	send(request: HttpRequest): Promise<HttpResponse>;
 }
 
+/** 一定の間隔で処理を呼び、止めるための関数を返す。 */
+export interface Ticker {
+	start(intervalMs: number, listener: () => void): () => void;
+}
+
 /** 問題文の HTML を、コピー用の文字列に変換する。 */
 export interface StatementConverter {
 	toMarkdown(html: string): string;

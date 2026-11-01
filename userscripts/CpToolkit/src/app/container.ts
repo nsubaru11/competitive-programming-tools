@@ -15,6 +15,7 @@ import {ElementScriptLoader} from "@adapters/page/element-script-loader";
 import {detectLocale} from "@adapters/page/locale";
 import {UnsafeWindowPageBridge} from "@adapters/page/page-bridge";
 import {SameOriginHttpClient} from "@adapters/page/same-origin-http-client";
+import {WorkerTicker} from "@adapters/page/worker-ticker";
 import {AtCoderRunnerProvider} from "@adapters/runners/atcoder-custom-test";
 import {PyodideRunnerProvider} from "@adapters/runners/pyodide";
 import {LocalRunnerProvider, PaizaRunnerProvider, TextRunnerProvider} from "@adapters/runners/simple-runners";
@@ -76,6 +77,7 @@ export function createServices(
 		state,
 		clipboard: new GmClipboard(),
 		notifier: new GmNotifier(),
+		ticker: new WorkerTicker(),
 		http,
 		site,
 		scripts,

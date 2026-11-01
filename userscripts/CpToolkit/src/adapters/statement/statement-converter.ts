@@ -8,16 +8,32 @@ const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMEN
 function texOf(element: Element, fallback: string): string {
 	const annotation = element.querySelector('annotation[encoding="application/x-tex"]');
 	const attribute = element.getAttribute("data-tex") ?? element.getAttribute("aria-label");
-	const tex = annotation?.textContent ?? attribute ?? fallback;
-	return `$${tex.trim()}$`;
+	return (annotation?.textContent ?? attribute ?? fallback).trim();
+}
+
+function inlineMath(element: Element, fallback: string): string {
+	return `$${texOf(element, fallback)}$`;
+}
+
+function displayMath(element: Element): string {
+	return `$$\n${texOf(element, "")}\n$$`;
+}
+
+/** 別行立ての数式と、var の外にある数式は、KaTeX の描画結果だけが残っている。 */
+function hasClass(node: Node, className: string): boolean {
+	return isElement(node) && node.classList.contains(className);
 }
 
 function createTurndown(): TurndownService {
 	const service = new TurndownService({headingStyle: "atx", codeBlockStyle: "fenced", bulletListMarker: "-"});
 	service.use(gfm);
 	service.addRule("math", {
-		filter: "var",
-		replacement: (content, node) => (isElement(node) ? texOf(node, content) : content),
+		filter: (node) => node.nodeName === "VAR" || hasClass(node, "katex"),
+		replacement: (content, node) => (isElement(node) ? inlineMath(node, content) : content),
+	});
+	service.addRule("displayMath", {
+		filter: (node) => hasClass(node, "katex-display"),
+		replacement: (content, node) => (isElement(node) ? `\n\n${displayMath(node)}\n\n` : content),
 	});
 	service.addRule("pre", {
 		filter: "pre",
@@ -48,7 +64,8 @@ function plainTextOf(node: Node): string {
 	const tag = node.tagName;
 	if (IGNORED_TAGS.has(tag)) return "";
 	if (tag === "BR") return "\n";
-	if (tag === "VAR") return texOf(node, node.textContent ?? "");
+	if (hasClass(node, "katex-display")) return `\n${displayMath(node)}\n`;
+	if (tag === "VAR" || hasClass(node, "katex")) return inlineMath(node, node.textContent ?? "");
 	if (tag === "CODE") return `\`${node.textContent ?? ""}\``;
 	if (tag === "PRE") return `\n${(node.textContent ?? "").trim()}\n`;
 	const inner = [...node.childNodes].map(plainTextOf).join("");

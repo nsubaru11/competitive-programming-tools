@@ -8,7 +8,7 @@ import {easyTest} from "@features/easy-test/index";
 import {javaSubmit} from "@features/java-submit/index";
 import {paizaLanguage} from "@features/paiza-language/index";
 import {taskDropdown} from "@features/task-dropdown/index";
-import {createFakeServices, FakeHttpClient, MemoryStore} from "../support/fakes";
+import {createFakePage, createFakeServices, FakeHttpClient, MemoryStore} from "../support/fakes";
 
 const wait = (ms = 10) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -362,12 +362,7 @@ describe("paizaLanguage", () => {
 			<option value=""></option><option value="1">JavaScript</option><option value="2">Java (OpenJDK 21)</option>
 		</select><input id="programming_language_id" type="hidden">`;
 		const triggerChange = mock(() => undefined);
-		const page = {
-			onChange: () => undefined,
-			triggerChange,
-			renderMath: () => undefined,
-			highlightCode: () => undefined,
-		};
+		const page = createFakePage({triggerChange});
 		void paizaLanguage.run({language: "Java"}, createFakeServices({page, judge: null, editors: {locate: async () => null}}));
 		await wait();
 

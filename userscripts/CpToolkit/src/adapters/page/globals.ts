@@ -63,6 +63,9 @@ export type RatingEntry = {
 	readonly StandingsUrl: string;
 };
 
+/** moment のオブジェクト。ミリ秒への変換だけを使う。 */
+type PageMoment = {valueOf(): number};
+
 export type PageGlobals = {
 	ace?: {edit(target: Element | string): AceEditor};
 	monaco?: {editor: {getEditors(): MonacoEditor[]}};
@@ -71,6 +74,10 @@ export type PageGlobals = {
 	rating_history?: readonly RatingEntry[];
 	csrfToken?: string;
 	contestScreenName?: string;
+	userScreenName?: string;
+	startTime?: PageMoment;
+	endTime?: PageMoment;
+	getServerTime?: () => PageMoment;
 	getSourceCode?: () => string;
 	renderMathInElement?: (target: Element, options: object) => void;
 	PR?: {prettyPrint(): void};

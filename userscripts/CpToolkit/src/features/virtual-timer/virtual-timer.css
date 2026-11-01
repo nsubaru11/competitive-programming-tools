@@ -1,0 +1,20 @@
+.cp-virtual-timer {
+	position: fixed;
+	right: 10px;
+	bottom: 0;
+	z-index: 50;
+	width: 160px;
+	height: 80px;
+	margin: 0;
+	padding: 20px 0;
+	background-image: url("//img.atcoder.jp/assets/contest/digitalclock.png");
+	font-size: 15px;
+	line-height: 20px;
+	text-align: center;
+	cursor: pointer;
+	user-select: none;
+}
+
+.cp-virtual-timer[hidden] {
+	display: none;
+}

@@ -69,8 +69,12 @@ submissionShortcuts.fastest: 実行時間順
 submissionShortcuts.shortest: コード長順
 
 resultNotifier.title: 提出結果の通知
-resultNotifier.description: 判定が終わると、どのページにいても結果を通知します。
-resultNotifier.desktop: 別のタブを見ているときはデスクトップ通知も出す
+resultNotifier.description: 判定が終わると、どのページにいても結果をすぐに通知します。AtCoder のタブを1つは開いたままにしてください。
+resultNotifier.desktop: AtCoder を操作していないときはデスクトップ通知も出す
+clarNotifier.title: Clar の通知
+clarNotifier.description: コンテスト中に運営からの回答や訂正(Clar)が届くと通知します。
+clarNotifier.desktop: AtCoder を操作していないときはデスクトップ通知も出す
+clarNotifier.arrived: "新しい Clar が {count} 件あります"
 
 averageResult.title: 実行結果の平均
 averageResult.description: 提出の詳細に、実行時間とメモリの平均を表示します。
@@ -84,6 +88,10 @@ submissionTimer.cancel: 取り消す
 submissionTimer.canceled: タイマーを取り消しました。
 submissionTimer.scheduled: "{time} ごろに提出します。"
 
+taskStatus.title: 問題の提出状況
+taskStatus.description: 問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。
+taskStatus.acceptedColor: 正解した問題の色
+taskStatus.rejectedColor: 正解していない問題の色
 taskDropdown.title: 問題のドロップダウン
 taskDropdown.description: 「問題」タブから各問題へ移動でき、複数の問題をまとめて開けます。
 taskDropdown.newTab: 新しいタブで開く
@@ -100,6 +108,18 @@ taskDropdown.tabLimit: "※一度に開けるタブは {count} 個までです�
 editorialList.title: 解説の一覧表示
 editorialList.description: 解説ページで、すべての問題の解説をまとめて表示します。
 
+variableHover.title: 変数の強調
+variableHover.description: 問題文の変数に重ねると、同じ変数をすべて強調します。クリックで固定し、Esc で解除します。
+latestContests.title: 最新のコンテスト
+latestContests.description: ヘッダーに ABC や ARC などの最新のコンテストへのリンクを追加します。
+latestContests.menu: 最新のコンテスト
+contestCalendar.title: カレンダーへの登録
+contestCalendar.description: コンテストのページに、Google カレンダーへ登録するリンクを追加します。
+contestCalendar.add: カレンダーに追加
+virtualTimer.title: バーチャル参加のタイマー
+virtualTimer.description: バーチャル参加の開始までの時間と残り時間を、画面右下の時計に表示します。参加のページを開くと開始時刻を記憶します。
+virtualTimer.untilStart: 開始まであと
+virtualTimer.remaining: 残り時間
 topLinks.title: トップページのコンテスト一覧
 topLinks.description: トップページの一覧を、種類ごとの過去問へのリンクに置き換えます。
 

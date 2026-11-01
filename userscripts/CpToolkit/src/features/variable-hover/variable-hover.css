@@ -1,0 +1,10 @@
+#task-statement .cp-variable {
+	border-radius: 2px;
+	background-color: rgba(255, 213, 79, .5);
+	box-shadow: 0 0 0 1px rgba(255, 213, 79, .5);
+}
+
+#task-statement .cp-variable-pinned {
+	background-color: rgba(255, 183, 77, .75);
+	box-shadow: 0 0 0 1px rgba(255, 152, 0, .8);
+}

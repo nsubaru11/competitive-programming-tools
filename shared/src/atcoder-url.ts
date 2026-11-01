@@ -37,6 +37,19 @@ export function buildAtCoderSubmitPostUrl(contestId: string): string {
 	return `https://atcoder.jp/contests/${contestId}/submit`;
 }
 
+export function buildAtCoderClarificationsUrl(contestId: string): string {
+	return `https://atcoder.jp/contests/${contestId}/clarifications`;
+}
+
+/**
+ * sinceMs より後の Clar の件数を返す API の URL を組み立てる。
+ * コンテストのページが内部で使うもので、時刻はページと同じ形式で渡す。
+ */
+export function buildAtCoderClarificationCountUrl(contestId: string, sinceMs: number): string {
+	const since = `${new Date(sinceMs).toISOString().slice(0, 19).replace("T", " ")}+0000`;
+	return `${buildAtCoderClarificationsUrl(contestId)}/count?t=${encodeURIComponent(since)}`;
+}
+
 export type AtCoderSubmissionsFilter = {
 	language?: string | undefined;
 	status?: string | undefined;

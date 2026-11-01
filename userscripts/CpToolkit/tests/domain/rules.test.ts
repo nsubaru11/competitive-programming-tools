@@ -8,6 +8,9 @@ import {backgroundOf, crownImageOf, tierOf, tierProgress} from "@domain/rating/s
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {isPureNumber, splitLimitValue, splitNumbers} from "@domain/statement/tokens";
 import {isJudging, summarizeJudgeCases} from "@domain/submission/status";
+import {buildCalendarUrl} from "@domain/contest/calendar";
+import {parseContestTime, pickLatestContest} from "@domain/contest/latest";
+import {formatClock, virtualClock} from "@domain/contest/virtual";
 
 describe("問題文の字句分割", () => {
 	const emphasized = (text: string) => splitNumbers(text).filter((part) => part.emphasized).map((part) => part.text);
@@ -175,6 +178,63 @@ describe("レーティング", () => {
 			{IsRated: false, Performance: 900},
 			{IsRated: true, Performance: -5},
 		])).toEqual([1200, 0]);
+	});
+});
+
+describe("最新のコンテスト", () => {
+	const rows = [
+		{id: "abc1", startMs: 100},
+		{id: "abc2", startMs: 200},
+		{id: "abc3", startMs: 300},
+		{id: "arc1", startMs: 150},
+	];
+
+	test("開始済みのうち最も新しいものを選ぶ", () => {
+		expect(pickLatestContest(rows, /^abc/, 250, 0)).toBe("abc2");
+	});
+
+	test("開始が迫っていれば、それを選ぶ", () => {
+		expect(pickLatestContest(rows, /^abc/, 250, 100)).toBe("abc3");
+	});
+
+	test("開始済みがなければ次に開かれるものを選ぶ", () => {
+		expect(pickLatestContest(rows, /^abc/, 0, 0)).toBe("abc1");
+	});
+
+	test("該当がなければ null を返す", () => {
+		expect(pickLatestContest(rows, /^agc/, 250, 0)).toBeNull();
+	});
+
+	test("一覧の時刻を読む", () => {
+		expect(parseContestTime(" 2026-10-31 21:00:00+0900 ")).toBe(Date.UTC(2026, 9, 31, 12));
+		expect(parseContestTime("")).toBeNaN();
+	});
+});
+
+describe("カレンダー", () => {
+	test("時刻を UTC にして登録の URL を作る", () => {
+		const url = new URL(buildCalendarUrl({
+			title: "ABC 1",
+			startMs: Date.UTC(2026, 0, 2, 3, 4, 5),
+			endMs: Date.UTC(2026, 0, 2, 4, 44, 5),
+			location: "https://atcoder.jp/contests/abc1",
+		}));
+		expect(url.searchParams.get("action")).toBe("TEMPLATE");
+		expect(url.searchParams.get("dates")).toBe("20260102T030405Z/20260102T044405Z");
+	});
+});
+
+describe("バーチャル参加の時計", () => {
+	test("開始前、参加中、終了後を区別する", () => {
+		expect(virtualClock(50, 100, 1000)).toEqual({phase: "before", remainingMs: 50});
+		expect(virtualClock(100, 100, 1000)).toEqual({phase: "running", remainingMs: 1000});
+		expect(virtualClock(1100, 100, 1000)).toEqual({phase: "finished"});
+	});
+
+	test("残り時間を切り上げて表す", () => {
+		expect(formatClock(1)).toBe("00:00:01");
+		expect(formatClock(3_661_000)).toBe("01:01:01");
+		expect(formatClock(90_000_000)).toBe("25:00:00");
 	});
 });
 

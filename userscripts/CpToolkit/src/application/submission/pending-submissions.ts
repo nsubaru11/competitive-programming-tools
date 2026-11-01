@@ -16,12 +16,16 @@ const isPendingList = isArrayOf(isObjectOf<PendingSubmission>({
 }));
 
 const PENDING_KEY = "result-notifier:pending";
-const LAST_POLL_KEY = "result-notifier:lastPoll";
+const NEXT_POLL_KEY = "result-notifier:nextPoll";
 const LAST_FOCUS_KEY = "result-notifier:lastFocus";
-const PENDING_LIFETIME_MS = 10 * 60 * 1000;
-const INACTIVE_LIMIT_MS = 5 * 60 * 1000;
+const PENDING_LIFETIME_MS = 30 * 60 * 1000;
+const FOCUS_REFRESH_MS = 1000;
+const FOCUS_TIMEOUT_MS = 3000;
 
-/** 判定待ちの提出をタブ間で共有する。通信が重複しないよう、確認は1つのタブだけが行う。 */
+/**
+ * 判定待ちの提出をタブ間で共有する。通信が重複しないよう、確認は1つのタブだけが行う。
+ * 操作中のタブがあれば、そのタブが確認する。通知を画面の内側に出せるので。
+ */
 export class PendingSubmissions {
 	constructor(private readonly state: KeyValueStore) {
 	}
@@ -42,16 +46,41 @@ export class PendingSubmissions {
 		this.state.set(PENDING_KEY, this.list(now).filter(({id}) => !removed.has(id)));
 	}
 
-	markFocused(now: number): void {
-		this.state.set(LAST_FOCUS_KEY, now);
+	/** 他のタブで登録や削除があったときに呼ぶ。解除する関数を返す。 */
+	subscribe(listener: () => void): () => void {
+		return this.state.subscribeRemote(PENDING_KEY, listener);
 	}
 
-	/** 確認してよければ時刻を記録して true を返す。長く操作がなければ確認しない。 */
+	markFocused(now: number): void {
+		if (now - this.lastFocus() >= FOCUS_REFRESH_MS) this.state.set(LAST_FOCUS_KEY, now);
+	}
+
+	clearFocus(): void {
+		this.state.set(LAST_FOCUS_KEY, 0);
+	}
+
+	/** このタブ以外のタブが操作されていれば真。 */
+	isFocusedElsewhere(now: number): boolean {
+		return now - this.lastFocus() < FOCUS_TIMEOUT_MS;
+	}
+
+	/** 確認してよければ次の確認の時刻を記録して true を返す。 */
 	claimPoll(now: number, intervalMs: number): boolean {
-		const lastFocus = Number(this.state.get(LAST_FOCUS_KEY) ?? 0);
-		const lastPoll = Number(this.state.get(LAST_POLL_KEY) ?? 0);
-		if (now - lastFocus > INACTIVE_LIMIT_MS || now - lastPoll < intervalMs) return false;
-		this.state.set(LAST_POLL_KEY, now);
+		if (now < this.nextPoll()) return false;
+		this.state.set(NEXT_POLL_KEY, now + intervalMs);
 		return true;
+	}
+
+	/** サイトが勧める間隔に合わせて、次の確認を遅らせる。 */
+	postponePoll(until: number): void {
+		if (until > this.nextPoll()) this.state.set(NEXT_POLL_KEY, until);
+	}
+
+	private lastFocus(): number {
+		return readStored(this.state, LAST_FOCUS_KEY, isNumber, 0);
+	}
+
+	private nextPoll(): number {
+		return readStored(this.state, NEXT_POLL_KEY, isNumber, 0);
 	}
 }

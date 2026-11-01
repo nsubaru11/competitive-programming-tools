@@ -1,4 +1,4 @@
-import type {PageBridge} from "@application/ports/page-bridge";
+import type {ContestPeriod, PageBridge} from "@application/ports/page-bridge";
 import {pageGlobals} from "./globals";
 
 const MATH_OPTIONS = {
@@ -38,5 +38,18 @@ export class UnsafeWindowPageBridge implements PageBridge {
 
 	highlightCode(): void {
 		pageGlobals().PR?.prettyPrint();
+	}
+
+	contestPeriod(): ContestPeriod | null {
+		const {startTime, endTime} = pageGlobals();
+		return startTime && endTime ? {startMs: startTime.valueOf(), endMs: endTime.valueOf()} : null;
+	}
+
+	serverNow(): number {
+		return pageGlobals().getServerTime?.().valueOf() ?? Date.now();
+	}
+
+	isLoggedIn(): boolean {
+		return Boolean(pageGlobals().userScreenName);
 	}
 }

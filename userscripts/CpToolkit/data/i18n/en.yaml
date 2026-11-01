@@ -68,8 +68,12 @@ submissionShortcuts.fastest: Fastest
 submissionShortcuts.shortest: Shortest
 
 resultNotifier.title: Submission notifications
-resultNotifier.description: Shows the verdict on any page when judging finishes.
-resultNotifier.desktop: Use desktop notifications while another tab is active
+resultNotifier.description: Shows the verdict right after judging finishes, on any page. Keep at least one AtCoder tab open.
+resultNotifier.desktop: Use desktop notifications while you are away from AtCoder
+clarNotifier.title: Clarification notifications
+clarNotifier.description: Notifies you when the organizers post an answer or a correction during a contest.
+clarNotifier.desktop: Use desktop notifications while you are away from AtCoder
+clarNotifier.arrived: "{count} new clarification(s)"
 
 averageResult.title: Average results
 averageResult.description: Shows average time and memory on the submission page.
@@ -83,6 +87,10 @@ submissionTimer.cancel: Cancel
 submissionTimer.canceled: The timer was canceled.
 submissionTimer.scheduled: "Your code will be submitted around {time}."
 
+taskStatus.title: Task status colors
+taskStatus.description: Colors the task list and the dropdown by your results. A task with a score counts as accepted.
+taskStatus.acceptedColor: Color of accepted tasks
+taskStatus.rejectedColor: Color of tasks not accepted
 taskDropdown.title: Task dropdown
 taskDropdown.description: Opens tasks from the Tasks tab and opens several tasks at once.
 taskDropdown.newTab: Open in a new tab
@@ -99,6 +107,18 @@ taskDropdown.tabLimit: "*Up to {count} tabs can be opened at once."
 editorialList.title: All editorials
 editorialList.description: Shows the editorials of every task on the editorial page.
 
+variableHover.title: Variable highlighting
+variableHover.description: Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.
+latestContests.title: Latest contests
+latestContests.description: Adds links to the latest ABC, ARC and other contests to the header.
+latestContests.menu: Latest contests
+contestCalendar.title: Add to calendar
+contestCalendar.description: Adds a link to contest pages that registers the contest in Google Calendar.
+contestCalendar.add: Add to calendar
+virtualTimer.title: Virtual contest timer
+virtualTimer.description: Shows the time until the start and the time left of a virtual participation in the corner clock. Open the virtual page once to record the start time.
+virtualTimer.untilStart: Starts in
+virtualTimer.remaining: Time left
 topLinks.title: Contest links on the top page
 topLinks.description: Replaces the top page list with links to past contests by type.
 

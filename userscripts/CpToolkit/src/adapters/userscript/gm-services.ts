@@ -15,7 +15,8 @@ export class GmClipboard implements Clipboard {
 
 export class GmNotifier implements Notifier {
 	notify({title, text, url}: Notification): void {
-		GM_notification({title, text, ...(url !== undefined && {onclick: () => window.open(url, "_blank")})});
+		// 通知のクリックはページの操作ではないので、window.open だとブロックされる
+		GM_notification({title, text, ...(url !== undefined && {onclick: () => GM_openInTab(url, {active: true})})});
 	}
 }
 

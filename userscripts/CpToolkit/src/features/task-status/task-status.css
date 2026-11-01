@@ -1,0 +1,9 @@
+tr.cp-task-accepted > td,
+li.cp-task-accepted > a {
+	background-color: var(--cp-task-accepted) !important;
+}
+
+tr.cp-task-rejected > td,
+li.cp-task-rejected > a {
+	background-color: var(--cp-task-rejected) !important;
+}

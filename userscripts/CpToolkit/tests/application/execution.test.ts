@@ -4,6 +4,9 @@ import {loadContestTasks} from "@application/contest/task-list";
 import {LocalRunnerClient} from "@application/execution/local-runner";
 import {type CodeRunner, RunnerCatalogService} from "@application/execution/runner-catalog";
 import {PendingSubmissions} from "@application/submission/pending-submissions";
+import {ClarificationCounter} from "@application/contest/clarification-counter";
+import {loadLatestContests} from "@application/contest/latest-contests";
+import {VirtualParticipations} from "@application/contest/virtual-participation";
 import {FakeHttpClient, MemoryStore} from "../support/fakes";
 
 const JSON_OK = (body: unknown) => ({status: 200, text: JSON.stringify(body)});
@@ -139,6 +142,75 @@ describe("loadContestTasks", () => {
 	});
 });
 
+describe("ClarificationCounter", () => {
+	test("増えた件数を返す", () => {
+		const counter = new ClarificationCounter(new MemoryStore());
+		expect(counter.update("abc1", 2)).toBe(2);
+		expect(counter.update("abc1", 2)).toBe(0);
+		expect(counter.update("abc1", 3)).toBe(1);
+		expect(counter.update("abc2", 1)).toBe(1);
+	});
+
+	test("件数が減っても通知しない", () => {
+		const counter = new ClarificationCounter(new MemoryStore());
+		counter.update("abc1", 3);
+		expect(counter.update("abc1", 2)).toBe(0);
+		expect(counter.update("abc1", 3)).toBe(1);
+	});
+
+	test("確認はタブ間で重複しない", () => {
+		const state = new MemoryStore();
+		expect(new ClarificationCounter(state).claimPoll(100_000, 60_000)).toBe(true);
+		expect(new ClarificationCounter(state).claimPoll(130_000, 60_000)).toBe(false);
+		expect(new ClarificationCounter(state).claimPoll(160_000, 60_000)).toBe(true);
+	});
+});
+
+describe("VirtualParticipations", () => {
+	test("コンテストごとに開始時刻を記憶して忘れる", () => {
+		const participations = new VirtualParticipations(new MemoryStore());
+		participations.record("abc1", 100);
+		participations.record("abc2", 200);
+		participations.forget("abc1");
+		expect(participations.startOf("abc1")).toBeNull();
+		expect(participations.startOf("abc2")).toBe(200);
+	});
+});
+
+describe("loadLatestContests", () => {
+	const catalog = {
+		menuTargets: [],
+		cacheMinutes: 60,
+		leadHours: 24,
+		kinds: [
+			{label: "ABC", idPattern: "^abc\\d+$", archiveUrl: "/archive/abc"},
+			{label: "AGC", idPattern: "^agc\\d+$", archiveUrl: "/archive/agc"},
+			{label: "AWC", idPattern: "^awc\\d+$", archiveUrl: "/archive/awc"},
+		],
+	};
+	const parse = (html: string) => (html ? html.split(",").map((id, index) => ({id, startMs: -index})) : []);
+	const site = () => new FakeHttpClient(({url}) => {
+		if (url === "/contests/") return {status: 200, text: "abc2,abc1"};
+		return {status: 200, text: url === "/archive/agc" ? "agc1" : ""};
+	});
+
+	test("一覧にない種類は過去の一覧から探し、見つからなければ省く", async () => {
+		const contests = await loadLatestContests(catalog, {site: site(), state: new MemoryStore(), parse, now: 0});
+		expect(contests).toEqual({ABC: "abc2", AGC: "agc1"});
+	});
+
+	test("保持期間内は通信しない", async () => {
+		const state = new MemoryStore();
+		const http = site();
+		await loadLatestContests(catalog, {site: http, state, parse, now: 0});
+		const count = http.requests.length;
+		await loadLatestContests(catalog, {site: http, state, parse, now: 59 * 60 * 1000});
+		expect(http.requests).toHaveLength(count);
+		await loadLatestContests(catalog, {site: http, state, parse, now: 60 * 60 * 1000});
+		expect(http.requests.length).toBeGreaterThan(count);
+	});
+});
+
 describe("PendingSubmissions", () => {
 	const submission = {id: "1", contestId: "abc1", taskName: "A", addedAt: 1000};
 
@@ -152,22 +224,42 @@ describe("PendingSubmissions", () => {
 	test("時間が経った提出は対象から外す", () => {
 		const pending = new PendingSubmissions(new MemoryStore());
 		pending.add([submission], 1000);
-		expect(pending.list(1000 + 11 * 60 * 1000)).toHaveLength(0);
+		expect(pending.list(1000 + 31 * 60 * 1000)).toHaveLength(0);
 	});
 
 	test("確認は間隔を空け、他のタブと重複しない", () => {
 		const state = new MemoryStore();
 		const first = new PendingSubmissions(state);
 		const second = new PendingSubmissions(state);
-		first.markFocused(10_000);
-		expect(first.claimPoll(10_000, 5000)).toBe(true);
-		expect(second.claimPoll(11_000, 5000)).toBe(false);
-		expect(second.claimPoll(15_000, 5000)).toBe(true);
+		expect(first.claimPoll(10_000, 1000)).toBe(true);
+		expect(second.claimPoll(10_500, 1000)).toBe(false);
+		expect(second.claimPoll(11_000, 1000)).toBe(true);
 	});
 
-	test("長く操作がなければ確認しない", () => {
+	test("サイトが勧める間隔まで確認を遅らせる", () => {
 		const pending = new PendingSubmissions(new MemoryStore());
-		pending.markFocused(0);
-		expect(pending.claimPoll(6 * 60 * 1000, 5000)).toBe(false);
+		pending.claimPoll(10_000, 1000);
+		pending.postponePoll(13_000);
+		expect(pending.claimPoll(12_000, 1000)).toBe(false);
+		expect(pending.claimPoll(13_000, 1000)).toBe(true);
+	});
+
+	test("操作中のタブの記録は短い間だけ有効で、離れると消える", () => {
+		const pending = new PendingSubmissions(new MemoryStore());
+		pending.markFocused(10_000);
+		expect(pending.isFocusedElsewhere(12_000)).toBe(true);
+		expect(pending.isFocusedElsewhere(13_000)).toBe(false);
+
+		pending.markFocused(14_000);
+		pending.clearFocus();
+		expect(pending.isFocusedElsewhere(14_000)).toBe(false);
+	});
+
+	test("操作中の記録を書き込む回数を抑える", () => {
+		const state = new MemoryStore();
+		const pending = new PendingSubmissions(state);
+		pending.markFocused(10_000);
+		pending.markFocused(10_500);
+		expect(state.get("result-notifier:lastFocus")).toBe(10_000);
 	});
 });
