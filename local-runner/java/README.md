@@ -26,9 +26,9 @@ Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっ
 
 ## 設計上の要点
 
-- **1 プロセス・1 スレッド・逐次**: 受信ループは次のコマンドが来るまでブロックし、1 件を最後まで処理してから次へ。提出コードの `main` はディスパッチャのメインスレッド上で **同期**実行されます。無限ループはこのスレッドごと止まるため、タイムアウト時は TS 側が JVM ごと SIGKILL します。
+- **1 プロセス・1 スレッド・逐次**: 受信ループは次のコマンドが来るまでブロックし、1 件を最後まで処理してから次へ。提出コードの `main` は専用のスレッドで実行し、ディスパッチャのメインスレッドはその終了を待ちます。無限ループでは処理が戻らないため、タイムアウト時は TS 側が JVM ごと SIGKILL します。
 - **隔離（`requiresIsolation`）**: `System.exit`/`Runtime.halt`/`FileDescriptor.in,out,err`/`System.setIn,setOut,setErr`/グローバル状態変更/シャットダウンフック/外部プロセス起動を参照するコードは、共有 JVM を壊す/汚すため TS 側で使い捨て外部 JVM に振り分けます。 **スレッド生成は除外**（競プロの大スタック再帰イディオムは join 済みで安全なため）。詳細は `src/PROTOCOL.md` 6.2。
-- **メモリは近似**: `RESULT` の `memory` は実行スレッドの累積アロケーション量（`com.sun.management.ThreadMXBean`）で、ピーク RSS ではありません。詳細は `src/PROTOCOL.md` 6.1。
+- **メモリは近似**: `RESULT` の `memory` は実行中に増えた累積アロケーション量（`com.sun.management.ThreadMXBean`）で、ピーク RSS ではありません。詳細は `src/PROTOCOL.md` 6.1。
 - **出力上限**: 既定 2 MiB（`LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`）。超過分は破棄し切り詰めフラグを立てます。
 
 ## ビルド

@@ -25,7 +25,10 @@ export type RunResult = {
 	readonly input: string;
 	readonly exitCode?: string | number;
 	readonly execTime?: number;
+	/** 判定サーバーが測った使用量(KB)。 */
 	readonly memory?: number;
+	/** Local Runner が測った累積の割り当て量(KB)。ピークの使用量ではない。 */
+	readonly allocatedMemory?: number;
 	readonly output?: string;
 	readonly error?: string;
 	readonly expectedOutput?: string;

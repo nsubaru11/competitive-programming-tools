@@ -201,6 +201,7 @@ easyTest.expectedOutput: Expected output
 easyTest.exitCode: Exit code
 easyTest.execTime: Time
 easyTest.memory: Memory
+easyTest.allocated: allocated in total
 easyTest.noSavedCode: No saved code was found for this task.
 easyTest.restoreConfirm: Your current code will be replaced. Continue?
 

@@ -6,7 +6,9 @@ import {usesLibrary} from "@application/source/transform-java";
 import {type CodeRunner, RunnerCatalogService} from "@application/execution/runner-catalog";
 import type {CodeEditor} from "@application/ports/code-editor";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
+import type {Translate} from "@catalog/messages";
 import {easyTest} from "@features/easy-test/index";
+import {createResultView} from "@features/easy-test/views";
 import {javaSubmit} from "@features/java-submit/index";
 import {paizaLanguage} from "@features/paiza-language/index";
 import {taskDropdown} from "@features/task-dropdown/index";
@@ -437,5 +439,19 @@ describe("taskDropdown", () => {
 			}))
 		}));
 		expect(document.querySelector(".cp-task-menu")?.textContent).toContain("読み込み失敗");
+	});
+});
+
+describe("Easy Test の結果の表示", () => {
+	const memoryCell = (result: Partial<RunResult>): string | null => {
+		const view = createResultView(((key: string) => key) as Translate);
+		view.show({status: "OK", input: "", ...result});
+		return view.element.querySelectorAll("td")[2]!.textContent;
+	};
+
+	test("判定サーバーの使用量と、Local Runner の累積の割り当て量を区別する", () => {
+		expect(memoryCell({memory: 2048})).toBe("2048 KB");
+		expect(memoryCell({allocatedMemory: 2048})).toBe("2048 KB (easyTest.allocated)");
+		expect(memoryCell({})).toBe("");
 	});
 });

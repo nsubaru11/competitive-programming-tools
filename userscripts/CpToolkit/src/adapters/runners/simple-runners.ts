@@ -109,7 +109,7 @@ class LocalCodeRunner implements CodeRunner {
 			status: toEasyTestStatus(response.status, response.exitCode),
 			exitCode: String(response.exitCode),
 			execTime: Number(response.time),
-			memory: Number(response.memory),
+			...(response.memory > 0 ? {allocatedMemory: Number(response.memory)} : {}),
 			input,
 			output: response.stdout ?? "",
 			error: response.stderr ?? "",

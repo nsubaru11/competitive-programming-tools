@@ -64,7 +64,11 @@ export function createResultView(translate: Translate): {element: HTMLElement; s
 			exitCode.textContent = String(result.exitCode ?? "");
 			exitCode.dataset.tone = String(result.exitCode) === "0" ? "success" : "danger";
 			execTime.textContent = result.execTime === undefined ? "" : `${result.execTime} ms`;
-			memory.textContent = result.memory === undefined ? "" : `${result.memory} KB`;
+			if (result.allocatedMemory !== undefined) {
+				memory.textContent = `${result.allocatedMemory} KB (${translate("easyTest.allocated")})`;
+			} else {
+				memory.textContent = result.memory === undefined ? "" : `${result.memory} KB`;
+			}
 		},
 	};
 }

@@ -30,7 +30,7 @@ final class ProgramRunner {
 	private static final int MAX_CAPTURE_BYTES = resolveCaptureLimitBytes();
 
 	/**
-	 * 実行スレッドの累積アロケーション量を測る MXBean（HotSpot 拡張）。計測不可なら null（改善2）。
+	 * JVM 全体の累積アロケーション量を測る MXBean（HotSpot 拡張）。計測不可なら null（改善2）。
 	 */
 	private static final ThreadMXBean THREAD_MX = resolveThreadMx();
 	/**
@@ -54,8 +54,12 @@ final class ProgramRunner {
 		return null;
 	}
 
-	private static long currentThreadAllocatedBytes() {
-		return THREAD_MX != null ? THREAD_MX.getCurrentThreadAllocatedBytes() : -1L;
+	/**
+	 * 大スタックのスレッドへ処理を移すイディオムがあるので、実行スレッドだけでなく全スレッドの合計を測る。
+	 * 実行中は他の要求を処理しないため、差分はほぼ提出コードの分になる。
+	 */
+	private static long totalAllocatedBytes() {
+		return THREAD_MX != null ? THREAD_MX.getTotalThreadAllocatedBytes() : -1L;
 	}
 
 	private static long resolveRunThreadStackBytes() {
@@ -163,7 +167,7 @@ final class ProgramRunner {
 		// 実行前に生存していたスレッド集合。実行後にここに無い非デーモンスレッドが残っていれば
 		// 「join されなかった残存スレッド」とみなし、汚染防止に JVM を再生成する（Dispatcher が halt）。
 		final Set<Thread> baselineThreads = Thread.getAllStackTraces().keySet();
-		// アロケーション量は実行スレッド自身の上で測る（従来は main スレッドで測っていたため
+		// アロケーション量は実行スレッドの開始直後と終了時の差分で測る（従来は main スレッドで測っていたため
 		// プロトコル処理分が混ざっていた）。[0]=開始前 / [1]=終了後、計測不可なら -1。
 		final long[] allocSnapshot = {-1L, -1L};
 
@@ -171,13 +175,13 @@ final class ProgramRunner {
 		try (StandardStreamsGuard guard = new StandardStreamsGuard(standardInput, redirectedOut, redirectedErr, uncaughtError); URLClassLoader classLoader = new URLClassLoader(new URL[]{classDirectory.toUri().toURL()}, ClassLoader.getSystemClassLoader())) {
 			guard.setContextClassLoader(classLoader);
 			final Runnable body = () -> {
-				allocSnapshot[0] = currentThreadAllocatedBytes();
+				allocSnapshot[0] = totalAllocatedBytes();
 				try {
 					invokeMain(classLoader, mainClassName);
 				} catch (final Throwable throwable) {
 					uncaughtError.compareAndSet(null, throwable);
 				} finally {
-					allocSnapshot[1] = currentThreadAllocatedBytes();
+					allocSnapshot[1] = totalAllocatedBytes();
 				}
 			};
 			// 大きめのスタックを持つ専用スレッドで実行する。これにより
