@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.21
+// @version        1.0.22
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2161,6 +2161,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.running": "Running...",
 		"easyTest.run": "Run",
 		"easyTest.testAndSubmit": "Test & Submit",
+		"easyTest.cancelSubmit": "Cancel Submit",
 		"easyTest.testAll": "Test All Samples",
 		"easyTest.restore": "Restore Last Play",
 		"easyTest.environment": "Environment",
@@ -2174,6 +2175,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.memory": "Memory",
 		"easyTest.allocated": "allocated in total",
 		"easyTest.noSavedCode": "No saved code was found for this task.",
+		"easyTest.noSamples": "No samples were found. Nothing was tested or submitted.",
 		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
 		"paizaLanguage.title": "paiza language selection",
 		"paizaLanguage.description":
@@ -2363,6 +2365,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.running": "実行中...",
 		"easyTest.run": "Run",
 		"easyTest.testAndSubmit": "Test & Submit",
+		"easyTest.cancelSubmit": "提出を中止",
 		"easyTest.testAll": "Test All Samples",
 		"easyTest.restore": "Restore Last Play",
 		"easyTest.environment": "実行環境",
@@ -2376,6 +2379,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.memory": "メモリ",
 		"easyTest.allocated": "累積の割り当て",
 		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
+		"easyTest.noSamples": "サンプルが見つかりませんでした。テストと提出は行っていません。",
 		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
 		"paizaLanguage.title": "paiza の言語選択",
 		"paizaLanguage.description":
@@ -7534,6 +7538,8 @@ summary {
 		savedCodes;
 		buttons = [];
 		resultList = h("div", {className: "row"});
+		submitButton;
+		pendingSubmit = null;
 		candidates = [];
 		languageId;
 		refreshing = Promise.resolve();
@@ -7592,13 +7598,17 @@ summary {
 			const {translate} = this.context;
 			const {testButtons, sideButtons, results} = this.site.mounts;
 			if (testButtons instanceof Element) {
+				this.submitButton = this.createTestButton(
+					"easyTest.testAndSubmit",
+					"btn-info",
+					TEST_AND_SUBMIT_KEY,
+					() => {
+						if (this.pendingSubmit) this.setPendingSubmit(null);
+						else this.testAndSubmit();
+					},
+				);
 				testButtons.append(
-					this.createTestButton(
-						"easyTest.testAndSubmit",
-						"btn-info",
-						TEST_AND_SUBMIT_KEY,
-						() => void this.testAndSubmit(),
-					),
+					this.submitButton,
 					this.createTestButton(
 						"easyTest.testAll",
 						"btn-default btn-sm",
@@ -7620,7 +7630,7 @@ summary {
 		}
 
 		placeSampleButtons() {
-			this.site.samples().then((samples) => {
+			this.readSamples().then((samples) => {
 				const label = this.context.translate("easyTest.run");
 				for (const sample of samples) {
 					if (!(sample.anchor instanceof Element)) continue;
@@ -7729,6 +7739,22 @@ ${label}`,
 			this.runnable = runnable;
 			this.panel.setRunnable(runnable);
 			for (const button of this.buttons) button.classList.toggle("disabled", !runnable);
+			this.showSubmitState();
+		}
+
+		setPendingSubmit(pending) {
+			this.pendingSubmit = pending;
+			this.showSubmitState();
+		}
+
+		showSubmitState() {
+			const button = this.submitButton;
+			if (!button) return;
+			const pending = this.pendingSubmit !== null;
+			button.textContent = this.context.translate(pending ? "easyTest.cancelSubmit" : "easyTest.testAndSubmit");
+			button.classList.toggle("btn-info", !pending);
+			button.classList.toggle("btn-warning", pending);
+			button.classList.toggle("disabled", !pending && !this.runnable);
 		}
 
 		runOptions(extra) {
@@ -7771,14 +7797,23 @@ ${label}`,
 			tab.show();
 		}
 
-		async runSamples() {
-			const samples = await this.site.samples();
+		readSamples() {
+			return this.site.samples().catch(() => []);
+		}
+
+		async runSamples(onClose) {
+			const samples = await this.readSamples();
+			if (samples.length === 0) {
+				window.alert(this.context.translate("easyTest.noSamples"));
+				return false;
+			}
 			await this.refreshEnvironment();
 			const runGroupId = crypto.randomUUID();
 			const executions = samples.map((sample) => this.execute(sample, {runGroupId}));
 			executions[0]?.tab.select();
 			const row = createResultRow(samples.length, this.context.translate("settings.close"), () => {
 				for (const {tab} of executions) tab.close();
+				onClose?.();
 			});
 			this.resultList.prepend(row.element);
 			for (const {result, tab} of executions) row.track(result, () => tab.show());
@@ -7791,7 +7826,18 @@ ${label}`,
 		}
 
 		async testAndSubmit() {
-			if (await this.runSamples()) this.site.submit();
+			if (this.pendingSubmit) return;
+			const pending = {};
+			const cancel = () => {
+				if (this.pendingSubmit === pending) this.setPendingSubmit(null);
+			};
+			this.setPendingSubmit(pending);
+			try {
+				const passed = await this.runSamples(cancel);
+				if (passed && this.pendingSubmit === pending) this.site.submit();
+			} finally {
+				cancel();
+			}
 		}
 
 		restore() {

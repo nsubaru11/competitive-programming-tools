@@ -116,6 +116,106 @@ describe("easyTest", () => {
 		expect(row()?.dataset.tone).toBe("warning");
 	});
 
+	describe("提出の中止", () => {
+		const CANCEL = "提出を中止";
+
+		function createGate() {
+			let open: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => {
+				open = resolve;
+			});
+			const run: CodeRunner["run"] = async (_code, input) => {
+				await gate;
+				return {status: "OK", input, output: input};
+			};
+			return {run, open: () => open()};
+		}
+
+		test("テスト中はボタンが中止に変わり、押すと提出だけを取り消す", async () => {
+			const site = createSite();
+			const {run, open} = createGate();
+			await start(site, run);
+			button("Test & Submit")?.click();
+			await wait();
+			expect(button(CANCEL)?.classList.contains("btn-warning")).toBe(true);
+			expect(button(CANCEL)?.classList.contains("disabled")).toBe(false);
+			button(CANCEL)?.click();
+			expect(button(CANCEL)).toBeUndefined();
+			open();
+			await wait(30);
+			expect(site.submit).not.toHaveBeenCalled();
+			expect(row()?.dataset.tone).toBe("success");
+			expect(button("Test & Submit")?.classList.contains("btn-info")).toBe(true);
+		});
+
+		test("結果の行を閉じても提出しない", async () => {
+			const site = createSite();
+			const {run, open} = createGate();
+			await start(site, run);
+			button("Test & Submit")?.click();
+			await wait();
+			row()?.querySelector<HTMLElement>(".cp-et-close")?.click();
+			expect(button("Test & Submit")).toBeDefined();
+			open();
+			await wait(30);
+			expect(site.submit).not.toHaveBeenCalled();
+		});
+
+		test("中止のあとに押し直した分は提出する", async () => {
+			const site = createSite();
+			const {run, open} = createGate();
+			await start(site, run);
+			button("Test & Submit")?.click();
+			await wait();
+			button(CANCEL)?.click();
+			button("Test & Submit")?.click();
+			await wait();
+			open();
+			await wait(30);
+			expect(site.submit).toHaveBeenCalledTimes(1);
+		});
+
+		test("テスト中のショートカットは無視し、二重に提出しない", async () => {
+			const site = createSite();
+			const {run, open} = createGate();
+			await start(site, run);
+			pressKey("Enter", {ctrlKey: true});
+			await wait();
+			pressKey("Enter", {ctrlKey: true});
+			await wait();
+			expect(tabLabels()).toEqual(["Easy Test", "#1 Sample 1", "#2 Sample 2"]);
+			open();
+			await wait(30);
+			expect(site.submit).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("サンプルがないとき", () => {
+		const originalAlert = window.alert;
+
+		afterEach(() => {
+			window.alert = originalAlert;
+		});
+
+		for (const [name, samples] of [
+			["0件", async () => []],
+			["取得に失敗", () => Promise.reject(new Error("offline"))],
+		] as const) {
+			test(`${name}なら提出せず知らせる`, async () => {
+				const alert = mock(() => undefined);
+				window.alert = alert;
+				const site = createSite({samples});
+				await start(site, echo);
+				button("Test & Submit")?.click();
+				await wait(30);
+				expect(site.submit).not.toHaveBeenCalled();
+				expect(alert).toHaveBeenCalledTimes(1);
+				expect(row()).toBeNull();
+				expect(button("Test & Submit")?.classList.contains("btn-info")).toBe(true);
+			});
+		}
+	});
+
 	test("実行環境がなければボタンを無効の表示にして理由を示す", async () => {
 		await start(createSite({language: () => null}), echo);
 		expect(button("Test & Submit")?.classList.contains("disabled")).toBe(true);

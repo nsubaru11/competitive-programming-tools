@@ -191,6 +191,7 @@ easyTest.allowableError: 許容誤差
 easyTest.running: "実行中..."
 easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
+easyTest.cancelSubmit: 提出を中止
 easyTest.testAll: Test All Samples
 easyTest.restore: Restore Last Play
 easyTest.environment: 実行環境
@@ -204,6 +205,7 @@ easyTest.execTime: 実行時間
 easyTest.memory: メモリ
 easyTest.allocated: 累積の割り当て
 easyTest.noSavedCode: この問題の保存済みコードはありません。
+easyTest.noSamples: サンプルが見つかりませんでした。テストと提出は行っていません。
 easyTest.restoreConfirm: 現在のコードを置き換えます。よろしいですか?
 
 paizaLanguage.title: paiza の言語選択

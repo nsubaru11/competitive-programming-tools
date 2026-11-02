@@ -35,6 +35,9 @@ class EasyTest {
 	private readonly savedCodes: SavedCodes;
 	private readonly buttons: HTMLElement[] = [];
 	private readonly resultList = h("div", {className: "row"});
+	private submitButton: HTMLButtonElement | undefined;
+	/** テスト後に提出する予定。中止したら別の予定と区別できるよう、実行ごとに作る。 */
+	private pendingSubmit: object | null = null;
 	private candidates: readonly CodeRunner[] = [];
 	private languageId: string | undefined;
 	private refreshing: Promise<void> = Promise.resolve();
@@ -77,7 +80,7 @@ class EasyTest {
 		return button;
 	}
 
-	private createTestButton(label: MessageKey, className: string, shortcut: string, onClick: () => void): HTMLElement {
+	private createTestButton(label: MessageKey, className: string, shortcut: string, onClick: () => void): HTMLButtonElement {
 		const button = this.createButton(this.context.translate(label), className, onClick);
 		button.title = shortcut;
 		button.style.marginLeft = "1rem";
@@ -88,8 +91,12 @@ class EasyTest {
 		const {translate} = this.context;
 		const {testButtons, sideButtons, results} = this.site.mounts;
 		if (testButtons instanceof Element) {
+			this.submitButton = this.createTestButton("easyTest.testAndSubmit", "btn-info", TEST_AND_SUBMIT_KEY, () => {
+				if (this.pendingSubmit) this.setPendingSubmit(null);
+				else void this.testAndSubmit();
+			});
 			testButtons.append(
-				this.createTestButton("easyTest.testAndSubmit", "btn-info", TEST_AND_SUBMIT_KEY, () => void this.testAndSubmit()),
+				this.submitButton,
 				this.createTestButton("easyTest.testAll", "btn-default btn-sm", TEST_ALL_KEY, () => void this.testAll()),
 			);
 		}
@@ -104,7 +111,7 @@ class EasyTest {
 	}
 
 	private placeSampleButtons(): void {
-		void this.site.samples().then((samples) => {
+		void this.readSamples().then((samples) => {
 			const label = this.context.translate("easyTest.run");
 			for (const sample of samples) {
 				if (!(sample.anchor instanceof Element)) continue;
@@ -193,6 +200,23 @@ class EasyTest {
 		this.runnable = runnable;
 		this.panel.setRunnable(runnable);
 		for (const button of this.buttons) button.classList.toggle("disabled", !runnable);
+		this.showSubmitState();
+	}
+
+	private setPendingSubmit(pending: object | null): void {
+		this.pendingSubmit = pending;
+		this.showSubmitState();
+	}
+
+	/** 提出の予定がある間は、Test & Submit のボタンを中止のボタンにする。 */
+	private showSubmitState(): void {
+		const button = this.submitButton;
+		if (!button) return;
+		const pending = this.pendingSubmit !== null;
+		button.textContent = this.context.translate(pending ? "easyTest.cancelSubmit" : "easyTest.testAndSubmit");
+		button.classList.toggle("btn-info", !pending);
+		button.classList.toggle("btn-warning", pending);
+		button.classList.toggle("disabled", !pending && !this.runnable);
 	}
 
 	private runOptions(extra: RunOptions): RunOptions {
@@ -234,8 +258,17 @@ class EasyTest {
 		tab.show();
 	}
 
-	private async runSamples(): Promise<boolean> {
-		const samples = await this.site.samples();
+	private readSamples(): Promise<readonly SampleCase[]> {
+		return this.site.samples().catch(() => []);
+	}
+
+	/** サンプルをすべて実行し、全問正解かを返す。サンプルを読めなければ何も実行しない。 */
+	private async runSamples(onClose?: () => void): Promise<boolean> {
+		const samples = await this.readSamples();
+		if (samples.length === 0) {
+			window.alert(this.context.translate("easyTest.noSamples"));
+			return false;
+		}
 		await this.refreshEnvironment();
 		const runGroupId = crypto.randomUUID();
 		const executions = samples.map((sample) => this.execute(sample, {runGroupId}));
@@ -243,6 +276,7 @@ class EasyTest {
 		executions[0]?.tab.select();
 		const row = createResultRow(samples.length, this.context.translate("settings.close"), () => {
 			for (const {tab} of executions) tab.close();
+			onClose?.();
 		});
 		this.resultList.prepend(row.element);
 		for (const {result, tab} of executions) row.track(result, () => tab.show());
@@ -254,8 +288,20 @@ class EasyTest {
 		await this.runSamples();
 	}
 
+	/** 提出の予定があれば何もしない。ショートカットの連打で二重に提出しないようにする。 */
 	private async testAndSubmit(): Promise<void> {
-		if (await this.runSamples()) this.site.submit();
+		if (this.pendingSubmit) return;
+		const pending = {};
+		const cancel = (): void => {
+			if (this.pendingSubmit === pending) this.setPendingSubmit(null);
+		};
+		this.setPendingSubmit(pending);
+		try {
+			const passed = await this.runSamples(cancel);
+			if (passed && this.pendingSubmit === pending) this.site.submit();
+		} finally {
+			cancel();
+		}
 	}
 
 	private restore(): void {
