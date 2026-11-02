@@ -66,7 +66,7 @@ Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-run
 | `stop`                                                         | サーバーを停止する                                                                           |
 | `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                               |
 | `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する    |
-| `setheader <language> <file>`                                  | 提出用ヘッダーのファイルを言語ごとに設定する。引数なしで一覧を表示し、`--clear` で解除する   |
+| `setheader <language\|name> <file>`                            | 言語の既定のヘッダーか、名前付きのヘッダーを設定する。引数なしで一覧を表示し、`--clear` で解除する |
 | `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                             |
 
 `taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
@@ -162,16 +162,20 @@ import lib.io.FastScanner;
 
 ## 提出用ヘッダー
 
-提出物の先頭に付けるコメントなどのファイルを、言語ごとに `setheader` で設定できます。`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助が使います。今のところ変換に対応している言語は Java だけなので、使われるのは `java` の設定です。
+提出物の先頭に付けるコメントなどのファイルを、`setheader` で設定できます。言語の既定のヘッダーと、名前付きのヘッダーの2通りがあります。`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助が使います。今のところ変換に対応している言語は Java だけなので、使われるのは `java` の設定です。
 
 ```bash
+# java の既定のヘッダー。--header を付けなければこれを使う
 setheader java C:\path\to\header.txt
+
+# 名前付きのヘッダー。submit --header=short のように選ぶ
+setheader short C:\path\to\short.txt
 ```
 
 - 設定は `local-runner.settings.json` に保存します。サーバーの再起動はいりません
 - `setheader` だけで一覧を表示し、`setheader java --clear` で解除します
 - 設定が無ければヘッダーは付けません。設定したファイルが見つからないときはエラーで止まります
-- 言語の名前のほかに、好きな名前でも設定できます。`--header=<name>` や CP Toolkit の「ヘッダーの名前」で選べます。設定が無い名前はエラーになります
+- 名前付きのヘッダーは `--header=<name>` や CP Toolkit の「ヘッダーの名前」で選べます。設定が無い名前はエラーになります
 - `--no-header` で、ヘッダーを付けずに出力します
 - ソースがヘッダーの1行目で始まるときは、重ねて付けません
 - `run`、`test`、`localtest`、`crosscheck` と Easy Test の実行には付けません。行番号が元のソースと揃います
