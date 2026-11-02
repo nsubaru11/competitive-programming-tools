@@ -10,7 +10,7 @@ export class ToclipCommand implements Command {
 	readonly name = "toclip";
 	readonly usageLines = [
 		"  toclip [--no-header|--header=<name>] <sourceFile>",
-		"  toclip [...options] <task>  (短縮: 例: toclip d → D.java)",
+		"  toclip [...options] <task>  (short form, e.g. toclip d -> D.java)",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {

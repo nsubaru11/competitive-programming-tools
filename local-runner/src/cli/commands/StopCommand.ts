@@ -5,7 +5,7 @@ import type {Command} from "./Command";
 export class StopCommand implements Command {
 	readonly name = "stop";
 	readonly usageLines = [
-		"  stop                                    (Local Runner サーバーを停止)",
+		"  stop                                    (stop the Local Runner server)",
 	];
 
 	async execute(): Promise<number> {
@@ -17,13 +17,13 @@ export class StopCommand implements Command {
 				signal: AbortSignal.timeout(3000),
 			});
 			if (res.ok) {
-				console.log("Local Runner を停止しました。");
+				console.log("Local Runner stopped.");
 				return 0;
 			}
-			console.error(`Local Runner の停止要求が失敗しました (status=${res.status})。`);
+			console.error(`Could not stop Local Runner (status=${res.status}).`);
 			return 1;
 		} catch {
-			console.log("Local Runner は起動していません（既に停止済み）。");
+			console.log("Local Runner is not running.");
 			return 0;
 		}
 	}

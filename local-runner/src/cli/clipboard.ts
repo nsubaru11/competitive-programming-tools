@@ -40,5 +40,5 @@ export function copyToClipboard(source: string): void {
 		const detail = result.error?.message || result.stderr.trim() || `exit code ${result.status}`;
 		errors.push(`${command}: ${detail}`);
 	}
-	throw new Error(`クリップボードへコピーできませんでした: ${errors.join("; ")}`);
+	throw new Error(`Could not copy to the clipboard: ${errors.join("; ")}`);
 }

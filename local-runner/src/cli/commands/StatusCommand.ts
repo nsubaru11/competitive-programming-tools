@@ -34,7 +34,7 @@ function countSampleCacheEntries(): number {
 export class StatusCommand implements Command {
 	readonly name = "status";
 	readonly usageLines = [
-		"  status                                  (Local Runner サーバーの稼働状況を表示。稼働中=0/停止中=1)",
+		"  status                                  (show the Local Runner server status; exit code 0 if running, 1 if stopped)",
 	];
 
 	async execute(): Promise<number> {
@@ -57,7 +57,7 @@ export class StatusCommand implements Command {
 			const label = isSupportCliColor ? `${color.ANSI.RED}stopped${color.ANSI.RESET}` : "stopped";
 			console.log(`Local Runner: ${label} (${CLI_CONFIG.defaultLocalRunnerUrl})`);
 			console.log(`  sample cache:  ${sampleCacheCount} task(s) (${sampleCache.getSampleCacheDir() || "-"})`);
-			console.log(`  起動するには: serve（または test/localtest/run で自動起動）`);
+			console.log(`  To start it: serve (test, localtest and run also start it automatically)`);
 			return 1;
 		}
 

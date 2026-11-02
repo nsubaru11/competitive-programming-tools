@@ -45,12 +45,12 @@ export function printUsage(): void {
 		for (const line of command.usageLines) console.error(line);
 	}
 	console.error("Options:");
-	console.error("  -f, --force                submit: 非 AC でも提出 / tomain: 既存 outFile を上書き");
-	console.error("  -d, --debug[=true|false]   test/localtest/run: DEBUG ブロックの有効/無効を上書き（既定: 有効）");
-	console.error("  --no-header                submit/tomain/toclip: 提出物の先頭にヘッダーを付けない");
-	console.error("  --header=<name>            submit/tomain/toclip: templates/header/<name>.txt をヘッダーに使う（既定: java）");
-	console.error("  --full                     test/localtest/submit/crosscheck: WA 差分を折りたたまず全行表示");
-	console.error("  --wa-only                  test/localtest/submit/crosscheck: WA 差分のうち不一致行だけ抽出（行番号は保持）");
-	console.error("  --max-lines=N              test/localtest/submit/crosscheck: WA 差分の折りたたみ行数を変更（既定: 20）");
-	console.error("  --time-limit=N             localtest/run/crosscheck: 実行時間警告のしきい値に使う制限(ms)。80%超=黄/制限以上=赤（既定: 2000。表示のみで実行は打ち切らない）");
+	console.error("  -f, --force                submit: submit even if a sample is not AC / tomain: overwrite outFile");
+	console.error("  -d, --debug[=true|false]   test/localtest/run: turn DEBUG on or off (default: on)");
+	console.error("  --no-header                submit/tomain/toclip: do not add the header");
+	console.error("  --header=<name>            submit/tomain/toclip: use templates/header/<name>.txt (default: java)");
+	console.error("  --full                     test/localtest/submit/crosscheck: show the whole WA diff");
+	console.error("  --wa-only                  test/localtest/submit/crosscheck: show only mismatched lines");
+	console.error("  --max-lines=N              test/localtest/submit/crosscheck: lines of the WA diff to show (default: 20)");
+	console.error("  --time-limit=N             localtest/run/crosscheck: time limit in ms for the warning colors (default: 2000; the run is not stopped)");
 }

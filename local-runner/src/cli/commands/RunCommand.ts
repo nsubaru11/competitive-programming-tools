@@ -31,7 +31,7 @@ export class RunCommand implements Command {
 	readonly name = "run";
 	readonly usageLines = [
 		"  run [-d|--debug[=true|false]] [--time-limit=N] <sourceFile> [inputFile]",
-		"                                          (1回実行して出力表示。inputFile省略可。DEBUG は既定で有効)",
+		"                                          (run once and show the output; inputFile is optional; DEBUG is on by default)",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {

@@ -39,7 +39,7 @@ export async function postLocalRunner(
 			headers: {"Content-Type": "application/json"},
 			body: JSON.stringify(body),
 		});
-		if (!res.ok) throw new Error(`Local runner request failed: ${res.status}`);
+		if (!res.ok) throw new Error(`Local Runner request failed: ${res.status}`);
 		return await res.json() as shared.LocalRunnerRunResponse;
 	};
 	if (!programId) return await request(shared.buildLocalRunnerRunRequest(sourceCode, stdinText, undefined, true));
@@ -147,11 +147,11 @@ function formatWaDiff(expected: string, actual: string, options: SampleDisplayOp
 	const NONE = "(none)";
 
 	const header = waOnly
-		? `  expected vs actual  (× = mismatch のみ抽出 / 行番号は保持)`
+		? `  expected vs actual  (mismatched lines only)`
 		: `  expected vs actual  (○ = match, × = mismatch)`;
 	const out: string[] = [header];
 	if (shownIdx.length === 0) {
-		out.push(`  (行単位の不一致なし — 空白や出力形式の差を確認してください)`);
+		out.push(`  (no line differs; check whitespace and the output format)`);
 	}
 	for (const i of shownIdx) {
 		const hasE = i < exp.length, hasA = i < act.length;
@@ -163,7 +163,7 @@ function formatWaDiff(expected: string, actual: string, options: SampleDisplayOp
 		out.push(row);
 	}
 	const hidden = indices.length - shownIdx.length;
-	if (hidden > 0) out.push(`  ... +${hidden} more line(s)  (--full で全行表示)`);
+	if (hidden > 0) out.push(`  ... +${hidden} more line(s)  (use --full to show all)`);
 	return out.join("\n");
 }
 

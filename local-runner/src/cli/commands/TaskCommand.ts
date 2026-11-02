@@ -40,8 +40,8 @@ export function detectContestId(startDir: string): string {
 		dir = parent;
 	}
 	throw new Error(
-		`短縮表記のコンテスト名をフォルダ階層から特定できませんでした（src の親にコンテストフォルダが見つからない）。\n` +
-		`  フル指定してください: test <contestId>_<task> <File.java>`,
+		`Could not find the contest name from the folders (no contest folder above src).\n` +
+		`  Use the full form: test <contestId>_<task> <File.java>`,
 	);
 }
 
@@ -66,7 +66,7 @@ function resolveShortSourceFile(token: string, cwd: string): string {
 /** 短縮指定（d, ex, d1など）から、現在ディレクトリ内のJavaソースを解決する。 */
 export function resolveShortSourceArg(token: string): string {
 	if (!SHORT_TASK_PATTERN.test(token)) {
-		throw new Error(`短縮タスク指定が不正です: "${token}"（例: d, e, ex, d1）。`);
+		throw new Error(`Invalid short task: "${token}" (e.g. d, e, ex, d1).`);
 	}
 	return resolveShortSourceFile(token, process.cwd());
 }
@@ -80,7 +80,7 @@ export function resolveShortSourceArg(token: string): string {
  */
 export function expandShortTaskArg(token: string): {task: Task; sourceFilePath: string} {
 	if (!SHORT_TASK_PATTERN.test(token)) {
-		throw new Error(`短縮タスク指定が不正です: "${token}"（例: d, e, ex, d1）。フル指定なら2引数で。`);
+		throw new Error(`Invalid short task: "${token}" (e.g. d, e, ex, d1). The full form takes two arguments.`);
 	}
 	const cwd = process.cwd();
 	const contestId = detectContestId(cwd);

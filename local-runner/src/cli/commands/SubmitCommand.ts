@@ -8,7 +8,7 @@ export class SubmitCommand extends TaskCommand {
 	readonly name = "submit";
 	readonly usageLines = [
 		"  submit [-f|--force] [--no-header|--header=<name>] [--full] [--wa-only] [--max-lines=N] <taskScreenName> <sourceFile>",
-		"  submit [...options] <task>              (短縮: 同上。例: submit d)",
+		"  submit [...options] <task>              (short form, e.g. submit d)",
 	];
 	protected readonly allowForce = true;
 	protected readonly debug = false;

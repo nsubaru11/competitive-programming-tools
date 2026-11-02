@@ -369,7 +369,7 @@ async function bootstrap() {
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.baseDir);
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.compileRootDir);
 	const libraryRoots = config.prepareLibrarySourceRoot();
-	logging.logInfo(`Local runner base directory: ${config.RUNNER_CONFIG.baseDir}`);
+	logging.logInfo(`Local Runner base directory: ${config.RUNNER_CONFIG.baseDir}`);
 	logging.logInfo(`Library source: ${libraryRoots.source}`);
 	logging.logInfo(`Prepared library source: ${libraryRoots.prepared}`);
 	logging.logInfo(`Log file: ${config.LOG_FILE_PATH}`);
@@ -391,7 +391,7 @@ async function bootstrap() {
 	// どうしても外部公開が必要な場合のみ LOCAL_RUNNER_HOST で上書き可能（非推奨）。
 	const host = process.env.LOCAL_RUNNER_HOST || "127.0.0.1";
 	server.listen(config.RUNNER_CONFIG.port, host, () => {
-		const message = "✓ LocalRunner server is ready:";
+		const message = "✓ Local Runner server is ready:";
 		const link = `http://${host}:${config.RUNNER_CONFIG.port}`;
 		logging.logInfo(color.supportsRunnerColor() ? `${color.ANSI.GREEN}${message}${color.ANSI.RESET} ${color.ANSI.CYAN}${link}${color.ANSI.RESET}` : `${message} ${link}`);
 		logging.logInfo(`Allowed browser origins: ${ALLOWED_ORIGINS_OVERRIDE.length > 0 ? ALLOWED_ORIGINS_OVERRIDE.join(", ") : ALLOWED_ORIGIN_HOSTS.join(", ")}`);
@@ -400,7 +400,7 @@ async function bootstrap() {
 }
 
 function shutdown(signal: string) {
-	logging.logInfo(`Shutting down LocalRunner server (${signal})...`);
+	logging.logInfo(`Shutting down Local Runner server (${signal})...`);
 	if (precompileTimer) clearTimeout(precompileTimer);
 	dispatcher.stopDispatcher();
 	server.close(() => {

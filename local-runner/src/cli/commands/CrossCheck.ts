@@ -19,7 +19,7 @@ export class CrossCheck implements Command {
 	readonly name = "crosscheck";
 	readonly usageLines = [
 		"  crosscheck  [--full] [--wa-only] [--max-lines=N] [--time-limit=N] <actualSourceFile> <expectedSourceFile> [testDir]",
-		"                                          (actual と expected を同じ入力で実行し出力を突き合わせます。expected側が異常終了したケースは比較せずそのまま報告)",
+		"                                          (run both on the same input and compare stdout; cases where expected fails are reported without comparing)",
 	];
 
 	/** ローカルの .in を入力として与え、2つのコードの実行結果を突き合わせます。 **/

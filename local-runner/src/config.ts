@@ -38,7 +38,7 @@ function findLibrarySourceRoot(): string {
 	for (const candidate of candidates) {
 		if (fs.existsSync(path.join(candidate, "lib"))) return path.resolve(candidate);
 	}
-	throw new Error(`Library source root not found. Tried: ${candidates.join(", ")}`);
+	throw new Error(`Java library not found. Clone competitive-programming-java-library to library/java next to tools, or set ATCODER_LIB_SRC. Tried: ${candidates.join(", ")}`);
 }
 
 export function resolveLibrarySourceRoot(): string {

@@ -5,12 +5,12 @@ import type {Command} from "./Command";
 export class ServeCommand implements Command {
 	readonly name = "serve";
 	readonly usageLines = [
-		"  serve                                   (Local Runner サーバーだけ先に起動)",
+		"  serve                                   (start the Local Runner server)",
 	];
 
 	async execute(): Promise<number> {
 		await ensureServer.ensureLocalRunnerReady();
-		console.log("Local Runner is up. これ以降の test / submit / localtest は即実行されます。");
+		console.log("Local Runner is up. test, submit and localtest will now start immediately.");
 		return 0;
 	}
 }

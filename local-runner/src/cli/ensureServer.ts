@@ -91,7 +91,7 @@ export async function ensureLocalRunnerReady(): Promise<void> {
 	try {
 		startServer();
 	} catch (e) {
-		throw new Error(`Local Runner の起動コマンド実行に失敗: ${e instanceof Error ? e.message : String(e)}`);
+		throw new Error(`Could not start Local Runner: ${e instanceof Error ? e.message : String(e)}`);
 	}
 
 	const deadline = Date.now() + READY_TIMEOUT_MS;
@@ -104,7 +104,7 @@ export async function ensureLocalRunnerReady(): Promise<void> {
 	}
 	throw new Error(
 		`Local Runner did not become ready within ${READY_TIMEOUT_MS}ms.\n` +
-		`  LocalRunnerのログを確認してください。\n` +
-		`  上書き用env: LOCAL_RUNNER_BACKEND=native|wsl / ATCODER_JAVA_VER / LOCAL_RUNNER_START_TIMEOUT_MS`,
+		`  Check the Local Runner log. Bun, a JDK and the Java library are required.\n` +
+		`  Related variables: LOCAL_RUNNER_BACKEND=native|wsl, ATCODER_LIB_SRC, ATCODER_JAVA_VER, LOCAL_RUNNER_START_TIMEOUT_MS`,
 	);
 }

@@ -52,13 +52,13 @@ export async function prepareSource(
 			body: JSON.stringify(shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate, header)),
 		});
 	}
-	if (!response.ok) throw new Error(`Local runner transform failed: ${response.status}`);
+	if (!response.ok) throw new Error(`Local Runner transform failed: ${response.status}`);
 	const transformedResult = await response.json() as shared.LocalRunnerTransformResponse | shared.LocalRunnerPrepareResponse;
 	if (transformedResult.status !== "success") {
 		throw new Error(transformedResult.diagnostics || "Java source transformation failed.");
 	}
 	if (preparedByServer && !("programId" in transformedResult && transformedResult.programId)) {
-		throw new Error("Local runner did not return a prepared program ID.");
+		throw new Error("Local Runner did not return a prepared program ID.");
 	}
 	if (transformedResult.addedImports.length > 0) {
 		console.log(`Added library imports: ${transformedResult.addedImports.join(", ")}`);

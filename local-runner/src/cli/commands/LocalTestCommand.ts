@@ -9,7 +9,7 @@ export class LocalTestCommand implements Command {
 	readonly name = "localtest";
 	readonly usageLines = [
 		"  localtest [-d|--debug[=true|false]] [--full] [--wa-only] [--max-lines=N] [--time-limit=N] <sourceFile> [testDir]",
-		"                                          (.in/.out をローカル実行。DEBUG は既定で有効)",
+		"                                          (run local .in/.out samples; DEBUG is on by default)",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {
