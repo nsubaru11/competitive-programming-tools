@@ -96,8 +96,8 @@ CP Toolkit と同じ機能を持つスクリプトとの併用は推奨しませ
 Java の提出補助は、[Local Runner](https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner) がなくても動きます。
 
 - **Local Runner がなくてもできること**: パッケージ宣言の削除、クラス名の `Main` への変更、`DEBUG` の無効化
-- **Local Runner が必要なこと**: `import` の補完、提出用ヘッダーの付与
-- **Local Runner とライブラリの設定が必要なこと**: `lib.*` の展開
+- **Local Runner が必要なこと**: `import` の補完
+- **Local Runner の設定も必要なこと**: `lib.*` の展開(`setlib`)、提出用ヘッダーの付与(`setheader`)
 
 接続できない状態や、ライブラリを設定していない状態で `import lib.` を含むコードを貼り付けると、設定方法へのリンクを通知します。このまま提出するとコンパイルエラーになるので注意してください。
 
@@ -165,6 +165,8 @@ AtCoder Custom Default Submissions、AtCoder Easy Test for Java、AtCoder Highli
 ## ソースコードとライセンス
 
 配布するコードは、TypeScript のソースを1ファイルにまとめたものです。難読化も最小化もしていません。ソースは [GitHub](https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit) で公開しています。
+
+開発には Claude Opus 5.5 を使用しました。設計と仕様は作者が決めています。
 
 配布物には第三者のコードと turndown を含むので、ライセンスは `MIT AND Apache-2.0 AND 0BSD` です。各機能の出典は [SOURCES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/SOURCES.md)、第三者のコードのライセンスは [THIRD_PARTY_NOTICES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/THIRD_PARTY_NOTICES.md) にあります。
 

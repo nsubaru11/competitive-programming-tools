@@ -5,7 +5,7 @@ Java の解答を手元で実行、判定、提出するためのツールです
 - **CLI**: AtCoder のサンプルでのテスト、提出、提出用コードの作成を行う
 - **サーバー**: Java の実行を速くするために常駐する。[CP Toolkit](../userscripts/CpToolkit/README.md) からも接続できる
 
-[CP Toolkit](../userscripts/CpToolkit/README.md) の Java の提出補助で `lib.*` の展開や `import` の補完を使うには、Local Runner が必要です。
+[CP Toolkit](../userscripts/CpToolkit/README.md) の Java の提出補助で `lib.*` の展開や `import` の補完を使うには、Local Runner と[ライブラリの設定](#ライブラリを使う)が必要です。
 
 動作確認は Windows(WSL)で行っています。
 
@@ -31,7 +31,11 @@ Windows では、次のコマンドで `bin` を PATH に登録すると、ど�
 powershell -File ".\local-runner\bin\install-path.ps1"
 ```
 
-Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-runner test abc448_d D.java` のように実行します。
+Windows 以外では、`bin` の `.cmd` の代わりに CLI を直接実行します。解答のあるフォルダで実行できるよう、`bun run --cwd` は使わず、CLI のパスを指定します。
+
+```bash
+bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test abc448_d D.java
+```
 
 ## CP Toolkit とつなぐ
 
@@ -129,6 +133,7 @@ setlib C:\path\to\competitive-programming-java-library
 ```
 
 - ライブラリのルートと、`lib` の親の `src` のどちらを指定しても構いません
+- 相対パスは、コマンドを実行したフォルダを基準にします。保存するのは絶対パスです
 - 設定は `local-runner.settings.json` に保存します。Windows で設定したパスは、WSL のサーバーでも使えます
 - 設定したら `stop` のあと `serve` で読み込み直してください
 - `setlib` だけで現在の設定を表示し、`setlib --clear` で解除します
@@ -173,6 +178,7 @@ setheader short C:\path\to\short.txt
 ```
 
 - 設定は `local-runner.settings.json` に保存します。サーバーの再起動はいりません
+- 相対パスは、コマンドを実行したフォルダを基準にします。保存するのは絶対パスです
 - `setheader` だけで一覧を表示し、`setheader java --clear` で解除します
 - 設定が無ければヘッダーは付けません。設定したファイルが見つからないときはエラーで止まります
 - 名前付きのヘッダーは `--header=<name>` や CP Toolkit の「ヘッダーの名前」で選べます。設定が無い名前はエラーになります
@@ -218,5 +224,7 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`)は、WSL の `~/.profile` に設定してください。`setlib` と `setheader` の設定は引き継がれます。
 
 ## 開発
+
+開発には Claude Opus 5.5 を使用しました。設計と仕様は作者が決めています。
 
 内部の仕様と開発の手順は [DEVELOPMENT.md](./DEVELOPMENT.md) を参照してください。
