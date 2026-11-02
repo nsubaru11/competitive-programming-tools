@@ -8,10 +8,13 @@ import {YukicoderSite} from "@adapters/judges/yukicoder";
 import {LocalStorageLegacyInbox} from "@adapters/page/local-storage-legacy-inbox";
 import {SameOriginHttpClient} from "@adapters/page/same-origin-http-client";
 import {WorkerTicker} from "@adapters/page/worker-ticker";
+import {AtCoderRunnerProvider} from "@adapters/runners/atcoder-custom-test";
+import {CrossTabQueue} from "@adapters/runners/serial-queue";
 import {LocalRunnerProvider, PaizaRunnerProvider} from "@adapters/runners/simple-runners";
 import {WandboxRunnerProvider} from "@adapters/runners/wandbox";
 import {TurndownStatementConverter} from "@adapters/statement/statement-converter";
 import {LocalRunnerClient} from "@application/execution/local-runner";
+import type {JudgeSite} from "@application/ports/judge-site";
 import {createFakePage, FakeHttpClient, MemoryStore} from "../support/fakes";
 
 const bridge = createFakePage();
@@ -228,6 +231,104 @@ describe("CodeforcesSite", () => {
 		</div>`;
 		const samples = await new CodeforcesSite(bridge).samples();
 		expect(samples[0]).toMatchObject({input: "1\n2", output: "3\n"});
+	});
+});
+
+describe("CrossTabQueue", () => {
+	const descriptor = Object.getOwnPropertyDescriptor(navigator, "locks");
+
+	afterEach(() => {
+		if (descriptor) Object.defineProperty(navigator, "locks", descriptor);
+		else Reflect.deleteProperty(navigator, "locks");
+	});
+
+	/** 同じ名前のタブの間で順番を守る、Web Locks の代役を置く。 */
+	function stubLocks(): void {
+		let last: Promise<unknown> = Promise.resolve();
+		const request = (_name: string, task: () => Promise<unknown>): Promise<unknown> => {
+			const result = last.then(task);
+			last = result.catch(() => undefined);
+			return result;
+		};
+		Object.defineProperty(navigator, "locks", {value: {request}, configurable: true});
+	}
+
+	async function runInTwoTabs(): Promise<number> {
+		let running = 0;
+		let peak = 0;
+		const task = async (): Promise<void> => {
+			peak = Math.max(peak, ++running);
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			running--;
+		};
+		const tabs = [new CrossTabQueue("test"), new CrossTabQueue("test")];
+		await Promise.all(tabs.flatMap((tab) => [tab.run(task), tab.run(task)]));
+		return peak;
+	}
+
+	test("別のタブの処理とも重ねない", async () => {
+		stubLocks();
+		expect(await runInTwoTabs()).toBe(1);
+	});
+
+	test("Web Locks がなくてもタブの中では順番を守る", async () => {
+		Object.defineProperty(navigator, "locks", {value: undefined, configurable: true});
+		let running = 0;
+		let peak = 0;
+		const queue = new CrossTabQueue("test");
+		const task = async (): Promise<void> => {
+			peak = Math.max(peak, ++running);
+			await new Promise((resolve) => setTimeout(resolve, 1));
+			running--;
+		};
+		await Promise.all([queue.run(task), queue.run(task)]);
+		expect(peak).toBe(1);
+	});
+});
+
+describe("AtCoder のコードテスト", () => {
+	const finished = {Result: {ExitCode: 0, TimeConsumption: 12, MemoryConsumption: 3456}, Stdout: "ok", Stderr: ""};
+	const language = {id: "6056", label: "Java24 (OpenJDK 24.0.2)", family: "java"};
+	const judge = async () => ({id: "atcoder", languages: () => [language]}) as unknown as JudgeSite;
+	const globals = globalThis as {unsafeWindow?: unknown};
+
+	beforeEach(() => {
+		globals.unsafeWindow = {csrfToken: "token"};
+	});
+
+	afterEach(() => {
+		delete globals.unsafeWindow;
+	});
+
+	async function runner(http: FakeHttpClient) {
+		const [found] = await new AtCoderRunnerProvider(http, judge).runnersFor(language);
+		if (!found) throw new Error("実行環境がない");
+		return found;
+	}
+
+	test("前の実行が残っていたら、終わるのを待って送り直す", async () => {
+		const statuses = [{Interval: 1, Result: {ExitCode: 0, TimeConsumption: 0, MemoryConsumption: 0}}, {}, finished];
+		let submits = 0;
+		const http = new FakeHttpClient(({url}) => {
+			if (url.endsWith("/submit/json")) return {status: 200, text: ++submits === 1 ? "busy" : ""};
+			return {status: 200, text: JSON.stringify(statuses.shift())};
+		});
+		expect(await (await runner(http)).run("code", "input", {})).toMatchObject({status: "OK", output: "ok", execTime: 12});
+		expect(submits).toBe(2);
+		expect(statuses).toHaveLength(0);
+	});
+
+	test("送り直しても断られたら、サイトの理由を伝える", async () => {
+		let submits = 0;
+		const http = new FakeHttpClient(({url}) => {
+			if (url.endsWith("/submit/json")) {
+				submits++;
+				return {status: 200, text: "rejected"};
+			}
+			return {status: 200, text: "{}"};
+		});
+		await expect((await runner(http)).run("code", "input", {})).rejects.toThrow("rejected");
+		expect(submits).toBe(3);
 	});
 });
 

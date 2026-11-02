@@ -122,6 +122,51 @@ describe("easyTest", () => {
 		expect(dock()?.querySelector("select")?.textContent).toBe("実行環境がありません");
 	});
 
+	describe("サイトの言語の切り替え", () => {
+		const cpython: JudgeLanguage = {id: "6082", label: "Python (CPython 3.13.7)", family: "python3"};
+		const pypy: JudgeLanguage = {id: "6083", label: "Python (PyPy 3.11-v7.3.20)", family: "python3"};
+
+		function createJudgeRunners(ran: string[]) {
+			const runner = ({id, label}: JudgeLanguage): CodeRunner => ({
+				id: `atcoder:${id}`,
+				label: `${label} [AtCoder]`,
+				kind: "judge",
+				run: async (_code, input) => {
+					ran.push(id);
+					return {status: "OK", input, output: input};
+				},
+			});
+			return new RunnerCatalogService(() => [{runnersFor: async () => [runner(cpython), runner(pypy)]}], ["judge"], 3);
+		}
+
+		test("押した時点の言語で実行する", async () => {
+			const ran: string[] = [];
+			let language = cpython;
+			await start(createSite({language: () => language}), echo, {runners: createJudgeRunners(ran)});
+			language = pypy;
+			button("Test All Samples")?.click();
+			await wait(30);
+			expect(ran).toEqual([pypy.id, pypy.id]);
+		});
+
+		test("言語ごとに選んだ実行環境は、戻したときに復元する", async () => {
+			const ran: string[] = [];
+			let language = cpython;
+			await start(createSite({language: () => language}), echo, {runners: createJudgeRunners(ran)});
+			const environment = dock()?.querySelector("select");
+			if (!environment) throw new Error("実行環境の選択欄がない");
+			environment.value = `atcoder:${pypy.id}`;
+			environment.dispatchEvent(new Event("change"));
+			language = pypy;
+			button("Test All Samples")?.click();
+			await wait(30);
+			language = cpython;
+			button("Test All Samples")?.click();
+			await wait(30);
+			expect(ran).toEqual([pypy.id, pypy.id, pypy.id, pypy.id]);
+		});
+	});
+
 	test("すべてのサンプルを順番どおりに実行する", async () => {
 		await start(createSite(), async (_code, input) => {
 			await wait(input === "1" ? 20 : 0);

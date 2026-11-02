@@ -86,6 +86,15 @@ describe("RunnerCatalogService", () => {
 		expect(candidates[0]?.id).toBe("near");
 	});
 
+	test("サイトの言語と同じ表記の環境を、同じ種類の先頭に並べる", async () => {
+		const labels = ["C++23 (GCC 15.2.0)", "C++23 (Clang 21.1.0)", "C++20 (GCC 12.2.0)"];
+		for (const label of labels) {
+			const runners = labels.map((item) => runner(item, "judge", ok, `${item} [AtCoder]`));
+			const candidates = await catalog(runners).candidates({id: "1", label, family: "cpp"});
+			expect(candidates[0]?.id).toBe(label);
+		}
+	});
+
 	test("内部エラーなら次の候補で実行する", async () => {
 		const failing = mock(async (): Promise<RunResult> => ({status: "IE", input: ""}));
 		const service = catalog([]);

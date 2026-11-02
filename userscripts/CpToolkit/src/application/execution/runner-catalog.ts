@@ -8,6 +8,9 @@ import {
 	type TestCase
 } from "@domain/execution/result";
 
+/** 実行環境の表記の末尾にある `[AtCoder]` などの部分。言語の表記と比べるときは除く。 */
+const ENVIRONMENT_SUFFIX = /\s*\[[^\]]*\]$/;
+
 export interface CodeRunner {
 	readonly id: string;
 	readonly label: string;
@@ -41,7 +44,7 @@ export class RunnerCatalogService {
 			.map((runner) => ({
 				runner,
 				rank: this.order.indexOf(runner.kind),
-				distance: labelDistance(runner.label, language.label),
+				distance: labelDistance(runner.label.replace(ENVIRONMENT_SUFFIX, ""), language.label),
 			}));
 		return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
 	}

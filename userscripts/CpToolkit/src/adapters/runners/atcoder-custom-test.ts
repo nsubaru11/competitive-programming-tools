@@ -4,7 +4,7 @@ import type {CodeRunner, RunnerProvider} from "@application/execution/runner-cat
 import type {JudgeSite} from "@application/ports/judge-site";
 import type {HttpClient} from "@application/ports/services";
 import {pageGlobals} from "@adapters/page/globals";
-import {SerialQueue} from "./serial-queue";
+import {CrossTabQueue} from "./serial-queue";
 
 type CustomTestResponse = {
 	Interval?: number;
@@ -13,12 +13,14 @@ type CustomTestResponse = {
 	Stderr?: string;
 };
 
+const LOCK_NAME = "cp-toolkit:atcoder-custom-test";
 const MAX_POLLS = 300;
+const MAX_SUBMITS = 3;
 const POLL_INTERVAL_MS = 1000;
 
-/** サイトのコードテストは同時に1件しか実行できないので、順番に実行する。 */
+/** サイトのコードテストは同時に1件しか実行できないので、タブをまたいで順番に実行する。 */
 class CustomTestQueue {
-	private readonly queue = new SerialQueue();
+	private readonly queue = new CrossTabQueue(LOCK_NAME);
 	private readonly failedGroups = new Set<string>();
 
 	constructor(private readonly site: HttpClient) {
@@ -34,23 +36,11 @@ class CustomTestQueue {
 
 	private async execute(languageId: string, sourceCode: string, input: string, groupId?: string): Promise<RunResult> {
 		if (groupId && this.failedGroups.has(groupId)) return {status: "CE", input};
-		const submitted = await this.site.send({
-			url: `${this.baseUrl}/submit/json`,
-			method: "POST",
-			headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-			body: buildQueryString({
-				"data.LanguageId": languageId,
-				sourceCode,
-				input,
-				csrf_token: pageGlobals().csrfToken,
-			}),
-		});
-		if (submitted.text) throw new Error(submitted.text);
+		await this.submit(languageId, sourceCode, input);
 
 		for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
 			await sleep(POLL_INTERVAL_MS / 10);
-			const response = await this.site.send({url: `${this.baseUrl}/json?reload=true`});
-			const data = JSON.parse(response.text) as CustomTestResponse;
+			const data = await this.fetchStatus();
 			const {Result: result} = data;
 			if (!result || data.Interval !== undefined) {
 				await sleep(data.Interval ?? POLL_INTERVAL_MS);
@@ -69,7 +59,43 @@ class CustomTestQueue {
 				error: data.Stderr ?? "",
 			};
 		}
-		return {status: "TLE", input, error: "Custom test timed out"};
+		return {status: "TLE", input, error: "Test timed out"};
+	}
+
+	/** サイトの画面や閉じたタブの実行が残っていると断られるので、終わるのを待って送り直す。 */
+	private async submit(languageId: string, sourceCode: string, input: string): Promise<void> {
+		const body = buildQueryString({
+			"data.LanguageId": languageId,
+			sourceCode,
+			input,
+			csrf_token: pageGlobals().csrfToken,
+		});
+		let rejection = "";
+		for (let attempt = 0; attempt < MAX_SUBMITS; attempt++) {
+			const {text} = await this.site.send({
+				url: `${this.baseUrl}/submit/json`,
+				method: "POST",
+				headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
+				body,
+			});
+			if (!text) return;
+			rejection = text;
+			await this.waitUntilFinished();
+		}
+		throw new Error(rejection);
+	}
+
+	private async waitUntilFinished(): Promise<void> {
+		for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+			const {Interval: interval} = await this.fetchStatus();
+			if (interval === undefined) return;
+			await sleep(interval);
+		}
+	}
+
+	private async fetchStatus(): Promise<CustomTestResponse> {
+		const response = await this.site.send({url: `${this.baseUrl}/json?reload=true`});
+		return JSON.parse(response.text) as CustomTestResponse;
 	}
 }
 

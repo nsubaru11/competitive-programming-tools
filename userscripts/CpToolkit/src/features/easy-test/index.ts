@@ -36,6 +36,7 @@ class EasyTest {
 	private readonly buttons: HTMLElement[] = [];
 	private readonly resultList = h("div", {className: "row"});
 	private candidates: readonly CodeRunner[] = [];
+	private languageId: string | undefined;
 	private refreshing: Promise<void> = Promise.resolve();
 	private runnable = false;
 	private runCount = 0;
@@ -180,7 +181,10 @@ class EasyTest {
 		const isCandidate = (id: string | undefined): boolean => candidates.some((candidate) => candidate.id === id);
 		const local = candidates.find(({kind}) => kind === "local")?.id;
 		const saved = language ? this.selections()[language.id] : undefined;
-		const next = local ?? (isCandidate(previous) ? previous : isCandidate(saved) ? saved : candidates[0]?.id);
+		// 同じ系統の別の言語でも候補に残るので、前の選択を引き継ぐのは言語が同じときだけにする
+		const kept = language?.id === this.languageId && isCandidate(previous) ? previous : undefined;
+		this.languageId = language?.id;
+		const next = local ?? kept ?? (isCandidate(saved) ? saved : candidates[0]?.id);
 		if (next !== undefined) environment.value = next;
 		this.setRunnable(candidates.length > 0 && this.running === 0);
 	}

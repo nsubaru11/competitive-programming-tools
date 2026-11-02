@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.20
+// @version        1.0.21
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -3378,6 +3378,8 @@ a:focus > .cp-settings-entry {
 	}
 
 	// CpToolkit/src/application/execution/runner-catalog.ts
+	var ENVIRONMENT_SUFFIX = /\s*\[[^\]]*\]$/;
+
 	class RunnerCatalogService {
 		providers;
 		order;
@@ -3398,7 +3400,7 @@ a:focus > .cp-settings-entry {
 				.map((runner) => ({
 					runner,
 					rank: this.order.indexOf(runner.kind),
-					distance: labelDistance(runner.label, language.label),
+					distance: labelDistance(runner.label.replace(ENVIRONMENT_SUFFIX, ""), language.label),
 				}));
 			return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
 		}
@@ -4559,13 +4561,31 @@ a:focus > .cp-settings-entry {
 		}
 	}
 
+	class CrossTabQueue {
+		lockName;
+		queue = new SerialQueue();
+
+		constructor(lockName) {
+			this.lockName = lockName;
+		}
+
+		run(task) {
+			return this.queue.run(() => {
+				if (!navigator.locks) return task();
+				return navigator.locks.request(this.lockName, () => task());
+			});
+		}
+	}
+
 	// CpToolkit/src/adapters/runners/atcoder-custom-test.ts
+	var LOCK_NAME = "cp-toolkit:atcoder-custom-test";
 	var MAX_POLLS = 300;
+	var MAX_SUBMITS = 3;
 	var POLL_INTERVAL_MS = 1000;
 
 	class CustomTestQueue {
 		site;
-		queue = new SerialQueue();
+		queue = new CrossTabQueue(LOCK_NAME);
 		failedGroups = new Set();
 
 		constructor(site) {
@@ -4582,22 +4602,10 @@ a:focus > .cp-settings-entry {
 
 		async execute(languageId, sourceCode, input, groupId) {
 			if (groupId && this.failedGroups.has(groupId)) return {status: "CE", input};
-			const submitted = await this.site.send({
-				url: `${this.baseUrl}/submit/json`,
-				method: "POST",
-				headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-				body: buildQueryString({
-					"data.LanguageId": languageId,
-					sourceCode,
-					input,
-					csrf_token: pageGlobals().csrfToken,
-				}),
-			});
-			if (submitted.text) throw new Error(submitted.text);
+			await this.submit(languageId, sourceCode, input);
 			for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
 				await sleep(POLL_INTERVAL_MS / 10);
-				const response = await this.site.send({url: `${this.baseUrl}/json?reload=true`});
-				const data = JSON.parse(response.text);
+				const data = await this.fetchStatus();
 				const {Result: result} = data;
 				if (!result || data.Interval !== undefined) {
 					await sleep(data.Interval ?? POLL_INTERVAL_MS);
@@ -4616,7 +4624,42 @@ a:focus > .cp-settings-entry {
 					error: data.Stderr ?? "",
 				};
 			}
-			return {status: "TLE", input, error: "Custom test timed out"};
+			return {status: "TLE", input, error: "Test timed out"};
+		}
+
+		async submit(languageId, sourceCode, input) {
+			const body = buildQueryString({
+				"data.LanguageId": languageId,
+				sourceCode,
+				input,
+				csrf_token: pageGlobals().csrfToken,
+			});
+			let rejection = "";
+			for (let attempt = 0; attempt < MAX_SUBMITS; attempt++) {
+				const {text} = await this.site.send({
+					url: `${this.baseUrl}/submit/json`,
+					method: "POST",
+					headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
+					body,
+				});
+				if (!text) return;
+				rejection = text;
+				await this.waitUntilFinished();
+			}
+			throw new Error(rejection);
+		}
+
+		async waitUntilFinished() {
+			for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+				const {Interval: interval} = await this.fetchStatus();
+				if (interval === undefined) return;
+				await sleep(interval);
+			}
+		}
+
+		async fetchStatus() {
+			const response = await this.site.send({url: `${this.baseUrl}/json?reload=true`});
+			return JSON.parse(response.text);
 		}
 	}
 
@@ -7492,6 +7535,7 @@ summary {
 		buttons = [];
 		resultList = h("div", {className: "row"});
 		candidates = [];
+		languageId;
 		refreshing = Promise.resolve();
 		runnable = false;
 		runCount = 0;
@@ -7674,7 +7718,9 @@ ${label}`,
 			const isCandidate = (id) => candidates.some((candidate) => candidate.id === id);
 			const local = candidates.find(({kind}) => kind === "local")?.id;
 			const saved = language ? this.selections()[language.id] : undefined;
-			const next2 = local ?? (isCandidate(previous) ? previous : isCandidate(saved) ? saved : candidates[0]?.id);
+			const kept = language?.id === this.languageId && isCandidate(previous) ? previous : undefined;
+			this.languageId = language?.id;
+			const next2 = local ?? kept ?? (isCandidate(saved) ? saved : candidates[0]?.id);
 			if (next2 !== undefined) environment.value = next2;
 			this.setRunnable(candidates.length > 0 && this.running === 0);
 		}
