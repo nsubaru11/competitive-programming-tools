@@ -266,6 +266,17 @@ describe("efficientLayout", () => {
 		expect(document.querySelector("details > .io-style")).not.toBeNull();
 		expect(document.querySelector("hr")).toBeNull();
 	});
+
+	test("KaTeX の絶対配置の要素が外へ漏れないように、サンプルの枠を基準にする", async () => {
+		document.body.innerHTML = `<span class="lang">
+			<div class="io-style"><div class="part">入力</div></div>
+			<div class="part">入力例</div><div class="part">出力例</div>
+		</span>`;
+		await run(efficientLayout);
+
+		const container = document.querySelector(".cp-samples-container");
+		expect(container && getComputedStyle(container).position).toBe("relative");
+	});
 });
 
 describe("tessokuDifficulty", () => {

@@ -7,7 +7,9 @@
 	width: 100%;
 }
 
+/* KaTeX の非表示の MathML は absolute なので、基準を置かないと枠で切られずページごと横に広がる */
 .cp-samples-container {
+	position: relative;
 	width: 100%;
 	overflow-x: auto;
 }

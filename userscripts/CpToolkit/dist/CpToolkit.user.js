@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.18
+// @version        1.0.19
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -7854,7 +7854,9 @@ pre code {tab-size: 4;}`;
 	width: 100%;
 }
 
+/* KaTeX の非表示の MathML は absolute なので、基準を置かないと枠で切られずページごと横に広がる */
 .cp-samples-container {
+	position: relative;
 	width: 100%;
 	overflow-x: auto;
 }
