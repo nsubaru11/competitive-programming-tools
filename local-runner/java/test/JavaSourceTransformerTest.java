@@ -170,6 +170,16 @@ public final class JavaSourceTransformerTest {
 			check(broken.exitCode() != 0, "broken source unexpectedly succeeded");
 			check(!broken.diagnosticItems().isEmpty(), "structured diagnostics are empty");
 			check(broken.diagnosticItems().getFirst().line() == 1, "diagnostic line is missing");
+
+			final Path emptyRoot = root.resolve("empty");
+			Files.createDirectories(emptyRoot.resolve("lib"));
+			final JavaSourceTransformer withoutLibrary = new JavaSourceTransformer();
+			final SourceTransformResult plain = withoutLibrary.transform("public final class A { private static final boolean DEBUG = true; public static void main(String[] args) {} }", emptyRoot, false, true);
+			check(plain.exitCode() == 0, plain.diagnostics());
+			check(plain.sourceCode().contains("class Main"), "class was not renamed without a library");
+			check(plain.sourceCode().contains("DEBUG = false"), "DEBUG was not disabled without a library");
+			final SourceTransformResult usesLibrary = withoutLibrary.transform("import lib.ds.UnionFind;\npublic final class A { public static void main(String[] args) { new UnionFind(1); } }", emptyRoot, false, true);
+			check(usesLibrary.exitCode() != 0, "library import unexpectedly succeeded without a library");
 			System.out.println("java source transformer smoke test: OK");
 		} finally {
 			try (var files = Files.walk(root)) {

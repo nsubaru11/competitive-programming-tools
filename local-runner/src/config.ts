@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {readLocalSettings, toRuntimePath} from "./localSettings";
 
 const importMetaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -28,21 +29,31 @@ export const PROJECT_ROOT = resolveProjectRoot();
 // 提出先の Java バージョン。これより新しい JDK では javac の --release で揃える。
 export const TARGET_JAVA_VERSION = process.env.ATCODER_JAVA_VER || "24";
 
-let preparedLibrarySourceRoot: string | null = null;
+// setlib の設定を置くファイル。Windows の CLI と WSL のサーバーの両方から読めるよう、リポジトリの中に置く。
+export const LOCAL_SETTINGS_FILE = process.env.LOCAL_RUNNER_SETTINGS_FILE || path.join(PROJECT_ROOT, "local-runner.settings.json");
 
-function findLibrarySourceRoot(): string {
-	const candidates = [
-		process.env.ATCODER_LIB_SRC,
-		path.resolve(PROJECT_ROOT, "../library/java/src"),
-	].filter(Boolean) as string[];
-	for (const candidate of candidates) {
-		if (fs.existsSync(path.join(candidate, "lib"))) return path.resolve(candidate);
-	}
-	throw new Error(`Java library not found. Clone competitive-programming-java-library to library/java next to tools, or set ATCODER_LIB_SRC. Tried: ${candidates.join(", ")}`);
+let preparedLibrarySourceRoot: string | null = null;
+let librarySource: string | null = null;
+
+/** 設定された Java のライブラリの場所。ATCODER_LIB_SRC があれば setlib の設定より優先する。 */
+export function configuredLibrarySourceRoot(): string | null {
+	return process.env.ATCODER_LIB_SRC || readLocalSettings(LOCAL_SETTINGS_FILE).librarySourceRoot || null;
+}
+
+function findLibrarySourceRoot(): string | null {
+	const configured = configuredLibrarySourceRoot();
+	if (!configured) return null;
+	const runtimePath = toRuntimePath(configured);
+	return fs.existsSync(path.join(runtimePath, "lib")) ? path.resolve(runtimePath) : null;
 }
 
 export function resolveLibrarySourceRoot(): string {
-	return preparedLibrarySourceRoot || findLibrarySourceRoot();
+	return preparedLibrarySourceRoot ?? prepareLibrarySourceRoot().prepared;
+}
+
+/** サーバーが読み込んだライブラリの場所。ライブラリなしで起動したら null。 */
+export function loadedLibrarySource(): string | null {
+	return librarySource;
 }
 
 /**
@@ -122,16 +133,18 @@ export const RUNNER_CONFIG = {
 	warmUpRunTimeoutMs: Number(process.env.LOCAL_RUNNER_WARMUP_TIMEOUT_MS || 30000),
 };
 
-export function prepareLibrarySourceRoot(): {source: string; prepared: string} {
+/** ライブラリが無くても、空の lib を渡して解答の変換と実行を同じ経路で行う。 */
+export function prepareLibrarySourceRoot(): {source: string | null; prepared: string} {
 	const source = findLibrarySourceRoot();
-	if (process.platform !== "linux") {
+	librarySource = source;
+	if (source !== null && process.platform !== "linux") {
 		preparedLibrarySourceRoot = source;
 		return {source, prepared: source};
 	}
 	const prepared = path.join(RUNNER_CONFIG.baseDir, "library-source");
 	fs.rmSync(prepared, {recursive: true, force: true});
-	fs.mkdirSync(prepared, {recursive: true});
-	fs.cpSync(path.join(source, "lib"), path.join(prepared, "lib"), {recursive: true, force: true});
+	fs.mkdirSync(path.join(prepared, "lib"), {recursive: true});
+	if (source !== null) fs.cpSync(path.join(source, "lib"), path.join(prepared, "lib"), {recursive: true, force: true});
 	preparedLibrarySourceRoot = prepared;
 	return {source, prepared};
 }

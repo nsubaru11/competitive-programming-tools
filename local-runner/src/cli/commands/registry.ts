@@ -9,6 +9,7 @@ import {ServeCommand} from "./ServeCommand";
 import {StopCommand} from "./StopCommand";
 import {StatusCommand} from "./StatusCommand";
 import {CacheClearCommand} from "./CacheClearCommand";
+import {SetLibCommand} from "./SetLibCommand";
 import {CrossCheck} from "./CrossCheck";
 
 /**
@@ -26,6 +27,7 @@ const COMMAND_LIST: readonly Command[] = [
 	new ServeCommand(),
 	new StopCommand(),
 	new StatusCommand(),
+	new SetLibCommand(),
 	new CacheClearCommand(),
 	new CrossCheck(),
 ];

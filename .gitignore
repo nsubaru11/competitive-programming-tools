@@ -4,6 +4,9 @@ node_modules/
 # ビルド成果物（CLI 実行ファイル。bin/ 内の *.sh は追跡するので exe だけ個別指定）
 /local-runner/bin/atcoder-cli-runner.exe
 
+# 利用者ごとの設定(setlib)
+/local-runner.settings.json
+
 # 型検査の生成物（プロジェクト参照の出力と YAML の型定義）
 .tsbuild/
 *.d.yaml.ts

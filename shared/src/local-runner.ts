@@ -70,6 +70,8 @@ export type LocalRunnerTransformResponse = {
 	inlinedClasses: string[];
 	addedImports: string[];
 	diagnosticItems: CompilerDiagnostic[];
+	/** lib.* を使うのに、サーバーがライブラリなしで動いているので変換できなかった。 */
+	libraryMissing?: boolean;
 };
 
 export type LocalRunnerPrepareResponse = LocalRunnerTransformResponse & {

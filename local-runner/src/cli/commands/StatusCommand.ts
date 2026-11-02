@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import type {RunnerStatusInfo} from "../../types";
-import {CLI_CONFIG} from "../../config";
+import {CLI_CONFIG, configuredLibrarySourceRoot} from "../../config";
 import * as color from "../../utils/color";
 import * as sampleCache from "../sampleCache";
 import type {Command} from "./Command";
@@ -56,6 +56,7 @@ export class StatusCommand implements Command {
 		if (!info) {
 			const label = isSupportCliColor ? `${color.ANSI.RED}stopped${color.ANSI.RESET}` : "stopped";
 			console.log(`Local Runner: ${label} (${CLI_CONFIG.defaultLocalRunnerUrl})`);
+			console.log(`  java library:  ${configuredLibrarySourceRoot() ?? "not set (setlib <path>)"}`);
 			console.log(`  sample cache:  ${sampleCacheCount} task(s) (${sampleCache.getSampleCacheDir() || "-"})`);
 			console.log(`  To start it: serve (test, localtest and run also start it automatically)`);
 			return 1;
@@ -71,6 +72,7 @@ export class StatusCommand implements Command {
 		console.log(`  java:          ${info.javaVersion}`);
 		console.log(`  label:         ${info.runnerLabel}`);
 		console.log(`  dispatcher:    ${dispatcher}`);
+		console.log(`  java library:  ${info.librarySource ?? "not loaded (setlib <path>)"}`);
 		console.log(`  compile cache: ${info.compileCacheSize}/${info.compileCacheMax} entries`);
 		console.log(`  warmup:        ${info.warmUpProfile}`);
 		console.log(`  base dir:      ${info.baseDir}`);

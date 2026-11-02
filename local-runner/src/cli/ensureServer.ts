@@ -104,7 +104,7 @@ export async function ensureLocalRunnerReady(): Promise<void> {
 	}
 	throw new Error(
 		`Local Runner did not become ready within ${READY_TIMEOUT_MS}ms.\n` +
-		`  Check the Local Runner log. Bun, a JDK and the Java library are required.\n` +
-		`  Related variables: LOCAL_RUNNER_BACKEND=native|wsl, ATCODER_LIB_SRC, ATCODER_JAVA_VER, LOCAL_RUNNER_START_TIMEOUT_MS`,
+		`  Check the Local Runner log. Bun and a JDK are required.\n` +
+		`  Related variables: LOCAL_RUNNER_BACKEND=native|wsl, ATCODER_JAVA_VER, LOCAL_RUNNER_START_TIMEOUT_MS`,
 	);
 }

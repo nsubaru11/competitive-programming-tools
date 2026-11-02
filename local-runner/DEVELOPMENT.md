@@ -23,10 +23,14 @@ local-runner/
 
 提出前の処理は TypeScript の正規表現ではなく、常駐 JVM の Java Compiler API(`JavacTask`、`Trees`、`SourcePositions`)で行います。型の解決、`Main` の対象、コンストラクタと自己参照、`DEBUG` のフィールド、package と import の範囲を javac の構文木とシンボルから決め、生成した単一のソースも再び解析します。
 
-ライブラリは次の順で探します。
+ライブラリの場所は推測せず、次の順で読みます。
 
-1. `ATCODER_LIB_SRC` で指定した `src` フォルダ
-2. `tools` と同じ階層の `library/java/src`
+1. 環境変数 `ATCODER_LIB_SRC`
+2. `setlib` が `local-runner.settings.json` に保存した値
+
+設定は、Windows の CLI と WSL のサーバーの両方から読めるようリポジトリの中に置き、Git には入れません。CLI は Windows のパスのまま保存し、サーバーが `toRuntimePath` で `/mnt/c/...` の形に直します。
+
+場所が設定されていないか見つからないときは、空の `lib` を渡して起動します。解答の変換は同じ経路を通り、`lib.*` の import はコンパイルエラーになります。このとき `server.ts` は診断の先頭に設定の案内を足し、応答の `libraryMissing` を立てます。CP Toolkit はこの値で案内を切り替えます。`WarmUp.java` は `lib.io` を使うので、ライブラリなしではウォームアップを行いません。
 
 同名の候補があるときは、パッケージの階層が最短の標準 API を優先します。同順位が複数あれば、曖昧としてエラーで止めます。
 

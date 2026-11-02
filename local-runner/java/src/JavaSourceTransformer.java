@@ -116,6 +116,7 @@ final class JavaSourceTransformer {
 			}
 		}
 		Files.createDirectories(classPath);
+		if (sources.isEmpty()) return;
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, Locale.ROOT, UTF_8)) {
 			final Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromPaths(sources);

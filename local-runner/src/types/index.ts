@@ -56,6 +56,7 @@ export type RunnerStatusInfo = {
 	javaVersion: string;
 	runnerLabel: string;
 	dispatcherRunning: boolean;
+	librarySource: string | null;
 	compileCacheSize: number;
 	compileCacheMax: number;
 	warmUpProfile: string;

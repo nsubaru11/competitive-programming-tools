@@ -13,25 +13,17 @@ Java の解答を手元で実行、判定、提出するためのツールです
 
 - [Bun](https://bun.sh/)
 - JDK 24 以降
-- Java のライブラリ([competitive-programming-java-library](https://github.com/nsubaru11/competitive-programming-java-library))
 - Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側にも Bun と JDK を入れる
-
-サーバーは起動時に Java のライブラリを読み込みます。見つからないと起動できません。
 
 ## セットアップ
 
-`tools` とライブラリを同じフォルダに並べます。
-
 ```bash
-mkdir cp-tools
-cd cp-tools
-git clone https://github.com/nsubaru11/competitive-programming-tools.git tools
-git clone https://github.com/nsubaru11/competitive-programming-java-library.git library/java
-cd tools
+git clone https://github.com/nsubaru11/competitive-programming-tools.git
+cd competitive-programming-tools
 bun install
 ```
 
-ライブラリを別の場所に置くときは、環境変数 `ATCODER_LIB_SRC` に `lib` フォルダの親を指定します。
+これだけで、解答の実行、判定、提出、提出用コードの作成が動きます。`lib.*` を使うときは、[ライブラリを使う](#ライブラリを使う)を参照してください。
 
 Windows では、次のコマンドで `bin` を PATH に登録すると、どのフォルダからでも `test` や `submit` を実行できます。
 
@@ -73,6 +65,7 @@ Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-run
 | `serve`                                                        | サーバーを起動し、準備が終わるまで待つ                                                       |
 | `stop`                                                         | サーバーを停止する                                                                           |
 | `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                               |
+| `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する    |
 | `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                             |
 
 `taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
@@ -126,12 +119,25 @@ localtest --full D.java
 submit abc448_d D.java
 ```
 
-## ライブラリの展開
+## ライブラリを使う
+
+`lib.*` を import するライブラリを使うときは、フォルダを `setlib` で設定します。作者のライブラリは [competitive-programming-java-library](https://github.com/nsubaru11/competitive-programming-java-library) です。`lib` フォルダを持つものなら、自分のライブラリも使えます。
+
+```bash
+setlib C:\path\to\competitive-programming-java-library
+```
+
+- ライブラリのルートと、`lib` の親の `src` のどちらを指定しても構いません
+- 設定は `local-runner.settings.json` に保存します。Windows で設定したパスは、WSL のサーバーでも使えます
+- 設定したら `stop` のあと `serve` で読み込み直してください
+- `setlib` だけで現在の設定を表示し、`setlib --clear` で解除します
+
+設定していなくても、サーバーはライブラリなしで起動します。`lib.*` を使うコードは、設定を促すエラーになります。
 
 解答では、通常の Java のコードとしてライブラリを import できます。
 
 ```java
-import lib.ds.UnionFind;
+import lib.ds.unionfind.UnionFind;
 import lib.io.FastPrinter;
 import lib.io.FastScanner;
 ```
@@ -142,7 +148,7 @@ import lib.io.FastScanner;
 - `import lib.io.*;` のようなワイルドカードでも、実際に使っている型だけを展開する
 - 提出コードの元の import はコメントアウトして残す
 - import を書かなくても、単純名がライブラリの中で一意なら補完する。標準 API と同名のときは標準 API を優先する
-- `import static lib...`、本文中の `lib.ds.UnionFind` のような完全修飾の参照、展開すると単純名が衝突する型はエラーになる
+- `import static lib...`、本文中の `lib.ds.unionfind.UnionFind` のような完全修飾の参照、展開すると単純名が衝突する型はエラーになる
 - `patterns.*` は展開しない
 
 提出用の `Main` にするのは、`public static void main(String[])` を持つトップレベルの型です。複数あるときは `Main` という名前の型を選びます。それも無いときや候補が無いときはエラーで止まります。
@@ -189,7 +195,7 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 | `LOCAL_RUNNER_BACKEND`     | Windows で `native` にすると、WSL を使わずに Windows の Bun と JDK で動かす | `wsl`                          |
 | `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                    | 有効                           |
 | `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                          | `24`                           |
-| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ                                  | `../library/java/src`          |
+| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ。`setlib` の設定より優先する     | なし                           |
 | `ATCODER_HEADER_FILE`      | 提出物の先頭に付ける既定のヘッダーファイル                          | `../templates/header/java.txt` |
 | `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                  | `~/.atcoder/session.txt`       |
 | `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                | なし                           |
@@ -198,7 +204,7 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 
 既定値の相対パスは `tools` からの位置です。
 
-Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE`)は、WSL の `~/.profile` に設定してください。
+Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE`)は、WSL の `~/.profile` に設定してください。`setlib` の設定は引き継がれます。
 
 ## 開発
 

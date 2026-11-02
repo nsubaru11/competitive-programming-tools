@@ -32,13 +32,18 @@ const ALLOWED_ORIGINS_OVERRIDE = (process.env.LOCAL_RUNNER_ALLOWED_ORIGINS || ""
 	.map((s) => s.trim())
 	.filter(Boolean);
 
+const LIBRARY_IMPORT = /^\s*import\s+(?:static\s+)?lib\./m;
+const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
+
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
 							 validate = true): Promise<LocalRunnerTransformResponse> {
 	const result = await dispatcher.queueDispatcherTransform(sourceCode, config.resolveLibrarySourceRoot(), debug, autoImport, validate);
+	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && LIBRARY_IMPORT.test(sourceCode);
 	return {
 		status: result.exitCode === 0 ? "success" : "compileError",
 		sourceCode: result.sourceCode,
-		diagnostics: result.diagnostics,
+		diagnostics: libraryMissing ? `${LIBRARY_MISSING_HINT}\n${result.diagnostics}` : result.diagnostics,
+		libraryMissing,
 		inlinedClasses: result.inlinedClasses,
 		addedImports: result.addedImports,
 		diagnosticItems: result.diagnosticItems,
@@ -338,6 +343,7 @@ const server = http.createServer(async (req, res) => {
 				javaVersion: compiler.JAVA_VERSION,
 				runnerLabel: compiler.RUNNER_LABEL,
 				dispatcherRunning: dispatcher.isDispatcherRunning(),
+				librarySource: config.loadedLibrarySource(),
 				compileCacheSize: compiler.getCompileCacheSize(),
 				compileCacheMax: config.RUNNER_CONFIG.maxCacheSize,
 				warmUpProfile: config.RUNNER_CONFIG.warmUpProfile,
@@ -370,8 +376,15 @@ async function bootstrap() {
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.compileRootDir);
 	const libraryRoots = config.prepareLibrarySourceRoot();
 	logging.logInfo(`Local Runner base directory: ${config.RUNNER_CONFIG.baseDir}`);
-	logging.logInfo(`Library source: ${libraryRoots.source}`);
-	logging.logInfo(`Prepared library source: ${libraryRoots.prepared}`);
+	if (libraryRoots.source === null) {
+		const configured = config.configuredLibrarySourceRoot();
+		logging.logWarn(configured
+			? `Java library not found: ${configured}. Starting without it.`
+			: "Java library is not set. Starting without it. To use lib.*, run setlib <path>.");
+	} else {
+		logging.logInfo(`Library source: ${libraryRoots.source}`);
+		logging.logInfo(`Prepared library source: ${libraryRoots.prepared}`);
+	}
 	logging.logInfo(`Log file: ${config.LOG_FILE_PATH}`);
 	logging.logInfo(`Log rotation size: ${config.RUNNER_CONFIG.maxLogFileSize} bytes`);
 	if (compiler.JAVA_VERSION !== config.TARGET_JAVA_VERSION) {
@@ -386,7 +399,8 @@ async function bootstrap() {
 	compiler.warmUpJavaTools();
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.dispatcherBuildDir);
 	await dispatcher.ensureDispatcherReady();
-	await dispatcher.warmUpDispatcher(config.resolveLibrarySourceRoot());
+	// WarmUp.java は lib.io を使うので、ライブラリなしでは温めない。最初の実行が遅くなるだけで動作は変わらない。
+	if (libraryRoots.source !== null) await dispatcher.warmUpDispatcher(config.resolveLibrarySourceRoot());
 	// 既定でループバック(127.0.0.1)にのみバインドし、LAN/リモートからの無認証アクセスを遮断する。
 	// どうしても外部公開が必要な場合のみ LOCAL_RUNNER_HOST で上書き可能（非推奨）。
 	const host = process.env.LOCAL_RUNNER_HOST || "127.0.0.1";
