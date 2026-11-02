@@ -20,6 +20,13 @@ const shadowRoots = (): ShadowRoot[] => [...document.body.children].flatMap((ele
 const pressKey = (key: string, modifiers: KeyboardEventInit = {}) => {
 	document.body.dispatchEvent(new KeyboardEvent("keydown", {key, bubbles: true, ...modifiers}));
 };
+const hover = (element: Element | null | undefined) => {
+	element?.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}));
+};
+const tooltipText = () => {
+	const tooltip = shadowRoots().flatMap((root) => root.querySelector<HTMLElement>(".tooltip") ?? [])[0];
+	return tooltip && !tooltip.hidden ? tooltip.textContent : null;
+};
 
 beforeEach(() => {
 	document.head.replaceChildren();
@@ -93,6 +100,40 @@ describe("easyTest", () => {
 	const tabLabels = () => tabs().map(({firstChild}) => firstChild?.textContent);
 	const activeTab = () => tabs().find(({dataset}) => dataset.active === "true")?.firstChild?.textContent;
 	const row = () => document.querySelector<HTMLElement>(".cp-et-row");
+
+	describe("ショートカットの説明", () => {
+		test("カーソルを乗せるとすぐに表示し、離すと消す", async () => {
+			await start(createSite(), echo);
+			hover(button("Test & Submit"));
+			expect(tooltipText()).toBe("Ctrl+Enter");
+			hover(button("Test All Samples"));
+			expect(tooltipText()).toBe("Alt+Enter");
+			hover(document.body);
+			expect(tooltipText()).toBeNull();
+		});
+
+		test("中止のボタンの間は表示しない", async () => {
+			await start(createSite(), () => new Promise(() => undefined));
+			hover(button("Test & Submit"));
+			button("Test & Submit")?.click();
+			await wait();
+			expect(tooltipText()).toBeNull();
+			hover(document.querySelector(".btn-warning"));
+			expect(tooltipText()).toBeNull();
+		});
+
+		test("ショートカットを無効にしていれば表示しない", async () => {
+			await easyTest.run({keyboardShortcuts: false}, createFakeServices({
+				judgeSite: async () => createSite(),
+				openSettings: () => undefined,
+				runners: createRunners(echo),
+				localRunner: new LocalRunnerClient(new FakeHttpClient(() => ({status: 500, text: ""})), () => null),
+			}));
+			await wait();
+			hover(button("Test & Submit"));
+			expect(tooltipText()).toBeNull();
+		});
+	});
 
 	test("サンプルの実行ボタンは置ける場所にだけ追加する", async () => {
 		await start(createSite(), echo);
@@ -535,6 +576,14 @@ describe("javaSubmit", () => {
 		expect(click).not.toHaveBeenCalled();
 		pressKey("Enter", {ctrlKey: true, shiftKey: true});
 		expect(click).toHaveBeenCalledTimes(1);
+	});
+
+	test("提出ボタンにカーソルを乗せるとショートカットを表示する", async () => {
+		await javaSubmit.run(undefined, createFakeServices({judge, localRunner: offline, ...editorServices(null)}));
+		// 起動の後にサイトが作ったボタンでも表示する
+		document.body.innerHTML = '<button id="submit"></button>';
+		hover(document.querySelector("#submit"));
+		expect(tooltipText()).toBe("Ctrl+Shift+Enter");
 	});
 });
 

@@ -9,6 +9,7 @@ import {readStored} from "@application/ports/key-value-store";
 import {createDock, type Dock, type DockTab} from "@ui/dock/dock";
 import {h, injectStyle} from "@ui/element";
 import {registerShortcut} from "@ui/shortcuts";
+import {addTooltip} from "@ui/tooltip/tooltip";
 import css from "./easy-test.css" with {type: "text"};
 import resultRowCss from "./result-row.css" with {type: "text"};
 import {SavedCodes} from "./saved-code";
@@ -80,9 +81,9 @@ class EasyTest {
 		return button;
 	}
 
-	private createTestButton(label: MessageKey, className: string, shortcut: string, onClick: () => void): HTMLButtonElement {
+	private createTestButton(label: MessageKey, className: string, shortcut: () => string | null, onClick: () => void): HTMLButtonElement {
 		const button = this.createButton(this.context.translate(label), className, onClick);
-		button.title = shortcut;
+		if (this.context.options.keyboardShortcuts) addTooltip(() => button, shortcut);
 		button.style.marginLeft = "1rem";
 		return button;
 	}
@@ -91,13 +92,15 @@ class EasyTest {
 		const {translate} = this.context;
 		const {testButtons, sideButtons, results} = this.site.mounts;
 		if (testButtons instanceof Element) {
-			this.submitButton = this.createTestButton("easyTest.testAndSubmit", "btn-info", TEST_AND_SUBMIT_KEY, () => {
+			// 中止のボタンの間は、ショートカットでは中止できない
+			const submitKey = (): string | null => this.pendingSubmit ? null : TEST_AND_SUBMIT_KEY;
+			this.submitButton = this.createTestButton("easyTest.testAndSubmit", "btn-info", submitKey, () => {
 				if (this.pendingSubmit) this.setPendingSubmit(null);
 				else void this.testAndSubmit();
 			});
 			testButtons.append(
 				this.submitButton,
-				this.createTestButton("easyTest.testAll", "btn-default btn-sm", TEST_ALL_KEY, () => void this.testAll()),
+				this.createTestButton("easyTest.testAll", "btn-default btn-sm", () => TEST_ALL_KEY, () => void this.testAll()),
 			);
 		}
 		if (sideButtons instanceof Element) {

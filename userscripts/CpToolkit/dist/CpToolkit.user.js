@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.23
+// @version        1.0.24
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -7035,6 +7035,81 @@ ${css}`,
 		return () => shortcuts.delete(combo);
 	}
 
+	// CpToolkit/src/ui/tooltip/tooltip.css
+	var tooltip_default = `.tooltip {
+	position: fixed;
+	z-index: 2147483000;
+	padding: 3px 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 4px;
+	background: var(--cp-text);
+	box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+	color: var(--cp-surface);
+	font-size: 12px;
+	white-space: nowrap;
+	pointer-events: none;
+	transform: translateX(-50%);
+}
+`;
+
+	// CpToolkit/src/ui/tooltip/tooltip.ts
+	var GAP_PX = 6;
+	var tooltips = [];
+	var bubble = null;
+	var listening2 = false;
+	var hovered = null;
+
+	function ensureBubble() {
+		if (bubble?.isConnected) return bubble;
+		const element = h("div", {className: "tooltip", hidden: true});
+		const host = h("div");
+		host.attachShadow({mode: "open"}).append(
+			h("style", {
+				textContent: `${theme_default}
+${tooltip_default}`,
+			}),
+			element,
+		);
+		document.body.append(host);
+		bubble = element;
+		return element;
+	}
+
+	function place(element, anchor) {
+		const {left, top, bottom, width} = anchor.getBoundingClientRect();
+		const above = top - element.offsetHeight - GAP_PX;
+		element.style.left = `${left + width / 2}px`;
+		element.style.top = `${above >= 0 ? above : bottom + GAP_PX}px`;
+	}
+
+	function refresh() {
+		for (const {anchor, text} of tooltips) {
+			const element = anchor();
+			const label = element?.contains(hovered) ? text() : null;
+			if (!element || label === null) continue;
+			const target = ensureBubble();
+			target.textContent = label;
+			target.hidden = false;
+			place(target, element);
+			return;
+		}
+		if (bubble) bubble.hidden = true;
+	}
+
+	function onPointerMove({target}) {
+		hovered = target instanceof Node ? target : null;
+		refresh();
+	}
+
+	function addTooltip(anchor, text) {
+		if (!listening2) {
+			document.addEventListener("mouseover", onPointerMove);
+			document.addEventListener("click", refresh);
+			listening2 = true;
+		}
+		tooltips.push({anchor, text});
+	}
+
 	// CpToolkit/src/features/easy-test/easy-test.css
 	var easy_test_default = `select,
 textarea,
@@ -7606,7 +7681,7 @@ summary {
 
 		createTestButton(label, className, shortcut, onClick) {
 			const button = this.createButton(this.context.translate(label), className, onClick);
-			button.title = shortcut;
+			if (this.context.options.keyboardShortcuts) addTooltip(() => button, shortcut);
 			button.style.marginLeft = "1rem";
 			return button;
 		}
@@ -7615,21 +7690,17 @@ summary {
 			const {translate} = this.context;
 			const {testButtons, sideButtons, results} = this.site.mounts;
 			if (testButtons instanceof Element) {
-				this.submitButton = this.createTestButton(
-					"easyTest.testAndSubmit",
-					"btn-info",
-					TEST_AND_SUBMIT_KEY,
-					() => {
-						if (this.pendingSubmit) this.setPendingSubmit(null);
-						else this.testAndSubmit();
-					},
-				);
+				const submitKey = () => (this.pendingSubmit ? null : TEST_AND_SUBMIT_KEY);
+				this.submitButton = this.createTestButton("easyTest.testAndSubmit", "btn-info", submitKey, () => {
+					if (this.pendingSubmit) this.setPendingSubmit(null);
+					else this.testAndSubmit();
+				});
 				testButtons.append(
 					this.submitButton,
 					this.createTestButton(
 						"easyTest.testAll",
 						"btn-default btn-sm",
-						TEST_ALL_KEY,
+						() => TEST_ALL_KEY,
 						() => void this.testAll(),
 					),
 				);
@@ -8210,6 +8281,10 @@ ${efficient_layout_default}`);
 				button?.click();
 				return button !== null;
 			});
+			addTooltip(
+				() => findSubmitButton(target),
+				() => target.shortcut,
+			);
 			const header = options.addHeader ? options.headerName || true : false;
 			const lookup = {delayMs: EDITOR_SETUP_DELAY_MS};
 			const fold = (editor) => editor.foldLines(findFoldStartLines(editor.getValue()));
@@ -9349,7 +9424,7 @@ ${efficient_layout_default}`);
 				panel.setUnsupported(!writable);
 				return result;
 			};
-			const refresh = () => {
+			const refresh2 = () => {
 				const original = site.sourceCode();
 				let code = original;
 				let writable = true;
@@ -9371,21 +9446,21 @@ ${efficient_layout_default}`);
 				comments,
 				translate,
 				task: () => site.taskUri(),
-				onChange: refresh,
+				onChange: refresh2,
 				onApply() {
-					refresh();
+					refresh2();
 					const code = site.sourceCode();
 					const next2 = insertAll(code);
 					if (next2 !== code) site.setSourceCode(next2);
 				},
 			});
 			editorButtons.append(panel.button);
-			site.onLanguageChange(refresh);
+			site.onLanguageChange(refresh2);
 			const taskSelect = document.querySelector("#select-task");
 			if (taskSelect) {
 				page.onChange(taskSelect, () => {
 					panel.reload();
-					refresh();
+					refresh2();
 				});
 			}
 			paste.add(
@@ -9961,7 +10036,7 @@ button.primary {
 		const info = h("p", {className: "open-tasks-info"});
 		const isAll = () => allRadio.checked;
 		const selectedRange = () => (isAll() ? {begin: 0, end: tasks.length - 1} : range);
-		const refresh = () => {
+		const refresh2 = () => {
 			beginSelect.value = String(range.begin);
 			endSelect.value = String(range.end);
 			beginSelect.disabled = endSelect.disabled = isAll();
@@ -9970,12 +10045,12 @@ button.primary {
 		};
 		const changeRange = (changed) => {
 			range = adjustRange({begin: Number(beginSelect.value), end: Number(endSelect.value)}, changed, maxTabs);
-			refresh();
+			refresh2();
 		};
 		allRadio.checked = canOpenAll && initial.begin === 0 && initial.end === tasks.length - 1;
 		rangeRadio.checked = !allRadio.checked;
-		allRadio.addEventListener("change", refresh);
-		rangeRadio.addEventListener("change", refresh);
+		allRadio.addEventListener("change", refresh2);
+		rangeRadio.addEventListener("change", refresh2);
 		beginSelect.addEventListener("change", () => changeRange("begin"));
 		endSelect.addEventListener("change", () => changeRange("end"));
 		const row = (...children) => h("div", {className: "open-tasks-row"}, ...children);
@@ -10014,7 +10089,7 @@ button.primary {
 		);
 		return {
 			open() {
-				refresh();
+				refresh2();
 				modal.open();
 			},
 		};

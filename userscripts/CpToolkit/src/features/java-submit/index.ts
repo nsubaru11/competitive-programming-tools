@@ -6,6 +6,7 @@ import {type CodeEditor, EDITOR_SETUP_DELAY_MS} from "@application/ports/code-ed
 import {transformJava, usesLibrary} from "@application/source/transform-java";
 import {registerShortcut} from "@ui/shortcuts";
 import {showToast} from "@ui/toast/toast";
+import {addTooltip} from "@ui/tooltip/tooltip";
 
 const FOLD_SHORTCUT = "Ctrl+Shift+M";
 const MIN_SOURCE_LENGTH = 30;
@@ -56,6 +57,7 @@ export const javaSubmit = defineFeature({
 			button?.click();
 			return button !== null;
 		});
+		addTooltip(() => findSubmitButton(target), () => target.shortcut);
 
 		// エディタのないページも多いので、見つかるのを待たずに起動を終える
 		const header = options.addHeader ? options.headerName || true : false;
