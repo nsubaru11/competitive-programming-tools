@@ -51,6 +51,7 @@ describe("easyTest", () => {
 			taskUri: () => "https://atcoder.jp/contests/abc1/tasks/abc1_a",
 			languages: () => [java],
 			language: () => java,
+			selectLanguage: () => undefined,
 			onLanguageChange: () => undefined,
 			onSourceChange: () => undefined,
 			sourceCode: () => "code",

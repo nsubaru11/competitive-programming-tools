@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.22
+// @version        1.0.23
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1835,6 +1835,7 @@ a:focus > .cp-settings-entry {
 			tasksPrint: "^/contests/[^/]+/tasks_print",
 			tessokuTasks: "^/contests/tessoku-book/tasks/?(\\?|$)",
 			submit: "^/contests/[^/]+/submit",
+			customTest: "^/contests/[^/]+/custom_test",
 			submissions: "^/contests/[^/]+/submissions(/me)?/?(\\?|$)",
 			submissionDetail: "^/contests/[^/]+/submissions/\\d+",
 			editorial: "^/contests/[^/]+/editorial/?(\\?|$)",
@@ -2059,6 +2060,11 @@ a:focus > .cp-settings-entry {
 		"submissionTimer.cancel": "Cancel",
 		"submissionTimer.canceled": "The timer was canceled.",
 		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
+		"languageButtons.title": "Language buttons",
+		"languageButtons.description":
+			"Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.",
+		"languageButtons.configure": "Choose languages for the buttons",
+		"languageButtons.hint": "Buttons for the checked languages appear below the language selector.",
 		"sourceComments.title": "Source comments",
 		"sourceComments.description":
 			"Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.",
@@ -2262,6 +2268,10 @@ a:focus > .cp-settings-entry {
 		"submissionTimer.cancel": "取り消す",
 		"submissionTimer.canceled": "タイマーを取り消しました。",
 		"submissionTimer.scheduled": "{time} ごろに提出します。",
+		"languageButtons.title": "言語のボタン",
+		"languageButtons.description": "よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます。",
+		"languageButtons.configure": "ボタンにする言語を選ぶ",
+		"languageButtons.hint": "チェックした言語のボタンを選択欄の下に表示します。",
 		"sourceComments.title": "ソースコードのコメント",
 		"sourceComments.description":
 			"貼り付けたコードの先頭と末尾へ、参照元の URL などのコメントを追記します。言語を変えるとコメントの書き方も切り替えます。",
@@ -3895,6 +3905,13 @@ a:focus > .cp-settings-entry {
 
 		language() {
 			return selectedLanguageOf(this.languageSelect);
+		}
+
+		selectLanguage(id) {
+			const select = this.languageSelect;
+			if (!select) return;
+			select.value = id;
+			this.bridge.triggerChange(select);
 		}
 
 		onLanguageChange(listener) {
@@ -8226,6 +8243,127 @@ ${efficient_layout_default}`);
 		},
 	});
 
+	// CpToolkit/src/application/execution/pinned-languages.ts
+	var PINNED_KEY = "language-buttons:pinned";
+	var isPinned = isArrayOf(isString);
+
+	class PinnedLanguages {
+		state;
+
+		constructor(state) {
+			this.state = state;
+		}
+
+		ids() {
+			return new Set(readStored(this.state, PINNED_KEY, isPinned, []));
+		}
+
+		set(id, pinned) {
+			const ids = new Set(this.ids());
+			if (pinned) ids.add(id);
+			else ids.delete(id);
+			this.state.set(PINNED_KEY, [...ids]);
+		}
+	}
+
+	// CpToolkit/src/features/language-buttons/language-buttons.css
+	var language_buttons_default = `.language-hint {
+	margin: 0 0 12px;
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.language-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 4px 16px;
+}
+
+.language-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.modal-footer:empty {
+	display: none;
+}
+`;
+
+	// CpToolkit/src/features/language-buttons/index.ts
+	var languageButtons = defineFeature({
+		id: "language-buttons",
+		title: "languageButtons.title",
+		description: "languageButtons.description",
+		category: "category.submission",
+		defaultEnabled: true,
+		routes: ["atcoder:task", "atcoder:submit", "atcoder:customTest"],
+		phase: "ready",
+		options: {},
+		async start({judgeSite, state, translate}) {
+			const container2 = document.querySelector("#select-lang");
+			const site = await judgeSite();
+			if (!container2 || !site) return;
+			const pinned = new PinnedLanguages(state);
+			const buttons = h("span");
+			Object.assign(buttons.style, {display: "contents"});
+			const render = () => {
+				const pinnedIds = pinned.ids();
+				const currentId = site.language()?.id;
+				buttons.replaceChildren(
+					...site
+						.languages()
+						.filter(({id}) => pinnedIds.has(id))
+						.map(({id, label}) =>
+							h("button", {
+								type: "button",
+								className: `btn btn-sm ${id === currentId ? "btn-success" : "btn-default"}`,
+								textContent: label,
+								onclick: () => site.selectLanguage(id),
+							}),
+						),
+				);
+			};
+			const modal = createModal({
+				title: translate("languageButtons.title"),
+				closeLabel: translate("settings.close"),
+				css: language_buttons_default,
+			});
+			const openConfig = () => {
+				const pinnedIds = pinned.ids();
+				const options = site.languages().map(({id, label}) => {
+					const checkbox = h("input", {type: "checkbox", checked: pinnedIds.has(id)});
+					checkbox.addEventListener("change", () => {
+						pinned.set(id, checkbox.checked);
+						render();
+					});
+					return h("label", {className: "language-option"}, checkbox, label);
+				});
+				modal.body.replaceChildren(
+					h("p", {className: "language-hint", textContent: translate("languageButtons.hint")}),
+					h("div", {className: "language-list"}, ...options),
+				);
+				modal.open();
+			};
+			const configButton = h(
+				"button",
+				{
+					type: "button",
+					className: "btn btn-default btn-sm",
+					title: translate("languageButtons.configure"),
+					ariaLabel: translate("languageButtons.configure"),
+					onclick: openConfig,
+				},
+				h("span", {className: "glyphicon glyphicon-cog"}),
+			);
+			const bar = h("span", {}, buttons, configButton);
+			Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
+			container2.append(bar);
+			render();
+			site.onLanguageChange(render);
+		},
+	});
+
 	// CpToolkit/src/application/contest/latest-contests.ts
 	var CACHE_KEY2 = "latest-contests:cache";
 	var HOME_URL = "/home";
@@ -10474,6 +10612,7 @@ ${wide_layout_default}`);
 		efficientLayout,
 		submissionQuery,
 		submissionShortcuts,
+		languageButtons,
 		sourceComments,
 		resultNotifier,
 		clarNotifier,

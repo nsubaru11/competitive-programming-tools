@@ -42,6 +42,7 @@ function createContext() {
 		taskUri: () => task,
 		languages: () => [],
 		language: () => language,
+		selectLanguage: () => undefined,
 		onLanguageChange(listener: () => void) {
 			onLanguageChange = listener;
 		},

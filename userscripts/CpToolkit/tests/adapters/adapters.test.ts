@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, test} from "bun:test";
+import {afterEach, beforeEach, describe, expect, mock, test} from "bun:test";
 import {importLegacySettings} from "@application/settings/legacy-import";
 import {SettingsService} from "@application/settings/settings-service";
 import {AtCoderSite} from "@adapters/judges/atcoder";
@@ -158,6 +158,20 @@ describe("languagesOf", () => {
 });
 
 describe("AtCoderSite", () => {
+	test("表示中の問題の選択欄だけ言語を切り替える", () => {
+		document.body.innerHTML = `<div id="select-lang">
+			<div><select><option value="1"></option><option value="2"></option></select></div>
+			<div><select class="current"><option value="1"></option><option value="2"></option></select></div>
+		</div>`;
+		const changed = mock((_element: object) => undefined);
+		const site = new AtCoderSite({...bridge, triggerChange: changed}, noHttp);
+		site.selectLanguage("2");
+		const [hidden, current] = document.querySelectorAll("select");
+		expect(current?.value).toBe("2");
+		expect(hidden?.value).toBe("1");
+		expect(changed).toHaveBeenCalledWith(current as HTMLSelectElement);
+	});
+
 	test("サンプルを入力と出力の組にする", async () => {
 		history.replaceState(null, "", "/contests/abc1/tasks/abc1_a");
 		document.body.innerHTML = `<div id="task-statement">

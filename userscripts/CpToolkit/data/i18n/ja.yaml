@@ -88,6 +88,11 @@ submissionTimer.cancel: 取り消す
 submissionTimer.canceled: タイマーを取り消しました。
 submissionTimer.scheduled: "{time} ごろに提出します。"
 
+languageButtons.title: 言語のボタン
+languageButtons.description: よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます。
+languageButtons.configure: ボタンにする言語を選ぶ
+languageButtons.hint: チェックした言語のボタンを選択欄の下に表示します。
+
 sourceComments.title: ソースコードのコメント
 sourceComments.description: 貼り付けたコードの先頭と末尾へ、参照元の URL などのコメントを追記します。言語を変えるとコメントの書き方も切り替えます。
 sourceComments.style: コメントの形式

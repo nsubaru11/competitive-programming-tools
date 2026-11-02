@@ -15,6 +15,7 @@ routes:
   tasksPrint: '^/contests/[^/]+/tasks_print'
   tessokuTasks: '^/contests/tessoku-book/tasks/?(\?|$)'
   submit: '^/contests/[^/]+/submit'
+  customTest: '^/contests/[^/]+/custom_test'
   submissions: '^/contests/[^/]+/submissions(/me)?/?(\?|$)'
   submissionDetail: '^/contests/[^/]+/submissions/\d+'
   editorial: '^/contests/[^/]+/editorial/?(\?|$)'

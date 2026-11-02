@@ -22,6 +22,8 @@ export interface JudgeSite {
 
 	language(): JudgeLanguage | null;
 
+	selectLanguage(id: string): void;
+
 	onLanguageChange(listener: () => void): void;
 
 	onSourceChange(listener: () => void): void;

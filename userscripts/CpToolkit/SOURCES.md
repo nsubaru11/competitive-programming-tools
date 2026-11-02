@@ -45,6 +45,7 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 | AC 提出への近道        | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                    | ktnyori     | MIT          |
 |                        | 参照 | [AtCoder Add Submissions Shortcuts](https://greasyfork.org/scripts/463453)                     | xero_cats   | MIT          |
 |                        | 参照 | [AtCoder quickly check fastest codes](https://greasyfork.org/scripts/499102)                   | zica87      | GPL-3.0-only |
+| 言語のボタン           | 模倣 | [AtCoderLanguageButtons](https://greasyfork.org/scripts/421663)                                | magurofly   | 記載なし     |
 | ソースコードのコメント | 参照 | [AtCoder Template](https://greasyfork.org/scripts/438105)(言語ごとの保存)                      | magurofly   | CC0-1.0      |
 |                        | 参照 | [AtCoder Code Template](https://greasyfork.org/scripts/584183)(名前付きの保存、挿入内容の記憶) | kirameku    | MIT          |
 | 提出結果の通知         | 模倣 | [AtCoderResultNotifier](https://greasyfork.org/scripts/371225)                                 | satanic0258 | MIT          |
@@ -99,6 +100,7 @@ Paiza Language Selector に類似する公開スクリプトは見つかりま�
 
 | 機能               | 参照したもの                                                                            |
 |--------------------|-----------------------------------------------------------------------------------------|
+| 言語のボタン       | コンテストのページの言語の処理(`#select-lang select.current`、`defaultLang` の記憶)     |
 | 提出結果の通知     | コンテストのページの判定待ちの処理(`submissions/me/status/json` と応答の `Interval`)    |
 | Clar の通知        | コンテストのページの Clar の処理(`clarifications/count`、1分の間隔、開始直後を避ける)   |
 | 問題の提出状況     | 自分の得点のページ(`/contests/<id>/score`)                                              |

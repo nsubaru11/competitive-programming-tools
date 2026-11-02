@@ -8,6 +8,7 @@ import {efficientLayout} from "@features/efficient-layout/index";
 import {historyColors} from "@features/history-colors/index";
 import {hoverMenu} from "@features/hover-menu/index";
 import {javaSubmit} from "@features/java-submit/index";
+import {languageButtons} from "@features/language-buttons/index";
 import {latestContests} from "@features/latest-contests/index";
 import {localRunner} from "@features/local-runner/index";
 import {paizaLanguage} from "@features/paiza-language/index";
@@ -37,6 +38,7 @@ export const features: readonly Feature[] = [
 	efficientLayout,
 	submissionQuery,
 	submissionShortcuts,
+	languageButtons,
 	sourceComments,
 	resultNotifier,
 	clarNotifier,

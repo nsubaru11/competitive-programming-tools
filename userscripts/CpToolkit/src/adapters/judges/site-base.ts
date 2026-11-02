@@ -33,6 +33,13 @@ export abstract class JudgeSiteBase implements JudgeSite {
 		return selectedLanguageOf(this.languageSelect);
 	}
 
+	selectLanguage(id: string): void {
+		const select = this.languageSelect;
+		if (!select) return;
+		select.value = id;
+		this.bridge.triggerChange(select);
+	}
+
 	onLanguageChange(listener: () => void): void {
 		if (this.languageSelect) this.bridge.onChange(this.languageSelect, listener);
 	}

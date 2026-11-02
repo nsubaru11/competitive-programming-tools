@@ -87,6 +87,11 @@ submissionTimer.cancel: Cancel
 submissionTimer.canceled: The timer was canceled.
 submissionTimer.scheduled: "Your code will be submitted around {time}."
 
+languageButtons.title: Language buttons
+languageButtons.description: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.
+languageButtons.configure: Choose languages for the buttons
+languageButtons.hint: Buttons for the checked languages appear below the language selector.
+
 sourceComments.title: Source comments
 sourceComments.description: Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.
 sourceComments.style: Comment style

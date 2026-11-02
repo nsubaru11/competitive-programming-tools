@@ -42,6 +42,7 @@ AtCoder Easy Test v2 と CP Toolkit の Easy Test を同時に有効にすると
 | AtCoder Search Query Holder                   | 検索条件の保持               |
 | AtCoder Submission Timer                      | 時間指定の提出               |
 | AtCoderAverageResult                          | 実行結果の平均               |
+| AtCoderLanguageButtons                        | 言語のボタン                 |
 | AtCoderPerformanceColorizer                   | 成績表の色付け               |
 | AtCoderResultNotifier                         | 提出結果の通知               |
 | Paiza Language Selector                       | paiza の言語選択             |
@@ -49,3 +50,5 @@ AtCoder Easy Test v2 と CP Toolkit の Easy Test を同時に有効にすると
 | View All Editorials                           | 解説の一覧表示               |
 
 nsubaru の旧スクリプト8本と Paiza Language Selector は最終版へ更新すれば、CP Toolkit が動いている間は本体を実行しません。
+
+AtCoderLanguageButtons の設定は引き継げないので、言語の選択欄の下の歯車から選び直してください。最後に使った言語は AtCoder が記憶します。
