@@ -94,27 +94,4 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 
 Paiza Language Selector に類似する公開スクリプトは見つかりませんでした。
 
-## サイトの仕様
-
-次の機能は AtCoder のページが使う仕組みに合わせています。
-
-| 機能               | 参照したもの                                                                            |
-|--------------------|-----------------------------------------------------------------------------------------|
-| 言語のボタン       | コンテストのページの言語の処理(`#select-lang select.current`、`defaultLang` の記憶)     |
-| 提出結果の通知     | コンテストのページの判定待ちの処理(`submissions/me/status/json` と応答の `Interval`)    |
-| Clar の通知        | コンテストのページの Clar の処理(`clarifications/count`、1分の間隔、開始直後を避ける)   |
-| 問題の提出状況     | 自分の得点のページ(`/contests/<id>/score`)                                              |
-| バーチャル参加     | 参加のページの開始時刻(`#main-container time.fixtime-second`)、ページの `getServerTime` |
-| 問題の提出状況の色 | AtCoder Problems の表の配色に近い、Bootstrap の `#c3e6cb` と `#f5c6cb`                  |
-
-## 統合しなかったスクリプト
-
-外部のスクリプトのまま使うか、導入しないと決めたものです。単独で入れるスクリプトは [RECOMMENDED.md](./RECOMMENDED.md) にまとめています。
-
-| スクリプト                                                          | 作者     | ライセンス | 扱い                       |
-|---------------------------------------------------------------------|----------|------------|----------------------------|
-| [atcoder-difficulty-display](https://greasyfork.org/scripts/397185) | hotarunw | MIT        | 外部のスクリプトのまま使う |
-| [ac-predictor](https://greasyfork.org/scripts/369954)               | keymoon  | MIT        | 外部のスクリプトのまま使う |
-| [AtCoderStandingsAnalysis](https://greasyfork.org/scripts/398439)   | RTnF     | CC0-1.0    | 外部のスクリプトのまま使う |
-| AtCoder History Exporter                                            | 記載なし | 記載なし   | 導入しない                 |
-| AtCoder Problems Advanced Summary Exporter                          | 記載なし | 記載なし   | 導入しない                 |
+ここに挙げたスクリプトと CP Toolkit を同時に使うときの注意は、[COMPATIBILITY.md](./COMPATIBILITY.md) を参照してください。

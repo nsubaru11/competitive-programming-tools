@@ -1,65 +1,134 @@
-# runner
+# Local Runner
 
-AtCoder 向けの **ローカル Java 実行** と **CLI**（`test` / `submit` / `toclip` / `localtest` / `run` / `crosscheck` / `tomain` / `serve` / `stop` / `status` / `cacheclear`）です。 Bun + TypeScript で実装し、Java 側は常駐 `Dispatcher`（インプロセス javac ＋ 実行）と連携します。
+Java の解答を手元で実行、判定、提出するためのツールです。次の2つからなります。
 
-## 構成
+- **CLI**: AtCoder のサンプルでのテスト、提出、提出用コードの作成を行う
+- **サーバー**: Java の実行を速くするために常駐する。[CP Toolkit](../userscripts/CpToolkit/README.md) からも接続できる
 
-```text
-tools/local-runner/
-├── package.json
-├── src/
-│   ├── cli/           # test / submit / 短縮表記、AtCoder HTTP、サンプルジャッジ
-│   ├── daemon/        # server.ts(HTTP API) / dispatcher.ts(常駐JVM連携) / compiler.ts(javac キャッシュ)
-│   ├── config.ts      # 設定
-│   ├── utils/         # ログ・色・整形・ファイル操作
-│   └── types/         # 型定義
-├── bin/               # test.cmd / submit.cmd、起動スクリプト
-└── java/              # README + src/（Dispatcher ほか常駐 JVM のクラス群・PROTOCOL.md・WarmUp.java）
+[CP Toolkit](../userscripts/CpToolkit/README.md) の Java の提出補助で `lib.*` の展開や `import` の補完を使うには、Local Runner が必要です。
+
+動作確認は Windows(WSL)で行っています。
+
+## 必要なもの
+
+- [Bun](https://bun.sh/)
+- JDK 24 以降
+- Java のライブラリ([competitive-programming-java-library](https://github.com/nsubaru11/competitive-programming-java-library))
+- Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側にも Bun と JDK を入れる
+
+サーバーは起動時に Java のライブラリを読み込みます。見つからないと起動できません。
+
+## セットアップ
+
+`tools` とライブラリを同じフォルダに並べます。
+
+```bash
+mkdir cp-tools
+cd cp-tools
+git clone https://github.com/nsubaru11/competitive-programming-tools.git tools
+git clone https://github.com/nsubaru11/competitive-programming-java-library.git library/java
+cd tools
+bun install
 ```
 
-`@atcoder-tools/shared` から URL 生成・Local Runner リクエスト・Easy Test ジャッジを利用しています。CLI のサンプル判定は CP Toolkit の Easy Test と同じ `evaluateEasyTestOutput` です。
+ライブラリを別の場所に置くときは、環境変数 `ATCODER_LIB_SRC` に `lib` フォルダの親を指定します。
 
-## セキュリティ
+Windows では、次のコマンドで `bin` を PATH に登録すると、どのフォルダからでも `test` や `submit` を実行できます。
 
-サーバーは受け取ったコードを実行するので、次の制限を設けています。
+```powershell
+powershell -File ".\local-runner\bin\install-path.ps1"
+```
 
-- 既定で `127.0.0.1` にだけバインドする。`LOCAL_RUNNER_HOST` で変更すると同じネットワークの端末から実行できるようになるので、変更しない
-- ブラウザからの要求は Origin を検査し、UserScript が動くジャッジサイトの `https` のオリジンだけを受け付ける。`LOCAL_RUNNER_ALLOWED_ORIGINS` で完全一致の許可リストに差し替えられる
-- Origin のない要求は CLI として受け付ける。同じ PC で動くプログラムからの要求は拒否できない
-- 実行するコードはサンドボックスに入らず、起動したユーザーの権限で動く。内容を確認していないコードは実行しない
+Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-runner test abc448_d D.java` のように実行します。
 
-## 前提条件
+## CP Toolkit とつなぐ
 
-- Bun
-- Java / javac
-- WSL で runner を使う場合は WSL 側にも Bun と JDK
+1. `serve` でサーバーを起動する。`test` などのコマンドを実行すると自動でも起動する
+2. CP Toolkit の設定で「Local Runner」が有効で、接続先の URL が `http://localhost:8080` であることを確かめる
+3. 問題ページからも実行するなら、「Easy Test」を有効にする
+
+## 安全のために
+
+サーバーは受け取ったコードを実行するので、次の点に注意してください。
+
+- サーバーは既定で `127.0.0.1` にだけ接続を許します。`LOCAL_RUNNER_HOST` を変更すると同じネットワークの端末からコードを実行できるようになるので、変更しないでください
+- ブラウザからの要求は、対応するジャッジサイトからのものだけを受け付けます。`LOCAL_RUNNER_ALLOWED_ORIGINS` で許可するオリジンを差し替えられます
+- 同じ PC で動くプログラムからの要求は拒否できません
+- 実行するコードはサンドボックスに入らず、起動したユーザーの権限で動きます。内容を確認していないコードは実行しないでください
+- `REVEL_SESSION` は AtCoder のログイン情報です。他人に渡さないでください
 
 ## コマンド
 
-| コマンド                                                       | 説明                                                                                                                                                            |
-|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `test <taskScreenName> <sourceFile>`                           | AtCoder のサンプルをローカル実行し AC/WA 判定（**DEBUG 既定 true**）                                                                                            |
-| `test <task>` / `submit [-f] <task>`                           | **短縮表記**。フォルダからコンテストを推定（例: `test d` → `abc463_d D.java`）                                                                                  |
-| `submit [-f] <taskScreenName> <sourceFile>`                    | 全サンプル AC 後に提出（`-f` で強制提出。提出は **DEBUG=false**）                                                                                               |
-| `localtest <sourceFile> [testDir]`                             | `.in`/`.out` を自動検出しオフライン実行・判定（**DEBUG 既定 true**）                                                                                            |
-| `run <sourceFile> [inputFile]`                                 | 1 回だけ実行して出力表示（期待出力なし・`inputFile` 省略可・**DEBUG 既定 true**）                                                                               |
-| `crosscheck <actualSourceFile> <expectedSourceFile> [testDir]` | `.in` を入力に2つのコードを実行し標準出力を突き合わせ（`.out` は不要。testDir は actual 側から自動探索。expected 側が異常終了したケースは比較せずそのまま報告） |
-| `tomain <sourceFile> [outFile]`                                | 提出用 `Main.java` に変換して書き出し（**DEBUG=false**。`-f` で上書き）                                                                                         |
-| `toclip <sourceFile>` / `toclip <task>`                        | 提出用ソースをクリップボードへコピー（**DEBUG=false**。短縮例: `toclip d` → `D.java`）                                                                          |
-| `serve`                                                        | Local Runner サーバーだけ先に起動して ready まで待つ                                                                                                            |
-| `stop`                                                         | Local Runner サーバーを停止（graceful shutdown）                                                                                                                |
-| `status`                                                       | Local Runner サーバーの稼働状況を表示（uptime・Java・dispatcher・キャッシュ等。稼働中=0/停止中=1。auto-start はしない）                                         |
-| `cacheclear -a` / `cacheclear -t <taskScreenName>`             | サンプルキャッシュを全削除、または指定タスクだけ削除                                                                                                            |
+| コマンド                                                       | 説明                                                                                         |
+|----------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `test <taskScreenName> <sourceFile>`                           | AtCoder のサンプルで実行し、AC か WA かを判定する                                            |
+| `test <task>`                                                  | 短縮表記。フォルダからコンテストを推定する(例: `test d`)                                     |
+| `submit [-f] <taskScreenName> <sourceFile>`                    | サンプルがすべて AC なら提出する。`-f` で強制的に提出する                                    |
+| `submit [-f] <task>`                                           | 短縮表記(例: `submit d`)                                                                     |
+| `localtest <sourceFile> [testDir]`                             | `.in` と `.out` を自動で探し、オフラインで実行して判定する                                   |
+| `run <sourceFile> [inputFile]`                                 | 1回だけ実行して出力を表示する。`inputFile` を省くと標準入力は空になる                        |
+| `crosscheck <actualSourceFile> <expectedSourceFile> [testDir]` | `.in` を入力に2つのコードを実行し、標準出力を比べる。`.out` は不要                           |
+| `tomain <sourceFile> [outFile]`                                | 提出用の `Main.java` を書き出す。`-f` で上書きする                                           |
+| `toclip <sourceFile>`、`toclip <task>`                         | 提出用のソースをクリップボードへコピーする(例: `toclip d`)                                   |
+| `serve`                                                        | サーバーを起動し、準備が終わるまで待つ                                                       |
+| `stop`                                                         | サーバーを停止する                                                                           |
+| `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                               |
+| `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                             |
 
-`taskScreenName` は URL の `/tasks/` 以降そのまま（例: `abc448_d`）。`contestId` は最後の `_` より前から自動解決します。
+`taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
 
-### `lib.*` の自動バンドル
+ライブラリを編集したら、`stop` のあと `serve` で読み込み直してください。
 
-提出前処理はTSの正規表現ではなく、常駐JVM内のJava Compiler API（`JavacTask` / `Trees` / `SourcePositions`）を使います。型解決、Main対象、コンストラクタ・自己参照、DEBUGフィールド、package/import範囲をjavacの構文木とシンボルから決定し、生成後の単一ソースも再解析します。
+### 短縮表記
 
-提出用の`Main`にするのは、`public static void main(String[])`を持つトップレベルの型です。複数あるときは`Main`という名前の型を選び、それも無いときや候補が無いときはエラーで止まります。
+`test`、`submit`、`toclip` に引数を1つだけ渡すと短縮表記になります。`abc463/src/java` のフォルダで `test d` を実行すると、`test abc463_d D.java` と同じです。
 
-解答では通常のJavaコードとして競プロライブラリをimportできます。
+- `src` の親のフォルダ名をコンテスト名として使う
+- 問題の記号は大文字と小文字を区別しない
+- 末尾の数字はファイルの違いとして扱う。`test d1` は `D1.java` を問題 `d` のサンプルでテストする
+- ソースは現在のフォルダから探す
+- `toclip` はコンテスト名を使わないので、どのフォルダでも使える
+
+### オプション
+
+オプションは引数の前後どちらに置いても構いません。
+
+| オプション                    | 対象                                           | 説明                                                                                   |
+|-------------------------------|------------------------------------------------|----------------------------------------------------------------------------------------|
+| `-f`, `--force`               | `submit`、`tomain`                             | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする       |
+| `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                     | ソースの `DEBUG` の有効と無効を切り替える(既定は有効)                                  |
+| `--no-header`                 | `submit`、`tomain`、`toclip`                   | 提出物の先頭にヘッダーを付けない                                                       |
+| `--header=<name>`             | `submit`、`tomain`、`toclip`                   | `templates/header/<name>.txt` をヘッダーに使う(既定は `java`)                          |
+| `--full`                      | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                        |
+| `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分のうち、一致しない行だけを表示する                                            |
+| `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたむ行数を変える(既定は 20)                                           |
+| `--time-limit=N`              | `localtest`、`run`、`crosscheck`               | 実行時間の警告に使う制限(ms)。既定は 2000。表示だけで、実行は打ち切らない              |
+
+### 実行例
+
+```powershell
+# AtCoder のサンプルでテストする
+test abc448_d D.java
+
+# 提出と同じ条件(DEBUG を無効)でテストする
+test --debug=false abc448_d D.java
+
+# 手元の .in と .out でテストする
+localtest D.java
+
+# 1回だけ実行する
+run D.java sample-1.in
+
+# WA の差分を全行表示する
+localtest --full D.java
+
+# 提出する
+submit abc448_d D.java
+```
+
+## ライブラリの展開
+
+解答では、通常の Java のコードとしてライブラリを import できます。
 
 ```java
 import lib.ds.UnionFind;
@@ -67,196 +136,70 @@ import lib.io.FastPrinter;
 import lib.io.FastScanner;
 ```
 
-`run` / `localtest` / `test` / `crosscheck` / `tomain` / `toclip` / `submit` は、実行前に`import lib.*`を検出し、`library/java/src/lib`から必要なクラスと推移的依存を単一ソースへ展開します。ログには`Bundled library classes: ...`として展開対象が表示されます。`patterns.*`は読む・写経する資料なので自動展開しません。
+`run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit` は、実行の前に `lib.*` の import を検出し、必要なクラスと依存するクラスを1つのソースへ展開します。
 
-ライブラリは次の順で検索します。
+- 展開したクラスは `Bundled library classes: ...` と表示する
+- `import lib.io.*;` のようなワイルドカードでも、実際に使っている型だけを展開する
+- 提出コードの元の import はコメントアウトして残す
+- import を書かなくても、単純名がライブラリの中で一意なら補完する。標準 API と同名のときは標準 API を優先する
+- `import static lib...`、本文中の `lib.ds.UnionFind` のような完全修飾の参照、展開すると単純名が衝突する型はエラーになる
+- `patterns.*` は展開しない
 
-1. `ATCODER_LIB_SRC`で指定された`src`ディレクトリ
-2. `tools`と同じ階層の`library/java/src`
+提出用の `Main` にするのは、`public static void main(String[])` を持つトップレベルの型です。複数あるときは `Main` という名前の型を選びます。それも無いときや候補が無いときはエラーで止まります。
 
-リポジトリに`library/java`サブモジュールがあれば、通常は環境変数の設定は不要です。`import static lib...`、本文中の`lib.ds.UnionFind`のような完全修飾参照、バンドル後に単純名が衝突する型はエラーになります。
+## DEBUG の扱い
 
-`import lib.io.*;`のようなワイルドカードimportでも、解答本文で実際に参照しているトップレベル型だけをインラインします。提出コードでは元のlibrary importを削除せず、`// import lib.io.*;`のようにコメントアウトして展開元を残します。
+ソースの `DEBUG = true` は、提出物(`submit`、`tomain`、`toclip`)では常に `false` にします。手元の実行(`test`、`localtest`、`run`)では既定で `true` のまま実行し、`--debug=false` で切り替えられます。
 
-importを書かずに`FastScanner`や`UnionFind`を使用した場合も、単純名がlibrary内で一意ならCompiler APIがimportを補完してバンドルします。同名候補ではパッケージ階層が最短の標準APIを優先し、同順位が複数なら曖昧エラーで停止します。
+デバッグ出力を `System.err` に出しておけば、判定に影響しません。
 
-ブラウザへ手動で貼り付ける提出コードは、クリップボードへ直接コピーできます。
+## 提出用ヘッダー
 
-```powershell
-toclip d       # 短縮表記: カレントディレクトリの D.java
-toclip D.java  # ファイルを明示
-```
+`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助は、提出物の先頭に `templates/header/java.txt` を付けます。`templates` は `tools` と同じフォルダに置きます。
 
-#### 短縮表記（フォルダからコンテスト推定）
+- ファイルが無ければ付けません
+- `--no-header` で付けずに出力し、`--header=<name>` で `templates/header/<name>.txt` を選べます。選んだファイルが無ければエラーで止まります
+- ソースがヘッダーの1行目で始まるときは、重ねて付けません
+- `run`、`test`、`localtest`、`crosscheck` と Easy Test の実行には付けません。行番号が元のソースと揃います
 
-`test` / `submit` / `toclip` に **引数を 1 つだけ**渡すと短縮表記になります。
-`test d` は、原則としてカレントの上位にある `src` の親フォルダ名からコンテスト（小文字化）を、引数の記号からタスクとソース（`D.java`）を解決します。たとえば `abc463/src/java` では `test abc463_d D.java` と同等です。コンテストIDと問題IDの接頭辞が異なる `jsc2025advance-final` / `jsc2026advance-final` / `tessoku-book` は、それぞれ `abc422` / `abc474` / `tessoku_book` に固定対応します。
+## 実行時間の警告
 
-- 記号は **大小無視**（`d` = `D`）。コンテスト名は URL に合わせ **小文字化**。
-- 末尾の数字は **ファイル変種**扱い: `test d1` → `D1.java` を、問題 `d`（`abc463_d`）のサンプルでテスト（AtCoder のタスク記号は A〜H と Ex のみで数字付きは無いため）。
-- コンテストフォルダは原則として `src` の親（`abc463` / `jsc2025advance-final` など）を採用。範囲フォルダ `451-500` は採用しません。
-- ソースは **カレントディレクトリ**から探します（例の構成では `abc463/src/java` で実行）。
-- `toclip`はコンテストIDを必要とせず、短縮記号からソースだけを解決します（`toclip d1` → `D1.java`）。
+実行時間は、制限の 80% を超えると黄色、制限以上で赤で表示します。
 
-`test` / `submit` / `localtest` / `run` は、Local Runnerサーバーが未起動ならWSL上へ自動起動します。起動時にライブラリソースを`/dev/shm`へ同期して一度だけclass化し、解答のCompiler API解析はそのclasspathを使用します。提出用本文だけを同期済みsourceから取得するため、コンパイル・実行環境をWSLへ統一したままNTFS境界の反復コストを避けます。実行時はソースを一度だけ`prepare`して変換・コンパイルし、以降の各サンプルは`programId`と標準入力だけを送ります。`serve`で事前に温めておくと初回が速くなります。ライブラリを編集した場合は`stop`→`serve`で同期し直してください。
+- `test`、`submit`: 問題ページの実行時間制限を使う
+- `localtest`、`run`、`crosscheck`: 制限が分からないので 2000ms を使う。`--time-limit=3000` のように指定できる
 
-ほぼすべての解答で使う`lib.io.FastScanner`と`lib.io.FastPrinter`は、最小構成の`WarmUp.java`から通常どおりimportします。起動時にこのファイルを提出変換してからコンパイルし、メモリ入力と破棄出力で`nextInt`・`nextLong`・`println(long)`を実行することで、class解決・依存解析・インライン・javac・I/OのJIT経路を一度に温めます。標準入出力への副作用や、アルゴリズム・データ構造の私有コピーはありません。
+どちらも表示だけで、実行は最大10秒まで続きます。手元の実行は本番より速く出やすいので、目安として見てください。
 
-EasyTestは最後のエディタ変更から180ms後に`prepare`し、得られた`programId`を同じソースのテストで再利用します。貼り付け直後にテストした場合も、進行中のprepareを全サンプルで共有します。旧クライアント向けの`precompile`要求は即座に`accepted`を返し、サーバー側150msのデバウンス後に同じprepare経路を使います。実runが先に届いた場合は待機中の同一precompileを取り消します。
+## 提出の準備
 
-### オプション
-
-オプションは位置引数の前後どちらに置いても構いません（各コマンドが自前で解釈します）。
-
-| オプション                    | 対象コマンド                                   | 説明                                                                                                     |
-|-------------------------------|------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `-f`, `--force`               | `submit` / `tomain`                            | submit: サンプルが非 AC でも提出する / tomain: 既存の出力ファイルを上書きする                            |
-| `-d`, `--debug[=true\|false]` | `test` / `localtest` / `run`                   | ソースの DEBUG ブロックの有効/無効を上書き（既定は有効）。`-d` だけなら有効、`--debug=false` で無効      |
-| `--no-header`                 | `submit` / `tomain` / `toclip`                 | 提出物の先頭にヘッダーを付けない                                                                         |
-| `--header=<name>`             | `submit` / `tomain` / `toclip`                 | `templates/header/<name>.txt` をヘッダーに使う（既定は `java`）                                          |
-| `--full`                      | `test` / `localtest` / `submit` / `crosscheck` | WA 差分を行数で折りたたまず**全行表示**する（`--max-lines` より優先）                                    |
-| `--wa-only`                   | `test` / `localtest` / `submit` / `crosscheck` | WA 差分のうち**不一致行（×）だけ**を抽出して表示する（行番号は元のまま保持）                             |
-| `--max-lines=N`               | `test` / `localtest` / `submit` / `crosscheck` | WA 差分の折りたたみ行数を `N` に変更する（既定 20）                                                      |
-| `--time-limit=N`              | `localtest` / `run` / `crosscheck`             | 実行時間警告のしきい値に使う制限(ms)。80%超で黄、制限以上で赤（既定 2000。表示のみで実行は打ち切らない） |
-
-```powershell
-# DEBUG を切って（提出と同じ条件で）ローカル実行
-.\bin\test.cmd --debug=false abc448_d D.java
-.\bin\run.cmd -d=false D.java
-
-# WA 差分を全行表示 / 不一致行だけ抽出 / 行数指定
-.\bin\localtest.cmd --full D.java
-.\bin\test.cmd --wa-only abc448_d D.java
-.\bin\test.cmd --max-lines=50 abc448_d D.java
-```
-
-各サンプルは **実行が終わるたびに逐次表示**され、最後に集計（`Summary:`）を出します。
-
-### DEBUG の扱い
-
-ソース中の `DEBUG = true` は、`submit` / `tomain` / `toclip`（提出物）では `false` に固定し、`test` / `localtest` / `run`（ローカル実行）では既定で `true` のまま実行します。デバッグ出力を `System.err` に出しておけば、判定（stdout 比較）に影響せず確認できます。
-
-`test` / `localtest` / `run` は `-d/--debug=false` で DEBUG を切って実行でき、提出と同じ条件での確認に使えます。`submit` / `tomain` / `toclip` は提出物のため常に `false`（上書き不可）。
-
-### 提出用ヘッダー
-
-ヘッダーは解答に書かず、提出物を作るときに付けます。`submit` / `tomain` / `toclip` と CP Toolkit の Java の提出補助の貼り付け変換は、バンドル後のソースの先頭に `templates/header/java.txt` を付けます。
-
-- `--no-header` で付けずに出力し、`--header=<name>` で `templates/header/<name>.txt` を選べます。
-- 既定のファイルは `ATCODER_HEADER_FILE` で差し替えられます。既定のファイルが無い場合は付けず、`--header` で選んだファイルが無い場合はエラーで止まります。
-- ソースがヘッダーの1行目で始まる場合は重ねて付けません（`toclip` の出力を貼り付けた場合など）。
-- `run` / `test` / `localtest` / `crosscheck` と EasyTest の実行には付けません。ローカルの行番号を元のソースと揃えるためです。
-
-ヘッダーにはサイトやコンテストで変わらない情報だけを書きます。言語のバージョンのように提出先で変わるものは書きません。
-
-### 実行時間の警告
-
-`test` / `submit` は問題ページから **実行時間制限**を取得し（サンプルと一緒にキャッシュ）、exec 表示を **制限の 80% 超で黄色、制限以上で赤**にします（例: 2 sec の問題 → 1600ms 超で黄、2000ms 以上で赤）。実行前に `Time limit: 2000ms` のように制限も表示します。
-
-制限が分からない `localtest` / `run` / `crosscheck` は、AtCoder で最も一般的な 2 sec を仮の制限として **1600ms 超で黄色、2000ms 以上で赤**です。`--time-limit=3000` のように制限 (ms)を指定すれば、その値を基準に test/submit と同じしきい値（80%で黄、100%で赤）になります。
-
-いずれも表示上の警告で、実行自体は従来どおり最大 10 秒まで走ります（TLE 判定の打ち切りは変えません）。ローカルはウォームアップ済み JVM で本番より速く出やすいため、あくまで目安です（`NO_COLOR=1` で色無効）。
-
-### 実行例
-
-```powershell
-cd tools/local-runner
-bun install
-
-# （任意）サーバーを先に起動。test 等を打てば自動起動するので必須ではない
-.\bin\serve.cmd
-
-# AtCoder サンプルでテスト
-.\bin\test.cmd abc448_d D.java
-
-# ローカルの .in/.out でテスト（オフライン）
-.\bin\localtest.cmd D.java
-
-# 1 回だけ実行（入力ファイルあり / なし）
-.\bin\run.cmd D.java sample-1.in
-.\bin\run.cmd D.java
-
-# 提出（要セッション）
-.\bin\submit.cmd abc448_d D.java
-
-# サーバー停止
-.\bin\stop.cmd
-```
-
-PATH 登録済みなら任意ディレクトリから `test` / `localtest` / `run` / `serve` / `stop` / `status` を実行できます（下記「PATH に登録」）。
-
-`package.json` から:
-
-```powershell
-cd tools
-bun run --cwd local-runner serve
-bun run --cwd local-runner test abc448_d D.java
-bun run --cwd local-runner localtest D.java
-```
-
-## 環境変数
-
-| 変数                             | 説明                                               | 既定値                         |
-|----------------------------------|----------------------------------------------------|--------------------------------|
-| `LOCAL_RUNNER_URL`               | Local Runner API                                   | `http://localhost:8080`        |
-| `LOCAL_RUNNER_PORT`              | 待受ポート                                         | `8080`                         |
-| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐javacを無効化し外部javacにフォールバック | 有効                           |
-| `LOCAL_RUNNER_RUN_STACK_BYTES`   | 解答を実行するスレッドのスタックサイズ(バイト)     | `268435456`（256 MiB）         |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`  | auto-start の ready 待ちタイムアウト(ms)           | `60000`                        |
-| `LOCAL_RUNNER_BACKEND`           | Windowsで`native`を明示する診断用上書き            | `wsl`                          |
-| `LOCAL_RUNNER_BUN`               | native起動に使うBunコマンド                        | `bun`                          |
-| `ATCODER_RUNNER_AUTOSTART`       | `0` で auto-start を無効化（常駐運用に切替時）     | 有効                           |
-| `ATCODER_JAVA_VER`               | 提出先の Java バージョン（下記）                   | `24`                           |
-| `ATCODER_LIB_SRC`                | 競プロライブラリの`src`ディレクトリ                | `../library/java/src`          |
-| `ATCODER_HEADER_FILE`            | 提出物の先頭に付ける既定のヘッダーファイル         | `../templates/header/java.txt` |
-| `ATCODER_COOKIE`                 | 提出用 Cookie 全体                                 | —                              |
-| `ATCODER_SESSION`                | `REVEL_SESSION` の値のみ                           | —                              |
-| `ATCODER_SESSION_FILE`           | セッションファイル                                 | `~/.atcoder/session.txt`       |
-
-`ATCODER_JAVA_VER` は auto-start で使う JDK を選びます。起動した JDK の方が新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
-
-既定値の相対パスは `tools` からの位置です。`LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_INPROCESS_COMPILE`、`LOCAL_RUNNER_RUN_STACK_BYTES`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE` は常駐サーバーが読みます。Windows から WSL へ auto-start する場合は Windows 側の環境変数が引き継がれないため、WSL の `~/.profile` に設定してください。
-
-## セッションファイル例
+`submit` には AtCoder のログイン情報が必要です。ブラウザの Cookie の `REVEL_SESSION` の値をファイルへ保存します。
 
 ```powershell
 New-Item -ItemType Directory -Force "$HOME\.atcoder" | Out-Null
 Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -Encoding UTF8
 ```
 
-## ビルド
+## 環境変数
 
-CLI のソースを変更したら **`bun run build`**（typecheck ＋ CLI の exe 化）を実行してください。`bin/_runner.cmd` はこの exe があれば使い、無ければ `bun src` にフォールバックします。
+| 変数                       | 説明                                                                | 既定値                         |
+|----------------------------|---------------------------------------------------------------------|--------------------------------|
+| `LOCAL_RUNNER_URL`         | サーバーの URL                                                      | `http://localhost:8080`        |
+| `LOCAL_RUNNER_PORT`        | サーバーのポート                                                    | `8080`                         |
+| `LOCAL_RUNNER_BACKEND`     | Windows で `native` にすると、WSL を使わずに Windows の Bun と JDK で動かす | `wsl`                          |
+| `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                    | 有効                           |
+| `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                          | `24`                           |
+| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ                                  | `../library/java/src`          |
+| `ATCODER_HEADER_FILE`      | 提出物の先頭に付ける既定のヘッダーファイル                          | `../templates/header/java.txt` |
+| `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                  | `~/.atcoder/session.txt`       |
+| `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                | なし                           |
+| `ATCODER_COOKIE`           | 提出に使う Cookie 全体                                              | なし                           |
+| `NO_COLOR`                 | `1` で色付きの表示を止める                                          | なし                           |
 
-```powershell
-cd tools/local-runner
-bun run build        # = typecheck + build:cli:win
-```
+既定値の相対パスは `tools` からの位置です。
 
-Local Runner（サーバー）は単一バイナリ化しません。通常は`bin/start-local-runner.sh`経由でWSL上の`bun ./src/daemon/server.ts`を実行します（`serve`や`test`等のauto-startから自動起動）。 Java のコンパイルは外部 `javac` を都度起動せず **常駐Dispatcher 内の javac（インプロセス）** で行うため高速です。`Dispatcher.class` はソース未変更ならキャッシュを再利用します。
+Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE`)は、WSL の `~/.profile` に設定してください。
 
-## PATH に登録（任意）
+## 開発
 
-```powershell
-powershell -File ".\bin\install-path.ps1"
-```
-
-以後、任意ディレクトリから `test` / `submit` を実行できます。短縮表記は **問題フォルダ**で実行します（コンテストをフォルダから推定するため）。
-
-```powershell
-cd "C:\...\atcoder\abc\451-500\abc463\src\java"
-test d            # = test abc463_d D.java
-submit d          # = submit abc463_d D.java
-```
-
-## 注意
-
-- カスタム入力は `run <sourceFile> [inputFile]` で実行可能（`inputFile` 省略で空標準入力）
-- 色付きログは ANSI。`NO_COLOR=1` で無効化
-- `java/README.md` は Java 常駐側の補足（本 README の対象外）
-
-## 関連ドキュメント
-
-- [tools/README.md](../README.md)
-- [shared/README.md](../shared/README.md)
-- [userscripts/README.md](../userscripts/README.md)（ブラウザ側 Easy Test）
+内部の仕様と開発の手順は [DEVELOPMENT.md](./DEVELOPMENT.md) を参照してください。
