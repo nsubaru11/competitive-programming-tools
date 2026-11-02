@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, describe, expect, mock, test} from "bun:test";
+import {usesJavaLibrary} from "@atcoder-tools/shared";
 import type {JudgeLanguage, RunResult} from "@domain/execution/result";
 import {LocalRunnerClient} from "@application/execution/local-runner";
 import {PastePipeline} from "@application/source/paste-pipeline";
-import {usesLibrary} from "@application/source/transform-java";
 import {type CodeRunner, RunnerCatalogService} from "@application/execution/runner-catalog";
 import type {CodeEditor} from "@application/ports/code-editor";
 import type {JudgeSite, SampleCase} from "@application/ports/judge-site";
@@ -576,8 +576,8 @@ describe("javaSubmit", () => {
 	});
 
 	test("コメントの中の lib は案内の対象にしない", () => {
-		expect(usesLibrary("// import lib.ds.UnionFind;\nclass Main {}\n")).toBe(false);
-		expect(usesLibrary("import static lib.math.Mod.pow;\nclass Main {}\n")).toBe(true);
+		expect(usesJavaLibrary("// import lib.ds.UnionFind;\nclass Main {}\n")).toBe(false);
+		expect(usesJavaLibrary("import static lib.math.Mod.pow;\nclass Main {}\n")).toBe(true);
 	});
 
 	test("ショートカットで提出ボタンを押す", async () => {

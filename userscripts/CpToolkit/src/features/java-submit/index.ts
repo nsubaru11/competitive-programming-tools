@@ -1,9 +1,10 @@
+import {usesJavaLibrary} from "@atcoder-tools/shared";
 import type {SubmissionTarget} from "@domain/page/route";
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
 import {type CodeEditor, EDITOR_SETUP_DELAY_MS} from "@application/ports/code-editor";
-import {transformJava, usesLibrary} from "@application/source/transform-java";
+import {transformJava} from "@application/source/transform-java";
 import {registerShortcut} from "@ui/shortcuts";
 import {showToast} from "@ui/toast/toast";
 import {addTooltip} from "@ui/tooltip/tooltip";
@@ -84,7 +85,8 @@ export const javaSubmit = defineFeature({
 						href: LIBRARY_GUIDE_URL,
 						durationMs: GUIDE_DURATION_MS,
 					});
-				} else if (!connected && usesLibrary(code)) {
+				} else if (!connected && usesJavaLibrary(code)) {
+					// lib.* の展開は Local Runner の Java Compiler API が行う。ブラウザの字句の置換ではできない
 					showToast({
 						title: translate("javaSubmit.localRunnerRequired"),
 						detail: translate("javaSubmit.localRunnerGuide"),

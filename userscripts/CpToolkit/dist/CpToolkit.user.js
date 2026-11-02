@@ -606,6 +606,12 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		return out.join("");
 	}
 
+	var LIBRARY_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?lib\./m;
+
+	function usesJavaLibrary(code) {
+		return LIBRARY_IMPORT_PATTERN.test(createMaskedCode(code));
+	}
+
 	function findMatchingBrace(maskedText, openBraceIdx) {
 		let depth = 1;
 		for (let i = openBraceIdx + 1; i < maskedText.length; i++) {
@@ -4603,10 +4609,8 @@ a:focus > .cp-settings-entry {
 		}
 
 		run(task) {
-			return this.queue.run(() => {
-				if (!navigator.locks) return task();
-				return navigator.locks.request(this.lockName, () => task());
-			});
+			if (!navigator.locks) return this.queue.run(task);
+			return navigator.locks.request(this.lockName, task);
 		}
 	}
 
@@ -8228,12 +8232,6 @@ ${efficient_layout_default}`);
 	var EDITOR_SETUP_DELAY_MS = 500;
 
 	// CpToolkit/src/application/source/transform-java.ts
-	var LIBRARY_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?lib\./m;
-
-	function usesLibrary(code) {
-		return LIBRARY_IMPORT_PATTERN.test(createMaskedCode(code));
-	}
-
 	async function transformJava(code, localRunner2, options) {
 		let connected = false;
 		let libraryMissing = false;
@@ -8330,7 +8328,7 @@ ${efficient_layout_default}`);
 							href: LIBRARY_GUIDE_URL,
 							durationMs: GUIDE_DURATION_MS,
 						});
-					} else if (!connected && usesLibrary(code)) {
+					} else if (!connected && usesJavaLibrary(code)) {
 						showToast({
 							title: translate("javaSubmit.localRunnerRequired"),
 							detail: translate("javaSubmit.localRunnerGuide"),
@@ -8410,12 +8408,12 @@ ${efficient_layout_default}`);
 			const site = await judgeSite();
 			if (!container2 || !site) return;
 			const pinned = new PinnedLanguages(state);
-			const buttons = h("span");
-			Object.assign(buttons.style, {display: "contents"});
+			const bar = h("span");
+			Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
 			const render = () => {
 				const pinnedIds = pinned.ids();
 				const currentId = site.language()?.id;
-				buttons.replaceChildren(
+				bar.replaceChildren(
 					...site
 						.languages()
 						.filter(({id}) => pinnedIds.has(id))
@@ -8427,6 +8425,7 @@ ${efficient_layout_default}`);
 								onclick: () => site.selectLanguage(id),
 							}),
 						),
+					configButton,
 				);
 			};
 			const modal = createModal({
@@ -8461,8 +8460,6 @@ ${efficient_layout_default}`);
 				},
 				h("span", {className: "glyphicon glyphicon-cog"}),
 			);
-			const bar = h("span", {}, buttons, configButton);
-			Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
 			container2.append(bar);
 			render();
 			site.onLanguageChange(render);

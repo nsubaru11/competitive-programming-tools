@@ -86,6 +86,13 @@ export function createMaskedCode(text: string): string {
 	return out.join("");
 }
 
+const LIBRARY_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?lib\./m;
+
+/** lib.* を import しているか。コメントや文字列の中は数えない。 */
+export function usesJavaLibrary(code: string): boolean {
+	return LIBRARY_IMPORT_PATTERN.test(createMaskedCode(code));
+}
+
 function findMatchingBrace(maskedText: string, openBraceIdx: number): number {
 	let depth = 1;
 	for (let i = openBraceIdx + 1; i < maskedText.length; i++) {

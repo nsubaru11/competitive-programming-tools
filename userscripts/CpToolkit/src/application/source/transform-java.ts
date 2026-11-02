@@ -1,7 +1,5 @@
-import {createMaskedCode, type LocalRunnerHeaderOption, modifyJavaCode} from "@atcoder-tools/shared";
+import {type LocalRunnerHeaderOption, modifyJavaCode} from "@atcoder-tools/shared";
 import type {LocalRunnerClient} from "@application/execution/local-runner";
-
-const LIBRARY_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?lib\./m;
 
 export type JavaTransformOptions = {
 	readonly removePackage: boolean;
@@ -17,11 +15,6 @@ export type JavaTransformResult = {
 	/** Local Runner にライブラリが設定されていないので、lib.* を展開できなかった。 */
 	readonly libraryMissing: boolean;
 };
-
-/** lib.* の展開は Local Runner の Java Compiler API が行う。ブラウザの字句の置換ではできない。 */
-export function usesLibrary(code: string): boolean {
-	return LIBRARY_IMPORT_PATTERN.test(createMaskedCode(code));
-}
 
 /** Local Runner で変換する。使えないときだけ、字句の置換で最低限の修正を行う。 */
 export async function transformJava(

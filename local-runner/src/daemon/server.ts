@@ -1,12 +1,13 @@
 import crypto from "node:crypto";
 import http from "node:http";
 import {pathToFileURL} from "node:url";
-import type {
-	LocalRunnerCompilerInfo,
-	LocalRunnerHeaderOption,
-	LocalRunnerPrepareResponse,
-	LocalRunnerRunResponse,
-	LocalRunnerTransformResponse,
+import {
+	type LocalRunnerCompilerInfo,
+	type LocalRunnerHeaderOption,
+	type LocalRunnerPrepareResponse,
+	type LocalRunnerRunResponse,
+	type LocalRunnerTransformResponse,
+	usesJavaLibrary,
 } from "@atcoder-tools/shared";
 import type {RunnerStatusInfo} from "../types";
 import * as config from "../config";
@@ -34,13 +35,12 @@ const ALLOWED_ORIGINS_OVERRIDE = (process.env.LOCAL_RUNNER_ALLOWED_ORIGINS || ""
 
 // 変換できるのは Java だけ。言語が増えたら要求から受け取る。
 const SOURCE_LANGUAGE = "java";
-const LIBRARY_IMPORT = /^\s*import\s+(?:static\s+)?lib\./m;
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
 							 validate = true): Promise<LocalRunnerTransformResponse> {
 	const result = await dispatcher.queueDispatcherTransform(sourceCode, config.resolveLibrarySourceRoot(), debug, autoImport, validate);
-	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && LIBRARY_IMPORT.test(sourceCode);
+	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && usesJavaLibrary(sourceCode);
 	return {
 		status: result.exitCode === 0 ? "success" : "compileError",
 		sourceCode: result.sourceCode,

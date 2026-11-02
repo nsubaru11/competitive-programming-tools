@@ -16,10 +16,9 @@ export class CrossTabQueue {
 	constructor(private readonly lockName: string) {
 	}
 
+	/** Web Locks はタブの中の要求も受け付けた順に並べるので、ここで並べるのは Web Locks がないときだけ。 */
 	run<T>(task: () => Promise<T>): Promise<T> {
-		return this.queue.run(() => {
-			if (!navigator.locks) return task();
-			return navigator.locks.request(this.lockName, () => task()) as Promise<T>;
-		});
+		if (!navigator.locks) return this.queue.run(task);
+		return navigator.locks.request(this.lockName, task) as Promise<T>;
 	}
 }

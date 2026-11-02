@@ -19,19 +19,20 @@ export const languageButtons = defineFeature({
 		if (!container || !site) return;
 
 		const pinned = new PinnedLanguages(state);
-		const buttons = h("span");
-		Object.assign(buttons.style, {display: "contents"});
+		// サイトは #select-lang の直下の div を問題の切り替えで隠すので、span に入れる
+		const bar = h("span");
+		Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
 
 		/** 問題を切り替えると選択欄も変わるので、そのたびに作り直す。 */
 		const render = (): void => {
 			const pinnedIds = pinned.ids();
 			const currentId = site.language()?.id;
-			buttons.replaceChildren(...site.languages().filter(({id}) => pinnedIds.has(id)).map(({id, label}) => h("button", {
+			bar.replaceChildren(...site.languages().filter(({id}) => pinnedIds.has(id)).map(({id, label}) => h("button", {
 				type: "button",
 				className: `btn btn-sm ${id === currentId ? "btn-success" : "btn-default"}`,
 				textContent: label,
 				onclick: () => site.selectLanguage(id),
-			})));
+			})), configButton);
 		};
 
 		const modal = createModal({
@@ -67,9 +68,6 @@ export const languageButtons = defineFeature({
 			},
 			h("span", {className: "glyphicon glyphicon-cog"}),
 		);
-		// サイトは #select-lang の直下の div を問題の切り替えで隠すので、span に入れる
-		const bar = h("span", {}, buttons, configButton);
-		Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
 		container.append(bar);
 
 		render();
