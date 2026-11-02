@@ -51,23 +51,23 @@ Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-run
 
 ## コマンド
 
-| コマンド                                                       | 説明                                                                                         |
-|----------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `test <taskScreenName> <sourceFile>`                           | AtCoder のサンプルで実行し、AC か WA かを判定する                                            |
-| `test <task>`                                                  | 短縮表記。フォルダからコンテストを推定する(例: `test d`)                                     |
-| `submit [-f] <taskScreenName> <sourceFile>`                    | サンプルがすべて AC なら提出する。`-f` で強制的に提出する                                    |
-| `submit [-f] <task>`                                           | 短縮表記(例: `submit d`)                                                                     |
-| `localtest <sourceFile> [testDir]`                             | `.in` と `.out` を自動で探し、オフラインで実行して判定する                                   |
-| `run <sourceFile> [inputFile]`                                 | 1回だけ実行して出力を表示する。`inputFile` を省くと標準入力は空になる                        |
-| `crosscheck <actualSourceFile> <expectedSourceFile> [testDir]` | `.in` を入力に2つのコードを実行し、標準出力を比べる。`.out` は不要                           |
-| `tomain <sourceFile> [outFile]`                                | 提出用の `Main.java` を書き出す。`-f` で上書きする                                           |
-| `toclip <sourceFile>`、`toclip <task>`                         | 提出用のソースをクリップボードへコピーする(例: `toclip d`)                                   |
-| `serve`                                                        | サーバーを起動し、準備が終わるまで待つ                                                       |
-| `stop`                                                         | サーバーを停止する                                                                           |
-| `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                               |
-| `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する    |
+| コマンド                                                       | 説明                                                                                               |
+|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `test <taskScreenName> <sourceFile>`                           | AtCoder のサンプルで実行し、AC か WA かを判定する                                                  |
+| `test <task>`                                                  | 短縮表記。フォルダからコンテストを推定する(例: `test d`)                                           |
+| `submit [-f] <taskScreenName> <sourceFile>`                    | サンプルがすべて AC なら提出する。`-f` で強制的に提出する                                          |
+| `submit [-f] <task>`                                           | 短縮表記(例: `submit d`)                                                                           |
+| `localtest <sourceFile> [testDir]`                             | `.in` と `.out` を自動で探し、オフラインで実行して判定する                                         |
+| `run <sourceFile> [inputFile]`                                 | 1回だけ実行して出力を表示する。`inputFile` を省くと標準入力は空になる                              |
+| `crosscheck <actualSourceFile> <expectedSourceFile> [testDir]` | `.in` を入力に2つのコードを実行し、標準出力を比べる。`.out` は不要                                 |
+| `tomain <sourceFile> [outFile]`                                | 提出用の `Main.java` を書き出す。`-f` で上書きする                                                 |
+| `toclip <sourceFile>`、`toclip <task>`                         | 提出用のソースをクリップボードへコピーする(例: `toclip d`)                                         |
+| `serve`                                                        | サーバーを起動し、準備が終わるまで待つ                                                             |
+| `stop`                                                         | サーバーを停止する                                                                                 |
+| `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                                     |
+| `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する          |
 | `setheader <language\|name> <file>`                            | 言語の既定のヘッダーか、名前付きのヘッダーを設定する。引数なしで一覧を表示し、`--clear` で解除する |
-| `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                             |
+| `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                                   |
 
 `taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
 
@@ -200,18 +200,18 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 
 ## 環境変数
 
-| 変数                       | 説明                                                                | 既定値                         |
-|----------------------------|---------------------------------------------------------------------|--------------------------------|
-| `LOCAL_RUNNER_URL`         | サーバーの URL                                                      | `http://localhost:8080`        |
-| `LOCAL_RUNNER_PORT`        | サーバーのポート                                                    | `8080`                         |
-| `LOCAL_RUNNER_BACKEND`     | Windows で `native` にすると、WSL を使わずに Windows の Bun と JDK で動かす | `wsl`                          |
-| `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                    | 有効                           |
-| `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                          | `24`                           |
-| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ。`setlib` の設定より優先する     | なし                           |
-| `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                  | `~/.atcoder/session.txt`       |
-| `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                | なし                           |
-| `ATCODER_COOKIE`           | 提出に使う Cookie 全体                                              | なし                           |
-| `NO_COLOR`                 | `1` で色付きの表示を止める                                          | なし                           |
+| 変数                       | 説明                                                                        | 既定値                   |
+|----------------------------|-----------------------------------------------------------------------------|--------------------------|
+| `LOCAL_RUNNER_URL`         | サーバーの URL                                                              | `http://localhost:8080`  |
+| `LOCAL_RUNNER_PORT`        | サーバーのポート                                                            | `8080`                   |
+| `LOCAL_RUNNER_BACKEND`     | Windows で `native` にすると、WSL を使わずに Windows の Bun と JDK で動かす | `wsl`                    |
+| `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                            | 有効                     |
+| `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                                  | `24`                     |
+| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ。`setlib` の設定より優先する             | なし                     |
+| `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                          | `~/.atcoder/session.txt` |
+| `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                        | なし                     |
+| `ATCODER_COOKIE`           | 提出に使う Cookie 全体                                                      | なし                     |
+| `NO_COLOR`                 | `1` で色付きの表示を止める                                                  | なし                     |
 
 既定値の相対パスは `tools` からの位置です。
 

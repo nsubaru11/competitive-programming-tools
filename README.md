@@ -2,10 +2,10 @@
 
 競技プログラミング向けの補助ツールです。
 
-| ツール                                               | 内容                                                                  | 使い始める                                                                     |
-|------------------------------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| [CP Toolkit](./userscripts/CpToolkit/README.md)      | AtCoder などのページに補助機能を足す UserScript。機能ごとに ON/OFF できる | [Greasy Fork からインストール](https://greasyfork.org/scripts/603262-cp-toolkit) |
-| [Local Runner](./local-runner/README.md)             | Java の解答を手元で実行、判定、提出する CLI とサーバー                | [セットアップ](./local-runner/README.md#セットアップ)                          |
+| ツール                                          | 内容                                                                      | 使い始める                                                                       |
+|-------------------------------------------------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| [CP Toolkit](./userscripts/CpToolkit/README.md) | AtCoder などのページに補助機能を足す UserScript。機能ごとに ON/OFF できる | [Greasy Fork からインストール](https://greasyfork.org/scripts/603262-cp-toolkit) |
+| [Local Runner](./local-runner/README.md)        | Java の解答を手元で実行、判定、提出する CLI とサーバー                    | [セットアップ](./local-runner/README.md#セットアップ)                            |
 
 CP Toolkit だけなら、インストールするだけで使えます。Local Runner は Java のライブラリの展開や、問題ページからの手元での実行に使います。
 
@@ -22,12 +22,12 @@ competitive-programming-tools/
 └── local-runner/   # CLI と Local Runner サーバー
 ```
 
-| 対象         | 文書                                                                                                                  |
-|--------------|-----------------------------------------------------------------------------------------------------------------------|
-| CP Toolkit   | [userscripts/CpToolkit/DEVELOPMENT.md](./userscripts/CpToolkit/DEVELOPMENT.md)                                        |
-| UserScript   | [userscripts/README.md](./userscripts/README.md)                                                                      |
+| 対象         | 文書                                                                                                                       |
+|--------------|----------------------------------------------------------------------------------------------------------------------------|
+| CP Toolkit   | [userscripts/CpToolkit/DEVELOPMENT.md](./userscripts/CpToolkit/DEVELOPMENT.md)                                             |
+| UserScript   | [userscripts/README.md](./userscripts/README.md)                                                                           |
 | Local Runner | [local-runner/DEVELOPMENT.md](./local-runner/DEVELOPMENT.md)、[local-runner/java/README.md](./local-runner/java/README.md) |
-| 共通コード   | [shared/README.md](./shared/README.md)                                                                                |
+| 共通コード   | [shared/README.md](./shared/README.md)                                                                                     |
 
 ### 方針
 
