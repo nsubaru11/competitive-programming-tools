@@ -26,8 +26,15 @@ describe("localSettings", () => {
 		expect(readLocalSettings(file)).toEqual({});
 		fs.writeFileSync(file, "{broken");
 		expect(readLocalSettings(file)).toEqual({});
-		fs.writeFileSync(file, JSON.stringify({librarySourceRoot: 1}));
+		fs.writeFileSync(file, JSON.stringify({librarySourceRoot: 1, headerFiles: {java: 1}}));
 		expect(readLocalSettings(file)).toEqual({});
+	});
+
+	test("ライブラリとヘッダーの設定を両方読む", () => {
+		const file = path.join(dir, "settings.json");
+		const settings = {librarySourceRoot: "/library/src", headerFiles: {java: "/header/java.txt"}};
+		writeLocalSettings(file, settings);
+		expect(readLocalSettings(file)).toEqual(settings);
 	});
 
 	test("src を直接指定しても、ライブラリのルートを指定しても src を返す", () => {

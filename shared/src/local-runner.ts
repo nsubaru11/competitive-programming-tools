@@ -23,7 +23,7 @@ export type LocalRunnerPrecompileRequest = {
 	sourceCode: string;
 };
 
-/** 提出物の先頭に付けるヘッダー。true は既定のファイル、文字列は templates/header/<名前>.txt、false は付けない。 */
+/** 提出物の先頭に付けるヘッダー。true は言語の設定、文字列は setheader で設定した名前、false は付けない。 */
 export type LocalRunnerHeaderOption = boolean | string;
 
 export type LocalRunnerTransformRequest = {

@@ -4,14 +4,28 @@ import path from "node:path";
 /** 利用者がコマンドで設定する値。環境ごとに違うので、リポジトリには入れない。 */
 export type LocalSettings = {
 	librarySourceRoot?: string;
+	/** 言語やヘッダーの名前ごとの、提出物の先頭に付けるファイル。 */
+	headerFiles?: Record<string, string>;
 };
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+	return typeof value === "object" && value !== null && Object.values(value).every((item) => typeof item === "string");
+}
+
+/** ヘッダーの名前は HTTP でも受け取るので、形式を限定する。 */
+export function isHeaderName(name: string): boolean {
+	return /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(name);
+}
 
 export function readLocalSettings(file: string): LocalSettings {
 	try {
 		const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
 		if (typeof parsed !== "object" || parsed === null) return {};
-		const {librarySourceRoot} = parsed as Record<string, unknown>;
-		return typeof librarySourceRoot === "string" ? {librarySourceRoot} : {};
+		const {librarySourceRoot, headerFiles} = parsed as Record<string, unknown>;
+		return {
+			...(typeof librarySourceRoot === "string" ? {librarySourceRoot} : {}),
+			...(isStringRecord(headerFiles) ? {headerFiles} : {}),
+		};
 	} catch {
 		return {};
 	}

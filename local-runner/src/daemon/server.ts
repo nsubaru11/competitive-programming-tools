@@ -32,6 +32,8 @@ const ALLOWED_ORIGINS_OVERRIDE = (process.env.LOCAL_RUNNER_ALLOWED_ORIGINS || ""
 	.map((s) => s.trim())
 	.filter(Boolean);
 
+// 変換できるのは Java だけ。言語が増えたら要求から受け取る。
+const SOURCE_LANGUAGE = "java";
 const LIBRARY_IMPORT = /^\s*import\s+(?:static\s+)?lib\./m;
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
@@ -318,6 +320,7 @@ const server = http.createServer(async (req, res) => {
 			response = applySubmissionHeader(
 				await transformCode(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate !== false),
 				request.header ?? true,
+				SOURCE_LANGUAGE,
 			);
 		} else if (request.mode === "prepare" && typeof request.sourceCode === "string") {
 			cancelMatchingPrecompile(request.sourceCode);
@@ -325,6 +328,7 @@ const server = http.createServer(async (req, res) => {
 			response = applySubmissionHeader(
 				await prepareCodeCached(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate === true),
 				request.header ?? false,
+				SOURCE_LANGUAGE,
 			);
 		} else if (request.mode === "run" &&
 			(typeof request.sourceCode === "string" || typeof request.programId === "string")) {

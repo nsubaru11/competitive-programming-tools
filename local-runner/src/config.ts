@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {readLocalSettings, toRuntimePath} from "./localSettings";
+import {isHeaderName, readLocalSettings, toRuntimePath} from "./localSettings";
 
 const importMetaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -57,14 +57,13 @@ export function loadedLibrarySource(): string | null {
 }
 
 /**
- * 提出物の先頭に付けるヘッダーファイル。name で templates/header/<name>.txt を選べる。
- * name は HTTP で受け取る値なので、このフォルダの外を指せない形式だけを許可する。
+ * setheader で設定したヘッダーファイルを返す。設定が無ければ null。
+ * name は HTTP で受け取る値なので、設定済みの名前だけを引き、パスとしては扱わない。
  */
-export function resolveSubmissionHeaderFile(name?: string): string {
-	const headerDir = path.resolve(PROJECT_ROOT, "../templates/header");
-	if (name === undefined) return process.env.ATCODER_HEADER_FILE || path.join(headerDir, "java.txt");
-	if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(name)) throw new Error(`Invalid header name: "${name}"`);
-	return path.join(headerDir, `${name}.txt`);
+export function resolveSubmissionHeaderFile(name: string): string | null {
+	if (!isHeaderName(name)) throw new Error(`Invalid header name: "${name}"`);
+	const file = readLocalSettings(LOCAL_SETTINGS_FILE).headerFiles?.[name];
+	return typeof file === "string" ? toRuntimePath(file) : null;
 }
 
 export const CLI_CONFIG = {

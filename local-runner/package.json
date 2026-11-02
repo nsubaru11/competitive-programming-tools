@@ -19,6 +19,7 @@
 		"localtest": "bun ./src/cli/index.ts localtest",
 		"serve": "bun ./src/cli/index.ts serve",
 		"setlib": "bun ./src/cli/index.ts setlib",
+		"setheader": "bun ./src/cli/index.ts setheader",
 		"build:cli:win": "bun build --compile --target=bun-windows-x64 ./src/cli/index.ts --outfile ./bin/atcoder-cli-runner.exe",
 		"build": "bun run typecheck && bun run build:cli:win",
 		"typecheck": "tsc --noEmit",

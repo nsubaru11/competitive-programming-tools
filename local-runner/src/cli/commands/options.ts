@@ -4,7 +4,7 @@ import {CliUsageError} from "./Command";
 /**
  * 提出物のヘッダー指定を解釈するヘルパー。受け付ける形式:
  *   --no-header       → 付けない
- *   --header=<名前>   → templates/header/<名前>.txt を付ける
+ *   --header=<名前>   → setheader で <名前> に設定したファイルを付ける
  *
  * arg がこのフラグでなければ undefined を返す。
  */

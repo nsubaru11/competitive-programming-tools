@@ -66,6 +66,7 @@ Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-run
 | `stop`                                                         | サーバーを停止する                                                                           |
 | `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                               |
 | `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する    |
+| `setheader <language> <file>`                                  | 提出用ヘッダーのファイルを言語ごとに設定する。引数なしで一覧を表示し、`--clear` で解除する   |
 | `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                             |
 
 `taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
@@ -91,7 +92,7 @@ Windows 以外では、`bin` の `.cmd` の代わりに `bun run --cwd local-run
 | `-f`, `--force`               | `submit`、`tomain`                             | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする       |
 | `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                     | ソースの `DEBUG` の有効と無効を切り替える(既定は有効)                                  |
 | `--no-header`                 | `submit`、`tomain`、`toclip`                   | 提出物の先頭にヘッダーを付けない                                                       |
-| `--header=<name>`             | `submit`、`tomain`、`toclip`                   | `templates/header/<name>.txt` をヘッダーに使う(既定は `java`)                          |
+| `--header=<name>`             | `submit`、`tomain`、`toclip`                   | `setheader` で `<name>` に設定したファイルをヘッダーに使う(既定は `java`)              |
 | `--full`                      | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                        |
 | `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分のうち、一致しない行だけを表示する                                            |
 | `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたむ行数を変える(既定は 20)                                           |
@@ -161,10 +162,17 @@ import lib.io.FastScanner;
 
 ## 提出用ヘッダー
 
-`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助は、提出物の先頭に `templates/header/java.txt` を付けます。`templates` は `tools` と同じフォルダに置きます。
+提出物の先頭に付けるコメントなどのファイルを、言語ごとに `setheader` で設定できます。`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助が使います。今のところ変換に対応している言語は Java だけなので、使われるのは `java` の設定です。
 
-- ファイルが無ければ付けません
-- `--no-header` で付けずに出力し、`--header=<name>` で `templates/header/<name>.txt` を選べます。選んだファイルが無ければエラーで止まります
+```bash
+setheader java C:\path\to\header.txt
+```
+
+- 設定は `local-runner.settings.json` に保存します。サーバーの再起動はいりません
+- `setheader` だけで一覧を表示し、`setheader java --clear` で解除します
+- 設定が無ければヘッダーは付けません。設定したファイルが見つからないときはエラーで止まります
+- 言語の名前のほかに、好きな名前でも設定できます。`--header=<name>` や CP Toolkit の「ヘッダーの名前」で選べます。設定が無い名前はエラーになります
+- `--no-header` で、ヘッダーを付けずに出力します
 - ソースがヘッダーの1行目で始まるときは、重ねて付けません
 - `run`、`test`、`localtest`、`crosscheck` と Easy Test の実行には付けません。行番号が元のソースと揃います
 
@@ -196,7 +204,6 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 | `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                    | 有効                           |
 | `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                          | `24`                           |
 | `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ。`setlib` の設定より優先する     | なし                           |
-| `ATCODER_HEADER_FILE`      | 提出物の先頭に付ける既定のヘッダーファイル                          | `../templates/header/java.txt` |
 | `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                  | `~/.atcoder/session.txt`       |
 | `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                | なし                           |
 | `ATCODER_COOKIE`           | 提出に使う Cookie 全体                                              | なし                           |
@@ -204,7 +211,7 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 
 既定値の相対パスは `tools` からの位置です。
 
-Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`、`ATCODER_HEADER_FILE`)は、WSL の `~/.profile` に設定してください。`setlib` の設定は引き継がれます。
+Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`)は、WSL の `~/.profile` に設定してください。`setlib` と `setheader` の設定は引き継がれます。
 
 ## 開発
 
