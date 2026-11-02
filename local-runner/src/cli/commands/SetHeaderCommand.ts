@@ -9,9 +9,10 @@ import {CliUsageError} from "./Command";
 export class SetHeaderCommand implements Command {
 	readonly name = "setheader";
 	readonly usageLines = [
-		"  setheader <language> <file>             (set the header file of a language, e.g. setheader java header.txt)",
-		"  setheader [language]                    (show the current header files)",
-		"  setheader <language> --clear            (stop adding the header of a language)",
+		"  setheader <language> <file>             (set the default header of a language, e.g. setheader java header.txt)",
+		"  setheader <name> <file>                 (set a named header, used with --header=<name>)",
+		"  setheader [language|name]               (show the current header files)",
+		"  setheader <language|name> --clear       (remove a header file)",
 	];
 
 	async execute(args: string[]): Promise<number> {
