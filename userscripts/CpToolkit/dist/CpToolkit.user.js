@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.26
+// @version        1.0.27
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2010,7 +2010,7 @@ a:focus > .cp-settings-entry {
 		"category.execution": "Execution",
 		"wideLayout.title": "Wider page",
 		"wideLayout.description": "Widens the central column of the page.",
-		"wideLayout.width": "Width (e.g. 50%, 1200px)",
+		"wideLayout.width": "Width (e.g. 50%, 1200px; empty for the original width)",
 		"hoverMenu.title": "Open menus on hover",
 		"hoverMenu.description": "Opens menus when the pointer moves over them.",
 		"hoverMenu.openStatementDetails": "Expand collapsed sections in statements",
@@ -2224,7 +2224,7 @@ a:focus > .cp-settings-entry {
 		"category.execution": "実行環境",
 		"wideLayout.title": "ページ幅の拡張",
 		"wideLayout.description": "ページ中央の幅を広げます。",
-		"wideLayout.width": "幅(例: 50%, 1200px)",
+		"wideLayout.width": "幅(例: 50%, 1200px。空欄なら元の幅)",
 		"hoverMenu.title": "メニューのホバー表示",
 		"hoverMenu.description": "マウスを重ねるだけでメニューを開きます。",
 		"hoverMenu.openStatementDetails": "問題文の折りたたみを最初から開く",
@@ -10697,10 +10697,14 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 		routes: ["atcoder:page"],
 		phase: "start",
 		options: {
-			width: option.text("50%", "wideLayout.width", {validate: (value) => CSS.supports("width", value)}),
+			width: option.text("", "wideLayout.width", {
+				validate: (value) => value === "" || CSS.supports("width", value),
+			}),
 		},
 		live: true,
 		start({options}) {
+			if (options.width === "") return () => {
+			};
 			const style = injectStyle(`:root {--cp-main-width: ${options.width};}
 ${wide_layout_default}`);
 			return () => style.remove();

@@ -29,7 +29,7 @@ category.execution: 実行環境
 
 wideLayout.title: ページ幅の拡張
 wideLayout.description: ページ中央の幅を広げます。
-wideLayout.width: "幅(例: 50%, 1200px)"
+wideLayout.width: "幅(例: 50%, 1200px。空欄なら元の幅)"
 
 hoverMenu.title: メニューのホバー表示
 hoverMenu.description: マウスを重ねるだけでメニューを開きます。

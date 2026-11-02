@@ -28,7 +28,7 @@ category.execution: Execution
 
 wideLayout.title: Wider page
 wideLayout.description: Widens the central column of the page.
-wideLayout.width: "Width (e.g. 50%, 1200px)"
+wideLayout.width: "Width (e.g. 50%, 1200px; empty for the original width)"
 
 hoverMenu.title: Open menus on hover
 hoverMenu.description: Opens menus when the pointer moves over them.

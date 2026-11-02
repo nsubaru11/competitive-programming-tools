@@ -98,7 +98,7 @@ describe("配布物", () => {
 	});
 
 	test("起動すると印を付け、有効な機能を動かし、メニューを登録する", async () => {
-		run(createGmApi());
+		run(createGmApi({settings: {version: 1, features: {"wide-layout": {options: {width: "50%"}}}}}));
 		await nextTask();
 
 		expect(document.documentElement.dataset.cpToolkit).toBe("9.9.9");
@@ -107,7 +107,7 @@ describe("配布物", () => {
 	});
 
 	test("無効にした機能は動かさない", async () => {
-		run(createGmApi({settings: {version: 1, features: {"wide-layout": {enabled: false}}}}));
+		run(createGmApi({settings: {version: 1, features: {"wide-layout": {enabled: false, options: {width: "50%"}}}}}));
 		await nextTask();
 
 		expect(injectedCss()).not.toContain("--cp-main-width");

@@ -12,10 +12,12 @@ export const wideLayout = defineFeature({
 	routes: ["atcoder:page"],
 	phase: "start",
 	options: {
-		width: option.text("50%", "wideLayout.width", {validate: (value) => CSS.supports("width", value)}),
+		width: option.text("", "wideLayout.width", {validate: (value) => value === "" || CSS.supports("width", value)}),
 	},
 	live: true,
 	start({options}) {
+		// 空欄ならページ本来の幅のままにする
+		if (options.width === "") return () => {};
 		const style = injectStyle(`:root {--cp-main-width: ${options.width};}\n${css}`);
 		return () => style.remove();
 	},

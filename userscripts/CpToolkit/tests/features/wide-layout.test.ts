@@ -20,8 +20,13 @@ describe("wideLayout", () => {
 		expect(css).toContain("#main-container");
 	});
 
+	test("既定ではスタイルを加えない", async () => {
+		await wideLayout.run(undefined, services);
+		expect(injectedStyles()).toHaveLength(0);
+	});
+
 	test("後始末でスタイルを取り除く", async () => {
-		const dispose = await wideLayout.run(undefined, services);
+		const dispose = await wideLayout.run({width: "1200px"}, services);
 		expect(injectedStyles()).toHaveLength(1);
 		dispose?.();
 		expect(injectedStyles()).toHaveLength(0);
