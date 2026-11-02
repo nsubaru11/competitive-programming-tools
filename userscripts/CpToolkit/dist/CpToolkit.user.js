@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.19
+// @version        1.0.20
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -7844,6 +7844,11 @@ pre code {tab-size: 4;}`;
 		},
 	});
 
+	// CpToolkit/src/domain/statement/sample.ts
+	function isSampleTitle(sampleHeadings, title) {
+		return sampleHeadings.some((heading) => title.includes(heading));
+	}
+
 	// CpToolkit/src/features/efficient-layout/efficient-layout.css
 	var efficient_layout_default = `.io-style {
 	display: flex;
@@ -7887,6 +7892,11 @@ pre code {tab-size: 4;}`;
 		return row;
 	}
 
+	function isSamplePart(element) {
+		if (!element.classList.contains("part")) return false;
+		return isSampleTitle(statementCatalog.sampleHeadings, element.querySelector("h3")?.textContent ?? "");
+	}
+
 	function arrangeSamples(ioStyle, translate) {
 		const parent = ioStyle.parentElement;
 		if (!parent) return;
@@ -7895,7 +7905,7 @@ pre code {tab-size: 4;}`;
 		for (const element of following) {
 			if (element.tagName === "HR") element.remove();
 		}
-		const samples = following.filter((element) => element.classList.contains("part"));
+		const samples = following.filter(isSamplePart);
 		const groupSize = samples.length % 2 === 0 ? 2 : 1;
 		for (let index = 0; index < samples.length; index += groupSize) {
 			const group = samples.slice(index, index + groupSize);
@@ -9168,8 +9178,7 @@ ${efficient_layout_default}`);
 	var EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right, .cp-title-control";
 
 	function isSampleHeading(section) {
-		const title = section.querySelector("h3")?.textContent ?? "";
-		return statementCatalog.sampleHeadings.some((heading) => title.includes(heading));
+		return isSampleTitle(statementCatalog.sampleHeadings, section.querySelector("h3")?.textContent ?? "");
 	}
 
 	function withoutControls(element) {

@@ -1,5 +1,6 @@
 import {statementCatalog} from "@catalog/tables";
 import {option} from "@domain/settings/option";
+import {isSampleTitle} from "@domain/statement/sample";
 import {defineFeature} from "@application/feature/definition";
 import {h} from "@ui/element";
 
@@ -7,8 +8,7 @@ const COPIED_LABEL_MS = 1500;
 const EXCLUDED_FROM_COPY = ".btn, .btn-copy, .btn-pre, .div-btn-copy, .pull-right, .cp-title-control";
 
 function isSampleHeading(section: Element): boolean {
-	const title = section.querySelector("h3")?.textContent ?? "";
-	return statementCatalog.sampleHeadings.some((heading) => title.includes(heading));
+	return isSampleTitle(statementCatalog.sampleHeadings, section.querySelector("h3")?.textContent ?? "");
 }
 
 function withoutControls(element: Element): HTMLElement {

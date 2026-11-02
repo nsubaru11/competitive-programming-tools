@@ -1,4 +1,6 @@
+import {statementCatalog} from "@catalog/tables";
 import {option} from "@domain/settings/option";
+import {isSampleTitle} from "@domain/statement/sample";
 import {defineFeature} from "@application/feature/definition";
 import type {Translate} from "@catalog/messages";
 import {h, injectStyle} from "@ui/element";
@@ -19,7 +21,12 @@ function createSampleRow(parent: Element, translate: Translate): HTMLElement {
 	return row;
 }
 
-/** 入出力形式より後の項目がサンプル。入力と出力の組なら2個ずつまとめる。 */
+function isSamplePart(element: Element): boolean {
+	if (!element.classList.contains("part")) return false;
+	return isSampleTitle(statementCatalog.sampleHeadings, element.querySelector("h3")?.textContent ?? "");
+}
+
+/** 入出力形式より後の項目のうち、見出しがサンプルのものを並べる。部分点などはその場に残す。入力と出力の組なら2個ずつまとめる。 */
 function arrangeSamples(ioStyle: Element, translate: Translate): void {
 	const parent = ioStyle.parentElement;
 	if (!parent) return;
@@ -28,7 +35,7 @@ function arrangeSamples(ioStyle: Element, translate: Translate): void {
 	for (const element of following) {
 		if (element.tagName === "HR") element.remove();
 	}
-	const samples = following.filter((element) => element.classList.contains("part"));
+	const samples = following.filter(isSamplePart);
 	const groupSize = samples.length % 2 === 0 ? 2 : 1;
 	for (let index = 0; index < samples.length; index += groupSize) {
 		const group = samples.slice(index, index + groupSize);

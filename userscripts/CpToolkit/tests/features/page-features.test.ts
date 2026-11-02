@@ -257,7 +257,7 @@ describe("efficientLayout", () => {
 		document.body.innerHTML = `<span class="lang">
 			<div class="io-style"><div class="part">入力</div><div class="part">出力</div></div>
 			<hr>
-			<div class="part">入力例</div><div class="part">出力例</div>
+			<div class="part"><h3>入力例 1</h3></div><div class="part"><h3>出力例 1</h3></div>
 		</span>`;
 		await run(efficientLayout);
 
@@ -267,10 +267,25 @@ describe("efficientLayout", () => {
 		expect(document.querySelector("hr")).toBeNull();
 	});
 
+	test("部分点はサンプルに含めず、入力例と出力例の組を保つ", async () => {
+		document.body.innerHTML = `<span class="lang">
+			<div class="io-style"><div class="part">入力</div></div>
+			<div class="part" id="partial"><h3>部分点</h3></div>
+			<div class="part"><h3>入力例 1</h3></div><div class="part"><h3>出力例 1</h3></div>
+			<div class="part"><h3>入力例 2</h3></div><div class="part"><h3>出力例 2</h3></div>
+		</span>`;
+		await run(efficientLayout);
+
+		expect(document.querySelector(".cp-samples-row")?.children).toHaveLength(2);
+		expect(document.querySelector(".cp-samples-row > div")?.children).toHaveLength(2);
+		expect(document.querySelector("#partial")?.closest(".cp-samples-row")).toBeNull();
+		expect(document.querySelector("#partial")?.parentElement?.className).toBe("lang");
+	});
+
 	test("KaTeX の絶対配置の要素が外へ漏れないように、サンプルの枠を基準にする", async () => {
 		document.body.innerHTML = `<span class="lang">
 			<div class="io-style"><div class="part">入力</div></div>
-			<div class="part">入力例</div><div class="part">出力例</div>
+			<div class="part"><h3>入力例 1</h3></div><div class="part"><h3>出力例 1</h3></div>
 		</span>`;
 		await run(efficientLayout);
 
