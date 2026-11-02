@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.25
+// @version        1.0.26
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2152,6 +2152,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.localRunnerRequired": "Expanding lib.* needs Local Runner",
 		"javaSubmit.localRunnerGuide":
 			"Could not connect to Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.",
+		"javaSubmit.libraryRequired": "Expanding lib.* needs the library to be set",
+		"javaSubmit.libraryGuide":
+			"The library folder is not set in Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.",
 		"javaSubmit.removePackage": "Remove package declarations when Local Runner is unavailable",
 		"javaSubmit.renameClass": "Rename the class to Main when Local Runner is unavailable",
 		"javaSubmit.fixDebug": "Set DEBUG to false when Local Runner is unavailable",
@@ -2363,6 +2366,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.localRunnerRequired": "lib.* の展開には Local Runner が必要です",
 		"javaSubmit.localRunnerGuide":
 			"Local Runner に接続できなかったので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから導入方法を確認できます。",
+		"javaSubmit.libraryRequired": "lib.* の展開にはライブラリの設定が必要です",
+		"javaSubmit.libraryGuide":
+			"Local Runner にライブラリのフォルダが設定されていないので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから設定方法を確認できます。",
 		"javaSubmit.removePackage": "Local Runner がないときにパッケージ宣言を削除する",
 		"javaSubmit.renameClass": "Local Runner がないときにクラス名を Main にする",
 		"javaSubmit.fixDebug": "Local Runner がないときに DEBUG を false にする",
@@ -8230,15 +8236,18 @@ ${efficient_layout_default}`);
 
 	async function transformJava(code, localRunner2, options) {
 		let connected = false;
+		let libraryMissing = false;
 		if (localRunner2.isAvailable()) {
 			try {
 				const transformed = await localRunner2.transform(code, options.header);
 				connected = true;
-				if (transformed.status === "success") return {sourceCode: transformed.sourceCode, connected};
+				if (transformed.status === "success")
+					return {sourceCode: transformed.sourceCode, connected, libraryMissing};
+				libraryMissing = transformed.libraryMissing === true;
 			} catch {
 			}
 		}
-		return {sourceCode: modifyJavaCode(code, options).modified, connected};
+		return {sourceCode: modifyJavaCode(code, options).modified, connected, libraryMissing};
 	}
 
 	// CpToolkit/src/features/java-submit/index.ts
@@ -8247,6 +8256,7 @@ ${efficient_layout_default}`);
 	var FOLD_DELAY_MS = 100;
 	var PASTE_ORDER = 10;
 	var LOCAL_RUNNER_GUIDE_URL = "https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner";
+	var LIBRARY_GUIDE_URL = `${LOCAL_RUNNER_GUIDE_URL}#ライブラリを使う`;
 	var GUIDE_DURATION_MS = 15000;
 
 	function findSubmitButton({submitButtons, labeledSubmit}) {
@@ -8308,8 +8318,19 @@ ${efficient_layout_default}`);
 				order: PASTE_ORDER,
 				async transform(code, {editor}) {
 					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-					const {sourceCode, connected} = await transformJava(code, localRunner2, {...options, header});
-					if (!connected && usesLibrary(code)) {
+					const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner2, {
+						...options,
+						header,
+					});
+					if (libraryMissing) {
+						showToast({
+							title: translate("javaSubmit.libraryRequired"),
+							detail: translate("javaSubmit.libraryGuide"),
+							tone: "warning",
+							href: LIBRARY_GUIDE_URL,
+							durationMs: GUIDE_DURATION_MS,
+						});
+					} else if (!connected && usesLibrary(code)) {
 						showToast({
 							title: translate("javaSubmit.localRunnerRequired"),
 							detail: translate("javaSubmit.localRunnerGuide"),

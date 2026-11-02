@@ -547,6 +547,24 @@ describe("javaSubmit", () => {
 		expect(editor.getValue()).toContain("public class Main");
 	});
 
+	test("Local Runner にライブラリが設定されていなければ、設定方法を案内する", async () => {
+		const code = "import lib.ds.UnionFind;\npublic class Solution {\n\tpublic static void main(String[] args) {}\n}\n";
+		const {editor, paste} = createEditor(code);
+		const response = {status: "compileError", sourceCode: code, diagnostics: "", libraryMissing: true};
+		const localRunner = new LocalRunnerClient(
+			new FakeHttpClient(() => ({status: 200, text: JSON.stringify(response)})),
+			() => "http://localhost:8080",
+		);
+		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner, ...editorServices(editor)}));
+		await wait();
+		paste();
+		await wait();
+
+		const text = shadowRoots().map((root) => root.textContent).join("");
+		expect(text).toContain("lib.* の展開にはライブラリの設定が必要です");
+		expect(text).not.toContain("lib.* の展開には Local Runner が必要です");
+	});
+
 	test("lib を使わないコードなら Local Runner がなくても案内しない", async () => {
 		const {editor, paste} = createEditor(source);
 		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner: offline, ...editorServices(editor)}));

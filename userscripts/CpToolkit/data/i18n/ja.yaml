@@ -180,6 +180,8 @@ javaSubmit.title: Java の提出補助
 javaSubmit.description: 貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。
 javaSubmit.localRunnerRequired: lib.* の展開には Local Runner が必要です
 javaSubmit.localRunnerGuide: Local Runner に接続できなかったので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから導入方法を確認できます。
+javaSubmit.libraryRequired: lib.* の展開にはライブラリの設定が必要です
+javaSubmit.libraryGuide: Local Runner にライブラリのフォルダが設定されていないので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから設定方法を確認できます。
 javaSubmit.removePackage: Local Runner がないときにパッケージ宣言を削除する
 javaSubmit.renameClass: Local Runner がないときにクラス名を Main にする
 javaSubmit.fixDebug: Local Runner がないときに DEBUG を false にする

@@ -179,6 +179,8 @@ javaSubmit.title: Java submission helper
 javaSubmit.description: Transforms pasted code for submission and adds submit shortcuts. Removing packages, renaming the class and disabling DEBUG work without Local Runner. Expanding lib.*, completing imports and adding the header need Local Runner.
 javaSubmit.localRunnerRequired: Expanding lib.* needs Local Runner
 javaSubmit.localRunnerGuide: Could not connect to Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.
+javaSubmit.libraryRequired: Expanding lib.* needs the library to be set
+javaSubmit.libraryGuide: The library folder is not set in Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.
 javaSubmit.removePackage: Remove package declarations when Local Runner is unavailable
 javaSubmit.renameClass: Rename the class to Main when Local Runner is unavailable
 javaSubmit.fixDebug: Set DEBUG to false when Local Runner is unavailable

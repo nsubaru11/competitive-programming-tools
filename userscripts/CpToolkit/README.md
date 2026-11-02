@@ -96,9 +96,10 @@ CP Toolkit と同じ機能を持つスクリプトとの併用は推奨しませ
 Java の提出補助は、[Local Runner](https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner) がなくても動きます。
 
 - **Local Runner がなくてもできること**: パッケージ宣言の削除、クラス名の `Main` への変更、`DEBUG` の無効化
-- **Local Runner が必要なこと**: `lib.*` の展開、`import` の補完、提出用ヘッダーの付与
+- **Local Runner が必要なこと**: `import` の補完、提出用ヘッダーの付与
+- **Local Runner とライブラリの設定が必要なこと**: `lib.*` の展開
 
-接続できない状態で `import lib.` を含むコードを貼り付けると、導入方法へのリンクを通知します。このまま提出するとコンパイルエラーになるので注意してください。
+接続できない状態や、ライブラリを設定していない状態で `import lib.` を含むコードを貼り付けると、設定方法へのリンクを通知します。このまま提出するとコンパイルエラーになるので注意してください。
 
 ## 外部との通信
 

@@ -13,6 +13,7 @@ const MIN_SOURCE_LENGTH = 30;
 const FOLD_DELAY_MS = 100;
 const PASTE_ORDER = 10;
 const LOCAL_RUNNER_GUIDE_URL = "https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner";
+const LIBRARY_GUIDE_URL = `${LOCAL_RUNNER_GUIDE_URL}#ライブラリを使う`;
 const GUIDE_DURATION_MS = 15_000;
 
 function findSubmitButton({submitButtons, labeledSubmit}: SubmissionTarget): HTMLElement | null {
@@ -74,8 +75,16 @@ export const javaSubmit = defineFeature({
 			order: PASTE_ORDER,
 			async transform(code, {editor}) {
 				if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-				const {sourceCode, connected} = await transformJava(code, localRunner, {...options, header});
-				if (!connected && usesLibrary(code)) {
+				const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner, {...options, header});
+				if (libraryMissing) {
+					showToast({
+						title: translate("javaSubmit.libraryRequired"),
+						detail: translate("javaSubmit.libraryGuide"),
+						tone: "warning",
+						href: LIBRARY_GUIDE_URL,
+						durationMs: GUIDE_DURATION_MS,
+					});
+				} else if (!connected && usesLibrary(code)) {
 					showToast({
 						title: translate("javaSubmit.localRunnerRequired"),
 						detail: translate("javaSubmit.localRunnerGuide"),
