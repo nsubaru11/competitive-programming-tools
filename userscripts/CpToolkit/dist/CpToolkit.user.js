@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.24
+// @version        1.0.25
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2026,7 +2026,7 @@ a:focus > .cp-settings-entry {
 		"statementCopy.formatMarkdown": "Markdown",
 		"statementCopy.formatPlain": "Plain text",
 		"statementCopy.copy": "Copy",
-		"statementCopy.copyAll": "All Copy",
+		"statementCopy.copyAll": "Copy All",
 		"statementCopy.copied": "Copied!",
 		"statementCopy.defaultTitle": "Task",
 		"efficientLayout.title": "Side-by-side samples",
@@ -2052,7 +2052,7 @@ a:focus > .cp-settings-entry {
 		"clarNotifier.arrived": "{count} new clarification(s)",
 		"averageResult.title": "Average results",
 		"averageResult.description": "Shows average time and memory on the submission page.",
-		"averageResult.average": "avg.",
+		"averageResult.average": "Average",
 		"submissionTimer.title": "Timed submission",
 		"submissionTimer.description": "Submits your code after the specified time.",
 		"submissionTimer.minutes": "Minutes until submission",
@@ -2074,7 +2074,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.panel": "Header and footer",
 		"sourceComments.header": "Header (top of the code)",
 		"sourceComments.footer": "Footer (bottom of the code)",
-		"sourceComments.placeholder": "Reference URLs and so on",
+		"sourceComments.placeholder": "e.g. reference URLs",
 		"sourceComments.taskOnly": "This task only",
 		"sourceComments.commentOut": "Comment out when inserting",
 		"sourceComments.restoreHistory": "Restore from history",
@@ -2095,14 +2095,14 @@ a:focus > .cp-settings-entry {
 		"taskDropdown.description": "Opens tasks from the Tasks tab and opens several tasks at once.",
 		"taskDropdown.newTab": "Open in a new tab",
 		"taskDropdown.taskTable": "Task table",
-		"taskDropdown.openAtOnce": "Open at once",
-		"taskDropdown.loadFailed": "(Loading failed)",
+		"taskDropdown.openAtOnce": "Open multiple tasks",
+		"taskDropdown.loadFailed": "(Failed to load)",
 		"taskDropdown.all": "All",
-		"taskDropdown.range": "Specify the range",
+		"taskDropdown.range": "Range",
 		"taskDropdown.reverse": "Open in reverse order",
 		"taskDropdown.cancel": "Cancel",
 		"taskDropdown.tabCount": "{count} tabs will open. If pop-ups are blocked, please allow them.",
-		"taskDropdown.tabLimit": "*Up to {count} tabs can be opened at once.",
+		"taskDropdown.tabLimit": "Note: up to {count} tabs can be opened at once.",
 		"editorialList.title": "All editorials",
 		"editorialList.description": "Shows the editorials of every task on the editorial page.",
 		"variableHover.title": "Variable highlighting",
@@ -2143,33 +2143,34 @@ a:focus > .cp-settings-entry {
 		"historyColors.modeText": "Text",
 		"historyColors.modeBackground": "Background",
 		"localRunner.title": "Local Runner",
-		"localRunner.description": "Connects to the local server used to transform and run code.",
+		"localRunner.description":
+			"Connects to the local server used to transform and run code. Local Runner needs a separate installation.",
 		"localRunner.url": "Server URL",
 		"javaSubmit.title": "Java submission helper",
 		"javaSubmit.description":
 			"Transforms pasted code for submission and adds submit shortcuts. Removing packages, renaming the class and disabling DEBUG work without Local Runner. Expanding lib.*, completing imports and adding the header need Local Runner.",
 		"javaSubmit.localRunnerRequired": "Expanding lib.* needs Local Runner",
 		"javaSubmit.localRunnerGuide":
-			"Could not connect to Local Runner, so only the basic transform was applied. Submitting this code causes a compile error. The link shows how to set it up.",
-		"javaSubmit.removePackage": "Remove package declarations without Local Runner",
-		"javaSubmit.renameClass": "Rename the class to Main without Local Runner",
-		"javaSubmit.fixDebug": "Set DEBUG to false without Local Runner",
+			"Could not connect to Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.",
+		"javaSubmit.removePackage": "Remove package declarations when Local Runner is unavailable",
+		"javaSubmit.renameClass": "Rename the class to Main when Local Runner is unavailable",
+		"javaSubmit.fixDebug": "Set DEBUG to false when Local Runner is unavailable",
 		"javaSubmit.addHeader": "Add the submission header",
 		"javaSubmit.headerName": "Header name (empty for the default)",
 		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
 		"easyTest.title": "Easy Test (for Java)",
 		"easyTest.description":
-			"Runs samples from the task page for Java solutions. For other languages, install AtCoder Easy Test v2 on its own. Enabling both duplicates the buttons.",
+			"Runs samples from the task page for Java solutions. For other languages, leave this off and use AtCoder Easy Test v2 instead. Enable only one of them, because using both duplicates the buttons.",
 		"easyTest.precompile": "Precompile edited code with Local Runner",
 		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
-		"easyTest.savedCodeLimit": "Number of saved codes",
-		"easyTest.allowableError": "Allowable error",
+		"easyTest.savedCodeLimit": "Number of saved solutions",
+		"easyTest.allowableError": "Allowed error",
 		"easyTest.running": "Running...",
 		"easyTest.run": "Run",
 		"easyTest.testAndSubmit": "Test & Submit",
-		"easyTest.cancelSubmit": "Cancel Submit",
+		"easyTest.cancelSubmit": "Cancel Submission",
 		"easyTest.testAll": "Test All Samples",
-		"easyTest.restore": "Restore Last Play",
+		"easyTest.restore": "Restore Last Code",
 		"easyTest.environment": "Environment",
 		"easyTest.noEnvironment": "No environment available",
 		"easyTest.standardInput": "Standard input",
@@ -2182,6 +2183,8 @@ a:focus > .cp-settings-entry {
 		"easyTest.allocated": "allocated in total",
 		"easyTest.noSavedCode": "No saved code was found for this task.",
 		"easyTest.noSamples": "No samples were found. Nothing was tested or submitted.",
+		"easyTest.internalError":
+			"The code could not be run because the environment failed. Choose another environment and try again.",
 		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
 		"paizaLanguage.title": "paiza language selection",
 		"paizaLanguage.description":
@@ -2234,7 +2237,7 @@ a:focus > .cp-settings-entry {
 		"statementCopy.formatMarkdown": "Markdown",
 		"statementCopy.formatPlain": "プレーンテキスト",
 		"statementCopy.copy": "Copy",
-		"statementCopy.copyAll": "All Copy",
+		"statementCopy.copyAll": "Copy All",
 		"statementCopy.copied": "Copied!",
 		"statementCopy.defaultTitle": "問題",
 		"efficientLayout.title": "サンプルの横並び",
@@ -2285,7 +2288,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.taskOnly": "この問題のみ",
 		"sourceComments.commentOut": "挿入時にコメントアウトする",
 		"sourceComments.restoreHistory": "履歴から復元",
-		"sourceComments.restorePreset": "名前付きから呼び出す",
+		"sourceComments.restorePreset": "保存した名前から呼び出す",
 		"sourceComments.savePreset": "名前を付けて保存",
 		"sourceComments.removePreset": "削除",
 		"sourceComments.presetName": "保存する名前",
@@ -2340,7 +2343,7 @@ a:focus > .cp-settings-entry {
 		"ratingGraph.recentByDefault": "最初は最近の結果だけを表示する",
 		"ratingGraph.recentRange": "最近の結果の範囲(例: 20 で直近20回、50% で直近の半分)",
 		"ratingGraph.recentRangeInvalid": "1 以上の整数か、1% から 100% の割合を入力してください。",
-		"ratingGraph.togglePerformance": "パフォーマンス ON/OFF切り替え",
+		"ratingGraph.togglePerformance": "パフォーマンスの ON/OFF",
 		"ratingGraph.showAll": "all",
 		"ratingGraph.showRecent": "recent",
 		"historyColors.title": "成績表の色付け",
@@ -2351,11 +2354,12 @@ a:focus > .cp-settings-entry {
 		"historyColors.modeText": "文字",
 		"historyColors.modeBackground": "背景",
 		"localRunner.title": "Local Runner",
-		"localRunner.description": "コードの変換と実行に使う、手元のサーバーへ接続します。",
+		"localRunner.description":
+			"コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。",
 		"localRunner.url": "接続先の URL",
 		"javaSubmit.title": "Java の提出補助",
 		"javaSubmit.description":
-			"貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。 パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。",
+			"貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。",
 		"javaSubmit.localRunnerRequired": "lib.* の展開には Local Runner が必要です",
 		"javaSubmit.localRunnerGuide":
 			"Local Runner に接続できなかったので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから導入方法を確認できます。",
@@ -2367,7 +2371,7 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
 		"easyTest.title": "Easy Test(Java 向け)",
 		"easyTest.description":
-			"Java の解答向けに、問題ページからサンプルを実行して結果を確認します。他の言語では AtCoder Easy Test v2 を単独で入れることを勧めます。両方を有効にするとボタンが重なります。",
+			"Java の解答向けに、問題ページからサンプルを実行して結果を確認します。ほかの言語でも使うなら、この機能はオフのまま AtCoder Easy Test v2 を使ってください。同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
 		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
 		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
 		"easyTest.savedCodeLimit": "保存するコードの数",
@@ -2377,7 +2381,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.testAndSubmit": "Test & Submit",
 		"easyTest.cancelSubmit": "提出を中止",
 		"easyTest.testAll": "Test All Samples",
-		"easyTest.restore": "Restore Last Play",
+		"easyTest.restore": "Restore Last Code",
 		"easyTest.environment": "実行環境",
 		"easyTest.noEnvironment": "実行環境がありません",
 		"easyTest.standardInput": "標準入力",
@@ -2390,6 +2394,8 @@ a:focus > .cp-settings-entry {
 		"easyTest.allocated": "累積の割り当て",
 		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
 		"easyTest.noSamples": "サンプルが見つかりませんでした。テストと提出は行っていません。",
+		"easyTest.internalError":
+			"実行環境でエラーが起きたので、コードを実行できませんでした。別の実行環境を選んでやり直してください。",
 		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
 		"paizaLanguage.title": "paiza の言語選択",
 		"paizaLanguage.description":
@@ -7478,8 +7484,11 @@ summary {
 					expected.textarea.value = result.expectedOutput;
 					expected.element.hidden = false;
 				}
-				if (result.error) {
-					error.textarea.value = result.error;
+				const internalError = result.status === "IE" ? translate("easyTest.internalError") : "";
+				const errorText = [internalError, result.error].filter(Boolean).join(`
+`);
+				if (errorText) {
+					error.textarea.value = errorText;
 					error.element.hidden = false;
 				}
 				exitCode.textContent = String(result.exitCode ?? "");

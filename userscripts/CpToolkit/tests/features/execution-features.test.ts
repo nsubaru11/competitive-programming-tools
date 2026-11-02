@@ -438,18 +438,18 @@ describe("easyTest", () => {
 			await start(createSite({setSourceCode}), echo, {state});
 			button("Test All Samples")?.click();
 			await wait(30);
-			[...document.querySelectorAll<HTMLElement>("a")].find(({textContent}) => textContent === "Restore Last Play")?.click();
+			[...document.querySelectorAll<HTMLElement>("a")].find(({textContent}) => textContent === "Restore Last Code")?.click();
 			expect(setSourceCode).toHaveBeenCalledWith("code");
 		} finally {
 			window.confirm = originalConfirm;
 		}
 	});
 
-	test("Restore Last Play は実行中も押せる", async () => {
+	test("Restore Last Code は実行中も押せる", async () => {
 		await start(createSite(), () => new Promise(() => undefined));
 		button("Test All Samples")?.click();
 		await wait();
-		const restore = [...document.querySelectorAll("a")].find(({textContent}) => textContent === "Restore Last Play");
+		const restore = [...document.querySelectorAll("a")].find(({textContent}) => textContent === "Restore Last Code");
 		expect(restore?.classList.contains("disabled")).toBe(false);
 	});
 });
@@ -652,6 +652,20 @@ describe("taskDropdown", () => {
 });
 
 describe("Easy Test の結果の表示", () => {
+	test("内部エラーは案内の文言を表示し、詳細があれば続けて表示する", () => {
+		const view = createResultView(((key: string) => key) as Translate);
+		view.show({status: "IE", input: "", error: "Error: boom"});
+		const errorField = view.element.querySelectorAll("textarea")[3]!;
+		expect(errorField.value).toBe("easyTest.internalError\nError: boom");
+		expect(errorField.closest("label")!.hidden).toBe(false);
+	});
+
+	test("内部エラーは詳細がなくても案内の文言を表示する", () => {
+		const view = createResultView(((key: string) => key) as Translate);
+		view.show({status: "IE", input: ""});
+		expect(view.element.querySelectorAll("textarea")[3]!.value).toBe("easyTest.internalError");
+	});
+
 	const memoryCell = (result: Partial<RunResult>): string | null => {
 		const view = createResultView(((key: string) => key) as Translate);
 		view.show({status: "OK", input: "", ...result});

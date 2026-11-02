@@ -47,7 +47,7 @@ statementCopy.format: Copy format
 statementCopy.formatMarkdown: Markdown
 statementCopy.formatPlain: Plain text
 statementCopy.copy: Copy
-statementCopy.copyAll: All Copy
+statementCopy.copyAll: Copy All
 statementCopy.copied: 'Copied!'
 statementCopy.defaultTitle: Task
 
@@ -77,7 +77,7 @@ clarNotifier.arrived: "{count} new clarification(s)"
 
 averageResult.title: Average results
 averageResult.description: Shows average time and memory on the submission page.
-averageResult.average: avg.
+averageResult.average: Average
 
 submissionTimer.title: Timed submission
 submissionTimer.description: Submits your code after the specified time.
@@ -100,7 +100,7 @@ sourceComments.styleBlock: Multi-line comment
 sourceComments.panel: Header and footer
 sourceComments.header: Header (top of the code)
 sourceComments.footer: Footer (bottom of the code)
-sourceComments.placeholder: Reference URLs and so on
+sourceComments.placeholder: e.g. reference URLs
 sourceComments.taskOnly: This task only
 sourceComments.commentOut: Comment out when inserting
 sourceComments.restoreHistory: Restore from history
@@ -120,14 +120,14 @@ taskDropdown.title: Task dropdown
 taskDropdown.description: Opens tasks from the Tasks tab and opens several tasks at once.
 taskDropdown.newTab: Open in a new tab
 taskDropdown.taskTable: Task table
-taskDropdown.openAtOnce: Open at once
-taskDropdown.loadFailed: (Loading failed)
+taskDropdown.openAtOnce: Open multiple tasks
+taskDropdown.loadFailed: (Failed to load)
 taskDropdown.all: All
-taskDropdown.range: Specify the range
+taskDropdown.range: Range
 taskDropdown.reverse: Open in reverse order
 taskDropdown.cancel: Cancel
 taskDropdown.tabCount: "{count} tabs will open. If pop-ups are blocked, please allow them."
-taskDropdown.tabLimit: "*Up to {count} tabs can be opened at once."
+taskDropdown.tabLimit: "Note: up to {count} tabs can be opened at once."
 
 editorialList.title: All editorials
 editorialList.description: Shows the editorials of every task on the editorial page.
@@ -172,32 +172,32 @@ historyColors.modeText: Text
 historyColors.modeBackground: Background
 
 localRunner.title: Local Runner
-localRunner.description: Connects to the local server used to transform and run code.
+localRunner.description: Connects to the local server used to transform and run code. Local Runner needs a separate installation.
 localRunner.url: Server URL
 
 javaSubmit.title: Java submission helper
 javaSubmit.description: Transforms pasted code for submission and adds submit shortcuts. Removing packages, renaming the class and disabling DEBUG work without Local Runner. Expanding lib.*, completing imports and adding the header need Local Runner.
 javaSubmit.localRunnerRequired: Expanding lib.* needs Local Runner
-javaSubmit.localRunnerGuide: Could not connect to Local Runner, so only the basic transform was applied. Submitting this code causes a compile error. The link shows how to set it up.
-javaSubmit.removePackage: Remove package declarations without Local Runner
-javaSubmit.renameClass: Rename the class to Main without Local Runner
-javaSubmit.fixDebug: Set DEBUG to false without Local Runner
+javaSubmit.localRunnerGuide: Could not connect to Local Runner, so only the basic transform was applied. Submitting this code will cause a compile error. See the link for setup instructions.
+javaSubmit.removePackage: Remove package declarations when Local Runner is unavailable
+javaSubmit.renameClass: Rename the class to Main when Local Runner is unavailable
+javaSubmit.fixDebug: Set DEBUG to false when Local Runner is unavailable
 javaSubmit.addHeader: Add the submission header
 javaSubmit.headerName: Header name (empty for the default)
 javaSubmit.foldOnPaste: Fold classes and comments after pasting
 
 easyTest.title: Easy Test (for Java)
-easyTest.description: Runs samples from the task page for Java solutions. For other languages, install AtCoder Easy Test v2 on its own. Enabling both duplicates the buttons.
+easyTest.description: Runs samples from the task page for Java solutions. For other languages, leave this off and use AtCoder Easy Test v2 instead. Enable only one of them, because using both duplicates the buttons.
 easyTest.precompile: Precompile edited code with Local Runner
 easyTest.keyboardShortcuts: "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)"
-easyTest.savedCodeLimit: Number of saved codes
-easyTest.allowableError: Allowable error
+easyTest.savedCodeLimit: Number of saved solutions
+easyTest.allowableError: Allowed error
 easyTest.running: "Running..."
 easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
-easyTest.cancelSubmit: Cancel Submit
+easyTest.cancelSubmit: Cancel Submission
 easyTest.testAll: Test All Samples
-easyTest.restore: Restore Last Play
+easyTest.restore: Restore Last Code
 easyTest.environment: Environment
 easyTest.noEnvironment: No environment available
 easyTest.standardInput: Standard input
@@ -210,6 +210,7 @@ easyTest.memory: Memory
 easyTest.allocated: allocated in total
 easyTest.noSavedCode: No saved code was found for this task.
 easyTest.noSamples: No samples were found. Nothing was tested or submitted.
+easyTest.internalError: The code could not be run because the environment failed. Choose another environment and try again.
 easyTest.restoreConfirm: Your current code will be replaced. Continue?
 
 paizaLanguage.title: paiza language selection

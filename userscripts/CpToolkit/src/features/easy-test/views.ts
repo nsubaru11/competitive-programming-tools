@@ -57,8 +57,10 @@ export function createResultView(translate: Translate): {element: HTMLElement; s
 				expected.textarea.value = result.expectedOutput;
 				expected.element.hidden = false;
 			}
-			if (result.error) {
-				error.textarea.value = result.error;
+			const internalError = result.status === "IE" ? translate("easyTest.internalError") : "";
+			const errorText = [internalError, result.error].filter(Boolean).join("\n");
+			if (errorText) {
+				error.textarea.value = errorText;
 				error.element.hidden = false;
 			}
 			exitCode.textContent = String(result.exitCode ?? "");

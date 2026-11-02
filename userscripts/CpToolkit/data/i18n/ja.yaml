@@ -48,7 +48,7 @@ statementCopy.format: コピーする形式
 statementCopy.formatMarkdown: Markdown
 statementCopy.formatPlain: プレーンテキスト
 statementCopy.copy: Copy
-statementCopy.copyAll: All Copy
+statementCopy.copyAll: Copy All
 statementCopy.copied: 'Copied!'
 statementCopy.defaultTitle: 問題
 
@@ -105,7 +105,7 @@ sourceComments.placeholder: 参照元の URL など
 sourceComments.taskOnly: この問題のみ
 sourceComments.commentOut: 挿入時にコメントアウトする
 sourceComments.restoreHistory: 履歴から復元
-sourceComments.restorePreset: 名前付きから呼び出す
+sourceComments.restorePreset: 保存した名前から呼び出す
 sourceComments.savePreset: 名前を付けて保存
 sourceComments.removePreset: 削除
 sourceComments.presetName: 保存する名前
@@ -160,7 +160,7 @@ ratingGraph.description: レーティンググラフにパフォーマンスを�
 ratingGraph.recentByDefault: 最初は最近の結果だけを表示する
 ratingGraph.recentRange: "最近の結果の範囲(例: 20 で直近20回、50% で直近の半分)"
 ratingGraph.recentRangeInvalid: "1 以上の整数か、1% から 100% の割合を入力してください。"
-ratingGraph.togglePerformance: パフォーマンス ON/OFF切り替え
+ratingGraph.togglePerformance: パフォーマンスの ON/OFF
 ratingGraph.showAll: all
 ratingGraph.showRecent: recent
 
@@ -173,11 +173,11 @@ historyColors.modeText: 文字
 historyColors.modeBackground: 背景
 
 localRunner.title: Local Runner
-localRunner.description: コードの変換と実行に使う、手元のサーバーへ接続します。
+localRunner.description: コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。
 localRunner.url: 接続先の URL
 
 javaSubmit.title: Java の提出補助
-javaSubmit.description: 貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。 パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。
+javaSubmit.description: 貼り付けたコードを提出用に変換し、ショートカットで提出できるようにします。パッケージ宣言の削除、クラス名の変更、DEBUG の無効化は Local Runner がなくても動きます。lib.* の展開、import の補完、ヘッダーの付与には Local Runner が必要です。
 javaSubmit.localRunnerRequired: lib.* の展開には Local Runner が必要です
 javaSubmit.localRunnerGuide: Local Runner に接続できなかったので、簡易の変換だけを行いました。このまま提出するとコンパイルエラーになります。リンクから導入方法を確認できます。
 javaSubmit.removePackage: Local Runner がないときにパッケージ宣言を削除する
@@ -188,7 +188,7 @@ javaSubmit.headerName: ヘッダーの名前(空欄なら既定)
 javaSubmit.foldOnPaste: 貼り付け後にクラスとコメントを折りたたむ
 
 easyTest.title: Easy Test(Java 向け)
-easyTest.description: Java の解答向けに、問題ページからサンプルを実行して結果を確認します。他の言語では AtCoder Easy Test v2 を単独で入れることを勧めます。両方を有効にするとボタンが重なります。
+easyTest.description: Java の解答向けに、問題ページからサンプルを実行して結果を確認します。ほかの言語でも使うなら、この機能はオフのまま AtCoder Easy Test v2 を使ってください。同時に有効にするとボタンが重なるので、どちらか片方にしてください。
 easyTest.precompile: Local Runner で編集中のコードを事前にコンパイルする
 easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)
 easyTest.savedCodeLimit: 保存するコードの数
@@ -198,7 +198,7 @@ easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
 easyTest.cancelSubmit: 提出を中止
 easyTest.testAll: Test All Samples
-easyTest.restore: Restore Last Play
+easyTest.restore: Restore Last Code
 easyTest.environment: 実行環境
 easyTest.noEnvironment: 実行環境がありません
 easyTest.standardInput: 標準入力
@@ -211,6 +211,7 @@ easyTest.memory: メモリ
 easyTest.allocated: 累積の割り当て
 easyTest.noSavedCode: この問題の保存済みコードはありません。
 easyTest.noSamples: サンプルが見つかりませんでした。テストと提出は行っていません。
+easyTest.internalError: 実行環境でエラーが起きたので、コードを実行できませんでした。別の実行環境を選んでやり直してください。
 easyTest.restoreConfirm: 現在のコードを置き換えます。よろしいですか?
 
 paizaLanguage.title: paiza の言語選択
