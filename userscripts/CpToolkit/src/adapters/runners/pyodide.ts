@@ -5,18 +5,29 @@ import type {ScriptLoader} from "@application/ports/services";
 import {pageGlobals, type PyodideApi} from "@adapters/page/globals";
 import {SerialQueue} from "./serial-queue";
 
+// 標準入力の差し替えは contextlib の非公開クラスを使わずに書く。
+// sys.stdin.buffer で読む提出もあるので、バイト列の層を持つ TextIOWrapper にする。
 const SETUP_CODE = `
-import contextlib, io, platform
-class __redirect_stdin(contextlib._RedirectStream):
-  _stream = "stdin"
+import contextlib, io, platform, sys
+
+@contextlib.contextmanager
+def __redirect_stdin(text):
+  previous = sys.stdin
+  sys.stdin = io.TextIOWrapper(io.BytesIO(text.encode()), encoding="utf-8")
+  try:
+    yield sys.stdin
+  finally:
+    sys.stdin = previous
 `;
 
 function wrapSource(sourceCode: string): string {
 	const body = sourceCode.split("\n").map((line) => `     ${line}`).join("\n");
+	// __code は Python 側で初期化する。JS の null は Pyodide 0.28 から None ではなく jsnull になる
 	return `
 def __run():
  global __stdout, __stderr, __stdin, __code
- with __redirect_stdin(io.StringIO(__stdin)):
+ __code = None
+ with __redirect_stdin(__stdin):
   with contextlib.redirect_stdout(io.StringIO()) as __stdout:
    with contextlib.redirect_stderr(io.StringIO()) as __stderr:
     try:
@@ -33,8 +44,10 @@ class PyodideRunner implements CodeRunner {
 	readonly label = "Python3 Pyodide [Browser]";
 	private pyodide: Promise<PyodideApi> | null = null;
 	private readonly queue = new SerialQueue();
+	private readonly scripts: ScriptLoader;
 
-	constructor(private readonly scripts: ScriptLoader) {
+	constructor(scripts: ScriptLoader) {
+		this.scripts = scripts;
 	}
 
 	run(sourceCode: string, input: string): Promise<RunResult> {
@@ -55,7 +68,6 @@ class PyodideRunner implements CodeRunner {
 		const pyodide = await this.pyodide;
 		const code = wrapSource(sourceCode);
 		pyodide.globals.set("__stdin", input);
-		pyodide.globals.set("__code", null);
 		const startedAt = Date.now();
 		try {
 			await pyodide.loadPackagesFromImports(code);

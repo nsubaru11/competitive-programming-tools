@@ -65,4 +65,5 @@ export const libraries: {
 	readonly katexAutoRender: ExternalResource;
 	readonly katexStylesheet: ExternalResource;
 	readonly prettify: ExternalResource;
+	readonly prettifyStylesheet: ExternalResource;
 } = librariesData;

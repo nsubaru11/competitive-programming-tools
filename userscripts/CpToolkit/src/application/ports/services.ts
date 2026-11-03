@@ -36,11 +36,14 @@ export interface Ticker {
 	start(intervalMs: number, listener: () => void): () => void;
 }
 
-/** 問題文の HTML を、コピー用の文字列に変換する。 */
+/**
+ * 問題文の要素を、コピー用の文字列に変換する。要素の子だけを変換し、要素自身のタグは含めない。
+ * application は DOM の型を持たないので、要素は object として受け取る。
+ */
 export interface StatementConverter {
-	toMarkdown(html: string): string;
+	toMarkdown(element: object): string;
 
-	toPlainText(html: string): string;
+	toPlainText(element: object): string;
 }
 
 /** ページの文脈で動くライブラリを読み込む。 */

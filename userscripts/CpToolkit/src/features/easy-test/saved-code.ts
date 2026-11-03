@@ -11,7 +11,12 @@ const isSavedCodes = isArrayOf(isObjectOf<SavedCode>({path: isString, code: isSt
 
 /** 実行したコードを問題ごとに記憶する。古いものから上限を超えた分を捨てる。 */
 export class SavedCodes {
-	constructor(private readonly state: KeyValueStore, private readonly limit: number) {
+	private readonly state: KeyValueStore;
+	private readonly limit: number;
+
+	constructor(state: KeyValueStore, limit: number) {
+		this.state = state;
+		this.limit = limit;
 	}
 
 	save(path: string, code: string): void {

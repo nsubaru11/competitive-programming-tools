@@ -84,10 +84,9 @@ This script sends nothing to the author's servers. Besides the site you are view
 
 - **Your Local Runner** (`http://localhost:8080` by default): Your code is sent to your own PC to transform and run it
 - **PaizaIO and Wandbox**: Your code and input are sent only when you choose them as the Easy Test environment. The script never switches to them automatically
-- **jsDelivr**: KaTeX for editorial math, Pyodide for running Python in the browser, and AtCoder Library for C++ on Wandbox are fetched only when needed
-- **cdnjs**: Prettify for editorial code is fetched only when needed
+- **jsDelivr**: KaTeX and Prettify for editorial math and code, Pyodide for running Python in the browser, and AtCoder Library for C++ on Wandbox are fetched only when needed
 
-KaTeX, Prettify and Pyodide are loaded at pinned versions. "Add to calendar" only places a link; the contest details reach Google when you open it.
+KaTeX, Prettify, Pyodide and AtCoder Library are loaded at pinned versions. "Add to calendar" only places a link; the contest details reach Google when you open it.
 
 ## Receiving notifications
 

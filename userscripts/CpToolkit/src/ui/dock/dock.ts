@@ -38,12 +38,14 @@ export function createDock({css, toggleLabel, closeLabel}: DockOptions): Dock {
 		panel.hidden = !open;
 		toggleButton.dataset.open = String(open);
 	};
+	// hidden は "until-found" も取るので、閉じていれば false 以外になる
+	const toggle = (): void => setOpen(panel.hidden !== false);
 	const toggleButton = h("button", {
 		type: "button",
 		className: "dock-toggle",
 		title: toggleLabel,
 		ariaLabel: toggleLabel,
-		onclick: () => setOpen(panel.hidden),
+		onclick: toggle,
 	});
 	const dock = h("div", {className: "dock"}, toggleButton, panel);
 
@@ -116,7 +118,7 @@ export function createDock({css, toggleLabel, closeLabel}: DockOptions): Dock {
 				},
 			};
 		},
-		toggle: () => setOpen(panel.hidden),
+		toggle,
 		remove: () => host.remove(),
 	};
 }

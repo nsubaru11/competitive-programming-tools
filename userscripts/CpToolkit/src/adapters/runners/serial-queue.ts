@@ -12,8 +12,10 @@ export class SerialQueue {
 /** 同じサイトのタブの間でも、受け付けた順に1件ずつ実行する。Web Locks がなければタブの中だけで順番を守る。 */
 export class CrossTabQueue {
 	private readonly queue = new SerialQueue();
+	private readonly lockName: string;
 
-	constructor(private readonly lockName: string) {
+	constructor(lockName: string) {
+		this.lockName = lockName;
 	}
 
 	/** Web Locks はタブの中の要求も受け付けた順に並べるので、ここで並べるのは Web Locks がないときだけ。 */

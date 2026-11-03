@@ -27,7 +27,10 @@ const FOCUS_TIMEOUT_MS = 3000;
  * 操作中のタブがあれば、そのタブが確認する。通知を画面の内側に出せるので。
  */
 export class PendingSubmissions {
-	constructor(private readonly state: KeyValueStore) {
+	private readonly state: KeyValueStore;
+
+	constructor(state: KeyValueStore) {
+		this.state = state;
 	}
 
 	list(now: number): readonly PendingSubmission[] {

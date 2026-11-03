@@ -34,8 +34,10 @@ export type FeatureRuntimeDependencies = {
 export class FeatureRuntime {
 	private readonly entries: FeatureEntry[];
 	private readonly listeners = new Set<() => void>();
+	private readonly dependencies: FeatureRuntimeDependencies;
 
-	constructor(private readonly dependencies: FeatureRuntimeDependencies) {
+	constructor(dependencies: FeatureRuntimeDependencies) {
+		this.dependencies = dependencies;
 		this.entries = dependencies.features.map((feature) => ({
 			feature,
 			status: {state: "pending"},

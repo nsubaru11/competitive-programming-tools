@@ -7,7 +7,10 @@ const isSeenCounts = isRecordOf(isNumber);
 
 /** 通知済みの Clar の件数をタブ間で共有する。通信が重複しないよう、確認は1つのタブだけが行う。 */
 export class ClarificationCounter {
-	constructor(private readonly state: KeyValueStore) {
+	private readonly state: KeyValueStore;
+
+	constructor(state: KeyValueStore) {
+		this.state = state;
 	}
 
 	/** 確認してよければ時刻を記録して true を返す。 */

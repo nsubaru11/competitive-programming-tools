@@ -8,7 +8,10 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const MIN_PASTED_LENGTH = 30;
 
 class AceCodeEditor implements CodeEditor {
-	constructor(private readonly editor: AceEditor) {
+	private readonly editor: AceEditor;
+
+	constructor(editor: AceEditor) {
+		this.editor = editor;
 	}
 
 	getValue(): string {
@@ -56,7 +59,10 @@ class AceCodeEditor implements CodeEditor {
 }
 
 class MonacoCodeEditor implements CodeEditor {
-	constructor(private readonly editor: MonacoEditor) {
+	private readonly editor: MonacoEditor;
+
+	constructor(editor: MonacoEditor) {
+		this.editor = editor;
 	}
 
 	private get model() {

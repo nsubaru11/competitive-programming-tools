@@ -107,10 +107,9 @@ Java の提出補助は、[Local Runner](https://github.com/nsubaru11/competitiv
 
 - **手元の Local Runner**(既定は `http://localhost:8080`): Java の変換と実行のために、コードを手元の PC へ送ります
 - **PaizaIO、Wandbox**: Easy Test でこれらを実行環境に選んだときだけ、コードと入力を送ります。ほかの実行環境から自動で切り替わることはありません
-- **jsDelivr**: 解説の数式の表示に使う KaTeX、ブラウザでの Python の実行に使う Pyodide、Wandbox の C++ で使う AtCoder Library を、必要なときだけ取得します
-- **cdnjs**: 解説のコードの表示に使う Prettify を、必要なときだけ取得します
+- **jsDelivr**: 解説の数式とコードの表示に使う KaTeX と Prettify、ブラウザでの Python の実行に使う Pyodide、Wandbox の C++ で使う AtCoder Library を、必要なときだけ取得します
 
-KaTeX、Prettify、Pyodide は、版を固定して読み込みます。「カレンダーへの登録」はリンクを置くだけで、開いたときにコンテストの情報が Google へ渡ります。
+KaTeX、Prettify、Pyodide、AtCoder Library は、版を固定して読み込みます。「カレンダーへの登録」はリンクを置くだけで、開いたときにコンテストの情報が Google へ渡ります。
 
 ### AtCoder への通信の頻度
 

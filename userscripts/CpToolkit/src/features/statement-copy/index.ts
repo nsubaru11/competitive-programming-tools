@@ -43,8 +43,10 @@ export const statementCopy = defineFeature({
 		if (!container) return () => undefined;
 
 		const convert = (element: Element): string => {
-			const html = withoutControls(element).innerHTML;
-			return options.format === "plain" ? statementConverter.toPlainText(html) : statementConverter.toMarkdown(html);
+			const statement = withoutControls(element);
+			return options.format === "plain"
+				? statementConverter.toPlainText(statement)
+				: statementConverter.toMarkdown(statement);
 		};
 
 		const createButton = (label: string, getText: () => string): HTMLButtonElement => {

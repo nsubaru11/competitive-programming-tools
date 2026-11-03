@@ -17,12 +17,12 @@
 	},
 	"devDependencies": {
 		"@happy-dom/global-registrator": "^21.0.4",
-		"@types/node": "^24.12.4",
+		"@types/node": "^26.6.6",
 		"@types/tampermonkey": "^5.5.0",
 		"@types/turndown": "^5",
-		"bun-types": "^1.2.0",
+		"bun-types": "^1.4.4",
 		"happy-dom": "^21.0.4",
-		"prettier": "^3.5.0",
-		"typescript": "^5.9.0"
+		"prettier": "^3.9.10",
+		"typescript": "^7.0.2"
 	}
 }

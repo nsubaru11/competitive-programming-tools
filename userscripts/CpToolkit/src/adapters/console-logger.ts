@@ -1,7 +1,10 @@
 import type {Logger} from "@application/ports/logger";
 
 export class ConsoleLogger implements Logger {
-	constructor(private readonly prefix: string) {
+	private readonly prefix: string;
+
+	constructor(prefix: string) {
+		this.prefix = prefix;
 	}
 
 	error(message: string, cause: unknown): void {

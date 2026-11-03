@@ -29,12 +29,21 @@ export interface RunnerProvider {
 
 /** 実行環境の候補を集め、優先順に並べて実行する。 */
 export class RunnerCatalogService {
+	private readonly providers: () => readonly RunnerProvider[];
+	private readonly order: readonly RunnerKind[];
+	private readonly maxRetry: number;
+	private readonly external: readonly RunnerKind[];
+
 	constructor(
-		private readonly providers: () => readonly RunnerProvider[],
-		private readonly order: readonly RunnerKind[],
-		private readonly maxRetry: number,
-		private readonly external: readonly RunnerKind[] = [],
+		providers: () => readonly RunnerProvider[],
+		order: readonly RunnerKind[],
+		maxRetry: number,
+		external: readonly RunnerKind[] = [],
 	) {
+		this.providers = providers;
+		this.order = order;
+		this.maxRetry = maxRetry;
+		this.external = external;
 	}
 
 	async candidates(language: JudgeLanguage): Promise<readonly CodeRunner[]> {

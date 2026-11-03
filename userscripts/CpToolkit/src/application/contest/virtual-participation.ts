@@ -6,7 +6,10 @@ const isStarts = isRecordOf(isNumber);
 
 /** バーチャル参加の開始時刻を記憶する。参加のページを開いたときに更新する。 */
 export class VirtualParticipations {
-	constructor(private readonly state: KeyValueStore) {
+	private readonly state: KeyValueStore;
+
+	constructor(state: KeyValueStore) {
+		this.state = state;
 	}
 
 	startOf(contestId: string): number | null {

@@ -1,4 +1,8 @@
-type ElementProps<K extends keyof HTMLElementTagNameMap> = Omit<Partial<HTMLElementTagNameMap[K]>, "style" | "dataset">;
+/** HTML の文字列を解釈するプロパティは受け付けない。文字は textContent で入れる。 */
+type ElementProps<K extends keyof HTMLElementTagNameMap> = Omit<
+	Partial<HTMLElementTagNameMap[K]>,
+	"style" | "dataset" | "innerHTML" | "outerHTML"
+>;
 
 export function h<K extends keyof HTMLElementTagNameMap>(
 	tagName: K,

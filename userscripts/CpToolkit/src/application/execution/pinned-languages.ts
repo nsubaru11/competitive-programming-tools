@@ -9,7 +9,10 @@ const isPinned = isArrayOf(isString);
  * ページにない ID も残すので、言語の少ないコンテストを開いても選択は失われない。
  */
 export class PinnedLanguages {
-	constructor(private readonly state: KeyValueStore) {
+	private readonly state: KeyValueStore;
+
+	constructor(state: KeyValueStore) {
+		this.state = state;
 	}
 
 	ids(): ReadonlySet<string> {

@@ -36,9 +36,11 @@ function parseSamples(page: Document): SampleCase[] {
 export class AtCoderSite extends JudgeSiteBase {
 	readonly id = "atcoder";
 	private readonly samplesByTask = new Map<string, Promise<readonly SampleCase[]>>();
+	private readonly site: HttpClient;
 
-	constructor(bridge: PageBridge, private readonly site: HttpClient) {
+	constructor(bridge: PageBridge, site: HttpClient) {
 		super(bridge);
+		this.site = site;
 	}
 
 	get mounts(): JudgeMounts {

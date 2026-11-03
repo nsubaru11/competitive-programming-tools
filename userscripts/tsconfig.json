@@ -8,11 +8,9 @@
 		],
 		"types": [
 			"bun-types"
-		],
-		"noImplicitThis": false
+		]
 	},
 	"include": [
-		"**/src/**/*.ts",
 		"types/**/*.d.ts",
 		"scripts/**/*.ts",
 		"build.ts"

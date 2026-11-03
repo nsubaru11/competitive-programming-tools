@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.27
+// @version        1.0.28
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -293,9 +293,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 
 	// CpToolkit/src/application/feature/runtime.ts
 	class FeatureRuntime {
-		dependencies;
 		entries;
 		listeners = new Set();
+		dependencies;
 
 		constructor(dependencies) {
 			this.dependencies = dependencies;
@@ -531,17 +531,11 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	}
 
 	// ../shared/src/java-transform.ts
+	var State = {Normal: 0, LineComment: 1, BlockComment: 2, String: 3, Char: 4};
+
 	function createMaskedCode(text) {
-		var State;
-		((State2) => {
-			State2[(State2["Normal"] = 0)] = "Normal";
-			State2[(State2["LineComment"] = 1)] = "LineComment";
-			State2[(State2["BlockComment"] = 2)] = "BlockComment";
-			State2[(State2["String"] = 3)] = "String";
-			State2[(State2["Char"] = 4)] = "Char";
-		})((State ||= {}));
 		const out = [];
-		let state = 0; /* Normal */
+		let state = State.Normal;
 		let isEscape = false;
 		const mask = (c) =>
 			c ===
@@ -553,24 +547,24 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		for (let i = 0, len = text.length; i < len; i++) {
 			const c = text[i],
 				n = i + 1 < len ? text[i + 1] : "";
-			if (state === 1 /* LineComment */) {
+			if (state === State.LineComment) {
 				out.push(mask(c));
 				if (
 					c ===
 					`
 `
 				)
-					state = 0 /* Normal */;
-			} else if (state === 2 /* BlockComment */) {
+					state = State.Normal;
+			} else if (state === State.BlockComment) {
 				if (c === "*" && n === "/") {
 					out.push(" ", " ");
 					i++;
-					state = 0 /* Normal */;
+					state = State.Normal;
 				} else {
 					out.push(mask(c));
 				}
-			} else if (state === 3 /* String */ || state === 4 /* Char */) {
-				const closeChar = state === 3 /* String */ ? '"' : "'";
+			} else if (state === State.String || state === State.Char) {
+				const closeChar = state === State.String ? '"' : "'";
 				if (isEscape) {
 					isEscape = false;
 					out.push(" ");
@@ -578,7 +572,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 					isEscape = true;
 					out.push(" ");
 				} else if (c === closeChar) {
-					state = 0 /* Normal */;
+					state = State.Normal;
 					out.push(" ");
 				} else {
 					out.push(mask(c));
@@ -587,16 +581,16 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 				if (c === "/" && n === "/") {
 					out.push(" ", " ");
 					i++;
-					state = 1 /* LineComment */;
+					state = State.LineComment;
 				} else if (c === "/" && n === "*") {
 					out.push(" ", " ");
 					i++;
-					state = 2 /* BlockComment */;
+					state = State.BlockComment;
 				} else if (c === '"') {
-					state = 3 /* String */;
+					state = State.String;
 					out.push(" ");
 				} else if (c === "'") {
-					state = 4 /* Char */;
+					state = State.Char;
 					out.push(" ");
 				} else {
 					out.push(c);
@@ -973,9 +967,9 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	var STORAGE_KEY = "settings";
 
 	class SettingsService {
-		store;
 		settings;
 		listeners = new Set();
+		store;
 
 		constructor(store) {
 			this.store = store;
@@ -2867,20 +2861,24 @@ a:focus > .cp-settings-entry {
 	// CpToolkit/data/libraries.yaml
 	var libraries_default = {
 		katexScript: {
-			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js",
-			integrity: "sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz",
+			url: "https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.js",
+			integrity: "sha384-a1WQdjRj162i159OYq041X6I4K8NenkrI09LlPmiHg0YOb7CR+wJOraXwK9abpnE",
 		},
 		katexAutoRender: {
-			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js",
-			integrity: "sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05",
+			url: "https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/contrib/auto-render.min.js",
+			integrity: "sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz",
 		},
 		katexStylesheet: {
-			url: "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css",
-			integrity: "sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X",
+			url: "https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.css",
+			integrity: "sha384-WwGtaC6ywCHxA5cstpj/3+xIZvTez8dq2IcBQaXRkenHZ7FVVq1ZROtURwfbtTlG",
 		},
 		prettify: {
-			url: "https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/run_prettify.min.js",
-			integrity: "sha384-FdDXhXktS7qbSx5SLuIH0p/V4mGwTw7hiWJsJeP0Mk8kCyd3hH+yv2UmzSn++Ghh",
+			url: "https://cdn.jsdelivr.net/gh/google/code-prettify@e006587b4a893f0281e9dc9a53001c7ed584d4e7/loader/prettify.js",
+			integrity: "sha384-KlbExXRJYYILJYRAJR121vJXgBDx+puqf1yjznMcTt7C5njwQajOLFwk6pMafFnX",
+		},
+		prettifyStylesheet: {
+			url: "https://cdn.jsdelivr.net/gh/google/code-prettify@e006587b4a893f0281e9dc9a53001c7ed584d4e7/loader/prettify.css",
+			integrity: "sha384-tGeLopS7aWCwgeqg+ah7c+iI19JU3teQPshyaQVybvOMRravAVLscwoeT4HPsfoW",
 		},
 	};
 	// CpToolkit/data/rating.yaml
@@ -3070,11 +3068,11 @@ a:focus > .cp-settings-entry {
 			listUrl: "https://wandbox.org/api/list.json",
 			compileUrl: "https://wandbox.org/api/compile.json",
 			cacheHours: 24,
-			aclBaseUrl: "https://cdn.jsdelivr.net/gh/atcoder/ac-library/",
+			aclBaseUrl: "https://cdn.jsdelivr.net/gh/atcoder/ac-library@864245a00b00dd008d1abfdc239618fdb7d139da/",
 		},
 		pyodide: {
-			baseUrl: "https://cdn.jsdelivr.net/pyodide/v0.24.0/full/",
-			integrity: "sha384-hxqITTjjSqs/ZNr6/q1sP+9wWFKuZ0jBiNJCqnaaiGb2/Qnq+d5DEiN3/oHDLGkk",
+			baseUrl: "https://cdn.jsdelivr.net/pyodide/v0.29.5/full/",
+			integrity: "sha384-VR47TfKeAmT7vMej7bwOVg0tHTQLLGMSIpsXtFMCZG5OpKZSIXoSLtGY//qHcxc6",
 		},
 	};
 	// CpToolkit/data/statement.yaml
@@ -3268,9 +3266,9 @@ a:focus > .cp-settings-entry {
 	}
 
 	class LocalRunnerClient {
+		prepared = null;
 		http;
 		endpoint;
-		prepared = null;
 
 		constructor(http, endpoint) {
 			this.http = http;
@@ -3461,9 +3459,9 @@ a:focus > .cp-settings-entry {
 
 	// CpToolkit/src/application/source/paste-pipeline.ts
 	class PastePipeline {
-		editors;
 		steps = [];
 		watching = false;
+		editors;
 
 		constructor(editors) {
 			this.editors = editors;
@@ -3680,8 +3678,8 @@ a:focus > .cp-settings-entry {
 			const drawBackground = () => {
 				const panel = newShape(stageGraph);
 				Object.assign(panel, {x: OFFSET_X, y: OFFSET_Y, alpha: 0.3});
-				const border2 = newShape(stageGraph);
-				Object.assign(border2, {x: OFFSET_X, y: OFFSET_Y});
+				const border = newShape(stageGraph);
+				Object.assign(border, {x: OFFSET_X, y: OFFSET_Y});
 				const addLabel = (text, x, y, align) => {
 					const label = new cj.Text(text, LABEL_FONT, "#000");
 					Object.assign(label, {x, y, ...align});
@@ -3702,10 +3700,10 @@ a:focus > .cp-settings-entry {
 					if (value < yMin) continue;
 					const y = panelHeight - panelHeight * ratio(value, yMin, yMax);
 					addLabel(String(value), OFFSET_X - 10, OFFSET_Y + y, {textAlign: "right", textBaseline: "middle"});
-					border2.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
-					border2.graphics.moveTo(0, y).lineTo(panelWidth, y);
+					border.graphics.beginStroke(value === 2000 ? "#000" : "#FFF").setStrokeStyle(0.5);
+					border.graphics.moveTo(0, y).lineTo(panelWidth, y);
 				}
-				border2.graphics.beginStroke("#FFF").setStrokeStyle(0.5);
+				border.graphics.beginStroke("#FFF").setStrokeStyle(0.5);
 				let monthStep = 6;
 				for (let years = 3; years >= 1; years--) {
 					if (xMax - xMin <= YEAR_SECONDS * years + MARGIN_X * 2) monthStep = years;
@@ -3724,7 +3722,7 @@ a:focus > .cp-settings-entry {
 								addLabel(String(year), OFFSET_X + x, OFFSET_Y + panelHeight + 15, axisLabel);
 								isFirst = false;
 							}
-							border2.graphics.mt(x, 0).lt(x, panelHeight);
+							border.graphics.mt(x, 0).lt(x, panelHeight);
 						}
 						if (unix > xMax) {
 							finished = true;
@@ -3733,7 +3731,7 @@ a:focus > .cp-settings-entry {
 					}
 					if (finished) break;
 				}
-				border2.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
+				border.graphics.s("#888").ss(1.5).rr(0, 0, panelWidth, panelHeight, 2);
 			};
 			const middle = OFFSET_Y + statusHeight / 2;
 			const border = newShape(stageStatus);
@@ -3901,8 +3899,8 @@ a:focus > .cp-settings-entry {
 	}
 
 	function selectedLanguageOf(select) {
-		const option2 = select?.selectedOptions[0];
-		return option2?.value ? toLanguage(option2) : null;
+		const option = select?.selectedOptions[0];
+		return option?.value ? toLanguage(option) : null;
 	}
 
 	// CpToolkit/src/adapters/judges/site-base.ts
@@ -3969,9 +3967,9 @@ a:focus > .cp-settings-entry {
 	}
 
 	class AtCoderSite extends JudgeSiteBase {
-		site;
 		id = "atcoder";
 		samplesByTask = new Map();
+		site;
 
 		constructor(bridge, site) {
 			super(bridge);
@@ -4150,9 +4148,9 @@ a:focus > .cp-settings-entry {
 	}
 
 	class CodeforcesMobileSite extends JudgeSiteBase {
+		id = "codeforces";
 		main;
 		form;
-		id = "codeforces";
 
 		constructor(bridge, main, form) {
 			super(bridge);
@@ -4439,8 +4437,8 @@ a:focus > .cp-settings-entry {
 			if (editor) return editor;
 			const {promise, resolve} = Promise.withResolvers();
 			const observer = new MutationObserver(() => {
-				const found2 = findEditor(target);
-				if (found2) resolve(found2);
+				const found = findEditor(target);
+				if (found) resolve(found);
 			});
 			observer.observe(document.body, {childList: true, subtree: true});
 			const timer = setTimeout(() => resolve(null), timeoutMs);
@@ -4601,8 +4599,8 @@ a:focus > .cp-settings-entry {
 	}
 
 	class CrossTabQueue {
-		lockName;
 		queue = new SerialQueue();
+		lockName;
 
 		constructor(lockName) {
 			this.lockName = lockName;
@@ -4621,9 +4619,9 @@ a:focus > .cp-settings-entry {
 	var POLL_INTERVAL_MS = 1000;
 
 	class CustomTestQueue {
-		site;
 		queue = new CrossTabQueue(LOCK_NAME);
 		failedGroups = new Set();
+		site;
 
 		constructor(site) {
 			this.site = site;
@@ -4701,11 +4699,11 @@ a:focus > .cp-settings-entry {
 	}
 
 	class AtCoderRunner {
-		queue;
-		language;
 		kind = "judge";
 		id;
 		label;
+		queue;
+		language;
 
 		constructor(queue, language) {
 			this.queue = queue;
@@ -4720,8 +4718,8 @@ a:focus > .cp-settings-entry {
 	}
 
 	class AtCoderRunnerProvider {
-		judge;
 		queue;
+		judge;
 
 		constructor(site, judge) {
 			this.judge = judge;
@@ -4740,9 +4738,16 @@ a:focus > .cp-settings-entry {
 
 	// CpToolkit/src/adapters/runners/pyodide.ts
 	var SETUP_CODE = `
-import contextlib, io, platform
-class __redirect_stdin(contextlib._RedirectStream):
-  _stream = "stdin"
+import contextlib, io, platform, sys
+
+@contextlib.contextmanager
+def __redirect_stdin(text):
+  previous = sys.stdin
+  sys.stdin = io.TextIOWrapper(io.BytesIO(text.encode()), encoding="utf-8")
+  try:
+    yield sys.stdin
+  finally:
+    sys.stdin = previous
 `;
 
 	function wrapSource(sourceCode) {
@@ -4756,7 +4761,8 @@ class __redirect_stdin(contextlib._RedirectStream):
 		return `
 def __run():
  global __stdout, __stderr, __stdin, __code
- with __redirect_stdin(io.StringIO(__stdin)):
+ __code = None
+ with __redirect_stdin(__stdin):
   with contextlib.redirect_stdout(io.StringIO()) as __stdout:
    with contextlib.redirect_stderr(io.StringIO()) as __stderr:
     try:
@@ -4768,12 +4774,12 @@ ${body}
 	}
 
 	class PyodideRunner {
-		scripts;
 		kind = "browser";
 		id = "browser:pyodide";
 		label = "Python3 Pyodide [Browser]";
 		pyodide = null;
 		queue = new SerialQueue();
+		scripts;
 
 		constructor(scripts) {
 			this.scripts = scripts;
@@ -4797,7 +4803,6 @@ ${body}
 			const pyodide = await this.pyodide;
 			const code = wrapSource(sourceCode);
 			pyodide.globals.set("__stdin", input);
-			pyodide.globals.set("__code", null);
 			const startedAt = Date.now();
 			try {
 				await pyodide.loadPackagesFromImports(code);
@@ -4840,11 +4845,11 @@ ${body}
 	var PAIZA_MAX_STATUS_CHECKS = 60;
 
 	class PaizaRunner {
-		http;
-		language;
 		kind = "paiza";
 		id;
 		label;
+		http;
+		language;
 
 		constructor(http, language, label) {
 			this.http = http;
@@ -4891,8 +4896,8 @@ ${body}
 			};
 		}
 
-		async request(path, query2, method = "GET") {
-			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query2, api_key: "guest"})}`;
+		async request(path, query, method = "GET") {
+			const url = `${runnerCatalog.paiza.apiBase}/${path}?${buildQueryString({...query, api_key: "guest"})}`;
 			const response = await this.http.send({url, method});
 			return JSON.parse(response.text);
 		}
@@ -4913,11 +4918,11 @@ ${body}
 	}
 
 	class LocalCodeRunner {
-		client;
-		compilerName;
 		kind = "local";
 		id;
 		label;
+		client;
+		compilerName;
 
 		constructor(client, compilerName, label) {
 			this.client = client;
@@ -5025,12 +5030,12 @@ ${body}
 	var ACL_INCLUDE_PATTERN = /^#\s*include\s*[<"]atcoder\/([^>"]+)[>"]/gm;
 
 	class WandboxRunner {
-		http;
-		compiler;
 		kind = "wandbox";
 		id;
 		label;
 		optimization;
+		http;
+		compiler;
 
 		constructor(http, compiler) {
 			this.http = http;
@@ -5663,9 +5668,9 @@ ${body}
 		},
 	};
 
-	function findRule(rules2, node, options) {
-		for (var i = 0; i < rules2.length; i++) {
-			var rule = rules2[i];
+	function findRule(rules, node, options) {
+		for (var i = 0; i < rules.length; i++) {
+			var rule = rules[i];
 			if (filterValue(rule, node, options)) return rule;
 		}
 		return;
@@ -5686,12 +5691,12 @@ ${body}
 
 	function collapseWhitespace(options) {
 		var element = options.element;
-		var isBlock2 = options.isBlock;
-		var isVoid2 = options.isVoid;
+		var isBlock = options.isBlock;
+		var isVoid = options.isVoid;
 		var isPre =
 			options.isPre ||
-			function (node2) {
-				return node2.nodeName === "PRE";
+			function (node) {
+				return node.nodeName === "PRE";
 			};
 		if (!element.firstChild || isPre(element)) return;
 		var prevText = null;
@@ -5711,13 +5716,13 @@ ${body}
 				node.data = text;
 				prevText = node;
 			} else if (node.nodeType === 1) {
-				if (isBlock2(node) || node.nodeName === "BR") {
+				if (isBlock(node) || node.nodeName === "BR") {
 					if (prevText) {
 						prevText.data = prevText.data.replace(/ $/, "");
 					}
 					prevText = null;
 					keepLeadingWs = false;
-				} else if (isVoid2(node) || isPre(node)) {
+				} else if (isVoid(node) || isPre(node)) {
 					prevText = null;
 					keepLeadingWs = true;
 				} else if (prevText) {
@@ -5805,23 +5810,23 @@ ${body}
 	var HTMLParser = canParseHTMLNatively() ? root.DOMParser : createHTMLParser();
 
 	function RootNode(input, options) {
-		var root2;
+		var root;
 		if (typeof input === "string") {
 			var doc = htmlParser().parseFromString(
 				'<x-turndown id="turndown-root">' + input + "</x-turndown>",
 				"text/html",
 			);
-			root2 = doc.getElementById("turndown-root");
+			root = doc.getElementById("turndown-root");
 		} else {
-			root2 = input.cloneNode(true);
+			root = input.cloneNode(true);
 		}
 		collapseWhitespace({
-			element: root2,
+			element: root,
 			isBlock,
 			isVoid,
 			isPre: options.preformattedCode ? isPreOrCode : null,
 		});
-		return root2;
+		return root;
 	}
 
 	var _htmlParser;
@@ -6328,17 +6333,20 @@ ${inner}
 			: inner;
 	}
 
+	function toHtmlElement(target) {
+		if (target instanceof HTMLElement) return target;
+		throw new TypeError("A page element is required.");
+	}
+
 	class TurndownStatementConverter {
 		turndown = createTurndown();
 
-		toMarkdown(html) {
-			return this.turndown.turndown(html);
+		toMarkdown(element) {
+			return this.turndown.turndown(toHtmlElement(element));
 		}
 
-		toPlainText(html) {
-			const template = document.createElement("template");
-			template.innerHTML = html;
-			return [...template.content.childNodes]
+		toPlainText(element) {
+			return [...toHtmlElement(element).childNodes]
 				.map(plainTextOf)
 				.join("")
 				.replace(
@@ -6550,11 +6558,11 @@ ${inner}
 		options: {},
 		live: true,
 		start({translate}) {
-			const tables2 = [...document.querySelectorAll("table")];
-			const body = tables2.at(-1)?.querySelector("tbody");
+			const tables = [...document.querySelectorAll("table")];
+			const body = tables.at(-1)?.querySelector("tbody");
 			const rows = [...(body?.querySelectorAll("tr") ?? [])];
-			const isCaseTable = rows.every((row2) => row2.querySelectorAll("td").length === COLUMN_COUNT);
-			const hasCases = tables2.length >= MIN_TABLES_WITH_CASES && rows.length >= MIN_CASES && isCaseTable;
+			const isCaseTable = rows.every((row) => row.querySelectorAll("td").length === COLUMN_COUNT);
+			const hasCases = tables.length >= MIN_TABLES_WITH_CASES && rows.length >= MIN_CASES && isCaseTable;
 			if (!body || !hasCases)
 				return () => {
 					return;
@@ -6756,13 +6764,13 @@ ${toast_default}`,
 	}
 
 	function buildCalendarUrl({title, startMs, endMs, location: location2}) {
-		const query2 = buildQueryString({
+		const query = buildQueryString({
 			action: "TEMPLATE",
 			text: title,
 			dates: `${toCalendarTime(startMs)}/${toCalendarTime(endMs)}`,
 			location: location2,
 		});
-		return `${GOOGLE_CALENDAR_URL}?${query2}`;
+		return `${GOOGLE_CALENDAR_URL}?${query}`;
 	}
 
 	// CpToolkit/src/features/contest-calendar/contest-calendar.css
@@ -6929,12 +6937,13 @@ ${toast_default}`,
 			panel.hidden = !open;
 			toggleButton.dataset.open = String(open);
 		};
+		const toggle = () => setOpen(panel.hidden !== false);
 		const toggleButton = h("button", {
 			type: "button",
 			className: "dock-toggle",
 			title: toggleLabel,
 			ariaLabel: toggleLabel,
-			onclick: () => setOpen(panel.hidden),
+			onclick: toggle,
 		});
 		const dock = h("div", {className: "dock"}, toggleButton, panel);
 		const host = h("div");
@@ -6960,11 +6969,11 @@ ${css}`,
 		});
 		const entries = new Set();
 		let active;
-		const activate = (next2) => {
-			active = next2;
+		const activate = (next) => {
+			active = next;
 			for (const entry of entries) {
-				entry.tab.dataset.active = String(entry === next2);
-				entry.pane.hidden = entry !== next2;
+				entry.tab.dataset.active = String(entry === next);
+				entry.pane.hidden = entry !== next;
 			}
 		};
 		return {
@@ -7011,7 +7020,7 @@ ${css}`,
 					},
 				};
 			},
-			toggle: () => setOpen(panel.hidden),
+			toggle,
 			remove: () => host.remove(),
 		};
 	}
@@ -7642,8 +7651,6 @@ summary {
 	};
 
 	class EasyTest {
-		site;
-		context;
 		dock;
 		panel;
 		savedCodes;
@@ -7657,6 +7664,8 @@ summary {
 		runnable = false;
 		runCount = 0;
 		running = 0;
+		site;
+		context;
 
 		constructor(site, context) {
 			this.site = site;
@@ -7837,8 +7846,8 @@ ${label}`,
 			const saved = language ? this.selections()[language.id] : undefined;
 			const kept = language?.id === this.languageId && isCandidate(previous) ? previous : undefined;
 			this.languageId = language?.id;
-			const next2 = local ?? kept ?? (isCandidate(saved) ? saved : candidates[0]?.id);
-			if (next2 !== undefined) environment.value = next2;
+			const next = local ?? kept ?? (isCandidate(saved) ? saved : candidates[0]?.id);
+			if (next !== undefined) environment.value = next;
 			this.setRunnable(candidates.length > 0 && this.running === 0);
 		}
 
@@ -7982,7 +7991,10 @@ ${EDITORIAL_BODY} > ul > li {font-size: larger;}
 pre code {tab-size: 4;}`;
 
 	async function loadLibraries({scripts}) {
-		await scripts.loadStylesheet(libraries.katexStylesheet);
+		await Promise.all([
+			scripts.loadStylesheet(libraries.katexStylesheet),
+			scripts.loadStylesheet(libraries.prettifyStylesheet),
+		]);
 		await scripts.loadScript(libraries.katexScript);
 		await Promise.all([scripts.loadScript(libraries.katexAutoRender), scripts.loadScript(libraries.prettify)]);
 	}
@@ -7994,10 +8006,10 @@ pre code {tab-size: 4;}`;
 		const content = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(1)`);
 		if (!content) throw new Error(`Editorial was not found in ${link.href}`);
 		const history = parsed.querySelector(`${EDITORIAL_BODY} > div:nth-of-type(2)`);
-		const container2 = h("div", {className: "cp-editorial"}, content);
-		if (history) container2.append(history);
-		link.parentElement?.append(container2);
-		page.renderMath(container2);
+		const container = h("div", {className: "cp-editorial"}, content);
+		if (history) container.append(history);
+		link.parentElement?.append(container);
+		page.renderMath(container);
 		page.highlightCode();
 	}
 
@@ -8083,11 +8095,11 @@ pre code {tab-size: 4;}`;
 	function createSampleRow(parent, translate) {
 		const existing = parent.querySelector(".cp-samples-row");
 		if (existing) return existing;
-		const container2 = createDetails(translate("efficientLayout.samples"));
-		container2.className = "cp-samples-container";
+		const container = createDetails(translate("efficientLayout.samples"));
+		container.className = "cp-samples-container";
 		const row = h("div", {className: "cp-samples-row"});
-		container2.append(row);
-		parent.append(container2);
+		container.append(row);
+		parent.append(container);
 		return row;
 	}
 
@@ -8147,18 +8159,18 @@ ${efficient_layout_default}`);
 		{value: "background", label: "historyColors.modeBackground"},
 	];
 
-	function colorizeText(cell2, value) {
+	function colorizeText(cell, value) {
 		const crown = crownImageOf(ratingScale, value);
-		cell2.replaceChildren();
-		if (crown) cell2.append(h("img", {src: crown}), " ");
-		cell2.append(h("span", {className: tierOf(ratingScale, value).className, textContent: String(value)}));
+		cell.replaceChildren();
+		if (crown) cell.append(h("img", {src: crown}), " ");
+		cell.append(h("span", {className: tierOf(ratingScale, value).className, textContent: String(value)}));
 	}
 
-	function colorizeCell(cell2, mode) {
-		const value = Number(cell2?.textContent?.trim() || Number.NaN);
-		if (!cell2 || Number.isNaN(value)) return;
-		if (mode === "text") colorizeText(cell2, value);
-		if (mode === "background") cell2.style.background = backgroundOf(ratingScale, value);
+	function colorizeCell(cell, mode) {
+		const value = Number(cell?.textContent?.trim() || Number.NaN);
+		if (!cell || Number.isNaN(value)) return;
+		if (mode === "text") colorizeText(cell, value);
+		if (mode === "background") cell.style.background = backgroundOf(ratingScale, value);
 	}
 
 	var historyColors = defineFeature({
@@ -8232,12 +8244,12 @@ ${efficient_layout_default}`);
 	var EDITOR_SETUP_DELAY_MS = 500;
 
 	// CpToolkit/src/application/source/transform-java.ts
-	async function transformJava(code, localRunner2, options) {
+	async function transformJava(code, localRunner, options) {
 		let connected = false;
 		let libraryMissing = false;
-		if (localRunner2.isAvailable()) {
+		if (localRunner.isAvailable()) {
 			try {
-				const transformed = await localRunner2.transform(code, options.header);
+				const transformed = await localRunner.transform(code, options.header);
 				connected = true;
 				if (transformed.status === "success")
 					return {sourceCode: transformed.sourceCode, connected, libraryMissing};
@@ -8290,7 +8302,7 @@ ${efficient_layout_default}`);
 			headerName: option.text("", "javaSubmit.headerName"),
 			foldOnPaste: option.boolean(true, "javaSubmit.foldOnPaste"),
 		},
-		start({options, judge, editors, localRunner: localRunner2, paste, translate}) {
+		start({options, judge, editors, localRunner, paste, translate}) {
 			const target = judge?.submission;
 			if (!target) return;
 			registerShortcut(target.shortcut, () => {
@@ -8316,7 +8328,7 @@ ${efficient_layout_default}`);
 				order: PASTE_ORDER,
 				async transform(code, {editor}) {
 					if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-					const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner2, {
+					const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner, {
 						...options,
 						header,
 					});
@@ -8404,9 +8416,9 @@ ${efficient_layout_default}`);
 		phase: "ready",
 		options: {},
 		async start({judgeSite, state, translate}) {
-			const container2 = document.querySelector("#select-lang");
+			const container = document.querySelector("#select-lang");
 			const site = await judgeSite();
-			if (!container2 || !site) return;
+			if (!container || !site) return;
 			const pinned = new PinnedLanguages(state);
 			const bar = h("span");
 			Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
@@ -8460,7 +8472,7 @@ ${efficient_layout_default}`);
 				},
 				h("span", {className: "glyphicon glyphicon-cog"}),
 			);
-			container2.append(bar);
+			container.append(bar);
 			render();
 			site.onLanguageChange(render);
 		},
@@ -8900,7 +8912,7 @@ ${efficient_layout_default}`);
 		const status = page.querySelector(".label")?.textContent?.trim() ?? "";
 		const detail = [...page.querySelectorAll("td")]
 			.slice(1)
-			.map((cell2) => cell2.textContent?.trim())
+			.map((cell) => cell.textContent?.trim())
 			.join("  ");
 		return {status, detail};
 	}
@@ -9067,9 +9079,9 @@ ${efficient_layout_default}`);
 		}${block}${code.slice(end)}`;
 	}
 
-	function replaceBlock(code, current, next2, fromEnd) {
+	function replaceBlock(code, current, next, fromEnd) {
 		const index = fromEnd ? code.lastIndexOf(current) : code.indexOf(current);
-		return index < 0 ? null : `${code.slice(0, index)}${next2}${code.slice(index + current.length)}`;
+		return index < 0 ? null : `${code.slice(0, index)}${next}${code.slice(index + current.length)}`;
 	}
 
 	// CpToolkit/src/application/source/source-comments.ts
@@ -9451,19 +9463,19 @@ ${efficient_layout_default}`);
 				panel.setUnsupported(!writable);
 				return result;
 			};
-			const refresh2 = () => {
+			const refresh = () => {
 				const original = site.sourceCode();
 				let code = original;
 				let writable = true;
 				for (const [slot, current] of inserted) {
-					const next2 = render(slot);
-					if (next2 === null) {
+					const next = render(slot);
+					if (next === null) {
 						writable = false;
 						continue;
 					}
-					const replaced = replaceBlock(code, current, next2, slot === "footer");
-					if (replaced === null || !next2) inserted.delete(slot);
-					else inserted.set(slot, next2);
+					const replaced = replaceBlock(code, current, next, slot === "footer");
+					if (replaced === null || !next) inserted.delete(slot);
+					else inserted.set(slot, next);
 					code = replaced ?? code;
 				}
 				panel.setUnsupported(!writable);
@@ -9473,21 +9485,21 @@ ${efficient_layout_default}`);
 				comments,
 				translate,
 				task: () => site.taskUri(),
-				onChange: refresh2,
+				onChange: refresh,
 				onApply() {
-					refresh2();
+					refresh();
 					const code = site.sourceCode();
-					const next2 = insertAll(code);
-					if (next2 !== code) site.setSourceCode(next2);
+					const next = insertAll(code);
+					if (next !== code) site.setSourceCode(next);
 				},
 			});
 			editorButtons.append(panel.button);
-			site.onLanguageChange(refresh2);
+			site.onLanguageChange(refresh);
 			const taskSelect = document.querySelector("#select-task");
 			if (taskSelect) {
 				page.onChange(taskSelect, () => {
 					panel.reload();
-					refresh2();
+					refresh();
 				});
 			}
 			paste.add(
@@ -9519,9 +9531,9 @@ ${efficient_layout_default}`);
 		return clone;
 	}
 
-	function findVisibleStatement(container2) {
-		const languages = [...container2.querySelectorAll(".lang-ja, .lang-en")];
-		return languages.find((element) => getComputedStyle(element).display !== "none") ?? container2;
+	function findVisibleStatement(container) {
+		const languages = [...container.querySelectorAll(".lang-ja, .lang-en")];
+		return languages.find((element) => getComputedStyle(element).display !== "none") ?? container;
 	}
 
 	var statementCopy = defineFeature({
@@ -9541,16 +9553,16 @@ ${efficient_layout_default}`);
 		live: true,
 		start({options, clipboard, statementConverter, translate}) {
 			const added = [];
-			const container2 = document.getElementById("task-statement");
-			if (!container2)
+			const container = document.getElementById("task-statement");
+			if (!container)
 				return () => {
 					return;
 				};
 			const convert = (element) => {
-				const html = withoutControls(element).innerHTML;
+				const statement = withoutControls(element);
 				return options.format === "plain"
-					? statementConverter.toPlainText(html)
-					: statementConverter.toMarkdown(html);
+					? statementConverter.toPlainText(statement)
+					: statementConverter.toMarkdown(statement);
 			};
 			const createButton = (label, getText) => {
 				const button = h("button", {type: "button", className: "btn btn-default btn-sm", textContent: label});
@@ -9566,7 +9578,7 @@ ${efficient_layout_default}`);
 				added.push(button);
 				return button;
 			};
-			for (const section of container2.querySelectorAll(".part section")) {
+			for (const section of container.querySelectorAll(".part section")) {
 				if (isSampleHeading(section)) continue;
 				section
 					.querySelector("h3")
@@ -9575,7 +9587,7 @@ ${efficient_layout_default}`);
 			const title = document.querySelector(".h2") ?? document.querySelector("h2");
 			if (title) {
 				const copyAll = () => {
-					const sections = [...findVisibleStatement(container2).querySelectorAll(".part section")];
+					const sections = [...findVisibleStatement(container).querySelectorAll(".part section")];
 					const heading =
 						withoutControls(title).textContent?.trim() || translate("statementCopy.defaultTitle");
 					const firstSample = sections.findIndex(isSampleHeading);
@@ -9677,8 +9689,8 @@ ${body}`.trim();
 	var HIGHLIGHT_DELAY_MS = 100;
 	var SKIPPED_TAGS = new Set(statementCatalog.skipTags);
 
-	function collectTextNodes(root2, accepts) {
-		const walker = document.createTreeWalker(root2, NodeFilter.SHOW_TEXT, {
+	function collectTextNodes(root, accepts) {
+		const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
 			acceptNode(node) {
 				const parent = node.parentElement;
 				if (!parent || SKIPPED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
@@ -9727,9 +9739,9 @@ ${body}`.trim();
 		}
 	}
 
-	function emphasizeLimit(root2, keywords, className) {
+	function emphasizeLimit(root, keywords, className) {
 		for (const keyword of keywords) {
-			for (const node of collectTextNodes(root2, (text) => text.includes(keyword))) {
+			for (const node of collectTextNodes(root, (text) => text.includes(keyword))) {
 				const segments = splitLimitValue(node.data, keyword);
 				if (segments) replaceWithSegments(node, segments, className);
 			}
@@ -9737,10 +9749,10 @@ ${body}`.trim();
 	}
 
 	function emphasizeLimits() {
-		const root2 = document.getElementById("main-container");
-		if (!root2) return;
-		emphasizeLimit(root2, statementCatalog.timeLimitKeywords, TIME_CLASS);
-		emphasizeLimit(root2, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
+		const root = document.getElementById("main-container");
+		if (!root) return;
+		emphasizeLimit(root, statementCatalog.timeLimitKeywords, TIME_CLASS);
+		emphasizeLimit(root, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
 	}
 
 	var statementHighlight = defineFeature({
@@ -9831,8 +9843,8 @@ ${statement_highlight_default}`);
 				return () => {
 					return;
 				};
-			const createLink = (label2, orderBy) => {
-				const query2 = buildAtCoderSubmissionsQuery({
+			const createLink = (label, orderBy) => {
+				const query = buildAtCoderSubmissionsQuery({
 					language: options.language || undefined,
 					status: "AC",
 					orderBy,
@@ -9840,8 +9852,8 @@ ${statement_highlight_default}`);
 				});
 				return h("a", {
 					className: "btn btn-default btn-sm",
-					href: `/contests/${task.contestId}/submissions?${query2}`,
-					textContent: label2,
+					href: `/contests/${task.contestId}/submissions?${query}`,
+					textContent: label,
 				});
 			};
 			const label = h("span", {textContent: `${translate("submissionShortcuts.label")}:`});
@@ -10063,7 +10075,7 @@ button.primary {
 		const info = h("p", {className: "open-tasks-info"});
 		const isAll = () => allRadio.checked;
 		const selectedRange = () => (isAll() ? {begin: 0, end: tasks.length - 1} : range);
-		const refresh2 = () => {
+		const refresh = () => {
 			beginSelect.value = String(range.begin);
 			endSelect.value = String(range.end);
 			beginSelect.disabled = endSelect.disabled = isAll();
@@ -10072,12 +10084,12 @@ button.primary {
 		};
 		const changeRange = (changed) => {
 			range = adjustRange({begin: Number(beginSelect.value), end: Number(endSelect.value)}, changed, maxTabs);
-			refresh2();
+			refresh();
 		};
 		allRadio.checked = canOpenAll && initial.begin === 0 && initial.end === tasks.length - 1;
 		rangeRadio.checked = !allRadio.checked;
-		allRadio.addEventListener("change", refresh2);
-		rangeRadio.addEventListener("change", refresh2);
+		allRadio.addEventListener("change", refresh);
+		rangeRadio.addEventListener("change", refresh);
 		beginSelect.addEventListener("change", () => changeRange("begin"));
 		endSelect.addEventListener("change", () => changeRange("end"));
 		const row = (...children) => h("div", {className: "open-tasks-row"}, ...children);
@@ -10116,7 +10128,7 @@ button.primary {
 		);
 		return {
 			open() {
-				refresh2();
+				refresh();
 				modal.open();
 			},
 		};

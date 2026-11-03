@@ -45,8 +45,10 @@ export class RecordingLogger implements Logger {
 /** 決めた応答を順に返す通信。送信内容も記録する。 */
 export class FakeHttpClient implements HttpClient {
 	readonly requests: HttpRequest[] = [];
+	private readonly respond: (request: HttpRequest) => HttpResponse;
 
-	constructor(private readonly respond: (request: HttpRequest) => HttpResponse) {
+	constructor(respond: (request: HttpRequest) => HttpResponse) {
+		this.respond = respond;
 	}
 
 	async send(request: HttpRequest): Promise<HttpResponse> {

@@ -28,8 +28,12 @@ class PaizaRunner implements CodeRunner {
 	readonly kind = "paiza";
 	readonly id: string;
 	readonly label: string;
+	private readonly http: HttpClient;
+	private readonly language: string;
 
-	constructor(private readonly http: HttpClient, private readonly language: string, label: string) {
+	constructor(http: HttpClient, language: string, label: string) {
+		this.http = http;
+		this.language = language;
 		this.id = `paiza:${language}`;
 		this.label = `${label} [PaizaIO]`;
 	}
@@ -76,7 +80,10 @@ class PaizaRunner implements CodeRunner {
 }
 
 export class PaizaRunnerProvider implements RunnerProvider {
-	constructor(private readonly http: HttpClient) {
+	private readonly http: HttpClient;
+
+	constructor(http: HttpClient) {
+		this.http = http;
 	}
 
 	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {
@@ -90,8 +97,12 @@ class LocalCodeRunner implements CodeRunner {
 	readonly kind = "local";
 	readonly id: string;
 	readonly label: string;
+	private readonly client: LocalRunnerClient;
+	private readonly compilerName: string;
 
-	constructor(private readonly client: LocalRunnerClient, private readonly compilerName: string, label: string) {
+	constructor(client: LocalRunnerClient, compilerName: string, label: string) {
+		this.client = client;
+		this.compilerName = compilerName;
 		this.id = `local:${compilerName}`;
 		this.label = `${label} [Local]`;
 	}
@@ -118,7 +129,10 @@ class LocalCodeRunner implements CodeRunner {
 }
 
 export class LocalRunnerProvider implements RunnerProvider {
-	constructor(private readonly client: LocalRunnerClient) {
+	private readonly client: LocalRunnerClient;
+
+	constructor(client: LocalRunnerClient) {
+		this.client = client;
 	}
 
 	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {

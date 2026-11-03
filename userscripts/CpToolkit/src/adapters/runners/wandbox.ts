@@ -49,8 +49,12 @@ class WandboxRunner implements CodeRunner {
 	readonly id: string;
 	readonly label: string;
 	private readonly optimization: string | undefined;
+	private readonly http: HttpClient;
+	private readonly compiler: WandboxCompiler;
 
-	constructor(private readonly http: HttpClient, private readonly compiler: WandboxCompiler) {
+	constructor(http: HttpClient, compiler: WandboxCompiler) {
+		this.http = http;
+		this.compiler = compiler;
 		const usesAcl = compiler.language === "C++";
 		this.id = `wandbox:${compiler.name}`;
 		this.label = `${compiler.language} ${compiler.name}${usesAcl ? " + ACL" : ""} [Wandbox]`;
@@ -106,7 +110,12 @@ class WandboxRunner implements CodeRunner {
 }
 
 export class WandboxRunnerProvider implements RunnerProvider {
-	constructor(private readonly http: HttpClient, private readonly state: KeyValueStore) {
+	private readonly http: HttpClient;
+	private readonly state: KeyValueStore;
+
+	constructor(http: HttpClient, state: KeyValueStore) {
+		this.http = http;
+		this.state = state;
 	}
 
 	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {

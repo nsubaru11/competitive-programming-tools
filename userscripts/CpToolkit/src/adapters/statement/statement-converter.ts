@@ -74,16 +74,20 @@ function plainTextOf(node: Node): string {
 	return BLOCK_TAGS.has(tag) ? `\n${inner}\n` : inner;
 }
 
+function toHtmlElement(target: object): HTMLElement {
+	if (target instanceof HTMLElement) return target;
+	throw new TypeError("A page element is required.");
+}
+
+/** HTML の文字列を経由せず、要素をそのまま変換する。turndown は要素を複製してから処理する。 */
 export class TurndownStatementConverter implements StatementConverter {
 	private readonly turndown = createTurndown();
 
-	toMarkdown(html: string): string {
-		return this.turndown.turndown(html);
+	toMarkdown(element: object): string {
+		return this.turndown.turndown(toHtmlElement(element));
 	}
 
-	toPlainText(html: string): string {
-		const template = document.createElement("template");
-		template.innerHTML = html;
-		return [...template.content.childNodes].map(plainTextOf).join("").replace(/\n{3,}/g, "\n\n").trim();
+	toPlainText(element: object): string {
+		return [...toHtmlElement(element).childNodes].map(plainTextOf).join("").replace(/\n{3,}/g, "\n\n").trim();
 	}
 }

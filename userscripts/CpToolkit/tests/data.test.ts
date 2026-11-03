@@ -83,7 +83,8 @@ describe("libraries", () => {
 		}];
 		for (const {url, integrity} of resources) {
 			expect(url).toMatch(/^https:\/\//);
-			expect(url).toMatch(/@\d|\/r\d+\/|\/v\d/);
+			// npm の版番号か、GitHub のコミットの完全な SHA。ブランチ名やタグは中身が変わりうる
+			expect(url).toMatch(/@\d|@[0-9a-f]{40}\/|\/v\d/);
 			expect(integrity).toMatch(/^sha384-[A-Za-z0-9+/]{64}$/);
 		}
 	});

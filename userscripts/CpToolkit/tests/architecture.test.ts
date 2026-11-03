@@ -20,6 +20,27 @@ async function featureSources(): Promise<Array<{feature: string; file: string; t
 	return sources;
 }
 
+describe("安全な DOM 操作", () => {
+	test("文字列を HTML やコードとして解釈する API を使わない", async () => {
+		const unsafePatterns = [
+			/\.(innerHTML|outerHTML)\b/,
+			/\binsertAdjacentHTML\b/,
+			/\bcreateContextualFragment\b/,
+			/\bdocument\.write(ln)?\s*\(/,
+			/\bsrcdoc\b/,
+			/(^|[^.\w])eval\s*\(/,
+			/\bnew\s+Function\s*\(/,
+			/\bset(Timeout|Interval)\s*\(\s*["'`]/,
+		];
+		const violations: string[] = [];
+		for await (const file of new Glob("**/*.ts").scan({cwd: sourceDir})) {
+			const text = await Bun.file(join(sourceDir, file)).text();
+			for (const pattern of unsafePatterns) if (pattern.test(text)) violations.push(`${file}: ${pattern.source}`);
+		}
+		expect(violations).toEqual([]);
+	});
+});
+
 describe("機能の独立性", () => {
 	test("機能は他の機能を import しない", async () => {
 		const violations: string[] = [];

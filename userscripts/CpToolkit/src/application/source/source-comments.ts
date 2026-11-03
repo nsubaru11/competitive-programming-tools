@@ -25,7 +25,10 @@ const isNamed: Guard<NamedComment> = isObjectOf<NamedComment>({name: isString, t
 
 /** ヘッダーとフッターを別々に記憶する。 */
 export class SourceComments {
-	constructor(private readonly state: KeyValueStore) {
+	private readonly state: KeyValueStore;
+
+	constructor(state: KeyValueStore) {
+		this.state = state;
 	}
 
 	/** この問題だけの内容があればそれを、なければ前回の内容を返す。 */

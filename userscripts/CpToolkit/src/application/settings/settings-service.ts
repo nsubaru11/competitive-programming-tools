@@ -6,8 +6,10 @@ const STORAGE_KEY = "settings";
 export class SettingsService {
 	private settings: Settings;
 	private readonly listeners = new Set<() => void>();
+	private readonly store: KeyValueStore;
 
-	constructor(private readonly store: KeyValueStore) {
+	constructor(store: KeyValueStore) {
+		this.store = store;
 		this.settings = parseSettings(store.get(STORAGE_KEY));
 		store.subscribeRemote(STORAGE_KEY, (value) => this.replace(parseSettings(value)));
 	}

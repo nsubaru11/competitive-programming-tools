@@ -45,8 +45,12 @@ class EasyTest {
 	private runnable = false;
 	private runCount = 0;
 	private running = 0;
+	private readonly site: JudgeSite;
+	private readonly context: Context;
 
-	constructor(private readonly site: JudgeSite, private readonly context: Context) {
+	constructor(site: JudgeSite, context: Context) {
+		this.site = site;
+		this.context = context;
 		const {options, state, translate, openSettings} = context;
 		this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
 		this.dock = createDock({css, toggleLabel: "Easy Test", closeLabel: translate("settings.close")});

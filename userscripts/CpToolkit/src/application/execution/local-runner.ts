@@ -17,8 +17,11 @@ const TRANSFORM_TIMEOUT_MS = 30_000;
 const STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
 export class LocalRunnerError extends Error {
-	constructor(message: string, readonly status: number) {
+	readonly status: number;
+
+	constructor(message: string, status: number) {
 		super(message);
+		this.status = status;
 	}
 }
 
@@ -30,11 +33,12 @@ export class LocalRunnerClient {
 		sourceCode: string;
 		response: Promise<LocalRunnerPrepareResponse>
 	} | null = null;
+	private readonly http: HttpClient;
+	private readonly endpoint: () => string | null;
 
-	constructor(
-		private readonly http: HttpClient,
-		private readonly endpoint: () => string | null,
-	) {
+	constructor(http: HttpClient, endpoint: () => string | null) {
+		this.http = http;
+		this.endpoint = endpoint;
 	}
 
 	isAvailable(): boolean {

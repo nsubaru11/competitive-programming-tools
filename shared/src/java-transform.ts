@@ -28,9 +28,11 @@ type ClassInfo = {
 	isPublic: boolean;
 }
 
-export function createMaskedCode(text: string): string {
-	const enum State {Normal, LineComment, BlockComment, String, Char}
+// enum は型を消すだけでは JS にならないので、定数のオブジェクトで表す
+const State = {Normal: 0, LineComment: 1, BlockComment: 2, String: 3, Char: 4} as const;
+type State = (typeof State)[keyof typeof State];
 
+export function createMaskedCode(text: string): string {
 	const out: string[] = [];
 	let state: State = State.Normal;
 	let isEscape = false;

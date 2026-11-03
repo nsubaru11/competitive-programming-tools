@@ -12,7 +12,10 @@ ${EDITORIAL_BODY} > ul > li {font-size: larger;}
 pre code {tab-size: 4;}`;
 
 async function loadLibraries({scripts}: FeatureServices): Promise<void> {
-	await scripts.loadStylesheet(libraries.katexStylesheet);
+	await Promise.all([
+		scripts.loadStylesheet(libraries.katexStylesheet),
+		scripts.loadStylesheet(libraries.prettifyStylesheet),
+	]);
 	await scripts.loadScript(libraries.katexScript);
 	await Promise.all([scripts.loadScript(libraries.katexAutoRender), scripts.loadScript(libraries.prettify)]);
 }

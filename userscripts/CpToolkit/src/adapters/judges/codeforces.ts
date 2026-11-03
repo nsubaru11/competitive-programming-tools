@@ -92,9 +92,13 @@ export class CodeforcesSite extends JudgeSiteBase {
 /** モバイル版には提出欄がないので、提出ページのフォームを問題ページへ移す。 */
 export class CodeforcesMobileSite extends JudgeSiteBase {
 	readonly id = "codeforces";
+	private readonly main: Element;
+	private readonly form: HTMLFormElement;
 
-	private constructor(bridge: PageBridge, private readonly main: Element, private readonly form: HTMLFormElement) {
+	private constructor(bridge: PageBridge, main: Element, form: HTMLFormElement) {
 		super(bridge);
+		this.main = main;
+		this.form = form;
 	}
 
 	get mounts(): JudgeMounts {

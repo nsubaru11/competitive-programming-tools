@@ -22,8 +22,10 @@ const POLL_INTERVAL_MS = 1000;
 class CustomTestQueue {
 	private readonly queue = new CrossTabQueue(LOCK_NAME);
 	private readonly failedGroups = new Set<string>();
+	private readonly site: HttpClient;
 
-	constructor(private readonly site: HttpClient) {
+	constructor(site: HttpClient) {
+		this.site = site;
 	}
 
 	private get baseUrl(): string {
@@ -103,8 +105,12 @@ class AtCoderRunner implements CodeRunner {
 	readonly kind = "judge";
 	readonly id: string;
 	readonly label: string;
+	private readonly queue: CustomTestQueue;
+	private readonly language: JudgeLanguage;
 
-	constructor(private readonly queue: CustomTestQueue, private readonly language: JudgeLanguage) {
+	constructor(queue: CustomTestQueue, language: JudgeLanguage) {
+		this.queue = queue;
+		this.language = language;
 		this.id = `atcoder:${language.id}`;
 		this.label = `${language.label} [AtCoder]`;
 	}
@@ -118,7 +124,10 @@ class AtCoderRunner implements CodeRunner {
 export class AtCoderRunnerProvider implements RunnerProvider {
 	private readonly queue: CustomTestQueue;
 
-	constructor(site: HttpClient, private readonly judge: () => Promise<JudgeSite | null>) {
+	private readonly judge: () => Promise<JudgeSite | null>;
+
+	constructor(site: HttpClient, judge: () => Promise<JudgeSite | null>) {
+		this.judge = judge;
 		this.queue = new CustomTestQueue(site);
 	}
 

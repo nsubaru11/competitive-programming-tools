@@ -8,7 +8,10 @@ export abstract class JudgeSiteBase implements JudgeSite {
 	abstract readonly id: string;
 	abstract readonly mounts: JudgeMounts;
 
-	protected constructor(protected readonly bridge: PageBridge) {
+	protected readonly bridge: PageBridge;
+
+	protected constructor(bridge: PageBridge) {
+		this.bridge = bridge;
 	}
 
 	protected abstract get languageSelect(): HTMLSelectElement | null;

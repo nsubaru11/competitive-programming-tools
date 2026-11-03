@@ -44,10 +44,11 @@ wandbox:
   listUrl: https://wandbox.org/api/list.json
   compileUrl: https://wandbox.org/api/compile.json
   cacheHours: 24
-  # C++ の提出で使う AtCoder Library の取得元
-  aclBaseUrl: https://cdn.jsdelivr.net/gh/atcoder/ac-library/
+  # C++ の提出で使う AtCoder Library の取得元。v1.6 のコミットに固定する
+  aclBaseUrl: https://cdn.jsdelivr.net/gh/atcoder/ac-library@864245a00b00dd008d1abfdc239618fdb7d139da/
 
 pyodide:
-  baseUrl: https://cdn.jsdelivr.net/pyodide/v0.24.0/full/
+  # AtCoder の Python 3.13 に合わせ、Python 3.13 の最新の 0.29 系を使う(314 系は Python 3.14)
+  baseUrl: https://cdn.jsdelivr.net/pyodide/v0.29.5/full/
   # pyodide.js の integrity。版を変えたら計算し直す
-  integrity: sha384-hxqITTjjSqs/ZNr6/q1sP+9wWFKuZ0jBiNJCqnaaiGb2/Qnq+d5DEiN3/oHDLGkk
+  integrity: sha384-VR47TfKeAmT7vMej7bwOVg0tHTQLLGMSIpsXtFMCZG5OpKZSIXoSLtGY//qHcxc6

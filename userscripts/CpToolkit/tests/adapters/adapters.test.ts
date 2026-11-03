@@ -31,8 +31,9 @@ describe("問題文の変換", () => {
 		const mathml = `<span class="katex-mathml"><math><annotation encoding="application/x-tex">${tex}</annotation></math></span>`;
 		return `<span class="katex">${mathml}<span class="katex-html" aria-hidden="true">描画結果</span></span>`;
 	};
-	const statement = `<p>長さ <var>${katex("N")}</var> の数列と ${katex("M")} について</p>
-		<p><span class="katex-display">${katex("\\sum_{i=1}^N A_i")}</span></p>`;
+	const html = `<div><p>長さ <var>${katex("N")}</var> の数列と ${katex("M")} について</p>
+		<p><span class="katex-display">${katex("\\sum_{i=1}^N A_i")}</span></p></div>`;
+	const statement = new DOMParser().parseFromString(html, "text/html").body.firstElementChild!;
 	const converter = new TurndownStatementConverter();
 
 	test("Markdown では別行立ての数式を $$ で囲み、描画結果を含めない", () => {

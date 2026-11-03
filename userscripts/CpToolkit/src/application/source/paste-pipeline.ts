@@ -20,8 +20,10 @@ export type PasteStep = {
 export class PastePipeline {
 	private readonly steps: PasteStep[] = [];
 	private watching = false;
+	private readonly editors: CodeEditorLocator;
 
-	constructor(private readonly editors: CodeEditorLocator) {
+	constructor(editors: CodeEditorLocator) {
+		this.editors = editors;
 	}
 
 	/** エディタのないページも多いので、見つかるのを待たずに返す。 */
