@@ -57,13 +57,15 @@ app ──► features ──► application ──► catalog ──► domain 
 
 規則は文書ではなく検査で守ります。
 
-| 規則               | 検査                                                                        |
-|--------------------|-----------------------------------------------------------------------------|
-| 層の依存方向       | `tsc -b`。各層の `tsconfig.json` の `references` にない層は import できない |
-| 使える環境 API     | `tsc -b`。層ごとの `lib` と `types` にない API は型エラーになる             |
-| YAML の形          | `tsc -b`。`catalog` で型に代入できなければ型エラーになる                    |
-| 機能どうしの独立性 | `tests/architecture.test.ts`                                                |
-| YAML の内容        | `tests/data.test.ts`。正規表現の妥当性や ID の重複など                      |
+| 規則                   | 検査                                                                                                        |
+|------------------------|-------------------------------------------------------------------------------------------------------------|
+| 層の依存方向           | `tsc -b`。各層の `tsconfig.json` の `references` にない層は import できない                                 |
+| 使える環境 API         | `tsc -b`。層ごとの `lib` と `types` にない API は型エラーになる                                             |
+| YAML の形              | `tsc -b`。`catalog` で型に代入できなければ型エラーになる                                                    |
+| 型を消せば JS になる   | `tsc -b`。`erasableSyntaxOnly` により、引数プロパティ、`enum`、`namespace` は型エラーになる                 |
+| 機能どうしの独立性     | `tests/architecture.test.ts`                                                                                |
+| 文字列を HTML にしない | `tests/architecture.test.ts`。`innerHTML`、`insertAdjacentHTML`、`eval`、文字列の `setTimeout` などを禁じる |
+| YAML の内容            | `tests/data.test.ts`。正規表現の妥当性や ID の重複、外部ファイルの版の固定と integrity など                 |
 
 ## データ
 
@@ -114,6 +116,8 @@ YAML の型は `scripts/gen-data-types.ts` が `<name>.d.yaml.ts` として生�
 ### 通信
 
 `SameOriginHttpClient` は表示中のサイトにしか送りません。外部のサービスは `data/runners.yaml` の `external` に書き、利用者が選んだときだけ使います。内部エラーで次の候補へ切り替わるときも、`external` の実行環境は選びません。
+
+ページの文脈で動くライブラリ(KaTeX、Prettify、Pyodide)は `data/libraries.yaml` と `data/runners.yaml` に置き、npm の版番号か GitHub のコミットの SHA で固定して、integrity で検証します。読み込んだ先でさらに別のファイルを検証なしで読むもの(Prettify の `run_prettify.js` など)は使いません。Pyodide は AtCoder と同じ Python の版の系列から選びます。
 
 ### ソースコードのコメント
 

@@ -45,7 +45,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 ## 型定義
 
 - `types/userscript.d.ts`: `GM_*`、`unsafeWindow`、AtCoder のページ向けの Window の拡張
-- `tsconfig.json`: `**/src/**/*.ts` と `build.ts` を型チェックする(`CpToolkit` は層ごとの `tsconfig.json` で検査する)
+- `tsconfig.json`: `build.ts`、`scripts/`、`types/` を型チェックする(`CpToolkit` は層ごとの `tsconfig.json` で検査する)
 
 ## shared との関係
 

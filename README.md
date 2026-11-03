@@ -33,8 +33,9 @@ competitive-programming-tools/
 
 ### 方針
 
-- パッケージマネージャは Bun
+- パッケージマネージャは Bun。配布物は CI と同じ版(`.github/workflows` の `bun-version`)でビルドする。版が違うと出力が変わり、CI の配布物の検査が失敗する
 - `@ts-nocheck` と `@ts-ignore` は使わない
+- 型を消すだけで JS にならない構文(引数プロパティ、`enum`、`namespace`)は使わない。`tsconfig.base.json` の `erasableSyntaxOnly` で検査する
 - 共通の設定は `tsconfig.base.json` に置く
 - `userscripts/*/dist/*.user.js` は生成物なので、`src/` を編集して再ビルドする
 
