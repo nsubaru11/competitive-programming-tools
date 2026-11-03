@@ -108,7 +108,9 @@ final class ProgramRunner {
 
 	/**
 	 * awaitQuiescence は待ち行列のタスクを呼び出し元で実行するので使わない。提出コードがこのスレッドで動いてしまう。
+	 * 代わりに isQuiescent を短い間隔で確かめる。
 	 */
+	@SuppressWarnings("BusyWait")
 	private static boolean commonPoolHasWork() throws InterruptedException {
 		final ForkJoinPool commonPool = ForkJoinPool.commonPool();
 		final long deadline = System.nanoTime() + QUIESCENCE_WAIT_NANOS;

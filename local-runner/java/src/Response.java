@@ -6,7 +6,7 @@ import java.util.*;
  * 実装はこのファイル内に限定（sealed）。各メッセージのワイヤ形式は {@code PROTOCOL.md} を参照してください。
  * </p>
  *
- * @see PROTOCOL.md 「3. メッセージ一覧」
+ * @see "PROTOCOL.md 「3. メッセージ一覧」"
  */
 sealed interface Response {}
 

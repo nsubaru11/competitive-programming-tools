@@ -29,10 +29,6 @@ final class JavaSourceTransformer {
 		if (compiler == null) throw new IllegalStateException("No system Java compiler is available (JDK required).");
 	}
 
-	SourceTransformResult transform(final String rawSource, final Path librarySourceRoot, final boolean debug, final boolean autoImport) {
-		return transform(rawSource, librarySourceRoot, debug, autoImport, true);
-	}
-
 	SourceTransformResult transform(final String rawSource, final Path librarySourceRoot, final boolean debug, final boolean autoImport, final boolean validate) {
 		try {
 			final Path root = librarySourceRoot.toAbsolutePath().normalize();
@@ -45,7 +41,7 @@ final class JavaSourceTransformer {
 
 			Analysis analysis = analyze(source, index.classPath());
 			if (autoImport) {
-				final AutoImportResult inferred = inferImports(source, analysis, index);
+				final AutoImportResult inferred = inferImports(analysis, index);
 				if (!inferred.error().isEmpty()) return failure(source, inferred.error());
 				if (!inferred.imports().isEmpty()) {
 					addedImports.addAll(inferred.imports());
@@ -129,7 +125,7 @@ final class JavaSourceTransformer {
 		}
 	}
 
-	private AutoImportResult inferImports(final String source, final Analysis analysis, final LibraryIndex index) {
+	private AutoImportResult inferImports(final Analysis analysis, final LibraryIndex index) {
 		final Set<String> existing = new HashSet<>();
 		for (final ImportTree importTree : analysis.solution().getImports()) {
 			existing.add(importTree.getQualifiedIdentifier().toString());
@@ -439,9 +435,6 @@ final class JavaSourceTransformer {
 					if (event.getKind() == TaskEvent.Kind.PARSE && event.getCompilationUnit() != null)
 						units.add(event.getCompilationUnit());
 				}
-
-				@Override
-				public void finished(final TaskEvent event) {}
 			});
 			final CompilationUnitTree solution = task.parse().iterator().next();
 			task.analyze();

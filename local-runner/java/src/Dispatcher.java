@@ -38,7 +38,7 @@ public final class Dispatcher {
 	 */
 	private static void dispatch(final ParseOutcome incoming, final Executor executor, final MessageChannel channel) throws IOException {
 		switch (incoming) {
-			case ProtocolError(var requestId, var reason) -> channel.send(new ErrorResponse(requestId, reason));
+			case ProtocolError(var reason) -> channel.send(new ErrorResponse(ProtocolCodec.PROTOCOL_ERROR_ID, reason));
 			case ValidRequest(var request) -> {
 				if (request instanceof Run) {
 					channel.send(new RunAck());

@@ -14,6 +14,7 @@ final class MessageChannel implements AutoCloseable {
 	private final BufferedReader reader;
 	private final BufferedWriter writer;
 
+	@SuppressWarnings("SameParameterValue") // 本番は標準入出力だけだが、テストで差し替えられるように受け取る
 	MessageChannel(final InputStream in, final OutputStream out) {
 		this.reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		this.writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));

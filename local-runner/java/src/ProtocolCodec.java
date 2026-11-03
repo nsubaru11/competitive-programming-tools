@@ -53,40 +53,40 @@ final class ProtocolCodec {
 			case RUN -> parseRun(parts);
 			case COMPILE -> parseCompile(parts);
 			case TRANSFORM -> parseTransform(parts);
-			default -> new ProtocolError(PROTOCOL_ERROR_ID, "Unknown command: " + parts[0]);
+			default -> new ProtocolError("Unknown command: " + parts[0]);
 		};
 	}
 
 	private static ParseOutcome parseTransform(final String[] parts) {
 		if (parts.length < TRANSFORM_PARTS_MIN_SIZE) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed TRANSFORM command.");
+			return new ProtocolError("Malformed TRANSFORM command.");
 		}
 		try {
 			return new ValidRequest(new Transform(parts[1], decode(parts[2]), Paths.get(decode(parts[3])), "1".equals(parts[4]), "1".equals(parts[5]), parts.length < 7 || "1".equals(parts[6])));
 		} catch (final RuntimeException exception) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed TRANSFORM command.");
+			return new ProtocolError("Malformed TRANSFORM command.");
 		}
 	}
 
 	private static ParseOutcome parseRun(final String[] parts) {
 		if (parts.length < RUN_PARTS_MIN_SIZE) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed RUN command.");
+			return new ProtocolError("Malformed RUN command.");
 		}
 		try {
 			return new ValidRequest(new Run(parts[1], Paths.get(decode(parts[2])), decode(parts[3]), DECODER.decode(parts[4])));
 		} catch (final RuntimeException exception) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed RUN command.");
+			return new ProtocolError("Malformed RUN command.");
 		}
 	}
 
 	private static ParseOutcome parseCompile(final String[] parts) {
 		if (parts.length < COMPILE_PARTS_MIN_SIZE) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed COMPILE command.");
+			return new ProtocolError("Malformed COMPILE command.");
 		}
 		try {
 			return new ValidRequest(new Compile(parts[1], Paths.get(decode(parts[2])), Paths.get(decode(parts[3]))));
 		} catch (final RuntimeException exception) {
-			return new ProtocolError(PROTOCOL_ERROR_ID, "Malformed COMPILE command.");
+			return new ProtocolError("Malformed COMPILE command.");
 		}
 	}
 
@@ -159,9 +159,8 @@ final class ProtocolCodec {
 record ValidRequest(Request request) implements ParseOutcome {}
 
 /**
- * プロトコル違反です。{@link ErrorResponse} に変換されます。
+ * プロトコル違反です。要求ID {@link ProtocolCodec#PROTOCOL_ERROR_ID} の {@link ErrorResponse} に変換されます。
  *
- * @param requestId 対象の要求ID（通常 {@code "protocol"}）
- * @param reason    違反理由
+ * @param reason 違反理由
  */
-record ProtocolError(String requestId, String reason) implements ParseOutcome {}
+record ProtocolError(String reason) implements ParseOutcome {}
