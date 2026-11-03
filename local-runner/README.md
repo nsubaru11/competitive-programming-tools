@@ -140,13 +140,7 @@ setlib C:\path\to\competitive-programming-java-library
 
 設定していなくても、サーバーはライブラリなしで起動します。`lib.*` を使うコードは、設定を促すエラーになります。
 
-解答では、通常の Java のコードとしてライブラリを import できます。
-
-```java
-import lib.ds.unionfind.UnionFind;
-import lib.io.FastPrinter;
-import lib.io.FastScanner;
-```
+解答では、`import lib.ds.unionfind.UnionFind;` のように、通常の Java のコードとしてライブラリを import できます。
 
 `run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit` は、実行の前に `lib.*` の import を検出し、必要なクラスと依存するクラスを1つのソースへ展開します。
 
