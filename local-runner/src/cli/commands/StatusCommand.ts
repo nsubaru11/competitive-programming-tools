@@ -2,6 +2,7 @@ import fs from "node:fs";
 import type {RunnerStatusInfo} from "../../types";
 import {CLI_CONFIG, configuredLibrarySourceRoot} from "../../config";
 import * as color from "../../utils/color";
+import {postToRunner} from "../runnerClient";
 import * as sampleCache from "../sampleCache";
 import type {Command} from "./Command";
 
@@ -41,12 +42,7 @@ export class StatusCommand implements Command {
 		const isSupportCliColor: boolean = color.supportsCliColor();
 		let info: RunnerStatusInfo | null = null;
 		try {
-			const res = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-				method: "POST",
-				headers: {"Content-Type": "application/json"},
-				body: JSON.stringify({mode: "status"}),
-				signal: AbortSignal.timeout(3000),
-			});
+			const res = await postToRunner({mode: "status"}, 3000);
 			if (res.ok) info = await res.json() as RunnerStatusInfo;
 		} catch {
 			// 接続失敗＝停止中として扱う

@@ -1,6 +1,7 @@
 import {spawn, spawnSync} from "node:child_process";
 import path from "node:path";
-import {CLI_CONFIG, PROJECT_ROOT, TARGET_JAVA_VERSION} from "../config";
+import {PROJECT_ROOT, TARGET_JAVA_VERSION} from "../config";
+import {postToRunner} from "./runnerClient";
 
 const READY_TIMEOUT_MS = Number(process.env.LOCAL_RUNNER_START_TIMEOUT_MS || 60000);
 const POLL_INTERVAL_MS = 500;
@@ -8,13 +9,7 @@ const POLL_INTERVAL_MS = 500;
 /** ヘルスチェック: POST {mode:"list"} が 200 を返せば daemon は利用可能（warmUp 済み）。 */
 async function pingServer(timeoutMs = 1500): Promise<boolean> {
 	try {
-		const res = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-			method: "POST",
-			headers: {"Content-Type": "application/json"},
-			body: JSON.stringify({mode: "list"}),
-			signal: AbortSignal.timeout(timeoutMs),
-		});
-		return res.ok;
+		return (await postToRunner({mode: "list"}, timeoutMs)).ok;
 	} catch {
 		return false;
 	}

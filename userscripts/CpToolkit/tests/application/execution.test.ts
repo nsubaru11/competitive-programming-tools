@@ -25,10 +25,10 @@ describe("LocalRunnerClient", () => {
 	test("同じソースはコンパイルし直さない", async () => {
 		const http = new FakeHttpClient(() => JSON_OK(success));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		await client.prepare("code", "java");
-		await client.prepare("code", "java");
+		await client.prepare("code");
+		await client.prepare("code");
 		expect(http.requests).toHaveLength(1);
-		await client.prepare("other", "java");
+		await client.prepare("other");
 		expect(http.requests).toHaveLength(2);
 	});
 
@@ -41,23 +41,30 @@ describe("LocalRunnerClient", () => {
 			return JSON_OK(runs === 1 ? stale : output);
 		});
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		expect(await client.run("code", "", "java")).toEqual(output as never);
+		expect(await client.run("code", "")).toEqual(output as never);
 		expect(runs).toBe(2);
 	});
 
-	test("prepare を持たない古いサーバーにはソースをそのまま渡す", async () => {
-		const http = new FakeHttpClient(({body}) => (body?.includes('"prepare"') ? {
-			status: 400,
-			text: "",
-		} : JSON_OK(output)));
+	test("サーバーの失敗はそのまま伝える", async () => {
+		const http = new FakeHttpClient(() => ({status: 400, text: ""}));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		expect(await client.run("code", "", "java")).toEqual(output as never);
+		await expect(client.run("code", "")).rejects.toThrow("Local Runner returned 400.");
+		expect(http.requests).toHaveLength(1);
+	});
+
+	test("要求に使わない値を送らない", async () => {
+		const http = new FakeHttpClient(() => JSON_OK(success));
+		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
+		await client.prepare("code");
+		expect(JSON.parse(http.requests[0]?.body ?? "{}")).toEqual({
+			mode: "prepare", sourceCode: "code", debug: true, autoImport: true, validate: false, header: false,
+		});
 	});
 
 	test("コンパイルエラーの内容を返す", async () => {
 		const failed = {status: "compileError", diagnostics: "error", sourceCode: ""};
 		const client = new LocalRunnerClient(new FakeHttpClient(() => JSON_OK(failed)), () => "http://localhost:8080");
-		expect(await client.run("code", "", "java")).toEqual(failed as never);
+		expect(await client.run("code", "")).toEqual(failed as never);
 	});
 });
 

@@ -728,23 +728,6 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		return {code, modified: true};
 	}
 
-	function enableDebugStatements(maskedCode, currentCode) {
-		const debugRegex = /\bDEBUG\b\s*=\s*false\b/g;
-		const replacements = [];
-		let dm;
-		while ((dm = debugRegex.exec(maskedCode)) !== null) {
-			const falseIdx = dm.index + dm[0].lastIndexOf("false");
-			replacements.push({start: falseIdx, end: falseIdx + 5});
-		}
-		if (!replacements.length) return {code: currentCode, modified: false};
-		replacements.sort((a, b) => b.start - a.start);
-		let code = currentCode;
-		for (const {start, end} of replacements) {
-			code = code.slice(0, start) + "true" + code.slice(end);
-		}
-		return {code, modified: true};
-	}
-
 	function modifyJavaCode(originalCode, options) {
 		let currentCode = normalizeNewlines(originalCode);
 		let packageRemoved = false;
@@ -762,11 +745,6 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 		}
 		if (options.fixDebug) {
 			const result = disableDebugStatements(createMaskedCode(currentCode), currentCode);
-			currentCode = result.code;
-			debugReplaced = result.modified;
-		}
-		if (options.enableDebug) {
-			const result = enableDebugStatements(createMaskedCode(currentCode), currentCode);
 			currentCode = result.code;
 			debugReplaced = result.modified;
 		}
@@ -800,52 +778,14 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	}
 
 	// ../shared/src/local-runner.ts
+	var STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
+
+	function isStaleProgramResponse(response) {
+		return response.status === "badRequest" && response.stderr?.startsWith(STALE_PROGRAM_MESSAGE) === true;
+	}
+
 	function isHttpUrl(value) {
 		return /^https?:\/\//.test(value);
-	}
-
-	function buildLocalRunnerListRequest() {
-		return {mode: "list"};
-	}
-
-	function buildLocalRunnerTransformRequest(
-		sourceCode,
-		debug = false,
-		autoImport = true,
-		validate = true,
-		header = true,
-	) {
-		return {mode: "transform", sourceCode, debug, autoImport, validate, header};
-	}
-
-	function buildLocalRunnerPrepareRequest(
-		sourceCode,
-		debug = false,
-		autoImport = true,
-		validate = false,
-		header = false,
-		compilerName,
-	) {
-		return {mode: "prepare", compilerName, sourceCode, debug, autoImport, validate, header};
-	}
-
-	function buildLocalRunnerRunRequest(sourceCode, stdin, compilerName, prepared = false) {
-		return {
-			mode: "run",
-			compilerName,
-			sourceCode,
-			stdin,
-			prepared,
-		};
-	}
-
-	function buildLocalRunnerProgramRunRequest(programId, stdin, compilerName) {
-		return {
-			mode: "run",
-			compilerName,
-			programId,
-			stdin,
-		};
 	}
 
 	function toEasyTestStatus(status, exitCode = 0) {
@@ -3254,7 +3194,6 @@ a:focus > .cp-settings-entry {
 
 	// CpToolkit/src/application/execution/local-runner.ts
 	var TRANSFORM_TIMEOUT_MS = 30000;
-	var STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
 	class LocalRunnerError extends Error {
 		status;
@@ -3280,57 +3219,47 @@ a:focus > .cp-settings-entry {
 		}
 
 		list() {
-			return this.post(buildLocalRunnerListRequest());
+			return this.post({mode: "list"});
 		}
 
 		transform(sourceCode, header) {
-			return this.post(
-				buildLocalRunnerTransformRequest(sourceCode, false, true, false, header),
-				TRANSFORM_TIMEOUT_MS,
-			);
+			const request = {mode: "transform", sourceCode, debug: false, autoImport: true, validate: false, header};
+			return this.post(request, TRANSFORM_TIMEOUT_MS);
 		}
 
-		prepare(sourceCode, compilerName) {
+		prepare(sourceCode) {
 			const endpoint = this.endpoint() ?? "";
 			const previous = this.prepared;
-			if (
-				previous?.endpoint === endpoint &&
-				previous.compilerName === compilerName &&
-				previous.sourceCode === sourceCode
-			) {
-				return previous.response;
-			}
-			const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false, false, compilerName);
+			if (previous?.endpoint === endpoint && previous.sourceCode === sourceCode) return previous.response;
+			const request = {
+				mode: "prepare",
+				sourceCode,
+				debug: true,
+				autoImport: true,
+				validate: false,
+				header: false,
+			};
 			const response = this.post(request);
-			this.prepared = {endpoint, compilerName, sourceCode, response};
+			this.prepared = {endpoint, sourceCode, response};
 			response.catch(() => {
 				if (this.prepared?.response === response) this.prepared = null;
 			});
 			return response;
 		}
 
-		async run(sourceCode, input, compilerName) {
-			let prepared;
-			try {
-				prepared = await this.prepare(sourceCode, compilerName);
-			} catch (error) {
-				if (error instanceof LocalRunnerError && error.status === 400) {
-					return this.post(buildLocalRunnerRunRequest(sourceCode, input, compilerName));
-				}
-				throw error;
-			}
+		async run(sourceCode, input) {
+			let prepared = await this.prepare(sourceCode);
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			const response = await this.runProgram(prepared.programId, input, compilerName);
-			if (response.status !== "badRequest" || !response.stderr?.startsWith(STALE_PROGRAM_MESSAGE))
-				return response;
+			const response = await this.runProgram(prepared.programId, input);
+			if (!isStaleProgramResponse(response)) return response;
 			this.prepared = null;
-			prepared = await this.prepare(sourceCode, compilerName);
+			prepared = await this.prepare(sourceCode);
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			return this.runProgram(prepared.programId, input, compilerName);
+			return this.runProgram(prepared.programId, input);
 		}
 
-		runProgram(programId, input, compilerName) {
-			return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
+		runProgram(programId, input) {
+			return this.post({mode: "run", programId, stdin: input});
 		}
 
 		async post(request, timeoutMs) {
@@ -4922,21 +4851,19 @@ ${body}
 		id;
 		label;
 		client;
-		compilerName;
 
 		constructor(client, compilerName, label) {
 			this.client = client;
-			this.compilerName = compilerName;
 			this.id = `local:${compilerName}`;
 			this.label = `${label} [Local]`;
 		}
 
 		prepare(sourceCode) {
-			return this.client.prepare(sourceCode, this.compilerName);
+			return this.client.prepare(sourceCode);
 		}
 
 		async run(sourceCode, input) {
-			const response = await this.client.run(sourceCode, input, this.compilerName);
+			const response = await this.client.run(sourceCode, input);
 			if ("diagnostics" in response) {
 				return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
 			}

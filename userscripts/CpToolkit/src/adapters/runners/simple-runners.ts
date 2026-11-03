@@ -98,21 +98,19 @@ class LocalCodeRunner implements CodeRunner {
 	readonly id: string;
 	readonly label: string;
 	private readonly client: LocalRunnerClient;
-	private readonly compilerName: string;
 
 	constructor(client: LocalRunnerClient, compilerName: string, label: string) {
 		this.client = client;
-		this.compilerName = compilerName;
 		this.id = `local:${compilerName}`;
 		this.label = `${label} [Local]`;
 	}
 
 	prepare(sourceCode: string): Promise<unknown> {
-		return this.client.prepare(sourceCode, this.compilerName);
+		return this.client.prepare(sourceCode);
 	}
 
 	async run(sourceCode: string, input: string): Promise<RunResult> {
-		const response = await this.client.run(sourceCode, input, this.compilerName);
+		const response = await this.client.run(sourceCode, input);
 		if ("diagnostics" in response) {
 			return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
 		}

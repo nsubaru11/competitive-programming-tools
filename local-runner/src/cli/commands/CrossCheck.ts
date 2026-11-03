@@ -27,26 +27,7 @@ export class CrossCheck implements Command {
 		const positionals: string[] = [];
 		const display: sampleJudge.SampleDisplayOptions = {};
 		for (const arg of args) {
-			const full = options.parseBoolFlag(arg, "--full");
-			if (full !== undefined) {
-				display.full = full;
-				continue;
-			}
-			const waOnly = options.parseBoolFlag(arg, "--wa-only");
-			if (waOnly !== undefined) {
-				display.waOnly = waOnly;
-				continue;
-			}
-			const maxLines = options.parseIntFlag(arg, "--max-lines");
-			if (maxLines !== undefined) {
-				display.maxLines = maxLines;
-				continue;
-			}
-			const timeLimit = options.parseIntFlag(arg, "--time-limit");
-			if (timeLimit !== undefined) {
-				display.timeLimitMs = timeLimit;
-				continue;
-			}
+			if (options.parseDisplayFlag(arg, display)) continue;
 			if (arg.startsWith("-")) throw new CliUsageError(`Unknown option: ${arg}`);
 			positionals.push(arg);
 		}

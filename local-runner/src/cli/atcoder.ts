@@ -6,6 +6,9 @@ import {CLI_CONFIG} from "../config";
 import * as color from "../utils/color";
 import * as parser from "./parser";
 
+/** 提出一覧と提出状況の確認は短い間隔で繰り返すので、429 のときは取り直す。 */
+const POLL_ATTEMPTS_ON_429 = 4;
+
 const AUTH_ERROR_MESSAGE = [
 	"[auth] Checking AtCoder session...",
 	"[auth] ERROR: REVEL_SESSION is missing, expired, or has been replaced.",
@@ -53,22 +56,8 @@ function readSessionFromFile() {
 	return "";
 }
 
-export async function httpGetText(url: string, cookieHeader = "") {
-	const headers: Record<string, string> = {
-		"User-Agent": CLI_CONFIG.userAgent,
-		"Accept-Language": "ja,en;q=0.9",
-	};
-	if (cookieHeader) headers.Cookie = cookieHeader;
-	const res = await fetch(url, {headers, redirect: "follow"});
-	if (!res.ok) {
-		throw new Error(`GET failed (${res.status}) for ${url}`);
-	}
-	const body = await res.text();
-	ensureNotLoginPage(body);
-	return body;
-}
-
-async function httpGetTextWith429Retry(url: string, cookieHeader = "", maxAttempts = 4) {
+/** 429 が返ったときは maxAttempts 回まで待って取り直す。既定では取り直さない。 */
+export async function httpGetText(url: string, cookieHeader = "", maxAttempts = 1) {
 	const headers: Record<string, string> = {
 		"User-Agent": CLI_CONFIG.userAgent,
 		"Accept-Language": "ja,en;q=0.9",
@@ -82,7 +71,7 @@ async function httpGetTextWith429Retry(url: string, cookieHeader = "", maxAttemp
 			ensureNotLoginPage(body);
 			return body;
 		}
-		if (res.status !== 429) {
+		if (res.status !== 429 || attempt + 1 === maxAttempts) {
 			throw new Error(`GET failed (${res.status}) for ${url}`);
 		}
 		const retryAfterHeader = res.headers.get("retry-after") || "";
@@ -97,7 +86,7 @@ async function httpGetTextWith429Retry(url: string, cookieHeader = "", maxAttemp
 
 export async function fetchLatestSubmissionId(task: Task, cookieHeader: string) {
 	const listUrl = shared.buildAtCoderSubmissionsMeUrl(task.contestId, {task: task.taskScreenName});
-	const html = await httpGetTextWith429Retry(listUrl, cookieHeader);
+	const html = await httpGetText(listUrl, cookieHeader, POLL_ATTEMPTS_ON_429);
 	return parser.extractSubmissionIdFromHtml(html, task.contestId);
 }
 
@@ -267,7 +256,7 @@ export async function pollSubmissionFinal(
 	const started = Date.now();
 	let lastStatus = "";
 	while (Date.now() - started < CLI_CONFIG.submissionPollTimeoutMs) {
-		const body = await httpGetTextWith429Retry(statusUrl, cookieHeader);
+		const body = await httpGetText(statusUrl, cookieHeader, POLL_ATTEMPTS_ON_429);
 		const snapshot = parser.parseSubmissionStatusJson(body, submissionId);
 		const display = snapshot.status || lastStatus || "WJ";
 		if (display !== lastStatus) {

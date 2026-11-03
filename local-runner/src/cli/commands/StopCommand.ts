@@ -1,4 +1,4 @@
-import {CLI_CONFIG} from "../../config";
+import {postToRunner} from "../runnerClient";
 import type {Command} from "./Command";
 
 /** Local Runner サーバーを停止する（mode:shutdown を投げて graceful 終了させる）。 */
@@ -10,12 +10,7 @@ export class StopCommand implements Command {
 
 	async execute(): Promise<number> {
 		try {
-			const res = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-				method: "POST",
-				headers: {"Content-Type": "application/json"},
-				body: JSON.stringify({mode: "shutdown"}),
-				signal: AbortSignal.timeout(3000),
-			});
+			const res = await postToRunner({mode: "shutdown"}, 3000);
 			if (res.ok) {
 				console.log("Local Runner stopped.");
 				return 0;

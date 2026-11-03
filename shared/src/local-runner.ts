@@ -38,7 +38,6 @@ export type LocalRunnerTransformRequest = {
 
 export type LocalRunnerPrepareRequest = {
 	mode: "prepare";
-	compilerName?: string;
 	sourceCode: string;
 	debug?: boolean;
 	autoImport?: boolean;
@@ -49,7 +48,6 @@ export type LocalRunnerPrepareRequest = {
 
 export type LocalRunnerRunRequest = {
 	mode: "run";
-	compilerName?: string;
 	sourceCode?: string;
 	programId?: string;
 	stdin?: string;
@@ -97,70 +95,16 @@ export type LocalRunnerRunResponse = {
 	memory: number;
 };
 
-export type LocalRunnerPrecompileResponse = {
-	status: "accepted";
-};
+/** 指定した programId のプログラムがサーバーにないときの stderr の先頭。サーバーの再起動やキャッシュの追い出しで起こる。 */
+export const STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
-export type LocalRunnerBadRequestResponse = {
-	status: "badRequest" | "internalError";
-	stderr: string;
-};
+/** コンパイル済みのプログラムが消えていて、ソースから作り直す必要がある応答か。 */
+export function isStaleProgramResponse(response: {status: string; stderr?: string}): boolean {
+	return response.status === "badRequest" && response.stderr?.startsWith(STALE_PROGRAM_MESSAGE) === true;
+}
 
 export function isHttpUrl(value: string): boolean {
 	return /^https?:\/\//.test(value);
-}
-
-export function buildLocalRunnerListRequest(): LocalRunnerListRequest {
-	return {mode: "list"};
-}
-
-export function buildLocalRunnerTransformRequest(
-	sourceCode: string,
-	debug = false,
-	autoImport = true,
-	validate = true,
-	header: LocalRunnerHeaderOption = true,
-): LocalRunnerTransformRequest {
-	return {mode: "transform", sourceCode, debug, autoImport, validate, header};
-}
-
-export function buildLocalRunnerPrepareRequest(
-	sourceCode: string,
-	debug = false,
-	autoImport = true,
-	validate = false,
-	header: LocalRunnerHeaderOption = false,
-	compilerName?: string,
-): LocalRunnerPrepareRequest {
-	return {mode: "prepare", compilerName, sourceCode, debug, autoImport, validate, header};
-}
-
-export function buildLocalRunnerRunRequest(
-	sourceCode: string,
-	stdin: string,
-	compilerName?: string,
-	prepared = false,
-): LocalRunnerRunRequest {
-	return {
-		mode: "run",
-		compilerName,
-		sourceCode,
-		stdin,
-		prepared,
-	};
-}
-
-export function buildLocalRunnerProgramRunRequest(
-	programId: string,
-	stdin: string,
-	compilerName?: string,
-): LocalRunnerRunRequest {
-	return {
-		mode: "run",
-		compilerName,
-		programId,
-		stdin,
-	};
 }
 
 export function toEasyTestStatus(status: LocalRunnerStatus, exitCode = 0): EasyTestStatus {

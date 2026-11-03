@@ -309,75 +309,78 @@ export function logCaptureAndBodySizeBalance() {
 	}
 }
 
+type DispatcherResultOf<K extends DispatcherResponse["kind"]> = Extract<DispatcherResponse, {kind: K}>;
+
+const COMMAND_BY_KIND = {run: "RUN", compile: "COMPILE", transform: "TRANSFORM"} as const;
+
+/**
+ * 要求を1件ずつ Dispatcher へ送る。応答は handleDispatcherResponse が currentRequest へ渡す。
+ * 時間切れなら JVM を止めて作り直し、timedOut の結果を返す。
+ */
+function queueDispatcherRequest<K extends DispatcherResponse["kind"]>(
+	kind: K,
+	fields: readonly string[],
+	timeoutMs: number,
+	timedOut: () => DispatcherResultOf<K>,
+): Promise<DispatcherResultOf<K>> {
+	const request = dispatcherState.requestQueue
+		.catch(() => null)
+		.then(async () => {
+			await ensureDispatcherReady();
+			return new Promise<DispatcherResultOf<K>>((resolve, reject) => {
+				const requestId = String(++dispatcherState.nextRequestId);
+				let settled = false;
+				let timeoutHandle: NodeJS.Timeout | undefined;
+				const settle = (finish: () => void) => {
+					if (settled) return;
+					settled = true;
+					clearTimeout(timeoutHandle);
+					finish();
+				};
+				const release = () => {
+					if (dispatcherState.currentRequest?.id === requestId) dispatcherState.currentRequest = null;
+				};
+				dispatcherState.currentRequest = {
+					id: requestId,
+					resolve: (value) => settle(() => {
+						if (value.kind === kind) {
+							resolve(value as DispatcherResultOf<K>);
+							return;
+						}
+						// 要求と違う種類の応答は通信が食い違っているので、JVM を作り直す
+						reject(new Error(`Dispatcher returned ${value.kind} for a ${kind} request.`));
+						stopDispatcher();
+					}),
+					reject: (error) => settle(() => reject(error)),
+				};
+				timeoutHandle = setTimeout(() => {
+					release();
+					stopDispatcher();
+					settle(() => resolve(timedOut()));
+				}, timeoutMs);
+				const command = [COMMAND_BY_KIND[kind], requestId, ...fields].join("\t");
+				dispatcherState.proc!.stdin.write(`${command}\n`, "utf8", (error) => {
+					if (!error) return;
+					release();
+					settle(() => reject(error));
+				});
+			});
+		});
+	dispatcherState.requestQueue = request;
+	return request;
+}
+
 export function queueDispatcherRun(
 	entry: CompileEntry,
 	standardInput: string,
 	timeoutMs = RUNNER_CONFIG.runTimeoutMs,
-) {
-	dispatcherState.requestQueue = dispatcherState.requestQueue
-		.catch(() => null)
-		.then(async () => {
-			await ensureDispatcherReady();
-			return new Promise<DispatcherRunResult>((resolve, reject) => {
-				const requestId = String(++dispatcherState.nextRequestId);
-				let settled = false;
-				let timeoutHandle: NodeJS.Timeout | null = null;
-				const finishResolve = (value: DispatcherResponse) => {
-					if (settled) {
-						return;
-					}
-					settled = true;
-					if (timeoutHandle) {
-						clearTimeout(timeoutHandle);
-					}
-					if (value.kind === "run") {
-						resolve(value);
-					}
-				};
-				const finishReject = (error: Error) => {
-					if (settled) {
-						return;
-					}
-					settled = true;
-					if (timeoutHandle) {
-						clearTimeout(timeoutHandle);
-					}
-					reject(error);
-				};
-
-				dispatcherState.currentRequest = {
-					id: requestId,
-					resolve: finishResolve,
-					reject: finishReject,
-				};
-
-				timeoutHandle = setTimeout(() => {
-					const timeoutError = new Error(`Execution timed out after ${timeoutMs}ms.`);
-					if (dispatcherState.currentRequest && dispatcherState.currentRequest.id === requestId) {
-						dispatcherState.currentRequest = null;
-					}
-					stopDispatcher();
-					finishResolve({kind: "run", timedOut: true, error: timeoutError.message});
-				}, timeoutMs);
-
-				const command = [
-					"RUN",
-					requestId,
-					encodeField(entry.classDir),
-					encodeField(entry.mainClass),
-					Buffer.from(standardInput ?? "", "utf8").toString("base64"),
-				].join("\t");
-				dispatcherState.proc!.stdin.write(`${command}\n`, "utf8", (error) => {
-					if (error) {
-						if (dispatcherState.currentRequest && dispatcherState.currentRequest.id === requestId) {
-							dispatcherState.currentRequest = null;
-						}
-						finishReject(error);
-					}
-				});
-			});
-		});
-	return dispatcherState.requestQueue as Promise<DispatcherRunResult>;
+): Promise<DispatcherRunResult> {
+	const fields = [encodeField(entry.classDir), encodeField(entry.mainClass), encodeField(standardInput)];
+	return queueDispatcherRequest("run", fields, timeoutMs, () => ({
+		kind: "run",
+		timedOut: true,
+		error: `Execution timed out after ${timeoutMs}ms.`,
+	}));
 }
 
 export function queueDispatcherCompile(
@@ -385,69 +388,13 @@ export function queueDispatcherCompile(
 	classDir: string,
 	timeoutMs = RUNNER_CONFIG.compileTimeoutMs,
 ): Promise<DispatcherCompileResult> {
-	dispatcherState.requestQueue = dispatcherState.requestQueue
-		.catch(() => null)
-		.then(async () => {
-			await ensureDispatcherReady();
-			return new Promise<DispatcherCompileResult>((resolve, reject) => {
-				const requestId = String(++dispatcherState.nextRequestId);
-				let settled = false;
-				let timeoutHandle: NodeJS.Timeout | null = null;
-				const finishResolve = (value: DispatcherResponse) => {
-					if (settled) {
-						return;
-					}
-					settled = true;
-					if (timeoutHandle) {
-						clearTimeout(timeoutHandle);
-					}
-					if (value.kind === "compile") {
-						resolve(value);
-					}
-				};
-				const finishReject = (error: Error) => {
-					if (settled) {
-						return;
-					}
-					settled = true;
-					if (timeoutHandle) {
-						clearTimeout(timeoutHandle);
-					}
-					reject(error);
-				};
-
-				dispatcherState.currentRequest = {
-					id: requestId,
-					resolve: finishResolve,
-					reject: finishReject,
-				};
-
-				timeoutHandle = setTimeout(() => {
-					if (dispatcherState.currentRequest && dispatcherState.currentRequest.id === requestId) {
-						dispatcherState.currentRequest = null;
-					}
-					stopDispatcher();
-					finishResolve({
-						kind: "compile",
-						exitCode: 1,
-						diagnostics: `Compilation timed out after ${timeoutMs}ms.`,
-						requiresIsolation: false,
-						timedOut: true
-					});
-				}, timeoutMs);
-
-				const command = ["COMPILE", requestId, encodeField(sourceFile), encodeField(classDir)].join("\t");
-				dispatcherState.proc!.stdin.write(`${command}\n`, "utf8", (error) => {
-					if (error) {
-						if (dispatcherState.currentRequest && dispatcherState.currentRequest.id === requestId) {
-							dispatcherState.currentRequest = null;
-						}
-						finishReject(error);
-					}
-				});
-			});
-		});
-	return dispatcherState.requestQueue as Promise<DispatcherCompileResult>;
+	return queueDispatcherRequest("compile", [encodeField(sourceFile), encodeField(classDir)], timeoutMs, () => ({
+		kind: "compile",
+		exitCode: 1,
+		diagnostics: `Compilation timed out after ${timeoutMs}ms.`,
+		requiresIsolation: false,
+		timedOut: true,
+	}));
 }
 
 export function queueDispatcherTransform(
@@ -458,55 +405,19 @@ export function queueDispatcherTransform(
 	validate = true,
 	timeoutMs = RUNNER_CONFIG.compileTimeoutMs,
 ): Promise<DispatcherTransformResult> {
-	dispatcherState.requestQueue = dispatcherState.requestQueue
-		.catch(() => null)
-		.then(async () => {
-			await ensureDispatcherReady();
-			return new Promise<DispatcherTransformResult>((resolve, reject) => {
-				const requestId = String(++dispatcherState.nextRequestId);
-				let settled = false;
-				let timeoutHandle: NodeJS.Timeout | null = null;
-				const finishResolve = (value: DispatcherResponse) => {
-					if (settled || value.kind !== "transform") return;
-					settled = true;
-					if (timeoutHandle) clearTimeout(timeoutHandle);
-					resolve(value);
-				};
-				const finishReject = (error: Error) => {
-					if (settled) return;
-					settled = true;
-					if (timeoutHandle) clearTimeout(timeoutHandle);
-					reject(error);
-				};
-				dispatcherState.currentRequest = {id: requestId, resolve: finishResolve, reject: finishReject};
-				timeoutHandle = setTimeout(() => {
-					if (dispatcherState.currentRequest?.id === requestId) dispatcherState.currentRequest = null;
-					stopDispatcher();
-					finishResolve({
-						kind: "transform",
-						exitCode: 1,
-						sourceCode,
-						inlinedClasses: [],
-						addedImports: [],
-						diagnosticItems: [],
-						diagnostics: `Transformation timed out after ${timeoutMs}ms.`,
-						timedOut: true,
-					});
-				}, timeoutMs);
-				const command = [
-					"TRANSFORM", requestId, encodeField(sourceCode), encodeField(librarySourceRoot),
-					debug ? "1" : "0", autoImport ? "1" : "0", validate ? "1" : "0",
-				].join("\t");
-				dispatcherState.proc!.stdin.write(`${command}\n`, "utf8", (error) => {
-					if (!error) return;
-					if (dispatcherState.currentRequest?.id === requestId) dispatcherState.currentRequest = null;
-					finishReject(error);
-				});
-			});
-		});
-	return dispatcherState.requestQueue as Promise<DispatcherTransformResult>;
+	const flag = (value: boolean) => (value ? "1" : "0");
+	const fields = [encodeField(sourceCode), encodeField(librarySourceRoot), flag(debug), flag(autoImport), flag(validate)];
+	return queueDispatcherRequest("transform", fields, timeoutMs, () => ({
+		kind: "transform",
+		exitCode: 1,
+		sourceCode,
+		inlinedClasses: [],
+		addedImports: [],
+		diagnosticItems: [],
+		diagnostics: `Transformation timed out after ${timeoutMs}ms.`,
+		timedOut: true,
+	}));
 }
-
 
 function firstLine(text: string | null | undefined) {
 	if (!text) return "";

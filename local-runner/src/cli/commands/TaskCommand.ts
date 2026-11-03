@@ -199,23 +199,7 @@ export abstract class TaskCommand implements Command {
 					continue;
 				}
 			}
-			if (this.supportsDisplayOptions) {
-				const full = options.parseBoolFlag(arg, "--full");
-				if (full !== undefined) {
-					display.full = full;
-					continue;
-				}
-				const waOnly = options.parseBoolFlag(arg, "--wa-only");
-				if (waOnly !== undefined) {
-					display.waOnly = waOnly;
-					continue;
-				}
-				const maxLines = options.parseIntFlag(arg, "--max-lines");
-				if (maxLines !== undefined) {
-					display.maxLines = maxLines;
-					continue;
-				}
-			}
+			if (this.supportsDisplayOptions && options.parseDisplayFlag(arg, display, {timeLimit: false})) continue;
 			if (arg.startsWith("-")) throw new CliUsageError(`Unknown option: ${arg}`);
 			positionals.push(arg);
 		}

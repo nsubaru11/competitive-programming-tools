@@ -1,5 +1,34 @@
 import type {LocalRunnerHeaderOption} from "@atcoder-tools/shared";
+import type {SampleDisplayOptions} from "../sampleJudge";
 import {CliUsageError} from "./Command";
+
+/**
+ * サンプルの結果の表示に関するオプション(--full、--wa-only、--max-lines=N、--time-limit=N)を解釈し、display に書き込む。
+ * 解釈したら true を返す。test と submit は問題ページの制限を使うので、timeLimit: false で --time-limit を受け付けない。
+ */
+export function parseDisplayFlag(arg: string, display: SampleDisplayOptions, {timeLimit = true} = {}): boolean {
+	const full = parseBoolFlag(arg, "--full");
+	if (full !== undefined) {
+		display.full = full;
+		return true;
+	}
+	const waOnly = parseBoolFlag(arg, "--wa-only");
+	if (waOnly !== undefined) {
+		display.waOnly = waOnly;
+		return true;
+	}
+	const maxLines = parseIntFlag(arg, "--max-lines");
+	if (maxLines !== undefined) {
+		display.maxLines = maxLines;
+		return true;
+	}
+	const timeLimitMs = timeLimit ? parseIntFlag(arg, "--time-limit") : undefined;
+	if (timeLimitMs !== undefined) {
+		display.timeLimitMs = timeLimitMs;
+		return true;
+	}
+	return false;
+}
 
 /**
  * 提出物のヘッダー指定を解釈するヘルパー。受け付ける形式:

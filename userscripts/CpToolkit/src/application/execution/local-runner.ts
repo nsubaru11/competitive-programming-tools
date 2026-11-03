@@ -1,9 +1,5 @@
 import {
-	buildLocalRunnerListRequest,
-	buildLocalRunnerPrepareRequest,
-	buildLocalRunnerProgramRunRequest,
-	buildLocalRunnerRunRequest,
-	buildLocalRunnerTransformRequest,
+	isStaleProgramResponse,
 	type LocalRunnerCompilerInfo,
 	type LocalRunnerHeaderOption,
 	type LocalRunnerPrepareResponse,
@@ -14,7 +10,6 @@ import {
 import type {HttpClient} from "@application/ports/services";
 
 const TRANSFORM_TIMEOUT_MS = 30_000;
-const STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
 
 export class LocalRunnerError extends Error {
 	readonly status: number;
@@ -29,7 +24,6 @@ export class LocalRunnerError extends Error {
 export class LocalRunnerClient {
 	private prepared: {
 		endpoint: string;
-		compilerName: string;
 		sourceCode: string;
 		response: Promise<LocalRunnerPrepareResponse>
 	} | null = null;
@@ -46,56 +40,43 @@ export class LocalRunnerClient {
 	}
 
 	list(): Promise<LocalRunnerCompilerInfo[]> {
-		return this.post(buildLocalRunnerListRequest());
+		return this.post({mode: "list"});
 	}
 
 	transform(sourceCode: string, header: LocalRunnerHeaderOption): Promise<LocalRunnerTransformResponse> {
-		return this.post(buildLocalRunnerTransformRequest(sourceCode, false, true, false, header), TRANSFORM_TIMEOUT_MS);
+		const request = {mode: "transform", sourceCode, debug: false, autoImport: true, validate: false, header} as const;
+		return this.post(request, TRANSFORM_TIMEOUT_MS);
 	}
 
 	/** 同じソースはコンパイルし直さない。 */
-	prepare(sourceCode: string, compilerName: string): Promise<LocalRunnerPrepareResponse> {
+	prepare(sourceCode: string): Promise<LocalRunnerPrepareResponse> {
 		const endpoint = this.endpoint() ?? "";
 		const previous = this.prepared;
-		if (previous?.endpoint === endpoint && previous.compilerName === compilerName && previous.sourceCode === sourceCode) {
-			return previous.response;
-		}
-		const request = buildLocalRunnerPrepareRequest(sourceCode, true, true, false, false, compilerName);
+		if (previous?.endpoint === endpoint && previous.sourceCode === sourceCode) return previous.response;
+		const request = {mode: "prepare", sourceCode, debug: true, autoImport: true, validate: false, header: false} as const;
 		const response = this.post<LocalRunnerPrepareResponse>(request);
-		this.prepared = {endpoint, compilerName, sourceCode, response};
+		this.prepared = {endpoint, sourceCode, response};
 		response.catch(() => {
 			if (this.prepared?.response === response) this.prepared = null;
 		});
 		return response;
 	}
 
-	/** コンパイル済みのプログラムを実行する。古いサーバーには、ソースをそのまま渡す。 */
-	async run(
-		sourceCode: string,
-		input: string,
-		compilerName: string,
-	): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
-		let prepared: LocalRunnerPrepareResponse;
-		try {
-			prepared = await this.prepare(sourceCode, compilerName);
-		} catch (error) {
-			if (error instanceof LocalRunnerError && error.status === 400) {
-				return this.post(buildLocalRunnerRunRequest(sourceCode, input, compilerName));
-			}
-			throw error;
-		}
+	/** コンパイル済みのプログラムを実行する。サーバーから消えていれば、コンパイルし直して1回だけ実行し直す。 */
+	async run(sourceCode: string, input: string): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
+		let prepared = await this.prepare(sourceCode);
 		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		const response = await this.runProgram(prepared.programId, input, compilerName);
-		if (response.status !== "badRequest" || !response.stderr?.startsWith(STALE_PROGRAM_MESSAGE)) return response;
+		const response = await this.runProgram(prepared.programId, input);
+		if (!isStaleProgramResponse(response)) return response;
 
 		this.prepared = null;
-		prepared = await this.prepare(sourceCode, compilerName);
+		prepared = await this.prepare(sourceCode);
 		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		return this.runProgram(prepared.programId, input, compilerName);
+		return this.runProgram(prepared.programId, input);
 	}
 
-	private runProgram(programId: string, input: string, compilerName: string): Promise<LocalRunnerRunResponse> {
-		return this.post(buildLocalRunnerProgramRunRequest(programId, input, compilerName));
+	private runProgram(programId: string, input: string): Promise<LocalRunnerRunResponse> {
+		return this.post({mode: "run", programId, stdin: input});
 	}
 
 	/** 実行はサンプルの数だけ順番に待つことがあるので、既定では時間を制限しない。 */

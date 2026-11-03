@@ -1,8 +1,8 @@
 import * as shared from "@atcoder-tools/shared";
 import type {SamplePair, SampleResult} from "../types";
-import {CLI_CONFIG} from "../config";
 import * as color from "../utils/color";
 import * as formatter from "../utils/formatter";
+import {requestRunner} from "./runnerClient";
 
 /**
  * 比較用に出力を行の配列へ正規化する。AtCoder の既定ジャッジに合わせ、
@@ -33,23 +33,15 @@ export async function postLocalRunner(
 	stdinText: string,
 	programId?: string,
 ): Promise<shared.LocalRunnerRunResponse> {
-	const request = async (body: unknown) => {
-		const res = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-			method: "POST",
-			headers: {"Content-Type": "application/json"},
-			body: JSON.stringify(body),
-		});
-		if (!res.ok) throw new Error(`Local Runner request failed: ${res.status}`);
-		return await res.json() as shared.LocalRunnerRunResponse;
+	const run = (request: shared.LocalRunnerRunRequest) => {
+		return requestRunner<shared.LocalRunnerRunResponse>(request, "Local Runner request failed");
 	};
-	if (!programId) return await request(shared.buildLocalRunnerRunRequest(sourceCode, stdinText, undefined, true));
+	const runSource = () => run({mode: "run", sourceCode, stdin: stdinText, prepared: true});
+	if (!programId) return await runSource();
 
-	const result = await request(shared.buildLocalRunnerProgramRunRequest(programId, stdinText));
-	if (result.status !== "badRequest" || !result.stderr?.startsWith("Prepared program is unavailable:")) {
-		return result;
-	}
-	// daemon再起動・キャッシュ追い出し時だけ、従来の全文送信で自己回復する。
-	return await request(shared.buildLocalRunnerRunRequest(sourceCode, stdinText, undefined, true));
+	const result = await run({mode: "run", programId, stdin: stdinText});
+	// daemon の再起動やキャッシュの追い出しでプログラムが消えたときだけ、ソースを送って実行し直す
+	return shared.isStaleProgramResponse(result) ? await runSource() : result;
 }
 
 /**

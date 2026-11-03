@@ -7,6 +7,7 @@ import {
 	type LocalRunnerPrepareResponse,
 	type LocalRunnerRunResponse,
 	type LocalRunnerTransformResponse,
+	STALE_PROGRAM_MESSAGE,
 	usesJavaLibrary,
 } from "@atcoder-tools/shared";
 import type {RunnerStatusInfo} from "../types";
@@ -100,7 +101,7 @@ function missingProgramResponse(programId: string): LocalRunnerRunResponse {
 		status: "badRequest",
 		exitCode: -1,
 		stdout: "",
-		stderr: `Prepared program is unavailable: ${programId}`,
+		stderr: `${STALE_PROGRAM_MESSAGE} ${programId}`,
 		time: 0,
 		stdoutTruncated: false,
 		stderrTruncated: false,

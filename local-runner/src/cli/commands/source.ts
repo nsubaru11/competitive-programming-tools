@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as shared from "@atcoder-tools/shared";
-import {CLI_CONFIG} from "../../config";
 import * as ensureServer from "../ensureServer";
+import {requestRunner} from "../runnerClient";
 import * as transform from "../transform";
 
 /** prepareSource の戻り値（複数コマンドで共有する整形済みソース情報）。 */
@@ -35,29 +35,15 @@ export async function prepareSource(
 	const compile = options.compile === true;
 	const validate = options.validate ?? !compile;
 	const header = options.header ?? !compile;
-	let preparedByServer = compile;
-	let response = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-		method: "POST",
-		headers: {"Content-Type": "application/json"},
-		body: JSON.stringify(compile
-			? shared.buildLocalRunnerPrepareRequest(sourceText, debug, true, validate, header)
-			: shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate, header)),
-	});
-	// 更新前の常駐daemonが残っている場合も、そのコマンドだけ従来経路で動作させる。
-	if (compile && response.status === 400) {
-		preparedByServer = false;
-		response = await fetch(CLI_CONFIG.defaultLocalRunnerUrl, {
-			method: "POST",
-			headers: {"Content-Type": "application/json"},
-			body: JSON.stringify(shared.buildLocalRunnerTransformRequest(sourceText, debug, true, validate, header)),
-		});
-	}
-	if (!response.ok) throw new Error(`Local Runner transform failed: ${response.status}`);
-	const transformedResult = await response.json() as shared.LocalRunnerTransformResponse | shared.LocalRunnerPrepareResponse;
+	const fields = {sourceCode: sourceText, debug, autoImport: true, validate, header};
+	const transformedResult = await requestRunner<shared.LocalRunnerTransformResponse | shared.LocalRunnerPrepareResponse>(
+		compile ? {mode: "prepare", ...fields} : {mode: "transform", ...fields},
+		"Local Runner transform failed",
+	);
 	if (transformedResult.status !== "success") {
 		throw new Error(transformedResult.diagnostics || "Java source transformation failed.");
 	}
-	if (preparedByServer && !("programId" in transformedResult && transformedResult.programId)) {
+	if (compile && !("programId" in transformedResult && transformedResult.programId)) {
 		throw new Error("Local Runner did not return a prepared program ID.");
 	}
 	if (transformedResult.addedImports.length > 0) {
