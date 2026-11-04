@@ -35,7 +35,7 @@ Everything is enabled from the start, except the features marked "off by default
 ### Submissions
 
 - **Keep submission filters**: Keeps search filters when switching between All and My submissions
-- **Links to AC submissions**: Opens AC submissions sorted by time and by code size
+- **Links to AC submissions**: Opens AC submissions for the task, sorted by time and by code size
 - **Language switch buttons**: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector
 - **Header and footer**: Adds a header to the top and a footer to the bottom of pasted code, such as reference URLs
 - **Submission notifications**: Shows the verdict right after judging finishes, on any page. A desktop notification is also shown while you are away from AtCoder
