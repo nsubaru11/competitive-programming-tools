@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.31
+// @version        1.0.32
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -6533,7 +6533,7 @@ ${inner}
 					}),
 				),
 				h("td", {className: "text-right", textContent: `${averageTimeMs}${timeIsLowerBound ? "+" : ""} ms`}),
-				h("td", {className: "text-right", textContent: `${averageMemoryKb} KB`}),
+				h("td", {className: "text-right", textContent: `${averageMemoryKb} KiB`}),
 			);
 			body.prepend(row);
 			return () => row.remove();

@@ -50,7 +50,7 @@ export const averageResult = defineFeature({
 				textContent: `${accepted}/${total}`,
 			})),
 			h("td", {className: "text-right", textContent: `${averageTimeMs}${timeIsLowerBound ? "+" : ""} ms`}),
-			h("td", {className: "text-right", textContent: `${averageMemoryKb} KB`}),
+			h("td", {className: "text-right", textContent: `${averageMemoryKb} KiB`}),
 		);
 		body.prepend(row);
 		return () => row.remove();
