@@ -1,4 +1,4 @@
-import {type Guard, isArrayOf, isBoolean, isObjectOf, isRecordOf, isString} from "@domain/validation/guards";
+import {type Guard, isArrayOf, isBoolean, isObjectOf, isOptional, isRecordOf, isString} from "@domain/validation/guards";
 import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 
 export type CommentSlot = "header" | "footer";
@@ -6,6 +6,8 @@ export type CommentSlot = "header" | "footer";
 export type CommentEntry = {
 	readonly text: string;
 	readonly commentOut: boolean;
+	/** 複数行コメントで書くか。省略すると詳細設定の既定に従う。 */
+	readonly multiline?: boolean;
 };
 
 export type NamedComment = CommentEntry & {
@@ -20,8 +22,13 @@ export type SlotContent = CommentEntry & {
 const HISTORY_LIMIT = 20;
 const EMPTY_ENTRY: CommentEntry = {text: "", commentOut: true};
 
-const isEntry: Guard<CommentEntry> = isObjectOf<CommentEntry>({text: isString, commentOut: isBoolean});
-const isNamed: Guard<NamedComment> = isObjectOf<NamedComment>({name: isString, text: isString, commentOut: isBoolean});
+const isEntry: Guard<CommentEntry> = isObjectOf<CommentEntry>({text: isString, commentOut: isBoolean, multiline: isOptional(isBoolean)});
+const isNamed: Guard<NamedComment> = isObjectOf<NamedComment>({
+	name: isString,
+	text: isString,
+	commentOut: isBoolean,
+	multiline: isOptional(isBoolean),
+});
 
 /** ヘッダーとフッターを別々に記憶する。 */
 export class SourceComments {
@@ -38,8 +45,8 @@ export class SourceComments {
 		return {...readStored(this.state, this.key(slot, "last"), isEntry, EMPTY_ENTRY), taskOnly: false};
 	}
 
-	save(slot: CommentSlot, task: string, {text, commentOut, taskOnly}: SlotContent): void {
-		const entry = {text, commentOut};
+	save(slot: CommentSlot, task: string, {text, commentOut, multiline, taskOnly}: SlotContent): void {
+		const entry: CommentEntry = {text, commentOut, ...(multiline !== undefined && {multiline})};
 		const {[task]: _replaced, ...others} = this.taskEntries(slot);
 		this.state.set(this.key(slot, "tasks"), taskOnly ? {...others, [task]: entry} : others);
 		if (!taskOnly) this.state.set(this.key(slot, "last"), entry);
@@ -67,8 +74,8 @@ export class SourceComments {
 	}
 
 	private remember(slot: CommentSlot, entry: CommentEntry): void {
-		const others = this.history(slot).filter(({text, commentOut}) => {
-			return text !== entry.text || commentOut !== entry.commentOut;
+		const others = this.history(slot).filter(({text, commentOut, multiline}) => {
+			return text !== entry.text || commentOut !== entry.commentOut || multiline !== entry.multiline;
 		});
 		this.state.set(this.key(slot, "history"), [entry, ...others].slice(0, HISTORY_LIMIT));
 	}

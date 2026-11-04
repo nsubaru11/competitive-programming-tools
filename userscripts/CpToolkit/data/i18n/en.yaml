@@ -27,12 +27,11 @@ category.rating: Results
 category.execution: Execution
 
 wideLayout.title: Wider page
-wideLayout.description: Widens the central column of the page.
-wideLayout.width: "Width (e.g. 50%, 1200px; empty for the original width)"
+wideLayout.description: Widens the central column of the page to the specified width.
+wideLayout.width: Width (e.g. 75%, 1200px; empty for the original width; 75% recommended)
 
 hoverMenu.title: Open menus on hover
 hoverMenu.description: Opens menus when the pointer moves over them.
-hoverMenu.openStatementDetails: Expand collapsed sections in statements
 
 statementHighlight.title: Statement highlighting
 statementHighlight.description: Highlights numbers, variables, and the time and memory limits.
@@ -53,7 +52,7 @@ statementCopy.defaultTitle: Task
 
 efficientLayout.title: Side-by-side samples
 efficientLayout.description: Places the input and output formats and samples side by side.
-efficientLayout.sampleWidth: Width of each sample pair (% of the screen)
+efficientLayout.sampleWidth: Width of each sample pair (% of the screen; 20 to 30 recommended)
 efficientLayout.samples: Samples
 efficientLayout.ioFormat: Input and output
 
@@ -61,11 +60,17 @@ submissionQuery.title: Keep submission filters
 submissionQuery.description: Keeps search filters when switching between All and My submissions.
 
 submissionShortcuts.title: AC submission buttons
-submissionShortcuts.description: Adds buttons that open the AC submissions for the task, sorted by time and by code size.
+submissionShortcuts.description: Adds buttons that open the AC submissions for the task, sorted by time, code size, submission time or memory. Choose the buttons to show in the detailed settings.
 submissionShortcuts.language: Language (empty for all)
 submissionShortcuts.label: AC submissions
-submissionShortcuts.fastest: Fastest
-submissionShortcuts.shortest: Shortest
+submissionShortcuts.time: Time
+submissionShortcuts.length: Size
+submissionShortcuts.created: Submitted
+submissionShortcuts.memory: Memory
+submissionShortcuts.byTime: Show the button sorted by time
+submissionShortcuts.byLength: Show the button sorted by code size
+submissionShortcuts.byCreated: Show the button sorted by submission time
+submissionShortcuts.byMemory: Show the button sorted by memory
 
 resultNotifier.title: Submission notifications
 resultNotifier.description: Shows the verdict right after judging finishes, on any page. Keep at least one AtCoder tab open.
@@ -88,13 +93,13 @@ submissionTimer.canceled: The timer was canceled.
 submissionTimer.scheduled: "Your code will be submitted around {time}."
 
 languageButtons.title: Language switch buttons
-languageButtons.description: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.
+languageButtons.description: Saves your frequently used languages as a row of buttons, so you can switch to one in a single click. Pick the languages from the gear below the language selector.
 languageButtons.configure: Choose languages for the buttons
 languageButtons.hint: Buttons for the checked languages appear below the language selector.
 
 sourceComments.title: Header and footer
-sourceComments.description: Adds a header to the top and a footer to the bottom of pasted code as comments, such as reference URLs, and rewrites them when the language changes.
-sourceComments.style: Comment style
+sourceComments.description: Adds a header to the top and a footer to the bottom of pasted code as comments, for example to attach reference URLs, and rewrites them when the language changes.
+sourceComments.style: Default comment style
 sourceComments.styleLine: Single-line comments
 sourceComments.styleBlock: Multi-line comment
 sourceComments.panel: Header and footer
@@ -103,6 +108,7 @@ sourceComments.footer: Footer (bottom of the code)
 sourceComments.placeholder: e.g. reference URLs
 sourceComments.taskOnly: This task only
 sourceComments.commentOut: Comment out when inserting
+sourceComments.multiline: Use a multi-line comment
 sourceComments.restoreHistory: Restore from history
 sourceComments.restorePreset: Load a saved entry
 sourceComments.savePreset: Save with a name
@@ -165,16 +171,9 @@ ratingGraph.togglePerformance: Toggle performance
 ratingGraph.showAll: all
 ratingGraph.showRecent: recent
 
-historyColors.title: Colored contest history
-historyColors.description: Colors performance and rating values in the contest history.
-historyColors.performanceMode: Performance coloring
-historyColors.ratingMode: Rating coloring
-historyColors.modeNone: None
-historyColors.modeText: Text
-historyColors.modeBackground: Background
 
 localRunner.title: Local Runner
-localRunner.description: Connects to the local server used to transform and run code. Local Runner needs a separate installation.
+localRunner.description: Connects to the local server used to transform and run code. Local Runner needs a separate installation. A server of your own with the same API also works.
 localRunner.url: Server URL
 
 javaSubmit.title: Java submission helper
@@ -191,7 +190,7 @@ javaSubmit.headerName: Header name (empty for the default)
 javaSubmit.foldOnPaste: Fold classes and comments after pasting
 
 easyTest.title: Easy Test+
-easyTest.description: Based on AtCoder Easy Test v2, with additional features. Runs samples from the task page and checks the results. For Java, Local Runner runs the code on your PC and compiles the code you are editing in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.
+easyTest.description: Based on AtCoder Easy Test v2, with additional features. Runs samples from the task page and checks the results. With Local Runner, code runs on your PC and the code you are editing is compiled in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.
 easyTest.precompile: Precompile edited code with Local Runner
 easyTest.keyboardShortcuts: "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)"
 easyTest.savedCodeLimit: Number of saved solutions

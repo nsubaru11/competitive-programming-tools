@@ -57,7 +57,6 @@ CP Toolkit はほかの機能をそのまま使えるので、スクリプト1�
 | バーチャル参加のタイマー                     | [AtCoderVirtualTimer](https://github.com/ocha98/AtCoderVirtualTimer)                                                                                                                                                                  |
 | 鉄則本の難易度表示                           | [tessoku_display_difficulty](https://greasyfork.org/scripts/453352)                                                                                                                                                                   |
 | ユーザーページのグラフへのパフォーマンス表示 | [AtCoder Perf Graph](https://greasyfork.org/scripts/476103)、[New AtCoder Perf Graph](https://greasyfork.org/scripts/586685)                                                                                                          |
-| 成績表の色付け                               | [AtCoderPerformanceColorizer](https://greasyfork.org/scripts/371693)                                                                                                                                                                  |
 | Java の提出補助                              | [AtCoder_submit_keyboard_shortcut](https://greasyfork.org/scripts/378760)、[Atcoder Submission Shortcut](https://greasyfork.org/scripts/509606)                                                                                       |
 
 「Java の提出補助」と重なるのは提出のショートカットだけです。AtCoder の問題ページで使うキーは `Ctrl+Shift+Enter` です。

@@ -17,6 +17,11 @@ export function isRecordOf<T>(isItem: Guard<T>): Guard<Readonly<Record<string, T
 	return (value): value is Readonly<Record<string, T>> => isPlainObject(value) && Object.values(value).every(isItem);
 }
 
+/** 省略できる項目に使う。 */
+export function isOptional<T>(isItem: Guard<T>): Guard<T | undefined> {
+	return (value): value is T | undefined => value === undefined || isItem(value);
+}
+
 /** 指定した項目がすべて正しいオブジェクトか判定する。それ以外の項目は見ない。 */
 export function isObjectOf<T extends object>(fields: {readonly [K in keyof T]: Guard<T[K]>}): Guard<T> {
 	const entries: ReadonlyArray<readonly [string, Guard<unknown>]> = Object.entries(fields);

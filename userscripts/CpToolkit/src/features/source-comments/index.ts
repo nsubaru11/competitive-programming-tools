@@ -41,7 +41,7 @@ export const sourceComments = defineFeature({
 		if (!target || !site || !editorButtons) return;
 
 		const comments = new SourceComments(state);
-		const style: CommentStyle = options.style === "block" ? "block" : "line";
+		const defaultMultiline = options.style === "block";
 		/** コードに挿入した部分。言語を変えたときに書き直す。 */
 		const inserted = new Map<CommentSlot, string>();
 
@@ -57,11 +57,12 @@ export const sourceComments = defineFeature({
 
 		/** 挿入する文字列を返す。空なら挿入するものがなく、null ならこの言語では書けない。 */
 		const render = (slot: CommentSlot): string | null => {
-			const {text, commentOut} = comments.content(slot, site.taskUri());
+			const {text, commentOut, multiline} = comments.content(slot, site.taskUri());
 			const filled = fillVariables(text.trimEnd(), variables());
 			if (!filled) return "";
 			if (!commentOut) return `${filled}\n`;
 			const syntax = syntaxOf();
+			const style: CommentStyle = multiline ?? defaultMultiline ? "block" : "line";
 			const comment = syntax && toComment(filled, syntax, style);
 			return comment === null ? null : `${comment}\n`;
 		};
@@ -107,6 +108,7 @@ export const sourceComments = defineFeature({
 			comments,
 			translate,
 			task: () => site.taskUri(),
+			defaultMultiline,
 			onChange: refresh,
 			onApply() {
 				refresh();

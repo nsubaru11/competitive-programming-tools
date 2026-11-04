@@ -79,7 +79,6 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 |----------------------------------------------|------|----------------------------------------------------------------------|-------------|------------|
 | ユーザーページのグラフへのパフォーマンス表示 | 派生 | [AtCoder Perf Graph](https://greasyfork.org/scripts/476103)          | nzm_ort     | MIT        |
 |                                              | 参照 | [New AtCoder Perf Graph](https://greasyfork.org/scripts/586685)      | kirameku    | MIT        |
-| 成績表の色付け                               | 模倣 | [AtCoderPerformanceColorizer](https://greasyfork.org/scripts/371693) | satanic0258 | MIT        |
 
 ### 実行環境
 

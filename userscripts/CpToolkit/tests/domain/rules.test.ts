@@ -4,7 +4,7 @@ import {adjustRange, contestCategory, defaultRange, rangeIndices} from "@domain/
 import {isLanguageOption, labelDistance, resolveFamily} from "@domain/execution/language";
 import {judgeResult} from "@domain/execution/result";
 import {parseRecentRange, ratedPerformances, recentCount} from "@domain/rating/history";
-import {backgroundOf, crownImageOf, tierOf, tierProgress} from "@domain/rating/scale";
+import {tierOf, tierProgress} from "@domain/rating/scale";
 import {findFoldStartLines} from "@domain/source/fold-lines";
 import {isPureNumber, splitLimitValue, splitNumbers} from "@domain/statement/tokens";
 import {
@@ -144,16 +144,6 @@ describe("レーティング", () => {
 		expect(tierOf(ratingScale, 399).className).toBe("user-gray");
 		expect(tierOf(ratingScale, 400).className).toBe("user-brown");
 		expect(tierOf(ratingScale, 5000).className).toBe("user-red");
-	});
-
-	test("王冠は 3200 以上で、400 刻みの画像を使う", () => {
-		expect(crownImageOf(ratingScale, 3199)).toBeNull();
-		expect(crownImageOf(ratingScale, 3650)).toBe("https://img.atcoder.jp/assets/icon/crown3600.gif");
-	});
-
-	test("3200 以上は銀と金の背景を使う", () => {
-		expect(backgroundOf(ratingScale, 3300)).toBe(ratingScale.silverBackground);
-		expect(backgroundOf(ratingScale, 3700)).toBe(ratingScale.goldBackground);
 	});
 
 	test("区分の中での位置を返す", () => {

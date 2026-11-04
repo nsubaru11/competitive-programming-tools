@@ -104,12 +104,13 @@ const openPanel = (): void => document.querySelector<HTMLButtonElement>(".editor
 const slot = (index: number) => {
 	const element = panelRoot().querySelectorAll(".comment-slot")[index];
 	if (!element) throw new Error("slot not found");
-	const [taskOnly, commentOut] = element.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+	const [taskOnly, commentOut, multiline] = element.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
 	const [history, presets] = element.querySelectorAll("select");
 	return {
 		textarea: element.querySelector("textarea") as HTMLTextAreaElement,
 		taskOnly: taskOnly as HTMLInputElement,
 		commentOut: commentOut as HTMLInputElement,
+		multiline: multiline as HTMLInputElement,
 		history: history as HTMLSelectElement,
 		presets: presets as HTMLSelectElement,
 		buttons: element.querySelectorAll("button"),
@@ -159,6 +160,16 @@ describe("sourceComments", () => {
 		setText(0, "header");
 		await context.pasteCode("class Main {}\n");
 		expect(context.code()).toBe("/*\nheader\n*/\nclass Main {}\n");
+	});
+
+	test("ヘッダーとフッターで、コメントの形式を別々に選べる", async () => {
+		const context = await open();
+		expect(slot(0).multiline.checked).toBe(false);
+		toggle(slot(0).multiline, true);
+		setText(0, "header");
+		setText(1, "footer");
+		await context.pasteCode("code\n");
+		expect(context.code()).toBe("/*\nheader\n*/\ncode\n// footer\n");
 	});
 
 	test("言語を変えるとコメントの書き方も変える", async () => {

@@ -52,7 +52,7 @@ export const efficientLayout = defineFeature({
 	routes: ["atcoder:task", "atcoder:tasksPrint"],
 	phase: "ready",
 	options: {
-		sampleWidth: option.number(60, "efficientLayout.sampleWidth", {min: 10, max: 100}),
+		sampleWidth: option.number(23, "efficientLayout.sampleWidth", {min: 10, max: 100}),
 	},
 	start({options, translate}) {
 		for (const ioStyle of document.querySelectorAll(".io-style")) {

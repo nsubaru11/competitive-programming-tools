@@ -67,7 +67,7 @@ All features are enabled from the start, except those marked <sub>off by default
 </thead>
 <tbody><tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/wide-layout.en.md"><strong>Wider page</strong></a>&emsp;</td>
-<td>Widens the central column of the page and adds a border to the editor</td>
+<td>Widens the central column to the specified width (75% recommended)</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/hover-menu.en.md"><strong>Open menus on hover</strong></a>&emsp;</td>
@@ -117,15 +117,15 @@ All features are enabled from the start, except those marked <sub>off by default
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-shortcuts.en.md"><strong>AC submission buttons</strong></a>&emsp;</td>
-<td>Opens the AC submissions for the task, sorted by time and by code size</td>
+<td>Opens the AC submissions for the task, sorted by time, code size, submission time or memory</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/language-buttons.en.md"><strong>Language switch buttons</strong></a>&emsp;</td>
-<td>Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector</td>
+<td>Saves your frequently used languages as buttons and switches in one click</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/source-comments.en.md"><strong>Header and footer</strong></a>&emsp;</td>
-<td>Adds a header to the top and a footer to the bottom of pasted code</td>
+<td>Adds comments such as reference URLs to the top and bottom of pasted code</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/result-notifier.en.md"><strong>Submission notifications</strong></a>&emsp;</td>
@@ -201,10 +201,6 @@ All features are enabled from the start, except those marked <sub>off by default
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/rating-graph.en.md"><strong>Performance on the user page graph</strong></a>&emsp;</td>
 <td>Overlays performance on the rating graph of user pages, with a recent range set by count or percentage</td>
 </tr>
-<tr style="background-color: rgba(128, 128, 128, 0.1)">
-<td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/history-colors.en.md"><strong>Colored contest history</strong></a>&emsp;</td>
-<td>Colors performance and rating values in the contest history</td>
-</tr>
 </tbody></table>
 
 ### 4.6 Execution
@@ -222,7 +218,7 @@ All features are enabled from the start, except those marked <sub>off by default
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/local-runner.en.md"><strong>Local Runner</strong></a>&emsp;</td>
-<td>Connects to the local server used to transform and run Java code. It needs a separate installation</td>
+<td>Connects to the local server used to transform and run code. A server of your own with the same API also works</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/easy-test.en.md"><strong>Easy Test+</strong></a> <sub>off by default</sub>&emsp;</td>

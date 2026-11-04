@@ -5,7 +5,6 @@ import {contestCalendar} from "@features/contest-calendar/index";
 import {easyTest} from "@features/easy-test/index";
 import {editorialList} from "@features/editorial-list/index";
 import {efficientLayout} from "@features/efficient-layout/index";
-import {historyColors} from "@features/history-colors/index";
 import {hoverMenu} from "@features/hover-menu/index";
 import {javaSubmit} from "@features/java-submit/index";
 import {languageButtons} from "@features/language-buttons/index";
@@ -53,7 +52,6 @@ export const features: readonly Feature[] = [
 	virtualTimer,
 	tessokuDifficulty,
 	ratingGraph,
-	historyColors,
 	localRunner,
 	javaSubmit,
 	easyTest,

@@ -15,7 +15,6 @@ type Cache = {
 const isCache: Guard<Cache> = isObjectOf<Cache>({
 	fetchedAt: isNumber,
 	contests: isArrayOf(isObjectOf<LatestContest>({
-		category: isString,
 		id: isString,
 		name: isString,
 		marks: isArrayOf(isObjectOf<ContestMark>({text: isString, className: isString, title: isString})),

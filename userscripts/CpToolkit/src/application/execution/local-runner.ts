@@ -24,6 +24,7 @@ export class LocalRunnerError extends Error {
 export class LocalRunnerClient {
 	private prepared: {
 		endpoint: string;
+		compilerName: string | undefined;
 		sourceCode: string;
 		response: Promise<LocalRunnerPrepareResponse>
 	} | null = null;
@@ -48,14 +49,24 @@ export class LocalRunnerClient {
 		return this.post(request, TRANSFORM_TIMEOUT_MS);
 	}
 
-	/** 同じソースはコンパイルし直さない。 */
-	prepare(sourceCode: string): Promise<LocalRunnerPrepareResponse> {
+	/** 同じソースはコンパイルし直さない。compilerName は list で返された識別子で、サーバーが言語を選ぶのに使う。 */
+	prepare(sourceCode: string, compilerName?: string): Promise<LocalRunnerPrepareResponse> {
 		const endpoint = this.endpoint() ?? "";
 		const previous = this.prepared;
-		if (previous?.endpoint === endpoint && previous.sourceCode === sourceCode) return previous.response;
-		const request = {mode: "prepare", sourceCode, debug: true, autoImport: true, validate: false, header: false} as const;
+		if (previous?.endpoint === endpoint && previous.compilerName === compilerName && previous.sourceCode === sourceCode) {
+			return previous.response;
+		}
+		const request = {
+			mode: "prepare",
+			sourceCode,
+			...(compilerName !== undefined && {compilerName}),
+			debug: true,
+			autoImport: true,
+			validate: false,
+			header: false,
+		} as const;
 		const response = this.post<LocalRunnerPrepareResponse>(request);
-		this.prepared = {endpoint, sourceCode, response};
+		this.prepared = {endpoint, compilerName, sourceCode, response};
 		response.catch(() => {
 			if (this.prepared?.response === response) this.prepared = null;
 		});
@@ -63,20 +74,24 @@ export class LocalRunnerClient {
 	}
 
 	/** コンパイル済みのプログラムを実行する。サーバーから消えていれば、コンパイルし直して1回だけ実行し直す。 */
-	async run(sourceCode: string, input: string): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
-		let prepared = await this.prepare(sourceCode);
+	async run(
+		sourceCode: string,
+		input: string,
+		compilerName?: string,
+	): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
+		let prepared = await this.prepare(sourceCode, compilerName);
 		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		const response = await this.runProgram(prepared.programId, input);
+		const response = await this.runProgram(prepared.programId, input, compilerName);
 		if (!isStaleProgramResponse(response)) return response;
 
 		this.prepared = null;
-		prepared = await this.prepare(sourceCode);
+		prepared = await this.prepare(sourceCode, compilerName);
 		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		return this.runProgram(prepared.programId, input);
+		return this.runProgram(prepared.programId, input, compilerName);
 	}
 
-	private runProgram(programId: string, input: string): Promise<LocalRunnerRunResponse> {
-		return this.post({mode: "run", programId, stdin: input});
+	private runProgram(programId: string, input: string, compilerName?: string): Promise<LocalRunnerRunResponse> {
+		return this.post({mode: "run", ...(compilerName !== undefined && {compilerName}), programId, stdin: input});
 	}
 
 	/** 実行はサンプルの数だけ順番に待つことがあるので、既定では時間を制限しない。 */

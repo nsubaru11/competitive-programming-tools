@@ -39,6 +39,8 @@ export type LocalRunnerTransformRequest = {
 export type LocalRunnerPrepareRequest = {
 	mode: "prepare";
 	sourceCode: string;
+	/** list で返したコンパイラの識別子。複数の言語を扱うサーバーが言語を選ぶのに使う。 */
+	compilerName?: string;
 	debug?: boolean;
 	autoImport?: boolean;
 	validate?: boolean;
@@ -48,6 +50,8 @@ export type LocalRunnerPrepareRequest = {
 
 export type LocalRunnerRunRequest = {
 	mode: "run";
+	/** list で返したコンパイラの識別子。 */
+	compilerName?: string;
 	sourceCode?: string;
 	programId?: string;
 	stdin?: string;

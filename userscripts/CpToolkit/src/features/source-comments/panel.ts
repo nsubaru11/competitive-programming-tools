@@ -16,6 +16,8 @@ type PanelOptions = {
 	readonly comments: SourceComments;
 	readonly translate: Translate;
 	readonly task: () => string;
+	/** 保存した内容に指定がないときの、複数行コメントの既定。 */
+	readonly defaultMultiline: boolean;
 	readonly onChange: () => void;
 	readonly onApply: () => void;
 };
@@ -38,11 +40,12 @@ function createCheckbox(label: string, onChange: () => void): {element: HTMLElem
 	return {element: h("label", {}, input, label), input};
 }
 
-function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: PanelOptions) {
+function createSlot(slot: CommentSlot, {comments, translate, task, defaultMultiline, onChange}: PanelOptions) {
 	const textarea = h("textarea", {spellcheck: false, placeholder: translate("sourceComments.placeholder")});
 	const content = (): SlotContent => ({
 		text: textarea.value,
 		commentOut: commentOut.input.checked,
+		multiline: multiline.input.checked,
 		taskOnly: taskOnly.input.checked,
 	});
 	const save = (): void => {
@@ -52,6 +55,7 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 	};
 	const taskOnly = createCheckbox(translate("sourceComments.taskOnly"), save);
 	const commentOut = createCheckbox(translate("sourceComments.commentOut"), save);
+	const multiline = createCheckbox(translate("sourceComments.multiline"), save);
 	const history = h("select");
 	const presets = h("select");
 	const saveButton = h("button", {type: "button", textContent: translate("sourceComments.savePreset")});
@@ -60,6 +64,7 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 	const fill = (entry: CommentEntry): void => {
 		textarea.value = entry.text;
 		commentOut.input.checked = entry.commentOut;
+		multiline.input.checked = entry.multiline ?? defaultMultiline;
 		save();
 	};
 
@@ -92,7 +97,12 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 	saveButton.addEventListener("click", () => {
 		const name = window.prompt(translate("sourceComments.presetName"), presets.value)?.trim();
 		if (!name) return;
-		comments.savePreset(slot, {name, text: textarea.value, commentOut: commentOut.input.checked});
+		comments.savePreset(slot, {
+			name,
+			text: textarea.value,
+			commentOut: commentOut.input.checked,
+			multiline: multiline.input.checked,
+		});
 		refreshLists();
 		presets.value = name;
 	});
@@ -109,7 +119,7 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 			{className: "comment-slot"},
 			h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 			textarea,
-			h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
+			h("div", {className: "comment-row"}, taskOnly.element, commentOut.element, multiline.element),
 			h("div", {className: "comment-row"}, history, presets, saveButton, removeButton),
 		),
 		hasText: (): boolean => textarea.value.trim() !== "",
@@ -117,6 +127,7 @@ function createSlot(slot: CommentSlot, {comments, translate, task, onChange}: Pa
 			const stored = comments.content(slot, task());
 			textarea.value = stored.text;
 			commentOut.input.checked = stored.commentOut;
+			multiline.input.checked = stored.multiline ?? defaultMultiline;
 			taskOnly.input.checked = stored.taskOnly;
 			refreshLists();
 		},

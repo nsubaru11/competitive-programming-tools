@@ -26,20 +26,17 @@ function parseNextContests(html: string): readonly LatestContest[] {
 	return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
 		const heading = row.firstElementChild;
 		if (heading?.tagName !== "TH") return [];
-		const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
 		return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
 			const id = link.getAttribute("href")?.split("/")[2];
-			return id ? [{category, id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
+			return id ? [{id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
 		});
 	});
 }
 
-function createContestItem({category, id, name, marks}: LatestContest): HTMLElement {
+function createContestItem({id, name, marks}: LatestContest): HTMLElement {
 	return h("li", {}, h(
 		"a",
 		{href: `${CONTEST_LIST_PATH}${id}`},
-		h("b", {textContent: category}),
-		" ",
 		...marks.map(({text, className, title}) => h("span", {textContent: text, className, title})),
 		" ",
 		h("span", {className: "cp-latest-name", textContent: name}),

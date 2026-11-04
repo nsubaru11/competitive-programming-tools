@@ -65,7 +65,6 @@ describe("AtCoder のルート", () => {
 		expect(routesOf("https://atcoder.jp/users/chokudai?contestType=heuristic")).toContain("atcoder:user");
 		expect(routesOf("https://atcoder.jp/users/chokudai?graph=rank")).not.toContain("atcoder:user");
 		expect(routesOf("https://atcoder.jp/users/chokudai/history")).not.toContain("atcoder:user");
-		expect(routesOf("https://atcoder.jp/users/chokudai/history")).toContain("atcoder:userHistory");
 	});
 
 	test("解説の一覧だけを対象にする", () => {

@@ -61,6 +61,14 @@ describe("LocalRunnerClient", () => {
 		});
 	});
 
+	test("コンパイラの識別子を送り、サーバーが言語を選べるようにする", async () => {
+		const http = new FakeHttpClient(() => JSON_OK(success));
+		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
+		await client.run("code", "in", "python3");
+		const bodies = http.requests.map(({body}) => JSON.parse(body ?? "{}"));
+		expect(bodies.map(({mode, compilerName}) => [mode, compilerName])).toEqual([["prepare", "python3"], ["run", "python3"]]);
+	});
+
 	test("コンパイルエラーの内容を返す", async () => {
 		const failed = {status: "compileError", diagnostics: "error", sourceCode: ""};
 		const client = new LocalRunnerClient(new FakeHttpClient(() => JSON_OK(failed)), () => "http://localhost:8080");

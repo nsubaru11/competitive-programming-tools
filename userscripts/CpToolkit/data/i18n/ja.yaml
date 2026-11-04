@@ -28,12 +28,11 @@ category.rating: 成績
 category.execution: 実行環境
 
 wideLayout.title: ページ幅の拡張
-wideLayout.description: ページ中央の幅を広げます。
-wideLayout.width: "幅(例: 50%, 1200px。空欄なら元の幅)"
+wideLayout.description: ページ中央の幅を、指定した幅に広げます。
+wideLayout.width: "幅(例: 75%, 1200px。空欄なら元の幅。おすすめは 75%)"
 
 hoverMenu.title: メニューのホバー表示
 hoverMenu.description: マウスを重ねるだけでメニューを開きます。
-hoverMenu.openStatementDetails: 問題文の折りたたみを最初から開く
 
 statementHighlight.title: 問題文の強調表示
 statementHighlight.description: 問題文中の数字と変数、実行時間とメモリの制限を強調します。
@@ -54,7 +53,7 @@ statementCopy.defaultTitle: 問題
 
 efficientLayout.title: サンプルの横並び
 efficientLayout.description: 入出力の形式とサンプルを横に並べて表示します。
-efficientLayout.sampleWidth: サンプル1組の幅(画面幅に対する %)
+efficientLayout.sampleWidth: サンプル1組の幅(画面幅に対する %。おすすめは 20〜30)
 efficientLayout.samples: 入出力例
 efficientLayout.ioFormat: 入出力形式
 
@@ -62,11 +61,17 @@ submissionQuery.title: 提出一覧の検索条件の保持
 submissionQuery.description: 提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。
 
 submissionShortcuts.title: AC 提出へのボタン
-submissionShortcuts.description: 問題ページに、この問題の AC 提出を実行時間順とコード長順で開くボタンを追加します。
+submissionShortcuts.description: 問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。
 submissionShortcuts.language: 言語(空欄ならすべて)
 submissionShortcuts.label: AC提出
-submissionShortcuts.fastest: 実行時間順
-submissionShortcuts.shortest: コード長順
+submissionShortcuts.time: 実行時間
+submissionShortcuts.length: コード長
+submissionShortcuts.created: 提出時間
+submissionShortcuts.memory: メモリ
+submissionShortcuts.byTime: 実行時間順のボタンを出す
+submissionShortcuts.byLength: コード長順のボタンを出す
+submissionShortcuts.byCreated: 提出時間順のボタンを出す
+submissionShortcuts.byMemory: メモリ順のボタンを出す
 
 resultNotifier.title: 提出結果の通知
 resultNotifier.description: 判定が終わると、どのページにいても結果をすぐに通知します。AtCoder のタブを1つは開いたままにしてください。
@@ -89,13 +94,13 @@ submissionTimer.canceled: タイマーを取り消しました。
 submissionTimer.scheduled: "{time} ごろに提出します。"
 
 languageButtons.title: 言語の切り替えボタン
-languageButtons.description: よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます。
+languageButtons.description: よく使う言語をボタンとして並べて保存しておき、1回の操作で切り替えられるようにします。並べる言語は選択欄の下の歯車から選びます。
 languageButtons.configure: ボタンにする言語を選ぶ
 languageButtons.hint: チェックした言語のボタンを選択欄の下に表示します。
 
 sourceComments.title: ヘッダーとフッター
-sourceComments.description: 貼り付けたコードの先頭にヘッダー、末尾にフッターをコメントとして追記します。参照元の URL などに使えます。言語を変えるとコメントの書き方も切り替えます。
-sourceComments.style: コメントの形式
+sourceComments.description: 貼り付けたコードの先頭にヘッダー、末尾にフッターをコメントとして追記します。参照元の URL の添付などに使えます。言語を変えるとコメントの書き方も切り替えます。
+sourceComments.style: 既定のコメントの形式
 sourceComments.styleLine: 単一行コメントを並べる
 sourceComments.styleBlock: 複数行コメント
 sourceComments.panel: ヘッダーとフッター
@@ -104,6 +109,7 @@ sourceComments.footer: フッター(コードの末尾)
 sourceComments.placeholder: 参照元の URL など
 sourceComments.taskOnly: この問題のみ
 sourceComments.commentOut: 挿入時にコメントアウトする
+sourceComments.multiline: 複数行コメントにする
 sourceComments.restoreHistory: 履歴から復元
 sourceComments.restorePreset: 保存した名前から呼び出す
 sourceComments.savePreset: 名前を付けて保存
@@ -166,16 +172,9 @@ ratingGraph.togglePerformance: パフォーマンスの ON/OFF
 ratingGraph.showAll: all
 ratingGraph.showRecent: recent
 
-historyColors.title: 成績表の色付け
-historyColors.description: 成績表のパフォーマンスとレーティングに色を付けます。
-historyColors.performanceMode: パフォーマンスの色付け
-historyColors.ratingMode: レーティングの色付け
-historyColors.modeNone: なし
-historyColors.modeText: 文字
-historyColors.modeBackground: 背景
 
 localRunner.title: Local Runner
-localRunner.description: コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。
+localRunner.description: コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。同じ API を持つ自作のサーバーにも接続できます。
 localRunner.url: 接続先の URL
 
 javaSubmit.title: Java の提出補助
@@ -192,7 +191,7 @@ javaSubmit.headerName: ヘッダーの名前(空欄なら既定)
 javaSubmit.foldOnPaste: 貼り付け後にクラスとコメントを折りたたむ
 
 easyTest.title: Easy Test+
-easyTest.description: AtCoder Easy Test v2 をもとに、機能を加えたものです。問題ページからサンプルを実行して結果を確認します。Java では Local Runner で手元で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。
+easyTest.description: AtCoder Easy Test v2 をもとに、機能を加えたものです。問題ページからサンプルを実行して結果を確認します。Local Runner に接続すると手元の PC で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。
 easyTest.precompile: Local Runner で編集中のコードを事前にコンパイルする
 easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)
 easyTest.savedCodeLimit: 保存するコードの数

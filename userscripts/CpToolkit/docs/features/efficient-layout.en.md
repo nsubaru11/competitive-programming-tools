@@ -11,7 +11,7 @@
 ## How it works
 
 - Places the input and output formats side by side, and each sample pair next to the others. Scroll sideways when they do not fit
-- The width of each sample pair can be set as a percentage of the screen
+- The width of each sample pair can be set as a percentage of the screen. **20 to 30 is recommended by the author**
 
 ## Detailed settings
 
@@ -19,7 +19,7 @@ Change these under "Detailed settings" of each feature in the settings.
 
 | Setting | Default |
 |---|---|
-| Width of each sample pair (% of the screen) | `60` |
+| Width of each sample pair (% of the screen; 20 to 30 recommended) | `23` |
 
 ## Pages
 

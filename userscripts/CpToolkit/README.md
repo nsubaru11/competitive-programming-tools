@@ -67,7 +67,7 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 </thead>
 <tbody><tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/wide-layout.md"><strong>ページ幅の拡張</strong></a>&emsp;</td>
-<td>ページ中央の幅を広げ、エディタに枠線を付けます</td>
+<td>ページ中央の幅を、指定した幅に広げます(おすすめは 75%)</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/hover-menu.md"><strong>メニューのホバー表示</strong></a>&emsp;</td>
@@ -117,15 +117,15 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-shortcuts.md"><strong>AC 提出へのボタン</strong></a>&emsp;</td>
-<td>この問題の AC 提出を実行時間順とコード長順で開きます</td>
+<td>この問題の AC 提出を、実行時間、コード長、提出時間、メモリの順で開きます</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/language-buttons.md"><strong>言語の切り替えボタン</strong></a>&emsp;</td>
-<td>よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます</td>
+<td>よく使う言語をボタンとして並べて保存し、1回の操作で切り替えます</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/source-comments.md"><strong>ヘッダーとフッター</strong></a>&emsp;</td>
-<td>貼り付けたコードの先頭にヘッダー、末尾にフッターを追記します</td>
+<td>貼り付けたコードの先頭と末尾に、参照元の URL などのコメントを追記します</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/result-notifier.md"><strong>提出結果の通知</strong></a>&emsp;</td>
@@ -201,10 +201,6 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/rating-graph.md"><strong>ユーザーページのグラフへのパフォーマンス表示</strong></a>&emsp;</td>
 <td>ユーザーページのレーティンググラフにパフォーマンスを重ね、最近の範囲を回数か割合で指定できます</td>
 </tr>
-<tr style="background-color: rgba(128, 128, 128, 0.1)">
-<td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/history-colors.md"><strong>成績表の色付け</strong></a>&emsp;</td>
-<td>成績表のパフォーマンスとレーティングに色を付けます</td>
-</tr>
 </tbody></table>
 
 ### 4.6 実行環境
@@ -222,7 +218,7 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/local-runner.md"><strong>Local Runner</strong></a>&emsp;</td>
-<td>Java の変換と実行に使う、手元のサーバーへ接続します。別途、導入が必要です</td>
+<td>コードの変換と実行に使う、手元のサーバーへ接続します。同じ API を持つ自作のサーバーも使えます</td>
 </tr>
 <tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/easy-test.md"><strong>Easy Test+</strong></a> <sub>既定で OFF</sub>&emsp;</td>
@@ -246,7 +242,7 @@ CP Toolkit と同じ機能を持つスクリプトとの併用は推奨しませ
 
 このスクリプトは、作者のサーバーへ情報を送りません。AtCoder などの表示中のサイトのほかに、次の場合だけ外部と通信します。
 
-- **手元の Local Runner**(既定は `http://localhost:8080`): Java の変換と実行のために、コードを手元の PC へ送ります
+- **手元の Local Runner**(既定は `http://localhost:8080`): コードの変換と実行のために、コードを手元の PC へ送ります
 - **PaizaIO、Wandbox**: Easy Test+ でこれらを実行環境に選んだときだけ、コードと入力を送ります。ほかの実行環境から自動で切り替わることはありません
 - **jsDelivr**: 解説の数式とコードの表示に使う KaTeX と Prettify、ブラウザでの Python の実行に使う Pyodide、Wandbox の C++ で使う AtCoder Library を、必要なときだけ取得します
 

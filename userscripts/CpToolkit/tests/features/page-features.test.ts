@@ -5,7 +5,6 @@ import {TurndownStatementConverter} from "@adapters/statement/statement-converte
 import {averageResult} from "@features/average-result/index";
 import {editorialList} from "@features/editorial-list/index";
 import {efficientLayout} from "@features/efficient-layout/index";
-import {historyColors} from "@features/history-colors/index";
 import {ratingGraph} from "@features/rating-graph/index";
 import {statementCopy} from "@features/statement-copy/index";
 import {statementHighlight} from "@features/statement-highlight/index";
@@ -68,11 +67,24 @@ describe("submissionShortcuts", () => {
 		const control = document.querySelector(".cp-title-control");
 		expect(control?.firstElementChild?.textContent).toBe("AC提出:");
 		const links = [...(control?.querySelectorAll<HTMLAnchorElement>(".btn-group a") ?? [])];
-		expect(links.map(({textContent}) => textContent)).toEqual(["実行時間順", "コード長順"]);
+		expect(links.map(({textContent}) => textContent)).toEqual(["実行時間", "コード長", "提出時間", "メモリ"]);
 		expect(links[0]?.getAttribute("href")).toContain("orderBy=time_consumption");
 		expect(links[0]?.getAttribute("href")).toContain("f.LanguageName=Java");
 		expect(links[1]?.getAttribute("href")).toContain("orderBy=source_length");
 		expect(links[1]?.getAttribute("href")).toContain("f.Task=abc420_a");
+		expect(links[2]?.getAttribute("href")).toContain("orderBy=created");
+		expect(links[3]?.getAttribute("href")).toContain("orderBy=memory_consumption");
+	});
+
+	test("詳細設定で選んだボタンだけを出し、1つもなければ何も出さない", async () => {
+		renderTitle();
+		await run(submissionShortcuts, {byTime: false, byLength: true, byCreated: false, byMemory: true});
+		const links = [...document.querySelectorAll(".cp-title-control .btn-group a")];
+		expect(links.map(({textContent}) => textContent)).toEqual(["コード長", "メモリ"]);
+
+		renderTitle();
+		await run(submissionShortcuts, {byTime: false, byLength: false, byCreated: false, byMemory: false});
+		expect(document.querySelector(".cp-title-control")).toBeNull();
 	});
 
 	test("後始末で取り除く", async () => {
@@ -224,31 +236,6 @@ describe("averageResult", () => {
 		document.body.innerHTML = "<table><tbody><tr><td>1</td></tr></tbody></table>";
 		await run(averageResult);
 		expect(document.querySelectorAll("tr")).toHaveLength(1);
-	});
-});
-
-describe("historyColors", () => {
-	const row = "<tr><td>a</td><td>b</td><td>c</td><td>1600</td><td>3300</td></tr>";
-
-	test("背景に色を付ける", async () => {
-		document.body.innerHTML = `<table id="history"><tbody>${row}</tbody></table>`;
-		await run(historyColors);
-		const cells = document.querySelectorAll("td");
-		expect(cells[3]?.getAttribute("style")).toContain("background");
-		expect(cells[4]?.getAttribute("style")).toContain("linear-gradient");
-	});
-
-	test("文字に色を付け、王冠を表示する", async () => {
-		document.body.innerHTML = `<table id="history"><tbody>${row}</tbody></table>`;
-		await run(historyColors, {performanceMode: "text", ratingMode: "text"});
-		expect(document.querySelector(".user-blue")?.textContent).toBe("1600");
-		expect(document.querySelector("img")?.getAttribute("src")).toContain("crown3200");
-	});
-
-	test("数値でないセルは変更しない", async () => {
-		document.body.innerHTML = '<table id="history"><tbody><tr><td></td><td></td><td></td><td>-</td><td>-</td></tr></tbody></table>';
-		await run(historyColors);
-		expect(document.querySelectorAll("td")[3]?.getAttribute("style")).toBeNull();
 	});
 });
 

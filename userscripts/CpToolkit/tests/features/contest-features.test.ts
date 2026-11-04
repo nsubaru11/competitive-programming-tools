@@ -504,7 +504,7 @@ describe("latestContests", () => {
 		await openMenu();
 
 		expect(site.requests.map(({url}) => url)).toEqual(["/home"]);
-		expect(menuItems()).toEqual(["ABC Ⓐ◉ AtCoder Beginner Contest 2", "ADT Ⓐ◉ EASY", "ADT Ⓐ◉ ALL"]);
+		expect(menuItems()).toEqual(["Ⓐ◉ AtCoder Beginner Contest 2", "Ⓐ◉ EASY", "Ⓐ◉ ALL"]);
 		const mark = document.querySelector(".cp-latest-menu .user-blue");
 		expect(mark?.textContent).toBe("◉");
 		expect(mark?.previousElementSibling?.getAttribute("title")).toBe("Algorithm");

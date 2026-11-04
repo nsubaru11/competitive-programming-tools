@@ -21,7 +21,6 @@ routes:
   editorial: '^/contests/[^/]+/editorial/?(\?|$)'
   virtual: '^/contests/[^/]+/virtual/?(\?|$)'
   user: '^/users/[^/?#]+/?(\?(?!.*graph=(rank|dist)).*)?$'
-  userHistory: '^/users/[^/]+/history'
 
 # 設定画面へのリンクを追加するメニュー。ヘッダーの形が2種類あるため上から順に探す
 navigationLists:

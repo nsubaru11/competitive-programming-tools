@@ -1,4 +1,3 @@
-import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
 
 const OPEN_CLASS = "open";
@@ -11,21 +10,14 @@ export const hoverMenu = defineFeature({
 	defaultEnabled: true,
 	routes: ["atcoder:page"],
 	phase: "ready",
-	options: {
-		openStatementDetails: option.boolean(true, "hoverMenu.openStatementDetails"),
-	},
+	options: {},
 	live: true,
-	start({options}) {
+	start() {
 		const controller = new AbortController();
 		const {signal} = controller;
 		for (const item of document.querySelectorAll(".nav > li:not(.pull-right)")) {
 			item.addEventListener("mouseenter", () => item.classList.add(OPEN_CLASS), {signal});
 			item.addEventListener("mouseleave", () => item.classList.remove(OPEN_CLASS), {signal});
-		}
-		if (options.openStatementDetails) {
-			for (const details of document.querySelectorAll<HTMLDetailsElement>("#task-statement details")) {
-				details.open = true;
-			}
 		}
 		return () => controller.abort();
 	},

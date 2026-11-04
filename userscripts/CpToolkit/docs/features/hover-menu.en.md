@@ -9,15 +9,7 @@
 ## How it works
 
 - Menus in the header and the contest tabs open when the pointer moves over them, without clicking
-- Collapsed sections in statements can start expanded
-
-## Detailed settings
-
-Change these under "Detailed settings" of each feature in the settings.
-
-| Setting | Default |
-|---|---|
-| Expand collapsed sections in statements | On |
+- For example, moving over "Results" opens the menu with "All Submissions" and "My Submissions"
 
 ## Pages
 

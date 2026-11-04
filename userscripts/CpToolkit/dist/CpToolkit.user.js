@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.32
+// @version        1.0.33
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1781,7 +1781,6 @@ a:focus > .cp-settings-entry {
 			editorial: "^/contests/[^/]+/editorial/?(\\?|$)",
 			virtual: "^/contests/[^/]+/virtual/?(\\?|$)",
 			user: "^/users/[^/?#]+/?(\\?(?!.*graph=(rank|dist)).*)?$",
-			userHistory: "^/users/[^/]+/history",
 		},
 		navigationLists: ["#navbar-collapse .navbar-right", "#header .header-page"],
 		submission: {
@@ -1949,11 +1948,10 @@ a:focus > .cp-settings-entry {
 		"category.rating": "Results",
 		"category.execution": "Execution",
 		"wideLayout.title": "Wider page",
-		"wideLayout.description": "Widens the central column of the page.",
-		"wideLayout.width": "Width (e.g. 50%, 1200px; empty for the original width)",
+		"wideLayout.description": "Widens the central column of the page to the specified width.",
+		"wideLayout.width": "Width (e.g. 75%, 1200px; empty for the original width; 75% recommended)",
 		"hoverMenu.title": "Open menus on hover",
 		"hoverMenu.description": "Opens menus when the pointer moves over them.",
-		"hoverMenu.openStatementDetails": "Expand collapsed sections in statements",
 		"statementHighlight.title": "Statement highlighting",
 		"statementHighlight.description": "Highlights numbers, variables, and the time and memory limits.",
 		"statementHighlight.numberColor": "Number color",
@@ -1971,18 +1969,24 @@ a:focus > .cp-settings-entry {
 		"statementCopy.defaultTitle": "Task",
 		"efficientLayout.title": "Side-by-side samples",
 		"efficientLayout.description": "Places the input and output formats and samples side by side.",
-		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen)",
+		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen; 20 to 30 recommended)",
 		"efficientLayout.samples": "Samples",
 		"efficientLayout.ioFormat": "Input and output",
 		"submissionQuery.title": "Keep submission filters",
 		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
 		"submissionShortcuts.title": "AC submission buttons",
 		"submissionShortcuts.description":
-			"Adds buttons that open the AC submissions for the task, sorted by time and by code size.",
+			"Adds buttons that open the AC submissions for the task, sorted by time, code size, submission time or memory. Choose the buttons to show in the detailed settings.",
 		"submissionShortcuts.language": "Language (empty for all)",
 		"submissionShortcuts.label": "AC submissions",
-		"submissionShortcuts.fastest": "Fastest",
-		"submissionShortcuts.shortest": "Shortest",
+		"submissionShortcuts.time": "Time",
+		"submissionShortcuts.length": "Size",
+		"submissionShortcuts.created": "Submitted",
+		"submissionShortcuts.memory": "Memory",
+		"submissionShortcuts.byTime": "Show the button sorted by time",
+		"submissionShortcuts.byLength": "Show the button sorted by code size",
+		"submissionShortcuts.byCreated": "Show the button sorted by submission time",
+		"submissionShortcuts.byMemory": "Show the button sorted by memory",
 		"resultNotifier.title": "Submission notifications",
 		"resultNotifier.description":
 			"Shows the verdict right after judging finishes, on any page. Keep at least one AtCoder tab open.",
@@ -2003,13 +2007,13 @@ a:focus > .cp-settings-entry {
 		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
 		"languageButtons.title": "Language switch buttons",
 		"languageButtons.description":
-			"Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.",
+			"Saves your frequently used languages as a row of buttons, so you can switch to one in a single click. Pick the languages from the gear below the language selector.",
 		"languageButtons.configure": "Choose languages for the buttons",
 		"languageButtons.hint": "Buttons for the checked languages appear below the language selector.",
 		"sourceComments.title": "Header and footer",
 		"sourceComments.description":
-			"Adds a header to the top and a footer to the bottom of pasted code as comments, such as reference URLs, and rewrites them when the language changes.",
-		"sourceComments.style": "Comment style",
+			"Adds a header to the top and a footer to the bottom of pasted code as comments, for example to attach reference URLs, and rewrites them when the language changes.",
+		"sourceComments.style": "Default comment style",
 		"sourceComments.styleLine": "Single-line comments",
 		"sourceComments.styleBlock": "Multi-line comment",
 		"sourceComments.panel": "Header and footer",
@@ -2018,6 +2022,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.placeholder": "e.g. reference URLs",
 		"sourceComments.taskOnly": "This task only",
 		"sourceComments.commentOut": "Comment out when inserting",
+		"sourceComments.multiline": "Use a multi-line comment",
 		"sourceComments.restoreHistory": "Restore from history",
 		"sourceComments.restorePreset": "Load a saved entry",
 		"sourceComments.savePreset": "Save with a name",
@@ -2079,16 +2084,9 @@ a:focus > .cp-settings-entry {
 		"ratingGraph.togglePerformance": "Toggle performance",
 		"ratingGraph.showAll": "all",
 		"ratingGraph.showRecent": "recent",
-		"historyColors.title": "Colored contest history",
-		"historyColors.description": "Colors performance and rating values in the contest history.",
-		"historyColors.performanceMode": "Performance coloring",
-		"historyColors.ratingMode": "Rating coloring",
-		"historyColors.modeNone": "None",
-		"historyColors.modeText": "Text",
-		"historyColors.modeBackground": "Background",
 		"localRunner.title": "Local Runner",
 		"localRunner.description":
-			"Connects to the local server used to transform and run code. Local Runner needs a separate installation.",
+			"Connects to the local server used to transform and run code. Local Runner needs a separate installation. A server of your own with the same API also works.",
 		"localRunner.url": "Server URL",
 		"javaSubmit.title": "Java submission helper",
 		"javaSubmit.description":
@@ -2107,7 +2105,7 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
 		"easyTest.title": "Easy Test+",
 		"easyTest.description":
-			"Based on AtCoder Easy Test v2, with additional features. Runs samples from the task page and checks the results. For Java, Local Runner runs the code on your PC and compiles the code you are editing in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.",
+			"Based on AtCoder Easy Test v2, with additional features. Runs samples from the task page and checks the results. With Local Runner, code runs on your PC and the code you are editing is compiled in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.",
 		"easyTest.precompile": "Precompile edited code with Local Runner",
 		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
 		"easyTest.savedCodeLimit": "Number of saved solutions",
@@ -2167,11 +2165,10 @@ a:focus > .cp-settings-entry {
 		"category.rating": "成績",
 		"category.execution": "実行環境",
 		"wideLayout.title": "ページ幅の拡張",
-		"wideLayout.description": "ページ中央の幅を広げます。",
-		"wideLayout.width": "幅(例: 50%, 1200px。空欄なら元の幅)",
+		"wideLayout.description": "ページ中央の幅を、指定した幅に広げます。",
+		"wideLayout.width": "幅(例: 75%, 1200px。空欄なら元の幅。おすすめは 75%)",
 		"hoverMenu.title": "メニューのホバー表示",
 		"hoverMenu.description": "マウスを重ねるだけでメニューを開きます。",
-		"hoverMenu.openStatementDetails": "問題文の折りたたみを最初から開く",
 		"statementHighlight.title": "問題文の強調表示",
 		"statementHighlight.description": "問題文中の数字と変数、実行時間とメモリの制限を強調します。",
 		"statementHighlight.numberColor": "数字の色",
@@ -2189,18 +2186,24 @@ a:focus > .cp-settings-entry {
 		"statementCopy.defaultTitle": "問題",
 		"efficientLayout.title": "サンプルの横並び",
 		"efficientLayout.description": "入出力の形式とサンプルを横に並べて表示します。",
-		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %)",
+		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %。おすすめは 20〜30)",
 		"efficientLayout.samples": "入出力例",
 		"efficientLayout.ioFormat": "入出力形式",
 		"submissionQuery.title": "提出一覧の検索条件の保持",
 		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
 		"submissionShortcuts.title": "AC 提出へのボタン",
 		"submissionShortcuts.description":
-			"問題ページに、この問題の AC 提出を実行時間順とコード長順で開くボタンを追加します。",
+			"問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
 		"submissionShortcuts.label": "AC提出",
-		"submissionShortcuts.fastest": "実行時間順",
-		"submissionShortcuts.shortest": "コード長順",
+		"submissionShortcuts.time": "実行時間",
+		"submissionShortcuts.length": "コード長",
+		"submissionShortcuts.created": "提出時間",
+		"submissionShortcuts.memory": "メモリ",
+		"submissionShortcuts.byTime": "実行時間順のボタンを出す",
+		"submissionShortcuts.byLength": "コード長順のボタンを出す",
+		"submissionShortcuts.byCreated": "提出時間順のボタンを出す",
+		"submissionShortcuts.byMemory": "メモリ順のボタンを出す",
 		"resultNotifier.title": "提出結果の通知",
 		"resultNotifier.description":
 			"判定が終わると、どのページにいても結果をすぐに通知します。AtCoder のタブを1つは開いたままにしてください。",
@@ -2220,13 +2223,14 @@ a:focus > .cp-settings-entry {
 		"submissionTimer.canceled": "タイマーを取り消しました。",
 		"submissionTimer.scheduled": "{time} ごろに提出します。",
 		"languageButtons.title": "言語の切り替えボタン",
-		"languageButtons.description": "よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます。",
+		"languageButtons.description":
+			"よく使う言語をボタンとして並べて保存しておき、1回の操作で切り替えられるようにします。並べる言語は選択欄の下の歯車から選びます。",
 		"languageButtons.configure": "ボタンにする言語を選ぶ",
 		"languageButtons.hint": "チェックした言語のボタンを選択欄の下に表示します。",
 		"sourceComments.title": "ヘッダーとフッター",
 		"sourceComments.description":
-			"貼り付けたコードの先頭にヘッダー、末尾にフッターをコメントとして追記します。参照元の URL などに使えます。言語を変えるとコメントの書き方も切り替えます。",
-		"sourceComments.style": "コメントの形式",
+			"貼り付けたコードの先頭にヘッダー、末尾にフッターをコメントとして追記します。参照元の URL の添付などに使えます。言語を変えるとコメントの書き方も切り替えます。",
+		"sourceComments.style": "既定のコメントの形式",
 		"sourceComments.styleLine": "単一行コメントを並べる",
 		"sourceComments.styleBlock": "複数行コメント",
 		"sourceComments.panel": "ヘッダーとフッター",
@@ -2235,6 +2239,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.placeholder": "参照元の URL など",
 		"sourceComments.taskOnly": "この問題のみ",
 		"sourceComments.commentOut": "挿入時にコメントアウトする",
+		"sourceComments.multiline": "複数行コメントにする",
 		"sourceComments.restoreHistory": "履歴から復元",
 		"sourceComments.restorePreset": "保存した名前から呼び出す",
 		"sourceComments.savePreset": "名前を付けて保存",
@@ -2297,16 +2302,9 @@ a:focus > .cp-settings-entry {
 		"ratingGraph.togglePerformance": "パフォーマンスの ON/OFF",
 		"ratingGraph.showAll": "all",
 		"ratingGraph.showRecent": "recent",
-		"historyColors.title": "成績表の色付け",
-		"historyColors.description": "成績表のパフォーマンスとレーティングに色を付けます。",
-		"historyColors.performanceMode": "パフォーマンスの色付け",
-		"historyColors.ratingMode": "レーティングの色付け",
-		"historyColors.modeNone": "なし",
-		"historyColors.modeText": "文字",
-		"historyColors.modeBackground": "背景",
 		"localRunner.title": "Local Runner",
 		"localRunner.description":
-			"コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。",
+			"コードの変換と実行に使う、手元のサーバーへ接続します。別途、Local Runner の導入が必要です。同じ API を持つ自作のサーバーにも接続できます。",
 		"localRunner.url": "接続先の URL",
 		"javaSubmit.title": "Java の提出補助",
 		"javaSubmit.description":
@@ -2325,7 +2323,7 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
 		"easyTest.title": "Easy Test+",
 		"easyTest.description":
-			"AtCoder Easy Test v2 をもとに、機能を加えたものです。問題ページからサンプルを実行して結果を確認します。Java では Local Runner で手元で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
+			"AtCoder Easy Test v2 をもとに、機能を加えたものです。問題ページからサンプルを実行して結果を確認します。Local Runner に接続すると手元の PC で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
 		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
 		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
 		"easyTest.savedCodeLimit": "保存するコードの数",
@@ -2836,65 +2834,52 @@ a:focus > .cp-settings-entry {
 				min: 0,
 				color: "#808080",
 				alpha: 0.15,
-				background: "#D9D9D9",
 				className: "user-gray",
 			},
 			{
 				min: 400,
 				color: "#804000",
 				alpha: 0.15,
-				background: "#D9C5B2",
 				className: "user-brown",
 			},
 			{
 				min: 800,
 				color: "#008000",
 				alpha: 0.15,
-				background: "#B2D9B2",
 				className: "user-green",
 			},
 			{
 				min: 1200,
 				color: "#00C0C0",
 				alpha: 0.2,
-				background: "#B2ECEC",
 				className: "user-cyan",
 			},
 			{
 				min: 1600,
 				color: "#0000FF",
 				alpha: 0.1,
-				background: "#B2B2FF",
 				className: "user-blue",
 			},
 			{
 				min: 2000,
 				color: "#C0C000",
 				alpha: 0.25,
-				background: "#ECECB2",
 				className: "user-yellow",
 			},
 			{
 				min: 2400,
 				color: "#FF8000",
 				alpha: 0.2,
-				background: "#FFD9B2",
 				className: "user-orange",
 			},
 			{
 				min: 2800,
 				color: "#FF0000",
 				alpha: 0.1,
-				background: "#FFB2B2",
 				className: "user-red",
 			},
 		],
 		crownMin: 3200,
-		crownStep: 400,
-		crownImage: "https://img.atcoder.jp/assets/icon/crown{value}.gif",
-		silverMax: 3600,
-		silverBackground: "linear-gradient(135deg, #E4E4E4, #EEEEEE, #E4E4E4, #CCCCCC, #C4C4C4)",
-		goldBackground: "linear-gradient(135deg, #FFD325, #FDEBA6, #FFE065, #FFCC00, #F0BE00)",
 	};
 	// CpToolkit/data/runners.yaml
 	var runners_default = {
@@ -3235,39 +3220,46 @@ a:focus > .cp-settings-entry {
 			return this.post(request, TRANSFORM_TIMEOUT_MS);
 		}
 
-		prepare(sourceCode) {
+		prepare(sourceCode, compilerName) {
 			const endpoint = this.endpoint() ?? "";
 			const previous = this.prepared;
-			if (previous?.endpoint === endpoint && previous.sourceCode === sourceCode) return previous.response;
+			if (
+				previous?.endpoint === endpoint &&
+				previous.compilerName === compilerName &&
+				previous.sourceCode === sourceCode
+			) {
+				return previous.response;
+			}
 			const request = {
 				mode: "prepare",
 				sourceCode,
+				...(compilerName !== undefined && {compilerName}),
 				debug: true,
 				autoImport: true,
 				validate: false,
 				header: false,
 			};
 			const response = this.post(request);
-			this.prepared = {endpoint, sourceCode, response};
+			this.prepared = {endpoint, compilerName, sourceCode, response};
 			response.catch(() => {
 				if (this.prepared?.response === response) this.prepared = null;
 			});
 			return response;
 		}
 
-		async run(sourceCode, input) {
-			let prepared = await this.prepare(sourceCode);
+		async run(sourceCode, input, compilerName) {
+			let prepared = await this.prepare(sourceCode, compilerName);
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			const response = await this.runProgram(prepared.programId, input);
+			const response = await this.runProgram(prepared.programId, input, compilerName);
 			if (!isStaleProgramResponse(response)) return response;
 			this.prepared = null;
-			prepared = await this.prepare(sourceCode);
+			prepared = await this.prepare(sourceCode, compilerName);
 			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			return this.runProgram(prepared.programId, input);
+			return this.runProgram(prepared.programId, input, compilerName);
 		}
 
-		runProgram(programId, input) {
-			return this.post({mode: "run", programId, stdin: input});
+		runProgram(programId, input, compilerName) {
+			return this.post({mode: "run", ...(compilerName !== undefined && {compilerName}), programId, stdin: input});
 		}
 
 		async post(request, timeoutMs) {
@@ -3460,23 +3452,11 @@ a:focus > .cp-settings-entry {
 		min: -1,
 		color: "#000000",
 		alpha: 0.1,
-		background: "#FFFFFF",
 		className: "user-unrated",
 	};
 
 	function tierOf(scale, value) {
 		return scale.tiers.findLast((tier) => value >= tier.min) ?? UNRATED_TIER;
-	}
-
-	function crownImageOf(scale, value) {
-		if (value < scale.crownMin) return null;
-		const step = Math.floor(value / scale.crownStep) * scale.crownStep;
-		return scale.crownImage.replace("{value}", String(step));
-	}
-
-	function backgroundOf(scale, value) {
-		if (value < scale.crownMin) return tierOf(scale, value).background;
-		return value < scale.silverMax ? scale.silverBackground : scale.goldBackground;
 	}
 
 	function tierProgress(scale, value) {
@@ -4873,19 +4853,21 @@ ${body}
 		id;
 		label;
 		client;
+		compilerName;
 
 		constructor(client, compilerName, label) {
 			this.client = client;
+			this.compilerName = compilerName;
 			this.id = `local:${compilerName}`;
 			this.label = `${label} [Local]`;
 		}
 
 		prepare(sourceCode) {
-			return this.client.prepare(sourceCode);
+			return this.client.prepare(sourceCode, this.compilerName);
 		}
 
 		async run(sourceCode, input) {
-			const response = await this.client.run(sourceCode, input);
+			const response = await this.client.run(sourceCode, input, this.compilerName);
 			if ("diagnostics" in response) {
 				return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
 			}
@@ -4948,6 +4930,10 @@ ${body}
 
 	function isRecordOf(isItem) {
 		return (value) => isPlainObject(value) && Object.values(value).every(isItem);
+	}
+
+	function isOptional(isItem) {
+		return (value) => value === undefined || isItem(value);
 	}
 
 	function isObjectOf(fields) {
@@ -8083,7 +8069,7 @@ pre code {tab-size: 4;}`;
 		routes: ["atcoder:task", "atcoder:tasksPrint"],
 		phase: "ready",
 		options: {
-			sampleWidth: option.number(60, "efficientLayout.sampleWidth", {min: 10, max: 100}),
+			sampleWidth: option.number(23, "efficientLayout.sampleWidth", {min: 10, max: 100}),
 		},
 		start({options, translate}) {
 			for (const ioStyle of document.querySelectorAll(".io-style")) {
@@ -8100,50 +8086,6 @@ ${efficient_layout_default}`);
 		},
 	});
 
-	// CpToolkit/src/features/history-colors/index.ts
-	var PERFORMANCE_COLUMN = 3;
-	var RATING_COLUMN = 4;
-	var modeChoices = [
-		{value: "none", label: "historyColors.modeNone"},
-		{value: "text", label: "historyColors.modeText"},
-		{value: "background", label: "historyColors.modeBackground"},
-	];
-
-	function colorizeText(cell, value) {
-		const crown = crownImageOf(ratingScale, value);
-		cell.replaceChildren();
-		if (crown) cell.append(h("img", {src: crown}), " ");
-		cell.append(h("span", {className: tierOf(ratingScale, value).className, textContent: String(value)}));
-	}
-
-	function colorizeCell(cell, mode) {
-		const value = Number(cell?.textContent?.trim() || Number.NaN);
-		if (!cell || Number.isNaN(value)) return;
-		if (mode === "text") colorizeText(cell, value);
-		if (mode === "background") cell.style.background = backgroundOf(ratingScale, value);
-	}
-
-	var historyColors = defineFeature({
-		id: "history-colors",
-		title: "historyColors.title",
-		description: "historyColors.description",
-		category: "category.rating",
-		defaultEnabled: true,
-		routes: ["atcoder:userHistory"],
-		phase: "ready",
-		options: {
-			performanceMode: option.select("background", "historyColors.performanceMode", modeChoices),
-			ratingMode: option.select("background", "historyColors.ratingMode", modeChoices),
-		},
-		start({options}) {
-			for (const row of document.querySelectorAll("#history tbody tr")) {
-				const cells = row.querySelectorAll("td");
-				colorizeCell(cells[PERFORMANCE_COLUMN], options.performanceMode);
-				colorizeCell(cells[RATING_COLUMN], options.ratingMode);
-			}
-		},
-	});
-
 	// CpToolkit/src/features/hover-menu/index.ts
 	var OPEN_CLASS = "open";
 	var hoverMenu = defineFeature({
@@ -8154,21 +8096,14 @@ ${efficient_layout_default}`);
 		defaultEnabled: true,
 		routes: ["atcoder:page"],
 		phase: "ready",
-		options: {
-			openStatementDetails: option.boolean(true, "hoverMenu.openStatementDetails"),
-		},
+		options: {},
 		live: true,
-		start({options}) {
+		start() {
 			const controller = new AbortController();
 			const {signal} = controller;
 			for (const item of document.querySelectorAll(".nav > li:not(.pull-right)")) {
 				item.addEventListener("mouseenter", () => item.classList.add(OPEN_CLASS), {signal});
 				item.addEventListener("mouseleave", () => item.classList.remove(OPEN_CLASS), {signal});
-			}
-			if (options.openStatementDetails) {
-				for (const details of document.querySelectorAll("#task-statement details")) {
-					details.open = true;
-				}
 			}
 			return () => controller.abort();
 		},
@@ -8444,7 +8379,6 @@ ${efficient_layout_default}`);
 		fetchedAt: isNumber,
 		contests: isArrayOf(
 			isObjectOf({
-				category: isString,
 				id: isString,
 				name: isString,
 				marks: isArrayOf(isObjectOf({text: isString, className: isString, title: isString})),
@@ -8559,23 +8493,20 @@ ${efficient_layout_default}`);
 		return [...page.querySelectorAll("tbody tr")].flatMap((row) => {
 			const heading = row.firstElementChild;
 			if (heading?.tagName !== "TH") return [];
-			const category = heading.textContent?.trim().split(/\s+/)[0] ?? "";
 			return [...row.querySelectorAll('a[href^="/contests/"]')].flatMap((link) => {
 				const id = link.getAttribute("href")?.split("/")[2];
-				return id ? [{category, id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
+				return id ? [{id, name: link.textContent?.trim() ?? id, marks: marksBefore(link)}] : [];
 			});
 		});
 	}
 
-	function createContestItem({category, id, name, marks}) {
+	function createContestItem({id, name, marks}) {
 		return h(
 			"li",
 			{},
 			h(
 				"a",
 				{href: `${CONTEST_LIST_PATH}${id}`},
-				h("b", {textContent: category}),
-				" ",
 				...marks.map(({text, className, title}) => h("span", {textContent: text, className, title})),
 				" ",
 				h("span", {className: "cp-latest-name", textContent: name}),
@@ -9045,8 +8976,13 @@ ${efficient_layout_default}`);
 	// CpToolkit/src/application/source/source-comments.ts
 	var HISTORY_LIMIT = 20;
 	var EMPTY_ENTRY = {text: "", commentOut: true};
-	var isEntry = isObjectOf({text: isString, commentOut: isBoolean});
-	var isNamed = isObjectOf({name: isString, text: isString, commentOut: isBoolean});
+	var isEntry = isObjectOf({text: isString, commentOut: isBoolean, multiline: isOptional(isBoolean)});
+	var isNamed = isObjectOf({
+		name: isString,
+		text: isString,
+		commentOut: isBoolean,
+		multiline: isOptional(isBoolean),
+	});
 
 	class SourceComments {
 		state;
@@ -9061,8 +8997,8 @@ ${efficient_layout_default}`);
 			return {...readStored(this.state, this.key(slot, "last"), isEntry, EMPTY_ENTRY), taskOnly: false};
 		}
 
-		save(slot, task, {text, commentOut, taskOnly}) {
-			const entry = {text, commentOut};
+		save(slot, task, {text, commentOut, multiline, taskOnly}) {
+			const entry = {text, commentOut, ...(multiline !== undefined && {multiline})};
 			const {[task]: _replaced, ...others} = this.taskEntries(slot);
 			this.state.set(this.key(slot, "tasks"), taskOnly ? {...others, [task]: entry} : others);
 			if (!taskOnly) this.state.set(this.key(slot, "last"), entry);
@@ -9091,8 +9027,8 @@ ${efficient_layout_default}`);
 		}
 
 		remember(slot, entry) {
-			const others = this.history(slot).filter(({text, commentOut}) => {
-				return text !== entry.text || commentOut !== entry.commentOut;
+			const others = this.history(slot).filter(({text, commentOut, multiline}) => {
+				return text !== entry.text || commentOut !== entry.commentOut || multiline !== entry.multiline;
 			});
 			this.state.set(this.key(slot, "history"), [entry, ...others].slice(0, HISTORY_LIMIT));
 		}
@@ -9202,11 +9138,12 @@ ${efficient_layout_default}`);
 		return {element: h("label", {}, input, label), input};
 	}
 
-	function createSlot(slot, {comments, translate, task, onChange}) {
+	function createSlot(slot, {comments, translate, task, defaultMultiline, onChange}) {
 		const textarea = h("textarea", {spellcheck: false, placeholder: translate("sourceComments.placeholder")});
 		const content = () => ({
 			text: textarea.value,
 			commentOut: commentOut.input.checked,
+			multiline: multiline.input.checked,
 			taskOnly: taskOnly.input.checked,
 		});
 		const save = () => {
@@ -9216,6 +9153,7 @@ ${efficient_layout_default}`);
 		};
 		const taskOnly = createCheckbox(translate("sourceComments.taskOnly"), save);
 		const commentOut = createCheckbox(translate("sourceComments.commentOut"), save);
+		const multiline = createCheckbox(translate("sourceComments.multiline"), save);
 		const history = h("select");
 		const presets = h("select");
 		const saveButton = h("button", {type: "button", textContent: translate("sourceComments.savePreset")});
@@ -9223,6 +9161,7 @@ ${efficient_layout_default}`);
 		const fill = (entry) => {
 			textarea.value = entry.text;
 			commentOut.input.checked = entry.commentOut;
+			multiline.input.checked = entry.multiline ?? defaultMultiline;
 			save();
 		};
 		const refreshLists = () => {
@@ -9255,7 +9194,12 @@ ${efficient_layout_default}`);
 		saveButton.addEventListener("click", () => {
 			const name = window.prompt(translate("sourceComments.presetName"), presets.value)?.trim();
 			if (!name) return;
-			comments.savePreset(slot, {name, text: textarea.value, commentOut: commentOut.input.checked});
+			comments.savePreset(slot, {
+				name,
+				text: textarea.value,
+				commentOut: commentOut.input.checked,
+				multiline: multiline.input.checked,
+			});
 			refreshLists();
 			presets.value = name;
 		});
@@ -9271,7 +9215,7 @@ ${efficient_layout_default}`);
 				{className: "comment-slot"},
 				h("h3", {textContent: translate(SLOT_LABELS[slot])}),
 				textarea,
-				h("div", {className: "comment-row"}, taskOnly.element, commentOut.element),
+				h("div", {className: "comment-row"}, taskOnly.element, commentOut.element, multiline.element),
 				h("div", {className: "comment-row"}, history, presets, saveButton, removeButton),
 			),
 			hasText: () => textarea.value.trim() !== "",
@@ -9279,6 +9223,7 @@ ${efficient_layout_default}`);
 				const stored = comments.content(slot, task());
 				textarea.value = stored.text;
 				commentOut.input.checked = stored.commentOut;
+				multiline.input.checked = stored.multiline ?? defaultMultiline;
 				taskOnly.input.checked = stored.taskOnly;
 				refreshLists();
 			},
@@ -9378,7 +9323,7 @@ ${efficient_layout_default}`);
 			const editorButtons = document.querySelector(".editor-buttons");
 			if (!target || !site || !editorButtons) return;
 			const comments = new SourceComments(state);
-			const style = options.style === "block" ? "block" : "line";
+			const defaultMultiline = options.style === "block";
 			const inserted = new Map();
 			const syntaxOf = () => {
 				const family = site.language()?.family;
@@ -9389,13 +9334,14 @@ ${efficient_layout_default}`);
 				return {url, task: url.split("/").at(-1) ?? "", contest: contestIdOf(location.pathname) ?? ""};
 			};
 			const render = (slot) => {
-				const {text, commentOut} = comments.content(slot, site.taskUri());
+				const {text, commentOut, multiline} = comments.content(slot, site.taskUri());
 				const filled = fillVariables(text.trimEnd(), variables());
 				if (!filled) return "";
 				if (!commentOut)
 					return `${filled}
 `;
 				const syntax = syntaxOf();
+				const style = (multiline ?? defaultMultiline) ? "block" : "line";
 				const comment = syntax && toComment(filled, syntax, style);
 				return comment === null
 					? null
@@ -9443,6 +9389,7 @@ ${efficient_layout_default}`);
 				comments,
 				translate,
 				task: () => site.taskUri(),
+				defaultMultiline,
 				onChange: refresh,
 				onApply() {
 					refresh();
@@ -9782,6 +9729,12 @@ ${statement_highlight_default}`);
 	});
 
 	// CpToolkit/src/features/submission-shortcuts/index.ts
+	var ORDERS = [
+		{option: "byTime", orderBy: "time_consumption", label: "submissionShortcuts.time"},
+		{option: "byLength", orderBy: "source_length", label: "submissionShortcuts.length"},
+		{option: "byCreated", orderBy: "created", label: "submissionShortcuts.created"},
+		{option: "byMemory", orderBy: "memory_consumption", label: "submissionShortcuts.memory"},
+	];
 	var submissionShortcuts = defineFeature({
 		id: "submission-shortcuts",
 		title: "submissionShortcuts.title",
@@ -9792,12 +9745,17 @@ ${statement_highlight_default}`);
 		phase: "ready",
 		options: {
 			language: option.text("", "submissionShortcuts.language"),
+			byTime: option.boolean(true, "submissionShortcuts.byTime"),
+			byLength: option.boolean(true, "submissionShortcuts.byLength"),
+			byCreated: option.boolean(true, "submissionShortcuts.byCreated"),
+			byMemory: option.boolean(true, "submissionShortcuts.byMemory"),
 		},
 		live: true,
 		start({options, translate}) {
 			const task = parseAtCoderTaskUrl(location.href);
 			const title = document.querySelector(".h2");
-			if (!task || !title)
+			const orders = ORDERS.filter((order) => options[order.option]);
+			if (!task || !title || orders.length === 0)
 				return () => {
 					return;
 				};
@@ -9823,8 +9781,7 @@ ${statement_highlight_default}`);
 				h(
 					"span",
 					{className: "btn-group"},
-					createLink(translate("submissionShortcuts.fastest"), "time_consumption"),
-					createLink(translate("submissionShortcuts.shortest"), "source_length"),
+					...orders.map(({orderBy, label}) => createLink(translate(label), orderBy)),
 				),
 			);
 			Object.assign(wrapper.style, {
@@ -10773,7 +10730,6 @@ ${wide_layout_default}`);
 		virtualTimer,
 		tessokuDifficulty,
 		ratingGraph,
-		historyColors,
 		localRunner,
 		javaSubmit,
 		easyTest,
