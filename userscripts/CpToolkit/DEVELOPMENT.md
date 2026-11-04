@@ -141,14 +141,14 @@ Local Runner の既定の URL は `http://localhost:8080` です。利用者に�
 
 次の機能は AtCoder のページが使う仕組みに合わせています。
 
-| 機能               | 参照したもの                                                                            |
-|--------------------|-----------------------------------------------------------------------------------------|
+| 機能                 | 参照したもの                                                                            |
+|----------------------|-----------------------------------------------------------------------------------------|
 | 言語の切り替えボタン | コンテストのページの言語の処理(`#select-lang select.current`、`defaultLang` の記憶)     |
-| 提出結果の通知     | コンテストのページの判定待ちの処理(`submissions/me/status/json` と応答の `Interval`)    |
-| Clar の通知        | コンテストのページの Clar の処理(`clarifications/count`、1分の間隔、開始直後を避ける)   |
-| 問題の正誤の色分け | 自分の提出一覧(`/contests/<id>/submissions/me`)                                              |
-| バーチャル参加     | 参加のページの開始時刻(`#main-container time.fixtime-second`)、ページの `getServerTime` |
-| 問題の正誤の色 | AtCoder Problems の表の配色に近い、Bootstrap の `#c3e6cb` と `#f5c6cb`                  |
+| 提出結果の通知       | コンテストのページの判定待ちの処理(`submissions/me/status/json` と応答の `Interval`)    |
+| Clar の通知          | コンテストのページの Clar の処理(`clarifications/count`、1分の間隔、開始直後を避ける)   |
+| 問題の正誤の色分け   | 自分の提出一覧(`/contests/<id>/submissions/me`)                                         |
+| バーチャル参加       | 参加のページの開始時刻(`#main-container time.fixtime-second`)、ページの `getServerTime` |
+| 問題の正誤の色       | AtCoder Problems の表の配色に近い、Bootstrap の `#c3e6cb` と `#f5c6cb`                  |
 
 ## 統合しないスクリプト
 

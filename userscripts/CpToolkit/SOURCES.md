@@ -25,33 +25,33 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 
 ### 問題文
 
-| 機能             | 区分 | スクリプト                                                                                                                                                                                | 作者                       | ライセンス |
-|------------------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|------------|
-| 問題文の強調表示 | 移植 | [AtCoder Highlighter](https://greasyfork.org/scripts/566471)                                                                                                                              | nsubaru                    | MIT        |
-|                  | 参照 | [Time Limit Emphasizer](https://greasyfork.org/scripts/406381)                                                                                                                            | Ogtsn99                    | 記載なし   |
-|                  | 参照 | [timemory-limit-emphasizer](https://greasyfork.org/scripts/480675)                                                                                                                        | hotarunw                   | MIT        |
-|                  | 参照 | [AtCoder Limit Colorizer](https://github.com/sevenc-nanashi/atcoder-limit-colorizer)                                                                                                      | sevenc-nanashi             | MIT        |
+| 機能                 | 区分 | スクリプト                                                                                                                                                                                | 作者                       | ライセンス |
+|----------------------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|------------|
+| 問題文の強調表示     | 移植 | [AtCoder Highlighter](https://greasyfork.org/scripts/566471)                                                                                                                              | nsubaru                    | MIT        |
+|                      | 参照 | [Time Limit Emphasizer](https://greasyfork.org/scripts/406381)                                                                                                                            | Ogtsn99                    | 記載なし   |
+|                      | 参照 | [timemory-limit-emphasizer](https://greasyfork.org/scripts/480675)                                                                                                                        | hotarunw                   | MIT        |
+|                      | 参照 | [AtCoder Limit Colorizer](https://github.com/sevenc-nanashi/atcoder-limit-colorizer)                                                                                                      | sevenc-nanashi             | MIT        |
 | 同じ変数と数値の強調 | 模倣 | [AtCoder Statement Lens](https://chromewebstore.google.com/detail/atcoder-statement-lens/ekoolnikabaabeeofcfmpmdpnmiejcmn)(Chrome 拡張。ソースは未公開で、説明にある動作だけを手本にした) | 不明                       | 不明       |
-| 問題文のコピー   | 移植 | [AtCoder Markdown Copier](https://greasyfork.org/scripts/580283)                                                                                                                          | nsubaru                    | MIT        |
-|                  | 模倣 | [AtCoder Question Copier](https://greasyfork.org/scripts/597743)(テキスト形式)                                                                                                            | Yuki Takemura (Twil3akine) | MIT        |
-|                  | 模倣 | [AtCoderProblemCopier](https://greasyfork.org/scripts/565854)(別行立ての数式を `$$` で囲む)                                                                                               | LIama                      | MIT        |
-| サンプルの横並び | 模倣 | [AtCoder Efficient Layout](https://greasyfork.org/scripts/453117)                                                                                                                         | magurofly                  | CC0-1.0    |
+| 問題文のコピー       | 移植 | [AtCoder Markdown Copier](https://greasyfork.org/scripts/580283)                                                                                                                          | nsubaru                    | MIT        |
+|                      | 模倣 | [AtCoder Question Copier](https://greasyfork.org/scripts/597743)(テキスト形式)                                                                                                            | Yuki Takemura (Twil3akine) | MIT        |
+|                      | 模倣 | [AtCoderProblemCopier](https://greasyfork.org/scripts/565854)(別行立ての数式を `$$` で囲む)                                                                                               | LIama                      | MIT        |
+| サンプルの横並び     | 模倣 | [AtCoder Efficient Layout](https://greasyfork.org/scripts/453117)                                                                                                                         | magurofly                  | CC0-1.0    |
 
 ### 提出
 
-| 機能                   | 区分 | スクリプト                                                                                     | 作者        | ライセンス   |
-|------------------------|------|------------------------------------------------------------------------------------------------|-------------|--------------|
+| 機能                     | 区分 | スクリプト                                                                                     | 作者        | ライセンス   |
+|--------------------------|------|------------------------------------------------------------------------------------------------|-------------|--------------|
 | 提出一覧の検索条件の保持 | 模倣 | [AtCoder Search Query Holder](https://greasyfork.org/scripts/460696)                           | gmmtea      | MIT          |
-| AC 提出一覧へのリンク  | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                    | ktnyori     | MIT          |
-|                        | 参照 | [AtCoder Add Submissions Shortcuts](https://greasyfork.org/scripts/463453)                     | xero_cats   | MIT          |
-|                        | 参照 | [AtCoder quickly check fastest codes](https://greasyfork.org/scripts/499102)                   | zica87      | GPL-3.0-only |
-| 言語の切り替えボタン   | 模倣 | [AtCoderLanguageButtons](https://greasyfork.org/scripts/421663)                                | magurofly   | 記載なし     |
-| ヘッダーとフッター     | 参照 | [AtCoder Template](https://greasyfork.org/scripts/438105)(言語ごとの保存)                      | magurofly   | CC0-1.0      |
-|                        | 参照 | [AtCoder Code Template](https://greasyfork.org/scripts/584183)(名前付きの保存、挿入内容の記憶) | kirameku    | MIT          |
-| 提出結果の通知         | 模倣 | [AtCoderResultNotifier](https://greasyfork.org/scripts/371225)                                 | satanic0258 | MIT          |
-|                        | 参照 | [comfortable-atcoder](https://github.com/urneighbor1/comfortable-atcoder)(判定の監視)          | urneighbor1 | 記載なし     |
-| テストケースの平均     | 模倣 | [AtCoderAverageResult](https://greasyfork.org/scripts/429155)                                  | merom686    | 記載なし     |
-| 提出の予約             | 模倣 | [AtCoder Submission Timer](https://greasyfork.org/scripts/451696)                              | Coki628     | MIT          |
+| AC 提出一覧へのリンク    | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                    | ktnyori     | MIT          |
+|                          | 参照 | [AtCoder Add Submissions Shortcuts](https://greasyfork.org/scripts/463453)                     | xero_cats   | MIT          |
+|                          | 参照 | [AtCoder quickly check fastest codes](https://greasyfork.org/scripts/499102)                   | zica87      | GPL-3.0-only |
+| 言語の切り替えボタン     | 模倣 | [AtCoderLanguageButtons](https://greasyfork.org/scripts/421663)                                | magurofly   | 記載なし     |
+| ヘッダーとフッター       | 参照 | [AtCoder Template](https://greasyfork.org/scripts/438105)(言語ごとの保存)                      | magurofly   | CC0-1.0      |
+|                          | 参照 | [AtCoder Code Template](https://greasyfork.org/scripts/584183)(名前付きの保存、挿入内容の記憶) | kirameku    | MIT          |
+| 提出結果の通知           | 模倣 | [AtCoderResultNotifier](https://greasyfork.org/scripts/371225)                                 | satanic0258 | MIT          |
+|                          | 参照 | [comfortable-atcoder](https://github.com/urneighbor1/comfortable-atcoder)(判定の監視)          | urneighbor1 | 記載なし     |
+| テストケースの平均       | 模倣 | [AtCoderAverageResult](https://greasyfork.org/scripts/429155)                                  | merom686    | 記載なし     |
+| 提出の予約               | 模倣 | [AtCoder Submission Timer](https://greasyfork.org/scripts/451696)                              | Coki628     | MIT          |
 
 ### コンテスト
 
@@ -75,11 +75,11 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 
 ### 成績
 
-| 機能                   | 区分 | スクリプト                                                             | 作者        | ライセンス |
-|------------------------|------|------------------------------------------------------------------------|-------------|------------|
-| ユーザーページのグラフへのパフォーマンス表示 | 派生 | [AtCoder Perf Graph](https://greasyfork.org/scripts/476103)            | nzm_ort     | MIT        |
-|                        | 参照 | [New AtCoder Perf Graph](https://greasyfork.org/scripts/586685)        | kirameku    | MIT        |
-| 成績表の色付け         | 模倣 | [AtCoderPerformanceColorizer](https://greasyfork.org/scripts/371693)   | satanic0258 | MIT        |
+| 機能                                         | 区分 | スクリプト                                                           | 作者        | ライセンス |
+|----------------------------------------------|------|----------------------------------------------------------------------|-------------|------------|
+| ユーザーページのグラフへのパフォーマンス表示 | 派生 | [AtCoder Perf Graph](https://greasyfork.org/scripts/476103)          | nzm_ort     | MIT        |
+|                                              | 参照 | [New AtCoder Perf Graph](https://greasyfork.org/scripts/586685)      | kirameku    | MIT        |
+| 成績表の色付け                               | 模倣 | [AtCoderPerformanceColorizer](https://greasyfork.org/scripts/371693) | satanic0258 | MIT        |
 
 ### 実行環境
 
