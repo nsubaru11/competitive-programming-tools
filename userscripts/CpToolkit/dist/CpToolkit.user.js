@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.29
+// @version        1.0.30
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2028,7 +2028,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.unsupported": "Nothing was inserted because the comment syntax of this language is unknown.",
 		"taskStatus.title": "Task status colors",
 		"taskStatus.description":
-			"Colors the task list and the dropdown by your results. A task with a score counts as accepted.",
+			"Colors the task list and the dropdown by all your submissions, including those after the contest. A task with an AC or a score counts as accepted.",
 		"taskStatus.acceptedColor": "Color of accepted tasks",
 		"taskStatus.rejectedColor": "Color of tasks not accepted",
 		"taskDropdown.title": "Task dropdown",
@@ -2242,7 +2242,7 @@ a:focus > .cp-settings-entry {
 		"sourceComments.unsupported": "この言語はコメントの書き方が分からないので、挿入していません。",
 		"taskStatus.title": "問題の提出状況",
 		"taskStatus.description":
-			"問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。",
+			"問題一覧とドロップダウンを、コンテスト後を含む自分の提出に合わせて色分けします。AC か得点があれば正解として扱います。",
 		"taskStatus.acceptedColor": "正解した問題の色",
 		"taskStatus.rejectedColor": "正解していない問題の色",
 		"taskDropdown.title": "問題のドロップダウン",
@@ -10251,23 +10251,40 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 	var TASK_MENU_LINKS = '.cp-task-menu a[href*="/tasks/"]';
 	var ACCEPTED_CLASS = "cp-task-accepted";
 	var REJECTED_CLASS = "cp-task-rejected";
-	var NOT_SUBMITTED = "-";
+	var PAGE_PATTERN = /[?&]page=(\d+)/;
 	var START_QUIET_MS = 5 * 60 * 1000;
 
 	function taskIdOf(link) {
-		return link?.getAttribute("href")?.split("/").at(-1);
+		return link?.getAttribute("href")?.split("?")[0]?.split("/").at(-1);
 	}
 
-	function parseScorePage(html) {
+	function parseSubmissionPage(html) {
 		const page = new DOMParser().parseFromString(html, "text/html");
-		return new Map(
-			[...page.querySelectorAll("#main-div tbody tr")].flatMap((row) => {
-				const [task, , score, submittedAt] = row.querySelectorAll("td");
-				const id = taskIdOf(task?.querySelector('a[href*="/tasks/"]'));
-				if (!id || submittedAt?.textContent?.trim() === NOT_SUBMITTED) return [];
-				return [[id, Number(score?.textContent) > 0 ? ACCEPTED_CLASS : REJECTED_CLASS]];
-			}),
+		const results = new Map();
+		for (const row of page.querySelectorAll(".table-responsive > table > tbody > tr")) {
+			const id = taskIdOf(row.querySelector('a[href*="/tasks/"]'));
+			const status = row.querySelector(".label")?.textContent?.trim() ?? "";
+			if (!id || isJudging(status)) continue;
+			const accepted = status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0;
+			results.set(id, (results.get(id) ?? false) || accepted);
+		}
+		const pages = [...page.querySelectorAll(".pagination a")].map((link) =>
+			Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1),
 		);
+		return {results, lastPage: Math.max(1, ...pages)};
+	}
+
+	async function loadStatuses(site, contestId) {
+		const accepted = new Map();
+		let lastPage = 1;
+		for (let page = 1; page <= lastPage; page++) {
+			const response = await site.send({url: `/contests/${contestId}/submissions/me?page=${page}`});
+			if (response.status !== 200) break;
+			const parsed = parseSubmissionPage(response.text);
+			for (const [id, ok] of parsed.results) accepted.set(id, (accepted.get(id) ?? false) || ok);
+			lastPage = parsed.lastPage;
+		}
+		return new Map([...accepted].map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS]));
 	}
 
 	function paint(statuses, links) {
@@ -10301,10 +10318,7 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 			const links = isOnRoute("atcoder:tasks") ? `${TASK_TABLE_LINKS}, ${TASK_MENU_LINKS}` : TASK_MENU_LINKS;
 			let statuses = null;
 			const paintAll = () => {
-				statuses ??= site
-					.send({url: `/contests/${contestId}/score`})
-					.then((response) => (response.status === 200 ? parseScorePage(response.text) : new Map()))
-					.catch(() => new Map());
+				statuses ??= loadStatuses(site, contestId).catch(() => new Map());
 				statuses.then((loaded) => paint(loaded, links));
 			};
 			if (isOnRoute("atcoder:tasks")) paintAll();

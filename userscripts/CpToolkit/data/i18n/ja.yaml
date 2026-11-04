@@ -114,7 +114,7 @@ sourceComments.variables: "{url} は問題の URL、{task} は問題の ID、{co
 sourceComments.notInserted: コメントを挿入していません
 sourceComments.unsupported: この言語はコメントの書き方が分からないので、挿入していません。
 taskStatus.title: 問題の提出状況
-taskStatus.description: 問題一覧とドロップダウンを、自分の結果に合わせて色分けします。得点があれば正解として扱います。
+taskStatus.description: 問題一覧とドロップダウンを、コンテスト後を含む自分の提出に合わせて色分けします。AC か得点があれば正解として扱います。
 taskStatus.acceptedColor: 正解した問題の色
 taskStatus.rejectedColor: 正解していない問題の色
 taskDropdown.title: 問題のドロップダウン

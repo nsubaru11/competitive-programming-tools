@@ -1,6 +1,8 @@
 import {contestIdOf} from "@domain/page/route";
+import {isJudging} from "@domain/submission/status";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
+import type {HttpClient} from "@application/ports/services";
 import {injectStyle} from "@ui/element";
 import css from "./task-status.css" with {type: "text"};
 
@@ -8,25 +10,51 @@ const TASK_TABLE_LINKS = '#main-container tbody a[href*="/tasks/"]';
 const TASK_MENU_LINKS = '.cp-task-menu a[href*="/tasks/"]';
 const ACCEPTED_CLASS = "cp-task-accepted";
 const REJECTED_CLASS = "cp-task-rejected";
-const NOT_SUBMITTED = "-";
+const PAGE_PATTERN = /[?&]page=(\d+)/;
 /** サイトと同じく、混み合う開始直後は取得しない。 */
 const START_QUIET_MS = 5 * 60 * 1000;
 
 type TaskStatuses = ReadonlyMap<string, string>;
 
+type SubmissionPage = {
+	/** 正解したかを問題ごとに持つ。判定中の提出だけの問題は含めない。 */
+	readonly results: ReadonlyMap<string, boolean>;
+	readonly lastPage: number;
+};
+
 function taskIdOf(link: Element | null | undefined): string | undefined {
-	return link?.getAttribute("href")?.split("/").at(-1);
+	return link?.getAttribute("href")?.split("?")[0]?.split("/").at(-1);
 }
 
-/** 自分の得点のページから、提出した問題の結果を読む。得点があれば正解として扱う。 */
-function parseScorePage(html: string): TaskStatuses {
+/** 自分の提出一覧の1ページを読む。AC か得点があれば正解として扱う。 */
+function parseSubmissionPage(html: string): SubmissionPage {
 	const page = new DOMParser().parseFromString(html, "text/html");
-	return new Map([...page.querySelectorAll("#main-div tbody tr")].flatMap((row) => {
-		const [task, , score, submittedAt] = row.querySelectorAll("td");
-		const id = taskIdOf(task?.querySelector('a[href*="/tasks/"]'));
-		if (!id || submittedAt?.textContent?.trim() === NOT_SUBMITTED) return [];
-		return [[id, Number(score?.textContent) > 0 ? ACCEPTED_CLASS : REJECTED_CLASS] as const];
-	}));
+	const results = new Map<string, boolean>();
+	for (const row of page.querySelectorAll(".table-responsive > table > tbody > tr")) {
+		const id = taskIdOf(row.querySelector('a[href*="/tasks/"]'));
+		const status = row.querySelector(".label")?.textContent?.trim() ?? "";
+		if (!id || isJudging(status)) continue;
+		const accepted = status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0;
+		results.set(id, (results.get(id) ?? false) || accepted);
+	}
+	const pages = [...page.querySelectorAll(".pagination a")]
+		.map((link) => Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1));
+	return {results, lastPage: Math.max(1, ...pages)};
+}
+
+/** コンテスト後の提出も含めるため、得点のページではなく自分の提出一覧を全ページ読む。 */
+async function loadStatuses(site: HttpClient, contestId: string): Promise<TaskStatuses> {
+	const accepted = new Map<string, boolean>();
+	let lastPage = 1;
+	// 通信が重ならないよう、ページは順に取得する
+	for (let page = 1; page <= lastPage; page++) {
+		const response = await site.send({url: `/contests/${contestId}/submissions/me?page=${page}`});
+		if (response.status !== 200) break;
+		const parsed = parseSubmissionPage(response.text);
+		for (const [id, ok] of parsed.results) accepted.set(id, (accepted.get(id) ?? false) || ok);
+		lastPage = parsed.lastPage;
+	}
+	return new Map([...accepted].map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS] as const));
 }
 
 function paint(statuses: TaskStatuses, links: string): void {
@@ -63,9 +91,7 @@ export const taskStatus = defineFeature({
 		const links = isOnRoute("atcoder:tasks") ? `${TASK_TABLE_LINKS}, ${TASK_MENU_LINKS}` : TASK_MENU_LINKS;
 		let statuses: Promise<TaskStatuses> | null = null;
 		const paintAll = (): void => {
-			statuses ??= site.send({url: `/contests/${contestId}/score`})
-				.then((response) => (response.status === 200 ? parseScorePage(response.text) : new Map()))
-				.catch(() => new Map());
+			statuses ??= loadStatuses(site, contestId).catch(() => new Map());
 			void statuses.then((loaded) => paint(loaded, links));
 		};
 

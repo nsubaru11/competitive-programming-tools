@@ -46,7 +46,7 @@ Everything is enabled from the start, except the features marked "off by default
 
 - **Clarification notifications**: Notifies you when the organizers post an answer or a correction during a contest
 - **Task dropdown**: Opens tasks from the Tasks tab and opens several tasks at once
-- **Task status colors**: Colors the task list and the dropdown by your results
+- **Task status colors**: Colors the task list and the dropdown by all your submissions, including those after the contest
 - **All editorials**: Shows the editorials of every task on one page
 - **Contest links on the top page**: Replaces the top page list with links to past contests by type
 - **Latest contests**: Adds a header menu with the upcoming contests listed on the home page

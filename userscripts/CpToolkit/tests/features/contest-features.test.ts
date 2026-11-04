@@ -267,11 +267,14 @@ describe("clarNotifier", () => {
 });
 
 describe("taskStatus", () => {
-	const scorePage = `<div id="main-div"><table><tbody>
-		<tr><td><a href="/contests/abc1/tasks/abc1_a">A</a></td><td>Sum</td><td>100</td><td>2026-11-01</td></tr>
-		<tr><td><a href="/contests/abc1/tasks/abc1_b">B</a></td><td>Max</td><td>0</td><td>2026-11-01</td></tr>
-		<tr><td><a href="/contests/abc1/tasks/abc1_c">C</a></td><td>Min</td><td>0</td><td>-</td></tr>
-	</tbody></table></div>`;
+	const submissionRow = (task: string, score: number, status: string) => `<tr>
+		<td>2026-11-01</td><td><a href="/contests/abc1/tasks/abc1_${task}">${task}</a></td>
+		<td><a href="/users/me">me</a></td><td>C++</td>
+		<td class="submission-score">${score}</td><td>100 Byte</td><td><span class="label">${status}</span></td>
+	</tr>`;
+	const submissionPage = (rows: string, lastPage = 1) => `<div class="table-responsive"><table><tbody>${rows}</tbody></table></div>
+		<ul class="pagination">${Array.from({length: lastPage}, (_, i) => `<li><a href="/contests/abc1/submissions/me?page=${i + 1}">${i + 1}</a></li>`).join("")}</ul>`;
+	const scorePage = submissionPage(submissionRow("a", 100, "AC") + submissionRow("b", 0, "WA"));
 	const taskRow = (id: string) => `<tr><td><a href="/contests/abc1/tasks/abc1_${id}">${id}</a></td></tr>`;
 	const classOf = (selector: string) => document.querySelector(selector)?.className;
 
@@ -289,11 +292,41 @@ describe("taskStatus", () => {
 		});
 		await flush();
 
-		expect(site.requests[0]?.url).toBe("/contests/abc1/score");
+		expect(site.requests[0]?.url).toBe("/contests/abc1/submissions/me?page=1");
 		expect(classOf("tr:nth-child(1)")).toBe("cp-task-accepted");
 		expect(classOf("tr:nth-child(2)")).toBe("cp-task-rejected");
 		expect(classOf("tr:nth-child(3)")).toBe("");
 		expect(document.documentElement.style.getPropertyValue("--cp-task-accepted")).toBe("#c3e6cb");
+	});
+
+	test("コンテスト後の提出も含め、全ページを読んで1回でも正解した問題を正解とする", async () => {
+		document.body.innerHTML = `<div id="main-container"><table><tbody>
+			${taskRow("a")}${taskRow("b")}${taskRow("c")}${taskRow("d")}
+		</tbody></table></div>`;
+		const pages: Record<string, string> = {
+			1: submissionPage(submissionRow("a", 0, "WA") + submissionRow("c", 0, "WJ"), 2),
+			2: submissionPage(submissionRow("a", 100, "AC") + submissionRow("b", 50, "WA") + submissionRow("d", 0, "TLE"), 2),
+		};
+		const site = new FakeHttpClient((request) => ({
+			status: 200,
+			text: pages[/page=(\d+)/.exec(request.url)?.[1] ?? ""] ?? "",
+		}));
+		await run(taskStatus, {
+			isOnRoute: (route) => route === "atcoder:tasks",
+			page: createFakePage(),
+			site,
+		});
+		await flush();
+		await flush();
+
+		expect(site.requests.map(({url}) => url)).toEqual([
+			"/contests/abc1/submissions/me?page=1",
+			"/contests/abc1/submissions/me?page=2",
+		]);
+		expect(classOf("tr:nth-child(1)")).toBe("cp-task-accepted");
+		expect(classOf("tr:nth-child(2)")).toBe("cp-task-accepted");
+		expect(classOf("tr:nth-child(3)")).toBe("");
+		expect(classOf("tr:nth-child(4)")).toBe("cp-task-rejected");
 	});
 
 	test("ドロップダウンは開くまで取得せず、取得は1回にする", async () => {
