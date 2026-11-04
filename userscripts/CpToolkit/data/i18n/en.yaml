@@ -60,8 +60,8 @@ efficientLayout.ioFormat: Input and output
 submissionQuery.title: Keep submission filters
 submissionQuery.description: Keeps search filters when switching between All and My submissions.
 
-submissionShortcuts.title: Links to AC submissions
-submissionShortcuts.description: Adds links to the AC submissions for the task, sorted by time and by code size.
+submissionShortcuts.title: AC submission buttons
+submissionShortcuts.description: Adds buttons that open the AC submissions for the task, sorted by time and by code size.
 submissionShortcuts.language: Language (empty for all)
 submissionShortcuts.label: AC submissions
 submissionShortcuts.fastest: Fastest

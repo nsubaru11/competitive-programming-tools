@@ -1976,9 +1976,9 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.ioFormat": "Input and output",
 		"submissionQuery.title": "Keep submission filters",
 		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
-		"submissionShortcuts.title": "Links to AC submissions",
+		"submissionShortcuts.title": "AC submission buttons",
 		"submissionShortcuts.description":
-			"Adds links to the AC submissions for the task, sorted by time and by code size.",
+			"Adds buttons that open the AC submissions for the task, sorted by time and by code size.",
 		"submissionShortcuts.language": "Language (empty for all)",
 		"submissionShortcuts.label": "AC submissions",
 		"submissionShortcuts.fastest": "Fastest",
@@ -2194,9 +2194,9 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.ioFormat": "入出力形式",
 		"submissionQuery.title": "提出一覧の検索条件の保持",
 		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
-		"submissionShortcuts.title": "AC 提出一覧へのリンク",
+		"submissionShortcuts.title": "AC 提出へのボタン",
 		"submissionShortcuts.description":
-			"問題ページに、この問題の AC 提出を実行時間順とコード長順で開くリンクを追加します。",
+			"問題ページに、この問題の AC 提出を実行時間順とコード長順で開くボタンを追加します。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
 		"submissionShortcuts.label": "AC提出",
 		"submissionShortcuts.fastest": "実行時間順",

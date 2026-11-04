@@ -42,7 +42,7 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 | 機能                     | 区分 | スクリプト                                                                                     | 作者        | ライセンス   |
 |--------------------------|------|------------------------------------------------------------------------------------------------|-------------|--------------|
 | 提出一覧の検索条件の保持 | 模倣 | [AtCoder Search Query Holder](https://greasyfork.org/scripts/460696)                           | gmmtea      | MIT          |
-| AC 提出一覧へのリンク    | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                    | ktnyori     | MIT          |
+| AC 提出へのボタン        | 派生 | [AtCoder Custom Default Submissions](https://greasyfork.org/scripts/393705)                    | ktnyori     | MIT          |
 |                          | 参照 | [AtCoder Add Submissions Shortcuts](https://greasyfork.org/scripts/463453)                     | xero_cats   | MIT          |
 |                          | 参照 | [AtCoder quickly check fastest codes](https://greasyfork.org/scripts/499102)                   | zica87      | GPL-3.0-only |
 | 言語の切り替えボタン     | 模倣 | [AtCoderLanguageButtons](https://greasyfork.org/scripts/421663)                                | magurofly   | 記載なし     |

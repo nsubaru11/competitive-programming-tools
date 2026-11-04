@@ -1,76 +1,103 @@
+<div align="center">
+
 # CP Toolkit
 
-A userscript that combines competitive programming helpers into one script. It focuses on AtCoder, and every feature can be switched on and off individually.
+**A userscript that combines competitive programming helpers into one script**
 
-[日本語](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/README.md)
+It focuses on AtCoder and improves the statement, submission, contest and results pages. Every feature can be switched on and off individually.
 
-## Installation
+[![Greasy Fork version](https://img.shields.io/greasyfork/v/603262?label=Greasy%20Fork&color=670000)](https://greasyfork.org/scripts/603262-cp-toolkit)
+[![License](https://img.shields.io/greasyfork/l/603262)](https://github.com/nsubaru11/competitive-programming-tools/blob/main/THIRD_PARTY_NOTICES.md)
+
+[**Install**](https://greasyfork.org/scripts/603262-cp-toolkit) ・ [Using other scripts](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/COMPATIBILITY.md) ・ [Bugs and requests](https://github.com/nsubaru11/competitive-programming-tools/issues) ・ [日本語](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/README.md)
+
+</div>
+
+## 🚀 Installation
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser
 2. In Chrome and other Chromium-based browsers, turn on "Allow User Scripts" in the Tampermonkey extension details
 3. Install the script from its [Greasy Fork page](https://greasyfork.org/scripts/603262-cp-toolkit)
 
-## Usage
+## 🛠️ Usage
 
 Open the settings from "Open settings" in the Tampermonkey menu, or from "CP Toolkit" in the AtCoder header. Each feature can be switched on and off there.
 
 The interface follows the language of the site and is available in Japanese and English.
 
-## Features
+## ✨ Features
 
-Everything is enabled from the start, except the features marked "off by default".
+Everything is enabled from the start, except the features marked <sub>off by default</sub>.
 
-### Layout
+### 🖥️ Layout
 
-- **Wider page**: Widens the central column of the page and adds a border to the editor
-- **Open menus on hover**: Opens menus when the pointer moves over them
+| Feature                 | What it does                                                          |
+|-------------------------|-----------------------------------------------------------------------|
+| **Wider page**          | Widens the central column of the page and adds a border to the editor |
+| **Open menus on hover** | Opens menus when the pointer moves over them                          |
 
-### Statement
+### 📄 Statement
 
-- **Statement highlighting**: Highlights numbers, variables, and the time and memory limits
-- **Highlight matching variables and numbers**: Hovering a variable or a number highlights every occurrence. Variables and numbers can be switched separately in the detailed settings. Click to pin, Esc to clear
-- **Copy statement**: Copies each section or the whole statement as Markdown or plain text
-- **Side-by-side samples (off by default)**: Places the input and output formats and samples side by side
+| Feature                                            | What it does                                                                                                                                                                  |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Statement highlighting**                         | Highlights numbers, variables, and the time and memory limits                                                                                                                 |
+| **Highlight matching variables and numbers**       | Hovering a variable or a number highlights every occurrence. Click to pin, <kbd>Esc</kbd> to clear. Variables and numbers can be switched separately in the detailed settings |
+| **Copy statement**                                 | Copies each section or the whole statement as Markdown or plain text                                                                                                          |
+| **Side-by-side samples** <sub>off by default</sub> | Places the input and output formats and samples side by side                                                                                                                  |
 
-### Submissions
+### 📤 Submissions
 
-- **Keep submission filters**: Keeps search filters when switching between All and My submissions
-- **Links to AC submissions**: Opens AC submissions for the task, sorted by time and by code size
-- **Language switch buttons**: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector
-- **Header and footer**: Adds a header to the top and a footer to the bottom of pasted code, such as reference URLs
-- **Submission notifications**: Shows the verdict right after judging finishes, on any page. A desktop notification is also shown while you are away from AtCoder
-- **Test case averages**: Shows average time and memory on the submission page
-- **Delayed submission (off by default)**: Submits your code after the specified time
+| Feature                                          | What it does                                                                                                                      |
+|--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| **Keep submission filters**                      | Keeps search filters when switching between All and My submissions                                                                |
+| **AC submission buttons**                        | Opens the AC submissions for the task, sorted by time and by code size                                                            |
+| **Language switch buttons**                      | Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector        |
+| **Header and footer**                            | Adds a header to the top and a footer to the bottom of pasted code, such as reference URLs                                        |
+| **Submission notifications**                     | Shows the verdict right after judging finishes, on any page. A desktop notification is also shown while you are away from AtCoder |
+| **Test case averages**                           | Shows average time and memory on the submission page                                                                              |
+| **Delayed submission** <sub>off by default</sub> | Submits your code after the specified time                                                                                        |
 
-### Contest
+### 🏆 Contest
 
-- **Clarification notifications**: Notifies you when the organizers post an answer or a correction during a contest
-- **Task dropdown**: Opens tasks from the Tasks tab and opens several tasks at once
-- **Task status colors**: Colors the task list and the dropdown by all your submissions, including those after the contest
-- **All editorials**: Shows the editorials of every task on one page
-- **Contest links on the top page**: Replaces the top page list with links to past contests by type
-- **Next contests**: Adds a header menu with the upcoming contests listed on the home page
-- **Add to calendar**: Adds a link to contest pages that registers the contest in Google Calendar
-- **Virtual contest timer**: Shows the time until the start and the time left in the corner clock
-- **Tessoku difficulty**: Shows the difficulty from the book on the Tessoku task list
+| Feature                           | What it does                                                                                     |
+|-----------------------------------|--------------------------------------------------------------------------------------------------|
+| **Clarification notifications**   | Notifies you when the organizers post an answer or a correction during a contest                 |
+| **Task dropdown**                 | Opens tasks from the Tasks tab and opens several tasks at once                                   |
+| **Task status colors**            | Colors the task list and the dropdown by all your submissions, including those after the contest |
+| **All editorials**                | Shows the editorials of every task on one page                                                   |
+| **Contest links on the top page** | Replaces the top page list with links to past contests by type                                   |
+| **Next contests**                 | Adds a header menu with the upcoming contests listed on the home page                            |
+| **Add to calendar**               | Adds a link to contest pages that registers the contest in Google Calendar                       |
+| **Virtual contest timer**         | Shows the time until the start and the time left in the corner clock                             |
+| **Tessoku difficulty**            | Shows the difficulty from the book on the Tessoku task list                                      |
 
-### Results
+### 📈 Results
 
-- **Performance on the user page graph**: Overlays performance on the rating graph of user pages, with a recent range set by count or percentage
-- **Colored contest history**: Colors performance and rating values in the contest history
+| Feature                                | What it does                                                                                           |
+|----------------------------------------|--------------------------------------------------------------------------------------------------------|
+| **Performance on the user page graph** | Overlays performance on the rating graph of user pages, with a recent range set by count or percentage |
+| **Colored contest history**            | Colors performance and rating values in the contest history                                            |
 
-### Execution
+### ⚙️ Execution
 
-- **Java submission helper**: Transforms pasted code for submission and adds submit shortcuts
-- **Local Runner**: Connects to the local server used to transform and run Java code. It needs a separate installation
-- **Easy Test (for Java, off by default)**: Runs samples from the task page for Java solutions
-- **paiza language selection**: Selects the specified language on paiza submission pages. It does nothing until you set a language
+| Feature                                            | What it does                                                                                       |
+|----------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| **Java submission helper**                         | Transforms pasted code for submission and adds submit shortcuts                                    |
+| **Local Runner**                                   | Connects to the local server used to transform and run Java code. It needs a separate installation |
+| **Easy Test (for Java)** <sub>off by default</sub> | Runs samples from the task page for Java solutions                                                 |
+| **paiza language selection**                       | Selects the specified language on paiza submission pages. It does nothing until you set a language |
 
-## Supported sites
+## 🌐 Supported sites
 
-The script focuses on AtCoder. Easy Test also works on yukicoder and Codeforces. The Java submission helper also works on Codeforces, AOJ, Library Checker and paiza.
+| Site                 | Available features                               |
+|----------------------|--------------------------------------------------|
+| AtCoder              | Every feature except paiza language selection    |
+| yukicoder            | Easy Test                                        |
+| Codeforces           | Easy Test, Java submission helper                |
+| AOJ, Library Checker | Java submission helper                           |
+| paiza                | Java submission helper, paiza language selection |
 
-## Using other scripts
+## 🤝 Using other scripts
 
 Using scripts that duplicate a CP Toolkit feature is not recommended, because buttons and notifications can appear twice. Use only one of the two for each feature. If you keep the other script, turn off the matching feature in the CP Toolkit settings.
 
@@ -78,7 +105,37 @@ Scripts that do not overlap work alongside CP Toolkit as they are, for example a
 
 The full list is in [COMPATIBILITY.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/COMPATIBILITY.md) (Japanese).
 
-## Network access
+## 📝 Header and footer
+
+Open the input screen from the "Header and footer" button to the left of the editor on task and submission pages. The button changes color when it has content. The header goes to the top of the code and the footer to the bottom, and each is saved separately.
+
+<details>
+<summary>Details</summary>
+
+- They are added when pasting replaces the whole code. Pasting part of the code adds nothing
+- The content is saved when you leave the input field and is used for the next task too. Choose "This task only" to save it for that task alone
+- Saved content can be loaded with "Restore from history", which keeps the latest 20 entries. Content saved with "Save with a name" stays until you delete it
+- Changing the language also switches the comment syntax. Once you edit the inserted part, it is no longer rewritten
+- Single-line comments are used by default. A multi-line comment can be chosen in the settings
+- Without "Comment out when inserting", the text is inserted as written, so write the comment markers yourself
+- `{url}`, `{task}` and `{contest}` become the task URL, the task ID and the contest ID
+- For languages whose comment syntax is unknown, nothing is inserted and a notification tells you so
+
+</details>
+
+## ☕ Java submission helper and Local Runner
+
+The Java submission helper works without [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner).
+
+| Requirement                     | What you can do                                                                     |
+|---------------------------------|-------------------------------------------------------------------------------------|
+| Works without Local Runner      | Removing the package declaration, renaming the class to `Main`, turning off `DEBUG` |
+| Needs Local Runner              | Completing `import` statements                                                      |
+| Needs Local Runner settings too | Expanding `lib.*` (`setlib`), adding a submission header (`setheader`)              |
+
+> **Note**: If you paste code containing `import lib.` while Local Runner is unreachable or has no library set, a notification links to the setup steps. Submitting that code as it is causes a compile error.
+
+## 🔒 Network access
 
 This script sends nothing to the author's servers. Besides the site you are viewing, it connects to other services only in these cases:
 
@@ -88,11 +145,63 @@ This script sends nothing to the author's servers. Besides the site you are view
 
 KaTeX, Prettify, Pyodide and AtCoder Library are loaded at pinned versions. "Add to calendar" only places a link; the contest details reach Google when you open it.
 
-## Receiving notifications
+<details>
+<summary>How often the script accesses AtCoder</summary>
+
+- **Submission notifications**: Checks only while you have submissions being judged. The interval follows the site, at least 1 second, and checking stops after 30 minutes
+- **Clarification notifications**: Checks once a minute during a contest, but not in the first 5 minutes
+- **Task status colors**: Fetches every page of your submissions in order when you open the task list or open the dropdown for the first time, but not in the first 5 minutes of a contest
+- **Task dropdown**: Fetches once per contest and remembers it for 10 days
+- **All editorials**: Fetches only the editorials shown on screen, every 0.5 seconds
+- **Next contests**: Fetches only when you open the menu and remembers it for 1 hour
+- **Performance on the user page graph**: Fetches once when you open a user page
+- **Easy Test**: Accesses the site only when you run code. AtCoder custom tests run one at a time, even across tabs
+
+When a request fails, the script waits longer before trying again.
+
+</details>
+
+## 🔔 Receiving notifications
 
 Submission and clarification notifications are checked by your open AtCoder tabs. Keep at least one AtCoder tab open. If all of them are closed, no notification arrives.
 
-## Source code and license
+## 📦 Migrating from the old scripts
+
+These scripts have been merged into CP Toolkit. Their final versions are available from the [Release](https://github.com/nsubaru11/competitive-programming-tools/releases/tag/legacy-userscripts-final).
+
+AtCoder Custom Default Submissions, AtCoder Easy Test for Java, AtCoder Highlighter, AtCoder Listing Tasks, AtCoder Markdown Copier, AtCoder Performance Overlay, AtCoder Widen Container, Java Code Submitter, Paiza Language Selector
+
+<details>
+<summary>Migration steps and differences from the old scripts</summary>
+
+1. Update the old scripts to their final versions and install CP Toolkit
+2. Open one site where an old script runs and reload it. Settings are carried over automatically, and items you have already set in CP Toolkit are not overwritten
+3. After checking that the settings were carried over, delete the old scripts
+
+While both are installed, the old scripts do not run their main code. Settings are shared across sites, so you do not need to repeat this on each site.
+
+These settings are carried over:
+
+- **AtCoder Easy Test for Java**: Settings such as precompiling the code being edited, and the Local Runner URL
+- **AtCoder Highlighter**: Highlight colors
+- **AtCoder Widen Container**: Page width
+- **Paiza Language Selector**: The language to select automatically
+
+These points differ from the old scripts:
+
+- The default filter on the submissions tab has been dropped. Open AC submissions from the AC submission buttons on the task page
+- Easy Test is off by default. It is turned on when you migrate from the old version
+- Desktop notifications are shown not only while you view another tab but also while you are away from the browser
+- Java Code Submitter settings and code saved in Easy Test are not carried over
+- Color settings accept only the `#rrggbb` format
+- "recent" on the rating graph shows the specified range. The default is the last 20 contests
+- Shortcuts work only when the modifier keys match exactly
+- The settings button on the bottom panel of Easy Test opens the CP Toolkit settings
+- On Codeforces, the Easy Test buttons are shown without decoration
+
+</details>
+
+## 📜 Source code and license
 
 The distributed code is the TypeScript source bundled into one file, neither obfuscated nor minified. The source is on [GitHub](https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit).
 
@@ -100,6 +209,6 @@ Claude Opus 5.5 was used in development. The design and specifications were deci
 
 The bundle includes third-party code and turndown, so its license is `MIT AND Apache-2.0 AND 0BSD`. See [SOURCES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/SOURCES.md) for the origin of each feature and [THIRD_PARTY_NOTICES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/THIRD_PARTY_NOTICES.md) for third-party licenses.
 
-## Bugs and requests
+## 💬 Bugs and requests
 
 Please use [GitHub Issues](https://github.com/nsubaru11/competitive-programming-tools/issues) or the Greasy Fork feedback page.

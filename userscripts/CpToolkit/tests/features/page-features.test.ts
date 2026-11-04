@@ -62,7 +62,7 @@ describe("submissionShortcuts", () => {
 		document.body.innerHTML = '<span class="h2">A - Sample<a class="btn btn-default btn-sm">解説</a></span>';
 	};
 
-	test("AC 提出一覧へのリンクであることが分かるようにまとめて表示する", async () => {
+	test("AC 提出へのボタンであることが分かるようにまとめて表示する", async () => {
 		renderTitle();
 		await run(submissionShortcuts, {language: "Java"});
 		const control = document.querySelector(".cp-title-control");
