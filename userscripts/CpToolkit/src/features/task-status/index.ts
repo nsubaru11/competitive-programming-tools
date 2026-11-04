@@ -17,26 +17,24 @@ const START_QUIET_MS = 5 * 60 * 1000;
 type TaskStatuses = ReadonlyMap<string, string>;
 
 type SubmissionPage = {
-	/** 正解したかを問題ごとに持つ。判定中の提出だけの問題は含めない。 */
-	readonly results: ReadonlyMap<string, boolean>;
+	/** 提出ごとの問題と、正解したか。判定中の提出は含めない。 */
+	readonly results: readonly (readonly [string, boolean])[];
 	readonly lastPage: number;
 };
 
 function taskIdOf(link: Element | null | undefined): string | undefined {
-	return link?.getAttribute("href")?.split("?")[0]?.split("/").at(-1);
+	return link?.getAttribute("href")?.split("/").at(-1);
 }
 
 /** 自分の提出一覧の1ページを読む。AC か得点があれば正解として扱う。 */
 function parseSubmissionPage(html: string): SubmissionPage {
 	const page = new DOMParser().parseFromString(html, "text/html");
-	const results = new Map<string, boolean>();
-	for (const row of page.querySelectorAll(".table-responsive > table > tbody > tr")) {
+	const results = [...page.querySelectorAll(".table-responsive > table > tbody > tr")].flatMap((row) => {
 		const id = taskIdOf(row.querySelector('a[href*="/tasks/"]'));
 		const status = row.querySelector(".label")?.textContent?.trim() ?? "";
-		if (!id || isJudging(status)) continue;
-		const accepted = status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0;
-		results.set(id, (results.get(id) ?? false) || accepted);
-	}
+		if (!id || isJudging(status)) return [];
+		return [[id, status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0] as const];
+	});
 	const pages = [...page.querySelectorAll(".pagination a")]
 		.map((link) => Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1));
 	return {results, lastPage: Math.max(1, ...pages)};

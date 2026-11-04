@@ -10255,19 +10255,17 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 	var START_QUIET_MS = 5 * 60 * 1000;
 
 	function taskIdOf(link) {
-		return link?.getAttribute("href")?.split("?")[0]?.split("/").at(-1);
+		return link?.getAttribute("href")?.split("/").at(-1);
 	}
 
 	function parseSubmissionPage(html) {
 		const page = new DOMParser().parseFromString(html, "text/html");
-		const results = new Map();
-		for (const row of page.querySelectorAll(".table-responsive > table > tbody > tr")) {
+		const results = [...page.querySelectorAll(".table-responsive > table > tbody > tr")].flatMap((row) => {
 			const id = taskIdOf(row.querySelector('a[href*="/tasks/"]'));
 			const status = row.querySelector(".label")?.textContent?.trim() ?? "";
-			if (!id || isJudging(status)) continue;
-			const accepted = status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0;
-			results.set(id, (results.get(id) ?? false) || accepted);
-		}
+			if (!id || isJudging(status)) return [];
+			return [[id, status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0]];
+		});
 		const pages = [...page.querySelectorAll(".pagination a")].map((link) =>
 			Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1),
 		);

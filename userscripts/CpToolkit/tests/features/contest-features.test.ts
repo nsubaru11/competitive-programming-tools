@@ -274,7 +274,7 @@ describe("taskStatus", () => {
 	</tr>`;
 	const submissionPage = (rows: string, lastPage = 1) => `<div class="table-responsive"><table><tbody>${rows}</tbody></table></div>
 		<ul class="pagination">${Array.from({length: lastPage}, (_, i) => `<li><a href="/contests/abc1/submissions/me?page=${i + 1}">${i + 1}</a></li>`).join("")}</ul>`;
-	const scorePage = submissionPage(submissionRow("a", 100, "AC") + submissionRow("b", 0, "WA"));
+	const submissions = submissionPage(submissionRow("a", 100, "AC") + submissionRow("b", 0, "WA"));
 	const taskRow = (id: string) => `<tr><td><a href="/contests/abc1/tasks/abc1_${id}">${id}</a></td></tr>`;
 	const classOf = (selector: string) => document.querySelector(selector)?.className;
 
@@ -284,7 +284,7 @@ describe("taskStatus", () => {
 		document.body.innerHTML = `<div id="main-container"><table><tbody>
 			${taskRow("a")}${taskRow("b")}${taskRow("c")}
 		</tbody></table></div>`;
-		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const site = new FakeHttpClient(() => ({status: 200, text: submissions}));
 		await run(taskStatus, {
 			isOnRoute: (route) => route === "atcoder:tasks",
 			page: createFakePage(),
@@ -334,7 +334,7 @@ describe("taskStatus", () => {
 			<a id="toggle" href="#">Tasks</a>
 			<ul class="cp-task-menu"><li><a href="/contests/abc1/tasks/abc1_a">A</a></li></ul>
 		</li></ul></div>`;
-		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const site = new FakeHttpClient(() => ({status: 200, text: submissions}));
 		await run(taskStatus, {isOnRoute: () => false, page: createFakePage(), site});
 		expect(site.requests).toHaveLength(0);
 
@@ -353,7 +353,7 @@ describe("taskStatus", () => {
 			<ul class="cp-task-menu"><li id="item"><a href="/contests/abc1/tasks/abc1_a">A</a></li></ul>
 		</li></ul></div>
 		<div id="main-container"><table><tbody>${taskRow("a")}</tbody></table></div>`;
-		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const site = new FakeHttpClient(() => ({status: 200, text: submissions}));
 		await run(taskStatus, {isOnRoute: () => false, page: createFakePage(), site});
 
 		document.querySelector("#toggle")?.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}));
@@ -364,7 +364,7 @@ describe("taskStatus", () => {
 	});
 
 	test("混み合う開始直後は取得しない", async () => {
-		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const site = new FakeHttpClient(() => ({status: 200, text: submissions}));
 		const period = {startMs: Date.now() - 60 * 1000, endMs: Date.now() + HOUR_MS};
 		await run(taskStatus, {
 			isOnRoute: () => true,
@@ -375,7 +375,7 @@ describe("taskStatus", () => {
 	});
 
 	test("ログインしていなければ取得しない", async () => {
-		const site = new FakeHttpClient(() => ({status: 200, text: scorePage}));
+		const site = new FakeHttpClient(() => ({status: 200, text: submissions}));
 		await run(taskStatus, {
 			isOnRoute: () => true,
 			page: createFakePage({isLoggedIn: () => false}),
