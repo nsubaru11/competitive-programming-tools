@@ -90,12 +90,12 @@ Everything is enabled from the start, except the features marked <sub>off by def
 
 ### 4.6 Execution
 
-| Feature                                                     | What it does                                                                                       |
-|-------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
-| **Java submission helper** <sub>details</sub>               | Transforms pasted code for submission and adds submit shortcuts                                    |
-| **Local Runner** <sub>details</sub>                         | Connects to the local server used to transform and run Java code. It needs a separate installation |
-| **Easy Test (for Java)** <sub>off by default, details</sub> | Runs samples from the task page for Java solutions                                                 |
-| **paiza language selection**                                | Selects the specified language on paiza submission pages. It does nothing until you set a language |
+| Feature                                          | What it does                                                                                       |
+|--------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| **Java submission helper** <sub>details</sub>    | Transforms pasted code for submission and adds submit shortcuts                                    |
+| **Local Runner** <sub>details</sub>              | Connects to the local server used to transform and run Java code. It needs a separate installation |
+| **Easy Test** <sub>off by default, details</sub> | Runs samples from the task page and checks the results                                             |
+| **paiza language selection**                     | Selects the specified language on paiza submission pages. It does nothing until you set a language |
 
 ## 5. Feature details
 
@@ -160,11 +160,15 @@ If you paste code containing `import lib.` while Local Runner is unreachable or 
 </details>
 
 <details>
-<summary><b>5.6 Easy Test (for Java)</b></summary>
+<summary><b>5.6 Easy Test</b></summary>
 
-- Runs the samples from the task page and checks the results, for Java solutions
-- For other languages, leave this off and use AtCoder Easy Test v2 instead. Enable only one of them, because using both duplicates the buttons
-- The execution environment can be chosen. Code is sent to PaizaIO or Wandbox only when you choose them
+- From the task page, you can run samples (Run, Test All Samples) and test before submitting (Test & Submit). A submission can be canceled midway
+- The execution environment can be AtCoder custom test, Python in the browser, PaizaIO or Wandbox. C++ on Wandbox can use AtCoder Library. Code is sent to PaizaIO or Wandbox only when you choose them
+- Output can be compared with an allowable error. The code you ran is saved per task and can be restored with "Restore Last Code"
+- AtCoder custom tests run one at a time, even across tabs
+- The shortcuts <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, <kbd>Alt</kbd>+<kbd>Enter</kbd> and <kbd>Alt</kbd>+<kbd>Esc</kbd> are available and can be turned off in the detailed settings
+- **Java gets extra features**. [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/tree/main/local-runner) runs the code on your PC and compiles the code you are editing in advance, so results come back sooner. Memory is shown as the cumulative allocation
+- Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons
 
 </details>
 

@@ -68,7 +68,7 @@ CP Toolkit はほかの機能をそのまま使えるので、スクリプト1�
 
 | CP Toolkit の機能 | 同じ機能を持つスクリプト                                          | 補足                                                                                                               |
 |-------------------|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| Easy Test         | [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)     | CP Toolkit の Easy Test は Java 向けです。ほかの言語でも使うなら、オフのまま AtCoder Easy Test v2 を使ってください |
+| Easy Test         | [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)     | 同時に有効にするとボタンが重なるので、どちらか片方を使ってください                                                 |
 | サンプルの横並び  | [AtCoder Efficient Layout](https://greasyfork.org/scripts/453117) |                                                                                                                    |
 | 提出の予約        | [AtCoder Submission Timer](https://greasyfork.org/scripts/451696) |                                                                                                                    |
 

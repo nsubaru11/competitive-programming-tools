@@ -2105,9 +2105,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.addHeader": "Add the submission header",
 		"javaSubmit.headerName": "Header name (empty for the default)",
 		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
-		"easyTest.title": "Easy Test (for Java)",
+		"easyTest.title": "Easy Test",
 		"easyTest.description":
-			"Runs samples from the task page for Java solutions. For other languages, leave this off and use AtCoder Easy Test v2 instead. Enable only one of them, because using both duplicates the buttons.",
+			"Runs samples from the task page and checks the results. For Java, Local Runner runs the code on your PC and compiles the code you are editing in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.",
 		"easyTest.precompile": "Precompile edited code with Local Runner",
 		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
 		"easyTest.savedCodeLimit": "Number of saved solutions",
@@ -2323,9 +2323,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.addHeader": "提出用のヘッダーを付ける",
 		"javaSubmit.headerName": "ヘッダーの名前(空欄なら既定)",
 		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
-		"easyTest.title": "Easy Test(Java 向け)",
+		"easyTest.title": "Easy Test",
 		"easyTest.description":
-			"Java の解答向けに、問題ページからサンプルを実行して結果を確認します。ほかの言語でも使うなら、この機能はオフのまま AtCoder Easy Test v2 を使ってください。同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
+			"問題ページからサンプルを実行して結果を確認します。Java では Local Runner で手元で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
 		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
 		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
 		"easyTest.savedCodeLimit": "保存するコードの数",

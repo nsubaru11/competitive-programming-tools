@@ -156,7 +156,7 @@ Local Runner の既定の URL は `http://localhost:8080` です。利用者に�
 
 | スクリプト                                                                     | 理由                                                           |
 |--------------------------------------------------------------------------------|----------------------------------------------------------------|
-| [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)                  | CP Toolkit の Easy Test は Java 向けで、置き換えるものではない |
+| [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)                  | CP Toolkit の Easy Test は上流から分かれたもので、上流の更新には追従しない |
 | [ac-predictor](https://greasyfork.org/scripts/369954)                          | 更新が盛んで、サイトの変更への追従が欠かせない                 |
 | [atcoder-difficulty-display](https://greasyfork.org/scripts/397185)            | 更新が盛んで、外部のデータにも依存する                         |
 | [AtCoderStandingsAnalysis](https://greasyfork.org/scripts/398439)              | 順位表のデータに強く依存し、機能も大きい                       |
