@@ -5,6 +5,7 @@ import {AtCoderSite} from "@adapters/judges/atcoder";
 import {CodeforcesSite} from "@adapters/judges/codeforces";
 import {languagesOf} from "@adapters/judges/languages";
 import {YukicoderSite} from "@adapters/judges/yukicoder";
+import {PageCodeEditorLocator} from "@adapters/page/code-editors";
 import {LocalStorageLegacyInbox} from "@adapters/page/local-storage-legacy-inbox";
 import {SameOriginHttpClient} from "@adapters/page/same-origin-http-client";
 import {WorkerTicker} from "@adapters/page/worker-ticker";
@@ -79,6 +80,34 @@ describe("PaizaRunnerProvider の確認", () => {
 
 		expect(result?.output).toBe("1");
 		expect((times[1] ?? 0) - (times[0] ?? 0)).toBeGreaterThanOrEqual(900);
+	});
+});
+
+describe("PageCodeEditorLocator", () => {
+	const globals = globalThis as {unsafeWindow?: unknown};
+	const target = {editor: "ace", editorElements: ["#editor"], shortcut: "", submitButtons: []} as const;
+
+	afterEach(() => {
+		delete globals.unsafeWindow;
+	});
+
+	test("同じ条件の探索は1本にまとめる", async () => {
+		globals.unsafeWindow = {};
+		const locator = new PageCodeEditorLocator();
+		const first = locator.locate(target, {timeoutMs: 10});
+		expect(locator.locate(target, {timeoutMs: 10})).toBe(first);
+		expect(await first).toBeNull();
+	});
+
+	test("見つからなかった結果は残さず、あとから探し直せる", async () => {
+		const editor = {getSession: () => ({})};
+		const locator = new PageCodeEditorLocator();
+		globals.unsafeWindow = {};
+		expect(await locator.locate(target, {timeoutMs: 10})).toBeNull();
+
+		document.body.innerHTML = '<div id="editor"></div>';
+		globals.unsafeWindow = {ace: {edit: () => editor}};
+		expect(await locator.locate(target, {timeoutMs: 10})).not.toBeNull();
 	});
 });
 

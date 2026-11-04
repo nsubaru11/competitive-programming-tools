@@ -252,6 +252,13 @@ describe("clarNotifier", () => {
 		expect(ticker.listeners.size).toBe(0);
 	});
 
+	test("終了したコンテストでは時計を動かさない", async () => {
+		const {services, ticker, setNow} = openContest(contest);
+		setNow(contest.endMs + HOUR_MS);
+		await run(clarNotifier, services);
+		expect(ticker.listeners.size).toBe(0);
+	});
+
 	test("常設のコンテストでは確認しない", async () => {
 		const {services, ticker} = openContest({startMs: 0, endMs: 24 * 365 * HOUR_MS});
 		await run(clarNotifier, services);

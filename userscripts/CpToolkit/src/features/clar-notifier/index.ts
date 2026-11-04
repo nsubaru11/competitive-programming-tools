@@ -31,7 +31,9 @@ export const clarNotifier = defineFeature({
 		const contestId = contestIdOf(location.pathname);
 		const period = page.contestPeriod();
 		const hasBadge = document.querySelector("#clar-badge") !== null;
-		if (!contestId || !period || !hasBadge || period.endMs - period.startMs > MAX_CONTEST_MS) {
+		// 終了したコンテストでは、過去問のページを開くたびに Worker を作らないよう時計を動かさない
+		const ended = !period || page.serverNow() >= period.endMs;
+		if (!contestId || ended || !hasBadge || period.endMs - period.startMs > MAX_CONTEST_MS) {
 			return () => undefined;
 		}
 

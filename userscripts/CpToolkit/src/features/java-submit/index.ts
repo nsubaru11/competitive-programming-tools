@@ -40,7 +40,8 @@ export const javaSubmit = defineFeature({
 	description: "javaSubmit.description",
 	category: "category.execution",
 	defaultEnabled: true,
-	routes: ["atcoder:contest", "codeforces:page", "aoj:page", "libraryChecker:page", "paiza:page"],
+	// AtCoder でエディタがあるのはこの3種類だけ。順位表などで探し続けないよう絞る
+	routes: ["atcoder:task", "atcoder:submit", "atcoder:customTest", "codeforces:page", "aoj:page", "libraryChecker:page", "paiza:page"],
 	phase: "ready",
 	options: {
 		removePackage: option.boolean(true, "javaSubmit.removePackage"),

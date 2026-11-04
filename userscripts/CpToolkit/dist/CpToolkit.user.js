@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.28
+// @version        1.0.29
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -4360,7 +4360,21 @@ a:focus > .cp-settings-entry {
 	}
 
 	class PageCodeEditorLocator {
-		async locate(target, {timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0} = {}) {
+		lookups = new Map();
+
+		locate(target, {timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0} = {}) {
+			const key = JSON.stringify([target, timeoutMs, delayMs]);
+			const shared = this.lookups.get(key);
+			if (shared) return shared;
+			const pending = this.search(target, timeoutMs, delayMs);
+			this.lookups.set(key, pending);
+			pending.then((editor) => {
+				if (!editor) this.lookups.delete(key);
+			});
+			return pending;
+		}
+
+		async search(target, timeoutMs, delayMs) {
 			if (delayMs > 0) await sleep(delayMs);
 			const editor = findEditor(target);
 			if (editor) return editor;
@@ -6652,7 +6666,8 @@ ${toast_default}`,
 			const contestId = contestIdOf(location.pathname);
 			const period = page.contestPeriod();
 			const hasBadge = document.querySelector("#clar-badge") !== null;
-			if (!contestId || !period || !hasBadge || period.endMs - period.startMs > MAX_CONTEST_MS) {
+			const ended = !period || page.serverNow() >= period.endMs;
+			if (!contestId || ended || !hasBadge || period.endMs - period.startMs > MAX_CONTEST_MS) {
 				return () => {
 					return;
 				};
@@ -8219,7 +8234,15 @@ ${efficient_layout_default}`);
 		description: "javaSubmit.description",
 		category: "category.execution",
 		defaultEnabled: true,
-		routes: ["atcoder:contest", "codeforces:page", "aoj:page", "libraryChecker:page", "paiza:page"],
+		routes: [
+			"atcoder:task",
+			"atcoder:submit",
+			"atcoder:customTest",
+			"codeforces:page",
+			"aoj:page",
+			"libraryChecker:page",
+			"paiza:page",
+		],
 		phase: "ready",
 		options: {
 			removePackage: option.boolean(true, "javaSubmit.removePackage"),

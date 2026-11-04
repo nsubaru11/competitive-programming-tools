@@ -139,10 +139,22 @@ function findEditor(target: SubmissionTarget): CodeEditor | null {
 }
 
 export class PageCodeEditorLocator implements CodeEditorLocator {
-	async locate(
-		target: SubmissionTarget,
-		{timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: EditorLookup = {},
-	): Promise<CodeEditor | null> {
+	/** 同じ条件の探索は1本にまとめ、ページ全体の監視を重ねない。見つからなかった結果は残さない。 */
+	private readonly lookups = new Map<string, Promise<CodeEditor | null>>();
+
+	locate(target: SubmissionTarget, {timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: EditorLookup = {}): Promise<CodeEditor | null> {
+		const key = JSON.stringify([target, timeoutMs, delayMs]);
+		const shared = this.lookups.get(key);
+		if (shared) return shared;
+		const pending = this.search(target, timeoutMs, delayMs);
+		this.lookups.set(key, pending);
+		void pending.then((editor) => {
+			if (!editor) this.lookups.delete(key);
+		});
+		return pending;
+	}
+
+	private async search(target: SubmissionTarget, timeoutMs: number, delayMs: number): Promise<CodeEditor | null> {
 		if (delayMs > 0) await sleep(delayMs);
 		const editor = findEditor(target);
 		if (editor) return editor;
