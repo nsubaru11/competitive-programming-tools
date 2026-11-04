@@ -132,7 +132,7 @@ taskDropdown.tabLimit: "Note: up to {count} tabs can be opened at once."
 editorialList.title: All editorials
 editorialList.description: Shows the editorials of every task on the editorial page.
 
-variableHover.title: Highlight matching variables and numbers
+variableHover.title: Highlight hovered variables and numbers
 variableHover.description: Hovering a variable or a number in the statement highlights every occurrence. Click to pin, Esc to clear.
 variableHover.variables: Highlight variables
 variableHover.numbers: Highlight numbers

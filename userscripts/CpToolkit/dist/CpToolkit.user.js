@@ -2046,7 +2046,7 @@ a:focus > .cp-settings-entry {
 		"taskDropdown.tabLimit": "Note: up to {count} tabs can be opened at once.",
 		"editorialList.title": "All editorials",
 		"editorialList.description": "Shows the editorials of every task on the editorial page.",
-		"variableHover.title": "Highlight matching variables and numbers",
+		"variableHover.title": "Highlight hovered variables and numbers",
 		"variableHover.description":
 			"Hovering a variable or a number in the statement highlights every occurrence. Click to pin, Esc to clear.",
 		"variableHover.variables": "Highlight variables",
@@ -2264,7 +2264,7 @@ a:focus > .cp-settings-entry {
 		"taskDropdown.tabLimit": "※一度に開けるタブは {count} 個までです。",
 		"editorialList.title": "解説の一覧表示",
 		"editorialList.description": "解説ページで、すべての問題の解説をまとめて表示します。",
-		"variableHover.title": "同じ変数と数値の強調",
+		"variableHover.title": "ホバーした変数と数値の強調",
 		"variableHover.description":
 			"問題文の変数や数値に重ねると、同じ変数や数値をすべて強調します。クリックで固定し、Esc で解除します。",
 		"variableHover.variables": "変数を強調する",
