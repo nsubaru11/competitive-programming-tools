@@ -28,19 +28,19 @@ Everything is enabled from the start, except the features marked "off by default
 ### Statement
 
 - **Statement highlighting**: Highlights numbers, variables, and the time and memory limits
-- **Variable highlighting**: Hovering a variable highlights every occurrence. Click to pin, Esc to clear
+- **Highlight matching variables and numbers**: Hovering a variable or a number highlights every occurrence. Variables and numbers can be switched separately in the detailed settings. Click to pin, Esc to clear
 - **Copy statement**: Copies each section or the whole statement as Markdown or plain text
 - **Side-by-side samples (off by default)**: Places the input and output formats and samples side by side
 
 ### Submissions
 
-- **Keep search filters**: Keeps search filters when switching between All and My submissions
-- **Shortcuts to AC submissions**: Opens AC submissions sorted by time and by code size
-- **Language buttons**: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector
-- **Source comments**: Adds comments such as reference URLs to the top and bottom of pasted code
+- **Keep submission filters**: Keeps search filters when switching between All and My submissions
+- **Links to AC submissions**: Opens AC submissions sorted by time and by code size
+- **Language switch buttons**: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector
+- **Header and footer**: Adds a header to the top and a footer to the bottom of pasted code, such as reference URLs
 - **Submission notifications**: Shows the verdict right after judging finishes, on any page. A desktop notification is also shown while you are away from AtCoder
-- **Average results**: Shows average time and memory on the submission page
-- **Timed submission (off by default)**: Submits your code after the specified time
+- **Test case averages**: Shows average time and memory on the submission page
+- **Delayed submission (off by default)**: Submits your code after the specified time
 
 ### Contest
 
@@ -49,14 +49,14 @@ Everything is enabled from the start, except the features marked "off by default
 - **Task status colors**: Colors the task list and the dropdown by all your submissions, including those after the contest
 - **All editorials**: Shows the editorials of every task on one page
 - **Contest links on the top page**: Replaces the top page list with links to past contests by type
-- **Latest contests**: Adds a header menu with the upcoming contests listed on the home page
+- **Next contests**: Adds a header menu with the upcoming contests listed on the home page
 - **Add to calendar**: Adds a link to contest pages that registers the contest in Google Calendar
 - **Virtual contest timer**: Shows the time until the start and the time left in the corner clock
 - **Tessoku difficulty**: Shows the difficulty from the book on the Tessoku task list
 
 ### Results
 
-- **Performance graph**: Overlays performance on the rating graph, with a recent range set by count or percentage
+- **Performance on the user page graph**: Overlays performance on the rating graph of user pages, with a recent range set by count or percentage
 - **Colored contest history**: Colors performance and rating values in the contest history
 
 ### Execution

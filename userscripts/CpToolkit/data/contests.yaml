@@ -8,7 +8,7 @@ maxTabsAtOnce: 20
 # 問題一覧のキャッシュの保持期間(日)
 taskCacheDays: 10
 
-# ヘッダーの「最新のコンテスト」。内容はホームの「次のコンテスト」の表から取得する
+# ヘッダーの「次のコンテスト」のメニュー。内容はホームの「次のコンテスト」の表から取得する
 latest:
   menuTargets:
     - '#navbar-collapse .navbar-nav:not(.navbar-right)'  # コンテストのページ

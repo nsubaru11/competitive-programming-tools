@@ -188,7 +188,7 @@ describe("レーティング", () => {
 	});
 });
 
-describe("ソースコードのコメント", () => {
+describe("ヘッダーとフッター", () => {
 	const c = {line: "//", open: "/*", close: "*/"};
 	const python = {line: "#"};
 	const ocaml = {open: "(*", close: "*)"};

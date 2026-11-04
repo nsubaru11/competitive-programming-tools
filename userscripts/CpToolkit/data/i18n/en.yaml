@@ -57,10 +57,10 @@ efficientLayout.sampleWidth: Width of each sample pair (% of the screen)
 efficientLayout.samples: Samples
 efficientLayout.ioFormat: Input and output
 
-submissionQuery.title: Keep search filters
+submissionQuery.title: Keep submission filters
 submissionQuery.description: Keeps search filters when switching between All and My submissions.
 
-submissionShortcuts.title: Shortcuts to AC submissions
+submissionShortcuts.title: Links to AC submissions
 submissionShortcuts.description: Adds links to AC submissions sorted by time and by code size.
 submissionShortcuts.language: Language (empty for all)
 submissionShortcuts.label: AC submissions
@@ -75,11 +75,11 @@ clarNotifier.description: Notifies you when the organizers post an answer or a c
 clarNotifier.desktop: Use desktop notifications while you are away from AtCoder
 clarNotifier.arrived: "{count} new clarification(s)"
 
-averageResult.title: Average results
+averageResult.title: Test case averages
 averageResult.description: Shows average time and memory on the submission page.
 averageResult.average: Average
 
-submissionTimer.title: Timed submission
+submissionTimer.title: Delayed submission
 submissionTimer.description: Submits your code after the specified time.
 submissionTimer.minutes: Minutes until submission
 submissionTimer.set: Set
@@ -87,13 +87,13 @@ submissionTimer.cancel: Cancel
 submissionTimer.canceled: The timer was canceled.
 submissionTimer.scheduled: "Your code will be submitted around {time}."
 
-languageButtons.title: Language buttons
+languageButtons.title: Language switch buttons
 languageButtons.description: Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.
 languageButtons.configure: Choose languages for the buttons
 languageButtons.hint: Buttons for the checked languages appear below the language selector.
 
-sourceComments.title: Source comments
-sourceComments.description: Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.
+sourceComments.title: Header and footer
+sourceComments.description: Adds a header to the top and a footer to the bottom of pasted code as comments, such as reference URLs, and rewrites them when the language changes.
 sourceComments.style: Comment style
 sourceComments.styleLine: Single-line comments
 sourceComments.styleBlock: Multi-line comment
@@ -132,11 +132,13 @@ taskDropdown.tabLimit: "Note: up to {count} tabs can be opened at once."
 editorialList.title: All editorials
 editorialList.description: Shows the editorials of every task on the editorial page.
 
-variableHover.title: Variable highlighting
-variableHover.description: Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.
-latestContests.title: Latest contests
+variableHover.title: Highlight matching variables and numbers
+variableHover.description: Hovering a variable or a number in the statement highlights every occurrence. Click to pin, Esc to clear.
+variableHover.variables: Highlight variables
+variableHover.numbers: Highlight numbers
+latestContests.title: Next contests
 latestContests.description: Adds a header menu with the upcoming contests listed on the home page.
-latestContests.menu: Latest contests
+latestContests.menu: Next contests
 latestContests.loading: "Loading..."
 latestContests.failed: Could not load the list
 contestCalendar.title: Add to calendar
@@ -154,8 +156,8 @@ tessokuDifficulty.description: Shows the difficulty from the book on the Tessoku
 tessokuDifficulty.sortByDifficulty: Sort by difficulty
 tessokuDifficulty.sortById: Sort by task number
 
-ratingGraph.title: Performance graph
-ratingGraph.description: Overlays performance on the rating graph.
+ratingGraph.title: Performance on the user page graph
+ratingGraph.description: Overlays performance on the rating graph of user pages (profiles), including other users' pages.
 ratingGraph.recentByDefault: Show only recent results at first
 ratingGraph.recentRange: "Recent range (e.g. 20 for the last 20 contests, 50% for the latest half)"
 ratingGraph.recentRangeInvalid: "Enter a whole number of 1 or more, or a percentage from 1% to 100%."

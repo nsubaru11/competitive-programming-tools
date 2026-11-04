@@ -427,6 +427,52 @@ describe("variableHover", () => {
 		fire(0, "mouseover");
 		expect(highlighted()).toEqual([]);
 	});
+
+	describe("数値", () => {
+		const digit = (text: string, id = "") => `<span class="mord"${id && ` id="${id}"`}>${text}</span>`;
+		// KaTeX は「10^5」の「10」を「1」と、指数を包む要素の中の「0」に分けて描く
+		const power = `${digit("1", "power")}<span class="mord">${digit("0")}<span class="msupsub">${digit("5", "exponent")}</span></span>`;
+		const hover = (id: string) => {
+			document.querySelector(`#${id}`)?.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}));
+		};
+
+		beforeEach(() => {
+			document.body.innerHTML = `<div id="task-statement">
+				<span class="katex"><span class="katex-html">${symbol("N")}${power}</span></span>
+				<span class="katex"><span class="katex-html">${digit("10")}${digit("0", "zero")}${digit("5")}</span></span>
+			</div>`;
+		});
+
+		test("分かれて描かれた数字も1つの数値として強調する", async () => {
+			await run(variableHover);
+			hover("power");
+			expect(highlighted()).toEqual(["1", "0", "10"]);
+		});
+
+		test("指数は別の数値として扱う", async () => {
+			await run(variableHover);
+			hover("exponent");
+			expect(highlighted()).toEqual(["5", "5"]);
+			hover("zero");
+			expect(highlighted()).toEqual(["0"]);
+		});
+
+		test("詳細設定で数値をオフにできる", async () => {
+			await run(variableHover, {}, {variables: true, numbers: false});
+			hover("zero");
+			expect(highlighted()).toEqual([]);
+			fire(0, "mouseover");
+			expect(highlighted()).toEqual(["N"]);
+		});
+
+		test("詳細設定で変数をオフにできる", async () => {
+			await run(variableHover, {}, {variables: false, numbers: true});
+			fire(0, "mouseover");
+			expect(highlighted()).toEqual([]);
+			hover("zero");
+			expect(highlighted()).toEqual(["0"]);
+		});
+	});
 });
 
 describe("latestContests", () => {

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.30
+// @version        1.0.31
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1974,9 +1974,9 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen)",
 		"efficientLayout.samples": "Samples",
 		"efficientLayout.ioFormat": "Input and output",
-		"submissionQuery.title": "Keep search filters",
+		"submissionQuery.title": "Keep submission filters",
 		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
-		"submissionShortcuts.title": "Shortcuts to AC submissions",
+		"submissionShortcuts.title": "Links to AC submissions",
 		"submissionShortcuts.description": "Adds links to AC submissions sorted by time and by code size.",
 		"submissionShortcuts.language": "Language (empty for all)",
 		"submissionShortcuts.label": "AC submissions",
@@ -1990,24 +1990,24 @@ a:focus > .cp-settings-entry {
 		"clarNotifier.description": "Notifies you when the organizers post an answer or a correction during a contest.",
 		"clarNotifier.desktop": "Use desktop notifications while you are away from AtCoder",
 		"clarNotifier.arrived": "{count} new clarification(s)",
-		"averageResult.title": "Average results",
+		"averageResult.title": "Test case averages",
 		"averageResult.description": "Shows average time and memory on the submission page.",
 		"averageResult.average": "Average",
-		"submissionTimer.title": "Timed submission",
+		"submissionTimer.title": "Delayed submission",
 		"submissionTimer.description": "Submits your code after the specified time.",
 		"submissionTimer.minutes": "Minutes until submission",
 		"submissionTimer.set": "Set",
 		"submissionTimer.cancel": "Cancel",
 		"submissionTimer.canceled": "The timer was canceled.",
 		"submissionTimer.scheduled": "Your code will be submitted around {time}.",
-		"languageButtons.title": "Language buttons",
+		"languageButtons.title": "Language switch buttons",
 		"languageButtons.description":
 			"Switches between your frequently used languages with buttons. Pick the languages from the gear below the language selector.",
 		"languageButtons.configure": "Choose languages for the buttons",
 		"languageButtons.hint": "Buttons for the checked languages appear below the language selector.",
-		"sourceComments.title": "Source comments",
+		"sourceComments.title": "Header and footer",
 		"sourceComments.description":
-			"Adds comments such as reference URLs to the top and bottom of pasted code, and rewrites them when the language changes.",
+			"Adds a header to the top and a footer to the bottom of pasted code as comments, such as reference URLs, and rewrites them when the language changes.",
 		"sourceComments.style": "Comment style",
 		"sourceComments.styleLine": "Single-line comments",
 		"sourceComments.styleBlock": "Multi-line comment",
@@ -2045,12 +2045,14 @@ a:focus > .cp-settings-entry {
 		"taskDropdown.tabLimit": "Note: up to {count} tabs can be opened at once.",
 		"editorialList.title": "All editorials",
 		"editorialList.description": "Shows the editorials of every task on the editorial page.",
-		"variableHover.title": "Variable highlighting",
+		"variableHover.title": "Highlight matching variables and numbers",
 		"variableHover.description":
-			"Hovering a variable in the statement highlights every occurrence. Click to pin, Esc to clear.",
-		"latestContests.title": "Latest contests",
+			"Hovering a variable or a number in the statement highlights every occurrence. Click to pin, Esc to clear.",
+		"variableHover.variables": "Highlight variables",
+		"variableHover.numbers": "Highlight numbers",
+		"latestContests.title": "Next contests",
 		"latestContests.description": "Adds a header menu with the upcoming contests listed on the home page.",
-		"latestContests.menu": "Latest contests",
+		"latestContests.menu": "Next contests",
 		"latestContests.loading": "Loading...",
 		"latestContests.failed": "Could not load the list",
 		"contestCalendar.title": "Add to calendar",
@@ -2067,8 +2069,9 @@ a:focus > .cp-settings-entry {
 		"tessokuDifficulty.description": "Shows the difficulty from the book on the Tessoku task list.",
 		"tessokuDifficulty.sortByDifficulty": "Sort by difficulty",
 		"tessokuDifficulty.sortById": "Sort by task number",
-		"ratingGraph.title": "Performance graph",
-		"ratingGraph.description": "Overlays performance on the rating graph.",
+		"ratingGraph.title": "Performance on the user page graph",
+		"ratingGraph.description":
+			"Overlays performance on the rating graph of user pages (profiles), including other users' pages.",
 		"ratingGraph.recentByDefault": "Show only recent results at first",
 		"ratingGraph.recentRange": "Recent range (e.g. 20 for the last 20 contests, 50% for the latest half)",
 		"ratingGraph.recentRangeInvalid": "Enter a whole number of 1 or more, or a percentage from 1% to 100%.",
@@ -2188,10 +2191,11 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %)",
 		"efficientLayout.samples": "入出力例",
 		"efficientLayout.ioFormat": "入出力形式",
-		"submissionQuery.title": "検索条件の保持",
+		"submissionQuery.title": "提出一覧の検索条件の保持",
 		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
-		"submissionShortcuts.title": "AC 提出への近道",
-		"submissionShortcuts.description": "問題ページに、AC 提出を実行時間順とコード長順で開くリンクを追加します。",
+		"submissionShortcuts.title": "AC 提出一覧へのリンク",
+		"submissionShortcuts.description":
+			"問題ページに、この問題の AC 提出を実行時間順とコード長順で開くリンクを追加します。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
 		"submissionShortcuts.label": "AC提出",
 		"submissionShortcuts.fastest": "実行時間順",
@@ -2204,23 +2208,23 @@ a:focus > .cp-settings-entry {
 		"clarNotifier.description": "コンテスト中に運営からの回答や訂正(Clar)が届くと通知します。",
 		"clarNotifier.desktop": "AtCoder を操作していないときはデスクトップ通知も出す",
 		"clarNotifier.arrived": "新しい Clar が {count} 件あります",
-		"averageResult.title": "実行結果の平均",
+		"averageResult.title": "テストケースの平均",
 		"averageResult.description": "提出の詳細に、実行時間とメモリの平均を表示します。",
 		"averageResult.average": "平均",
-		"submissionTimer.title": "時間指定の提出",
+		"submissionTimer.title": "提出の予約",
 		"submissionTimer.description": "指定した時間が経ったらコードを提出します。",
 		"submissionTimer.minutes": "何分後に提出するか",
 		"submissionTimer.set": "セットする",
 		"submissionTimer.cancel": "取り消す",
 		"submissionTimer.canceled": "タイマーを取り消しました。",
 		"submissionTimer.scheduled": "{time} ごろに提出します。",
-		"languageButtons.title": "言語のボタン",
+		"languageButtons.title": "言語の切り替えボタン",
 		"languageButtons.description": "よく使う言語をボタンで切り替えます。言語は選択欄の下の歯車から選びます。",
 		"languageButtons.configure": "ボタンにする言語を選ぶ",
 		"languageButtons.hint": "チェックした言語のボタンを選択欄の下に表示します。",
-		"sourceComments.title": "ソースコードのコメント",
+		"sourceComments.title": "ヘッダーとフッター",
 		"sourceComments.description":
-			"貼り付けたコードの先頭と末尾へ、参照元の URL などのコメントを追記します。言語を変えるとコメントの書き方も切り替えます。",
+			"貼り付けたコードの先頭にヘッダー、末尾にフッターをコメントとして追記します。参照元の URL などに使えます。言語を変えるとコメントの書き方も切り替えます。",
 		"sourceComments.style": "コメントの形式",
 		"sourceComments.styleLine": "単一行コメントを並べる",
 		"sourceComments.styleBlock": "複数行コメント",
@@ -2240,7 +2244,7 @@ a:focus > .cp-settings-entry {
 			"{url} は問題の URL、{task} は問題の ID、{contest} はコンテストの ID に置き換えます。",
 		"sourceComments.notInserted": "コメントを挿入していません",
 		"sourceComments.unsupported": "この言語はコメントの書き方が分からないので、挿入していません。",
-		"taskStatus.title": "問題の提出状況",
+		"taskStatus.title": "問題の正誤の色分け",
 		"taskStatus.description":
 			"問題一覧とドロップダウンを、コンテスト後を含む自分の提出に合わせて色分けします。AC か得点があれば正解として扱います。",
 		"taskStatus.acceptedColor": "正解した問題の色",
@@ -2259,12 +2263,14 @@ a:focus > .cp-settings-entry {
 		"taskDropdown.tabLimit": "※一度に開けるタブは {count} 個までです。",
 		"editorialList.title": "解説の一覧表示",
 		"editorialList.description": "解説ページで、すべての問題の解説をまとめて表示します。",
-		"variableHover.title": "変数の強調",
+		"variableHover.title": "同じ変数と数値の強調",
 		"variableHover.description":
-			"問題文の変数に重ねると、同じ変数をすべて強調します。クリックで固定し、Esc で解除します。",
-		"latestContests.title": "最新のコンテスト",
+			"問題文の変数や数値に重ねると、同じ変数や数値をすべて強調します。クリックで固定し、Esc で解除します。",
+		"variableHover.variables": "変数を強調する",
+		"variableHover.numbers": "数値を強調する",
+		"latestContests.title": "次のコンテスト",
 		"latestContests.description": "ホームの「次のコンテスト」の一覧を、ヘッダーのメニューから開けるようにします。",
-		"latestContests.menu": "最新のコンテスト",
+		"latestContests.menu": "次のコンテスト",
 		"latestContests.loading": "読み込み中...",
 		"latestContests.failed": "取得できませんでした",
 		"contestCalendar.title": "カレンダーへの登録",
@@ -2281,8 +2287,9 @@ a:focus > .cp-settings-entry {
 		"tessokuDifficulty.description": "「競技プログラミングの鉄則」の問題一覧に、書籍の難易度を表示します。",
 		"tessokuDifficulty.sortByDifficulty": "難易度順で並べ替え",
 		"tessokuDifficulty.sortById": "問題番号順で並べ替え",
-		"ratingGraph.title": "パフォーマンスのグラフ",
-		"ratingGraph.description": "レーティンググラフにパフォーマンスを重ねて表示します。",
+		"ratingGraph.title": "ユーザーページのグラフへのパフォーマンス表示",
+		"ratingGraph.description":
+			"ユーザーページ(プロフィール)のレーティンググラフに、パフォーマンスを重ねて表示します。自分以外のユーザーのページでも表示します。",
 		"ratingGraph.recentByDefault": "最初は最近の結果だけを表示する",
 		"ratingGraph.recentRange": "最近の結果の範囲(例: 20 で直近20回、50% で直近の半分)",
 		"ratingGraph.recentRangeInvalid": "1 以上の整数か、1% から 100% の割合を入力してください。",
@@ -10421,12 +10428,56 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 `;
 
 	// CpToolkit/src/features/variable-hover/index.ts
-	var SYMBOLS = ".katex-html .mathnormal";
+	var VARIABLES = ".katex-html .mathnormal";
+	var LEAVES = ".katex-html .mord";
+	var NUMBER_PATTERN2 = /^\d+(\.\d+)?$/;
 	var HIGHLIGHT_CLASS = "cp-variable";
 	var PINNED_CLASS = "cp-variable-pinned";
 
-	function symbolAt(target) {
-		return target instanceof Element ? target.closest(SYMBOLS) : null;
+	function isNumberLeaf(element) {
+		return (
+			element.childElementCount === 0 &&
+			!element.classList.contains("mathnormal") &&
+			NUMBER_PATTERN2.test(element.textContent ?? "")
+		);
+	}
+
+	function containerOf(leaf) {
+		const parent = leaf.parentElement;
+		const wrapped =
+			parent?.classList.contains("mord") &&
+			parent.firstElementChild === leaf &&
+			leaf.nextElementSibling?.classList.contains("msupsub");
+		return wrapped && parent ? parent : leaf;
+	}
+
+	function collectTokens(statement, targets) {
+		const tokens = [];
+		if (targets.variables) {
+			for (const element of statement.querySelectorAll(VARIABLES)) {
+				tokens.push({key: `variable:${element.textContent}`, elements: [element]});
+			}
+		}
+		if (targets.numbers) {
+			let last = null;
+			for (const leaf of [...statement.querySelectorAll(LEAVES)].filter(isNumberLeaf)) {
+				const container = containerOf(leaf);
+				const continues =
+					last !== null &&
+					container !== leaf &&
+					last.container === last.token.elements.at(-1) &&
+					last.container.nextElementSibling === container;
+				if (last && continues) {
+					last.token.key += leaf.textContent;
+					last.token.elements.push(leaf);
+				} else {
+					const token = {key: `number:${leaf.textContent}`, elements: [leaf]};
+					tokens.push(token);
+					last = {token, container};
+				}
+			}
+		}
+		return tokens;
 	}
 
 	var variableHover = defineFeature({
@@ -10437,11 +10488,14 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 		defaultEnabled: true,
 		routes: ["atcoder:task", "atcoder:tasksPrint"],
 		phase: "ready",
-		options: {},
+		options: {
+			variables: option.boolean(true, "variableHover.variables"),
+			numbers: option.boolean(true, "variableHover.numbers"),
+		},
 		live: true,
-		start() {
+		start({options}) {
 			const statement = document.querySelector("#task-statement");
-			if (!statement)
+			if (!statement || (!options.variables && !options.numbers))
 				return () => {
 					return;
 				};
@@ -10450,36 +10504,47 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 			const {signal} = controller;
 			let pinned = null;
 			let highlighted = [];
-			const highlight = (symbol) => {
-				for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
-				highlighted = [...statement.querySelectorAll(SYMBOLS)].filter(
-					(element) => element.textContent === symbol,
+			const keyAt = (target) => {
+				if (!(target instanceof Element) || !target.closest(LEAVES)) return null;
+				return (
+					collectTokens(statement, options).find(({elements}) =>
+						elements.some((element) => element.contains(target)),
+					)?.key ?? null
 				);
+			};
+			const highlight = (key) => {
+				for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
+				highlighted =
+					key === null
+						? []
+						: collectTokens(statement, options)
+								.filter((token) => token.key === key)
+								.flatMap(({elements}) => elements);
 				const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
 				for (const element of highlighted) element.classList.add(...names);
 			};
 			statement.addEventListener(
 				"mouseover",
 				(event) => {
-					const symbol = symbolAt(event.target);
-					if (symbol && pinned === null) highlight(symbol.textContent);
+					const key = keyAt(event.target);
+					if (key !== null && pinned === null) highlight(key);
 				},
 				{signal},
 			);
 			statement.addEventListener(
 				"mouseout",
 				(event) => {
-					if (symbolAt(event.target) && pinned === null) highlight(null);
+					if (keyAt(event.target) !== null && pinned === null) highlight(null);
 				},
 				{signal},
 			);
 			statement.addEventListener(
 				"click",
 				(event) => {
-					const symbol = symbolAt(event.target)?.textContent ?? null;
-					if (symbol === null) return;
-					pinned = symbol === pinned ? null : symbol;
-					highlight(symbol);
+					const key = keyAt(event.target);
+					if (key === null) return;
+					pinned = key === pinned ? null : key;
+					highlight(key);
 				},
 				{signal},
 			);

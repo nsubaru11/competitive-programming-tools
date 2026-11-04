@@ -119,7 +119,7 @@ YAML の型は `scripts/gen-data-types.ts` が `<name>.d.yaml.ts` として生�
 
 ページの文脈で動くライブラリ(KaTeX、Prettify、Pyodide)は `data/libraries.yaml` と `data/runners.yaml` に置き、npm の版番号か GitHub のコミットの SHA で固定して、integrity で検証します。読み込んだ先でさらに別のファイルを検証なしで読むもの(Prettify の `run_prettify.js` など)は使いません。Pyodide は AtCoder と同じ Python の版の系列から選びます。
 
-### ソースコードのコメント
+### ヘッダーとフッター
 
 - Java の変換があるときは、その後に追記する
 - 複数行コメントがない言語や、閉じる記号を含む文字列では単一行コメントで書く
@@ -143,12 +143,12 @@ Local Runner の既定の URL は `http://localhost:8080` です。利用者に�
 
 | 機能               | 参照したもの                                                                            |
 |--------------------|-----------------------------------------------------------------------------------------|
-| 言語のボタン       | コンテストのページの言語の処理(`#select-lang select.current`、`defaultLang` の記憶)     |
+| 言語の切り替えボタン | コンテストのページの言語の処理(`#select-lang select.current`、`defaultLang` の記憶)     |
 | 提出結果の通知     | コンテストのページの判定待ちの処理(`submissions/me/status/json` と応答の `Interval`)    |
 | Clar の通知        | コンテストのページの Clar の処理(`clarifications/count`、1分の間隔、開始直後を避ける)   |
-| 問題の提出状況     | 自分の得点のページ(`/contests/<id>/score`)                                              |
+| 問題の正誤の色分け | 自分の提出一覧(`/contests/<id>/submissions/me`)                                              |
 | バーチャル参加     | 参加のページの開始時刻(`#main-container time.fixtime-second`)、ページの `getServerTime` |
-| 問題の提出状況の色 | AtCoder Problems の表の配色に近い、Bootstrap の `#c3e6cb` と `#f5c6cb`                  |
+| 問題の正誤の色 | AtCoder Problems の表の配色に近い、Bootstrap の `#c3e6cb` と `#f5c6cb`                  |
 
 ## 統合しないスクリプト
 
