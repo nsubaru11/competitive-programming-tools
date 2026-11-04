@@ -8,11 +8,12 @@ CP Toolkit を変更する人向けの文書です。利用者向けの説明は
 |-----------------------------------------|--------|------------------------------------------------------------|
 | [README.md](./README.md)                | 利用者 | 導入、機能、通信、移行。Greasy Fork の説明文を兼ねる       |
 | [README.en.md](./README.en.md)          | 利用者 | README の英語版。Greasy Fork の英語の説明文を兼ねる        |
+| `docs/features/<機能の ID>.md`          | 利用者 | 機能ごとの詳細。英語版は `.en.md`、画像は `docs/images/`   |
 | [COMPATIBILITY.md](./COMPATIBILITY.md)  | 利用者 | 併用できるスクリプトと、併用を推奨しないスクリプト         |
 | [SOURCES.md](./SOURCES.md)              | 全員   | 各機能の出典                                               |
 | この文書                                | 開発者 | 構成、規則、内部の仕様、判断の記録                         |
 
-README は Greasy Fork でも読まれるので、リンクは絶対 URL で書き、HTML は [Greasy Fork で使えるもの](https://greasyfork.org/help/allowed-markup)(表、`<details>`、`<kbd>`、`<sub>` など)に限ります。`align` 属性は Greasy Fork では外れるので、中央寄せは GitHub だけで効きます。Greasy Fork は HTML の要素の中の Markdown を変換しないので、`<div>` と `<details>` の中身は HTML で書きます。表も Markdown ではなく HTML で書き、Greasy Fork では枠線が付かないため、`table`、`th`、`td` に `style="border: 1px solid #888"` を付けます(GitHub はこの指定を外し、自前の枠線を使います)。見出しは章番号を付け、絵文字は使いません。機能の詳しい説明は「機能の詳細」の折りたたみに置き、機能一覧の表は1文に揃えます。機能を変えたら README、README.en、設定画面の文言(`data/i18n/`)を揃えます。同じ機能を持つスクリプトが見つかったら COMPATIBILITY に追加します。
+README は Greasy Fork でも読まれるので、リンクは絶対 URL で書き、HTML は [Greasy Fork で使えるもの](https://greasyfork.org/help/allowed-markup)(表、`<details>`、`<kbd>`、`<sub>` など)に限ります。`align` 属性は Greasy Fork では外れるので、中央寄せは GitHub だけで効きます。Greasy Fork は HTML の要素の中の Markdown を変換しないので、`<div>` と `<details>` の中身は HTML で書きます。表も Markdown ではなく HTML で書きます。Greasy Fork の表には枠線も余白もないので、見出しの行と1行おきの行に `style="background-color: rgba(128, 128, 128, 0.25)"` と `0.1` の背景を付けて縞模様にします(GitHub はこの指定を外し、自前の縞模様を使います)。画像は `raw.githubusercontent.com` の絶対 URL で載せます。見出しは章番号を付け、絵文字は使いません。機能一覧の表は1文に揃え、機能名は詳細ページへのリンクにします。詳しい説明と画像は詳細ページ(`docs/features/`)に置きます。詳細ページは GitHub だけで読むので、Markdown で書いてかまいません。機能を変えたら README、README.en、詳細ページ、設定画面の文言(`data/i18n/`)を揃えます。同じ機能を持つスクリプトが見つかったら COMPATIBILITY に追加します。
 
 ## 公開の手順
 

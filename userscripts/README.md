@@ -53,7 +53,7 @@ CP Toolkit は `@atcoder-tools/shared` の Local Runner API、ジャッジ、提
 
 ## 更新を終了したスクリプト
 
-次の8本は CP Toolkit へ統合しました。今後は更新しません。最終版は [Release](https://github.com/nsubaru11/competitive-programming-tools/releases/tag/legacy-userscripts-final) から入手できます。利用者向けの手順は [旧スクリプトからの移行](./CpToolkit/README.md#8-旧スクリプトからの移行) にあります。
+次の8本は CP Toolkit へ統合しました。今後は更新しません。最終版は [Release](https://github.com/nsubaru11/competitive-programming-tools/releases/tag/legacy-userscripts-final) から入手できます。利用者向けの手順は [旧スクリプトからの移行](./CpToolkit/README.md#7-旧スクリプトからの移行) にあります。
 
 | スクリプト                         | CP Toolkit の機能                     |
 |------------------------------------|---------------------------------------|
