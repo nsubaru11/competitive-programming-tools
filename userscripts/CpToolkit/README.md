@@ -30,8 +30,8 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 | サイト               | 使える機能                         |
 |----------------------|------------------------------------|
 | AtCoder              | paiza の言語選択以外のすべての機能 |
-| yukicoder            | Easy Test                          |
-| Codeforces           | Easy Test、Java の提出補助         |
+| yukicoder            | Easy Test+                         |
+| Codeforces           | Easy Test+、Java の提出補助        |
 | AOJ、Library Checker | Java の提出補助                    |
 | paiza                | Java の提出補助、paiza の言語選択  |
 
@@ -90,12 +90,12 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 
 ### 4.6 実行環境
 
-| 機能                                          | できること                                                                         |
-|-----------------------------------------------|------------------------------------------------------------------------------------|
-| **Java の提出補助** <sub>詳細あり</sub>       | 貼り付けたコードを提出用に変換し、ショートカットで提出できます                     |
-| **Local Runner** <sub>詳細あり</sub>          | Java の変換と実行に使う、手元のサーバーへ接続します。別途、導入が必要です          |
-| **Easy Test** <sub>既定で OFF・詳細あり</sub> | 問題ページからサンプルを実行し、結果を確かめます                                   |
-| **paiza の言語選択**                          | paiza の提出ページで、指定した言語を自動で選びます。言語を設定するまでは動きません |
+| 機能                                           | できること                                                                         |
+|------------------------------------------------|------------------------------------------------------------------------------------|
+| **Java の提出補助** <sub>詳細あり</sub>        | 貼り付けたコードを提出用に変換し、ショートカットで提出できます                     |
+| **Local Runner** <sub>詳細あり</sub>           | Java の変換と実行に使う、手元のサーバーへ接続します。別途、導入が必要です          |
+| **Easy Test+** <sub>既定で OFF・詳細あり</sub> | 問題ページからサンプルを実行し、結果を確かめます                                   |
+| **paiza の言語選択**                           | paiza の提出ページで、指定した言語を自動で選びます。言語を設定するまでは動きません |
 
 ## 5. 機能の詳細
 
@@ -160,8 +160,9 @@ Java の提出補助は、[Local Runner](https://github.com/nsubaru11/competitiv
 </details>
 
 <details>
-<summary><b>5.6 Easy Test</b></summary>
+<summary><b>5.6 Easy Test+</b></summary>
 
+- [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152) をもとに、機能を加えたものです
 - 問題ページから、サンプルの実行(Run、Test All Samples)と、テストしてからの提出(Test & Submit)ができます。提出は途中で中止できます
 - 実行環境は、AtCoder のコードテスト、ブラウザでの Python の実行、PaizaIO、Wandbox から選べます。Wandbox の C++ では AtCoder Library を使えます。PaizaIO と Wandbox へコードを送るのは、それらを選んだときだけです
 - 出力は許容誤差を指定して比べられます。実行したコードは問題ごとに保存し、「Restore Last Code」で戻せます
@@ -185,7 +186,7 @@ CP Toolkit と同じ機能を持つスクリプトとの併用は推奨しませ
 このスクリプトは、作者のサーバーへ情報を送りません。AtCoder などの表示中のサイトのほかに、次の場合だけ外部と通信します。
 
 - **手元の Local Runner**(既定は `http://localhost:8080`): Java の変換と実行のために、コードを手元の PC へ送ります
-- **PaizaIO、Wandbox**: Easy Test でこれらを実行環境に選んだときだけ、コードと入力を送ります。ほかの実行環境から自動で切り替わることはありません
+- **PaizaIO、Wandbox**: Easy Test+ でこれらを実行環境に選んだときだけ、コードと入力を送ります。ほかの実行環境から自動で切り替わることはありません
 - **jsDelivr**: 解説の数式とコードの表示に使う KaTeX と Prettify、ブラウザでの Python の実行に使う Pyodide、Wandbox の C++ で使う AtCoder Library を、必要なときだけ取得します
 
 KaTeX、Prettify、Pyodide、AtCoder Library は、版を固定して読み込みます。「カレンダーへの登録」はリンクを置くだけで、開いたときにコンテストの情報が Google へ渡ります。
@@ -200,7 +201,7 @@ KaTeX、Prettify、Pyodide、AtCoder Library は、版を固定して読み込�
 - **解説の一覧表示**: 画面に表示された解説だけを、0.5秒間隔で取得します
 - **次のコンテスト**: メニューを開いたときだけ取得し、1時間記憶します
 - **ユーザーページのグラフへのパフォーマンス表示**: ユーザーのページを開いたときに1回取得します
-- **Easy Test**: 実行したときだけ通信します。AtCoder のコードテストは、タブをまたいでも1件ずつ順番に実行します
+- **Easy Test+**: 実行したときだけ通信します。AtCoder のコードテストは、タブをまたいでも1件ずつ順番に実行します
 
 通信に失敗したときは、確認の間隔を広げます。
 
@@ -234,14 +235,14 @@ AtCoder Custom Default Submissions、AtCoder Easy Test for Java、AtCoder Highli
 <summary><b>旧スクリプトとの違い</b></summary>
 
 - 提出タブの既定の絞り込みは廃止しました。AC 提出は問題ページの「AC提出」のボタンから開きます
-- Easy Test は既定で OFF です。旧版から移行すると ON になります
+- Easy Test+ は既定で OFF です。旧版から移行すると ON になります
 - デスクトップ通知は、別のタブを見ているときだけでなく、ブラウザから離れているときにも出します
-- Java Code Submitter の設定と、Easy Test に保存したコードは引き継ぎません
+- Java Code Submitter の設定と、Easy Test+ に保存したコードは引き継ぎません
 - 色の設定は `#rrggbb` の形式だけを受け付けます
 - レーティンググラフの recent は、指定した範囲を表示します。既定は直近20回です
 - ショートカットは、修飾キーまで完全に一致したときだけ動きます
-- Easy Test の下部のパネルの設定ボタンは、CP Toolkit の設定画面を開きます
-- Codeforces では、Easy Test のボタンは飾りのない表示になります
+- Easy Test+ の下部のパネルの設定ボタンは、CP Toolkit の設定画面を開きます
+- Codeforces では、Easy Test+ のボタンは飾りのない表示になります
 
 </details>
 

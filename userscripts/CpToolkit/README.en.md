@@ -30,8 +30,8 @@ The interface follows the language of the site and is available in Japanese and 
 | Site                 | Available features                               |
 |----------------------|--------------------------------------------------|
 | AtCoder              | Every feature except paiza language selection    |
-| yukicoder            | Easy Test                                        |
-| Codeforces           | Easy Test, Java submission helper                |
+| yukicoder            | Easy Test+                                       |
+| Codeforces           | Easy Test+, Java submission helper               |
 | AOJ, Library Checker | Java submission helper                           |
 | paiza                | Java submission helper, paiza language selection |
 
@@ -90,12 +90,12 @@ Everything is enabled from the start, except the features marked <sub>off by def
 
 ### 4.6 Execution
 
-| Feature                                          | What it does                                                                                       |
-|--------------------------------------------------|----------------------------------------------------------------------------------------------------|
-| **Java submission helper** <sub>details</sub>    | Transforms pasted code for submission and adds submit shortcuts                                    |
-| **Local Runner** <sub>details</sub>              | Connects to the local server used to transform and run Java code. It needs a separate installation |
-| **Easy Test** <sub>off by default, details</sub> | Runs samples from the task page and checks the results                                             |
-| **paiza language selection**                     | Selects the specified language on paiza submission pages. It does nothing until you set a language |
+| Feature                                           | What it does                                                                                       |
+|---------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| **Java submission helper** <sub>details</sub>     | Transforms pasted code for submission and adds submit shortcuts                                    |
+| **Local Runner** <sub>details</sub>               | Connects to the local server used to transform and run Java code. It needs a separate installation |
+| **Easy Test+** <sub>off by default, details</sub> | Runs samples from the task page and checks the results                                             |
+| **paiza language selection**                      | Selects the specified language on paiza submission pages. It does nothing until you set a language |
 
 ## 5. Feature details
 
@@ -160,8 +160,9 @@ If you paste code containing `import lib.` while Local Runner is unreachable or 
 </details>
 
 <details>
-<summary><b>5.6 Easy Test</b></summary>
+<summary><b>5.6 Easy Test+</b></summary>
 
+- Based on [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152), with additional features
 - From the task page, you can run samples (Run, Test All Samples) and test before submitting (Test & Submit). A submission can be canceled midway
 - The execution environment can be AtCoder custom test, Python in the browser, PaizaIO or Wandbox. C++ on Wandbox can use AtCoder Library. Code is sent to PaizaIO or Wandbox only when you choose them
 - Output can be compared with an allowable error. The code you ran is saved per task and can be restored with "Restore Last Code"
@@ -185,7 +186,7 @@ The full list is in [COMPATIBILITY.md](https://github.com/nsubaru11/competitive-
 This script sends nothing to the author's servers. Besides the site you are viewing, it connects to other services only in these cases:
 
 - **Your Local Runner** (`http://localhost:8080` by default): Your code is sent to your own PC to transform and run it
-- **PaizaIO and Wandbox**: Your code and input are sent only when you choose them as the Easy Test environment. The script never switches to them automatically
+- **PaizaIO and Wandbox**: Your code and input are sent only when you choose them as the Easy Test+ environment. The script never switches to them automatically
 - **jsDelivr**: KaTeX and Prettify for editorial math and code, Pyodide for running Python in the browser, and AtCoder Library for C++ on Wandbox are fetched only when needed
 
 KaTeX, Prettify, Pyodide and AtCoder Library are loaded at pinned versions. "Add to calendar" only places a link; the contest details reach Google when you open it.
@@ -200,7 +201,7 @@ KaTeX, Prettify, Pyodide and AtCoder Library are loaded at pinned versions. "Add
 - **All editorials**: Fetches only the editorials shown on screen, every 0.5 seconds
 - **Next contests**: Fetches only when you open the menu and remembers it for 1 hour
 - **Performance on the user page graph**: Fetches once when you open a user page
-- **Easy Test**: Accesses the site only when you run code. AtCoder custom tests run one at a time, even across tabs
+- **Easy Test+**: Accesses the site only when you run code. AtCoder custom tests run one at a time, even across tabs
 
 When a request fails, the script waits longer before trying again.
 
@@ -234,14 +235,14 @@ These settings are carried over:
 <summary><b>Differences from the old scripts</b></summary>
 
 - The default filter on the submissions tab has been dropped. Open AC submissions from the AC submission buttons on the task page
-- Easy Test is off by default. It is turned on when you migrate from the old version
+- Easy Test+ is off by default. It is turned on when you migrate from the old version
 - Desktop notifications are shown not only while you view another tab but also while you are away from the browser
-- Java Code Submitter settings and code saved in Easy Test are not carried over
+- Java Code Submitter settings and code saved in Easy Test+ are not carried over
 - Color settings accept only the `#rrggbb` format
 - "recent" on the rating graph shows the specified range. The default is the last 20 contests
 - Shortcuts work only when the modifier keys match exactly
-- The settings button on the bottom panel of Easy Test opens the CP Toolkit settings
-- On Codeforces, the Easy Test buttons are shown without decoration
+- The settings button on the bottom panel of Easy Test+ opens the CP Toolkit settings
+- On Codeforces, the Easy Test+ buttons are shown without decoration
 
 </details>
 

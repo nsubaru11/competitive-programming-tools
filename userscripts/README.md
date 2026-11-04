@@ -58,7 +58,7 @@ CP Toolkit は `@atcoder-tools/shared` の Local Runner API、ジャッジ、提
 | スクリプト                         | CP Toolkit の機能                     |
 |------------------------------------|---------------------------------------|
 | AtCoder Custom Default Submissions | AC 提出へのボタン(既定の絞り込みは廃止) |
-| AtCoder Easy Test for Java         | Easy Test、Local Runner               |
+| AtCoder Easy Test for Java         | Easy Test+、Local Runner              |
 | AtCoder Highlighter                | 問題文の強調表示                      |
 | AtCoder Listing Tasks              | 問題のドロップダウン                  |
 | AtCoder Markdown Copier            | 問題文のコピー                        |

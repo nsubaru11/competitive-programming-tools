@@ -41,7 +41,7 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 
 1. `serve` でサーバーを起動する。`test` などのコマンドを実行すると自動でも起動する
 2. CP Toolkit の設定で「Local Runner」が有効で、接続先の URL が `http://localhost:8080` であることを確かめる
-3. 問題ページからも実行するなら、「Easy Test」を有効にする
+3. 問題ページからも実行するなら、「Easy Test+」を有効にする
 
 ## 安全のために
 
@@ -178,7 +178,7 @@ setheader short C:\path\to\short.txt
 - 名前付きのヘッダーは `--header=<name>` や CP Toolkit の「ヘッダーの名前」で選べます。設定が無い名前はエラーになります
 - `--no-header` で、ヘッダーを付けずに出力します
 - ソースがヘッダーの1行目で始まるときは、重ねて付けません
-- `run`、`test`、`localtest`、`crosscheck` と Easy Test の実行には付けません。行番号が元のソースと揃います
+- `run`、`test`、`localtest`、`crosscheck` と Easy Test+ の実行には付けません。行番号が元のソースと揃います
 
 ## 実行時間の警告
 

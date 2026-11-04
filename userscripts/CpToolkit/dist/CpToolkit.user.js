@@ -2105,9 +2105,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.addHeader": "Add the submission header",
 		"javaSubmit.headerName": "Header name (empty for the default)",
 		"javaSubmit.foldOnPaste": "Fold classes and comments after pasting",
-		"easyTest.title": "Easy Test",
+		"easyTest.title": "Easy Test+",
 		"easyTest.description":
-			"Runs samples from the task page and checks the results. For Java, Local Runner runs the code on your PC and compiles the code you are editing in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.",
+			"Based on AtCoder Easy Test v2, with additional features. Runs samples from the task page and checks the results. For Java, Local Runner runs the code on your PC and compiles the code you are editing in advance. Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons.",
 		"easyTest.precompile": "Precompile edited code with Local Runner",
 		"easyTest.keyboardShortcuts": "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)",
 		"easyTest.savedCodeLimit": "Number of saved solutions",
@@ -2323,9 +2323,9 @@ a:focus > .cp-settings-entry {
 		"javaSubmit.addHeader": "提出用のヘッダーを付ける",
 		"javaSubmit.headerName": "ヘッダーの名前(空欄なら既定)",
 		"javaSubmit.foldOnPaste": "貼り付け後にクラスとコメントを折りたたむ",
-		"easyTest.title": "Easy Test",
+		"easyTest.title": "Easy Test+",
 		"easyTest.description":
-			"問題ページからサンプルを実行して結果を確認します。Java では Local Runner で手元で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
+			"AtCoder Easy Test v2 をもとに、機能を加えたものです。問題ページからサンプルを実行して結果を確認します。Java では Local Runner で手元で実行でき、編集中のコードを事前にコンパイルします。AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください。",
 		"easyTest.precompile": "Local Runner で編集中のコードを事前にコンパイルする",
 		"easyTest.keyboardShortcuts": "ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)",
 		"easyTest.savedCodeLimit": "保存するコードの数",
@@ -7624,14 +7624,14 @@ summary {
 			this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
 			this.dock = createDock({
 				css: easy_test_default,
-				toggleLabel: "Easy Test",
+				toggleLabel: "Easy Test+",
 				closeLabel: translate("settings.close"),
 			});
 			this.panel = createTestPanel(translate, options.allowableError, {
 				onRun: () => void this.runPanel(),
 				onOpenSettings: openSettings,
 			});
-			this.dock.addTab("Easy Test", this.panel.element);
+			this.dock.addTab("Easy Test+", this.panel.element);
 		}
 
 		start() {

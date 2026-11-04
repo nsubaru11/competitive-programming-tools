@@ -53,12 +53,12 @@ class EasyTest {
 		this.context = context;
 		const {options, state, translate, openSettings} = context;
 		this.savedCodes = new SavedCodes(state, options.savedCodeLimit);
-		this.dock = createDock({css, toggleLabel: "Easy Test", closeLabel: translate("settings.close")});
+		this.dock = createDock({css, toggleLabel: "Easy Test+", closeLabel: translate("settings.close")});
 		this.panel = createTestPanel(translate, options.allowableError, {
 			onRun: () => void this.runPanel(),
 			onOpenSettings: openSettings,
 		});
-		this.dock.addTab("Easy Test", this.panel.element);
+		this.dock.addTab("Easy Test+", this.panel.element);
 	}
 
 	start(): void {

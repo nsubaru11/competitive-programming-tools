@@ -85,7 +85,7 @@ CP Toolkit の機能の出典をまとめます。各機能は元のスクリプ
 
 | 機能             | 区分 | スクリプト                                                                | 作者       | ライセンス |
 |------------------|------|---------------------------------------------------------------------------|------------|------------|
-| Easy Test        | 派生 | [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)             | magurofly  | MIT        |
+| Easy Test+       | 派生 | [AtCoder Easy Test v2](https://greasyfork.org/scripts/433152)             | magurofly  | MIT        |
 | Java の提出補助  | 移植 | Java Code Submitter                                                       | nsubaru    | MIT        |
 |                  | 参照 | [AtCoder_submit_keyboard_shortcut](https://greasyfork.org/scripts/378760) | Osmium1008 | MIT        |
 |                  | 参照 | [Atcoder Submission Shortcut](https://greasyfork.org/scripts/509606)      | Rac75116   | MIT        |

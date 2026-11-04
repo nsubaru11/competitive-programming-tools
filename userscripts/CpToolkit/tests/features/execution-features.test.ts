@@ -225,7 +225,7 @@ describe("easyTest", () => {
 			await wait();
 			pressKey("Enter", {ctrlKey: true});
 			await wait();
-			expect(tabLabels()).toEqual(["Easy Test", "#1 Sample 1", "#2 Sample 2"]);
+			expect(tabLabels()).toEqual(["Easy Test+", "#1 Sample 1", "#2 Sample 2"]);
 			open();
 			await wait(30);
 			expect(site.submit).toHaveBeenCalledTimes(1);
@@ -316,7 +316,7 @@ describe("easyTest", () => {
 		});
 		button("Test All Samples")?.click();
 		await wait(60);
-		expect(tabLabels()).toEqual(["Easy Test", "#1 Sample 1", "#2 Sample 2"]);
+		expect(tabLabels()).toEqual(["Easy Test+", "#1 Sample 1", "#2 Sample 2"]);
 		const [input, , expected] = [...(dock()?.querySelector(".result")?.querySelectorAll("textarea") ?? [])];
 		expect(input?.value).toBe("1");
 		expect(expected?.value).toBe("1");
@@ -373,8 +373,8 @@ describe("easyTest", () => {
 		expect(labels()).toEqual(["AC", "AC"]);
 		row()?.querySelector<HTMLElement>(".cp-et-close")?.click();
 		expect(row()).toBeNull();
-		expect(tabLabels()).toEqual(["Easy Test"]);
-		expect(activeTab()).toBe("Easy Test");
+		expect(tabLabels()).toEqual(["Easy Test+"]);
+		expect(activeTab()).toBe("Easy Test+");
 	});
 
 	test("行のラベルからその結果を開ける", async () => {

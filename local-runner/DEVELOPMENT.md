@@ -17,7 +17,7 @@ local-runner/
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
 
-`@atcoder-tools/shared` の URL 生成、Local Runner のリクエスト、Easy Test の判定を使っています。CLI のサンプルの判定は、CP Toolkit の Easy Test と同じ `evaluateEasyTestOutput` です。
+`@atcoder-tools/shared` の URL 生成、Local Runner のリクエスト、Easy Test の判定を使っています。CLI のサンプルの判定は、CP Toolkit の Easy Test+ と同じ `evaluateEasyTestOutput` です。
 
 ## 提出前の処理
 
@@ -49,7 +49,7 @@ local-runner/
 - 実行時はソースを一度だけ `prepare` して変換とコンパイルを行い、以降の各サンプルは `programId` と標準入力だけを送る
 - `lib.io.FastScanner` と `lib.io.FastPrinter` は最小構成の `WarmUp.java` から通常どおり import する。起動時にこのファイルを提出用に変換してからコンパイルし、メモリ入力と破棄出力で `nextInt`、`nextLong`、`println(long)` を実行して、class の解決、依存の解析、インライン、javac、I/O の JIT の経路を温める
 
-Easy Test は最後のエディタの変更から 180ms 後に `prepare` し、得られた `programId` を同じソースのテストで再利用します。貼り付けの直後にテストした場合も、進行中の `prepare` を全サンプルで共有します。旧クライアント向けの `precompile` 要求はすぐに `accepted` を返し、サーバー側の 150ms のデバウンスの後に同じ `prepare` の経路を使います。実行の要求が先に届いたら、待機中の同じ `precompile` を取り消します。
+Easy Test+ は最後のエディタの変更から 180ms 後に `prepare` し、得られた `programId` を同じソースのテストで再利用します。貼り付けの直後にテストした場合も、進行中の `prepare` を全サンプルで共有します。旧クライアント向けの `precompile` 要求はすぐに `accepted` を返し、サーバー側の 150ms のデバウンスの後に同じ `prepare` の経路を使います。実行の要求が先に届いたら、待機中の同じ `precompile` を取り消します。
 
 短縮表記では、コンテスト ID と問題 ID の接頭辞が異なる `jsc2025advance-final`、`jsc2026advance-final`、`tessoku-book` を、それぞれ `abc422`、`abc474`、`tessoku_book` に固定で対応させています。範囲のフォルダ(`451-500` など)はコンテスト名に使いません。
 
