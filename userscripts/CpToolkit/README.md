@@ -113,7 +113,7 @@ Tampermonkey のメニューの「設定を開く」、または AtCoder のヘ�
 </thead>
 <tbody><tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-query.md"><strong>提出一覧の検索条件の保持</strong></a>&emsp;</td>
-<td>「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。URL の言語名の大文字と小文字の違いも補います</td>
+<td>「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-shortcuts.md"><strong>AC 提出へのボタン</strong></a>&emsp;</td>
