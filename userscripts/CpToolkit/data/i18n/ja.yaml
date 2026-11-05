@@ -196,7 +196,6 @@ easyTest.precompile: Local Runner で編集中のコードを事前にコンパ�
 easyTest.keyboardShortcuts: ショートカットを使う(Ctrl+Enter、Alt+Enter、Alt+Esc)
 easyTest.savedCodeLimit: 保存するコードの数
 easyTest.allowableError: 許容誤差
-easyTest.running: "実行中..."
 easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
 easyTest.cancelSubmit: 提出を中止

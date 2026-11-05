@@ -195,7 +195,6 @@ easyTest.precompile: Precompile edited code with Local Runner
 easyTest.keyboardShortcuts: "Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc)"
 easyTest.savedCodeLimit: Number of saved solutions
 easyTest.allowableError: Allowed error
-easyTest.running: "Running..."
 easyTest.run: Run
 easyTest.testAndSubmit: Test & Submit
 easyTest.cancelSubmit: Cancel Submission
