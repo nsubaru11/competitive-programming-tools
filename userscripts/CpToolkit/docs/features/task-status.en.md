@@ -10,7 +10,7 @@
 
 - Colors the rows of the task list and the Tasks tab menu by the results of your submissions
 - Your submission list is read, so submissions both during and after the contest are reflected
-- A task with at least one AC or scored submission gets the accepted color (light green by default), and a task with submissions but none accepted gets the rejected color (light red by default). Submissions still being judged are not counted.
+- A task with at least one AC or scored submission gets the accepted color (light green by default), and a task with submissions but none accepted gets the rejected color (light red by default). Submissions still being judged are not counted. In the image above, A to D are accepted, E is rejected, and F and G have no submissions
 - The colors can be changed in the detailed settings
 - Nothing is fetched while you are logged out or in the first 5 minutes of a contest
 

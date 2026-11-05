@@ -12,7 +12,7 @@ import {submissionQuery} from "@features/submission-query/index";
 import {submissionShortcuts} from "@features/submission-shortcuts/index";
 import {tessokuDifficulty} from "@features/tessoku-difficulty/index";
 import {topLinks} from "@features/top-links/index";
-import {createFakeServices, FakeHttpClient} from "../support/fakes";
+import {createFakePage, createFakeServices, FakeHttpClient} from "../support/fakes";
 
 const run = (feature: Feature, options?: unknown, overrides = {}) => feature.run(options, createFakeServices(overrides));
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,7 +63,7 @@ describe("submissionShortcuts", () => {
 
 	test("AC 提出へのボタンであることが分かるようにまとめて表示する", async () => {
 		renderTitle();
-		await run(submissionShortcuts, {language: "Java"});
+		await run(submissionShortcuts, {language: "Java"}, {page: createFakePage()});
 		const control = document.querySelector(".cp-title-control");
 		expect(control?.firstElementChild?.textContent).toBe("AC提出:");
 		const links = [...(control?.querySelectorAll<HTMLAnchorElement>(".btn-group a") ?? [])];
@@ -78,18 +78,25 @@ describe("submissionShortcuts", () => {
 
 	test("詳細設定で選んだボタンだけを出し、1つもなければ何も出さない", async () => {
 		renderTitle();
-		await run(submissionShortcuts, {byTime: false, byLength: true, byCreated: false, byMemory: true});
+		await run(submissionShortcuts, {byTime: false, byLength: true, byCreated: false, byMemory: true}, {page: createFakePage()});
 		const links = [...document.querySelectorAll(".cp-title-control .btn-group a")];
 		expect(links.map(({textContent}) => textContent)).toEqual(["コード長", "メモリ"]);
 
 		renderTitle();
-		await run(submissionShortcuts, {byTime: false, byLength: false, byCreated: false, byMemory: false});
+		await run(submissionShortcuts, {byTime: false, byLength: false, byCreated: false, byMemory: false}, {page: createFakePage()});
+		expect(document.querySelector(".cp-title-control")).toBeNull();
+	});
+
+	test("コンテスト中は出さない", async () => {
+		renderTitle();
+		const period = {startMs: Date.now() - 60_000, endMs: Date.now() + 60_000};
+		await run(submissionShortcuts, undefined, {page: createFakePage({contestPeriod: () => period})});
 		expect(document.querySelector(".cp-title-control")).toBeNull();
 	});
 
 	test("後始末で取り除く", async () => {
 		renderTitle();
-		const dispose = await run(submissionShortcuts);
+		const dispose = await run(submissionShortcuts, undefined, {page: createFakePage()});
 		dispose?.();
 		expect(document.querySelector(".cp-title-control")).toBeNull();
 	});
@@ -98,7 +105,7 @@ describe("submissionShortcuts", () => {
 		renderTitle();
 		document.body.insertAdjacentHTML("beforeend", '<div id="task-statement"></div>');
 		const write = mock((_text: string) => undefined);
-		await run(submissionShortcuts);
+		await run(submissionShortcuts, undefined, {page: createFakePage()});
 		await run(statementCopy, undefined, {clipboard: {write}, statementConverter: new TurndownStatementConverter()});
 		document.querySelector<HTMLElement>(".pull-right button")?.click();
 		expect(write.mock.calls[0]?.[0]).toStartWith("# A - Sample\n");

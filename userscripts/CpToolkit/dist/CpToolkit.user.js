@@ -1976,7 +1976,7 @@ a:focus > .cp-settings-entry {
 		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
 		"submissionShortcuts.title": "AC submission buttons",
 		"submissionShortcuts.description":
-			"Adds buttons that open the AC submissions for the task, sorted by time, code size, submission time or memory. Choose the buttons to show in the detailed settings.",
+			"Adds buttons that open the AC submissions for the task, sorted by time, code size, submission time or memory. Choose the buttons to show in the detailed settings. They are hidden during a contest.",
 		"submissionShortcuts.language": "Language (empty for all)",
 		"submissionShortcuts.label": "AC submissions",
 		"submissionShortcuts.time": "Time",
@@ -2193,7 +2193,7 @@ a:focus > .cp-settings-entry {
 		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
 		"submissionShortcuts.title": "AC 提出へのボタン",
 		"submissionShortcuts.description":
-			"問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。",
+			"問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。コンテスト中は表示しません。",
 		"submissionShortcuts.language": "言語(空欄ならすべて)",
 		"submissionShortcuts.label": "AC提出",
 		"submissionShortcuts.time": "実行時間",
@@ -9751,9 +9751,14 @@ ${statement_highlight_default}`);
 			byMemory: option.boolean(true, "submissionShortcuts.byMemory"),
 		},
 		live: true,
-		start({options, translate}) {
+		start({options, page, translate}) {
 			const task = parseAtCoderTaskUrl(location.href);
 			const title = document.querySelector(".h2");
+			const period = page.contestPeriod();
+			if (period && page.serverNow() < period.endMs)
+				return () => {
+					return;
+				};
 			const orders = ORDERS.filter((order) => options[order.option]);
 			if (!task || !title || orders.length === 0)
 				return () => {

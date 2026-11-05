@@ -61,7 +61,7 @@ submissionQuery.title: 提出一覧の検索条件の保持
 submissionQuery.description: 提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。
 
 submissionShortcuts.title: AC 提出へのボタン
-submissionShortcuts.description: 問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。
+submissionShortcuts.description: 問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。コンテスト中は表示しません。
 submissionShortcuts.language: 言語(空欄ならすべて)
 submissionShortcuts.label: AC提出
 submissionShortcuts.time: 実行時間

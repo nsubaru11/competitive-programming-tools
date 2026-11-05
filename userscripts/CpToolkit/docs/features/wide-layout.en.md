@@ -8,7 +8,6 @@
 
 - Widens the central column to the width set in the detailed settings, such as `75%` or `1200px`. **`75%` is recommended by the author**
 - The width is empty by default, so nothing changes until you set one
-- When a width is set, the editor gets a gray border so its right edge stands out from the background
 
 ## Detailed settings
 

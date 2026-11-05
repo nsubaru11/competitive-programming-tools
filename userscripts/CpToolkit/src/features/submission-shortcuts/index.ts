@@ -27,9 +27,12 @@ export const submissionShortcuts = defineFeature({
 		byMemory: option.boolean(true, "submissionShortcuts.byMemory"),
 	},
 	live: true,
-	start({options, translate}) {
+	start({options, page, translate}) {
 		const task = parseAtCoderTaskUrl(location.href);
 		const title = document.querySelector(".h2");
+		// コンテスト中は他の人の提出を見られないので、終わるまで出さない
+		const period = page.contestPeriod();
+		if (period && page.serverNow() < period.endMs) return () => undefined;
 		const orders = ORDERS.filter((order) => options[order.option]);
 		if (!task || !title || orders.length === 0) return () => undefined;
 
