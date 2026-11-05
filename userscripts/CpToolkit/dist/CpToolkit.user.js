@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.33
+// @version        1.0.34
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -9712,26 +9712,14 @@ ${statement_highlight_default}`);
 	var SUBMISSION_PAGE_TABS = "#main-container > div.row > div:nth-child(2) > ul > li > a";
 	var LANGUAGE_SELECT2 = 'select[name="f.LanguageName"]';
 
-	function restoreLanguageSelection(services) {
+	function selectQueriedLanguage(page) {
 		const language = new URLSearchParams(location.search).get("f.LanguageName");
 		const select = document.querySelector(LANGUAGE_SELECT2);
-		if (!language || !select || select.value)
-			return () => {
-				return;
-			};
+		if (!language || !select || select.value) return;
 		const option = [...select.options].find(({value}) => value.toLowerCase() === language.toLowerCase());
-		if (!option)
-			return () => {
-				return;
-			};
-		const previous = select.value;
+		if (!option) return;
 		select.value = option.value;
-		services.page.triggerChange(select);
-		return () => {
-			if (select.value !== option.value) return;
-			select.value = previous;
-			services.page.triggerChange(select);
-		};
+		page().triggerChange(select);
 	}
 
 	var submissionQuery = defineFeature({
@@ -9743,23 +9731,13 @@ ${statement_highlight_default}`);
 		routes: ["atcoder:submissions"],
 		phase: "ready",
 		options: {},
-		live: true,
 		start(services) {
-			const tabs = [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2).map((tab) => {
-				const original = tab.getAttribute("href");
-				const url = new URL(original ?? "", location.origin);
+			for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
+				const url = new URL(tab.getAttribute("href") ?? "", location.origin);
 				url.search = location.search;
 				tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
-				return {tab, original};
-			});
-			const restoreLanguage = restoreLanguageSelection(services);
-			return () => {
-				restoreLanguage();
-				for (const {tab, original} of tabs) {
-					if (original === null) tab.removeAttribute("href");
-					else tab.setAttribute("href", original);
-				}
-			};
+			}
+			selectQueriedLanguage(() => services.page);
 		},
 	});
 

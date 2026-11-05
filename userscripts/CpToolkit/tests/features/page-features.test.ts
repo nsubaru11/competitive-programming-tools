@@ -171,27 +171,25 @@ describe("statementCopy", () => {
 });
 
 describe("submissionQuery", () => {
-	test("検索条件を提出ページのタブへ引き継ぎ、後始末で戻す", async () => {
+	test("検索条件を提出ページのタブへ引き継ぐ", async () => {
 		history.replaceState(null, "", "/contests/abc420/submissions?f.Task=abc420_a&f.Status=AC");
 		document.body.innerHTML = `<div id="main-container"><div class="row"><div></div><div><ul>
 			<li><a href="/contests/abc420/submissions">すべての提出</a></li>
 			<li><a href="/contests/abc420/submissions/me">自分の提出</a></li>
 		</ul></div></div></div>`;
-		const dispose = await run(submissionQuery);
+		await run(submissionQuery);
 
-		const hrefs = () => [...document.querySelectorAll("a")].map((link) => link.getAttribute("href"));
-		expect(hrefs()).toEqual([
+		const hrefs = [...document.querySelectorAll("a")].map((link) => link.getAttribute("href"));
+		expect(hrefs).toEqual([
 			"/contests/abc420/submissions?f.Task=abc420_a&f.Status=AC",
 			"/contests/abc420/submissions/me?f.Task=abc420_a&f.Status=AC",
 		]);
-		dispose?.();
-		expect(hrefs()).toEqual(["/contests/abc420/submissions", "/contests/abc420/submissions/me"]);
 	});
 
-	const renderLanguageFilter = (language: string | null, mine = false): HTMLSelectElement => {
+	const renderLanguageFilter = (language: string | null): HTMLSelectElement => {
 		const query = new URLSearchParams({"f.Task": "abc420_a", "f.Status": "AC", orderBy: "source_length"});
 		if (language !== null) query.set("f.LanguageName", language);
-		history.replaceState(null, "", `/contests/abc420/submissions${mine ? "/me" : ""}?${query}`);
+		history.replaceState(null, "", `/contests/abc420/submissions?${query}`);
 		document.body.innerHTML = `<select id="select-language" name="f.LanguageName">
 			<option value=""></option><option value="Python">Python</option>
 			<option value="JavaScript">JavaScript</option><option value="C++">C++</option>
@@ -215,15 +213,6 @@ describe("submissionQuery", () => {
 		expect(new FormData(form).get("f.LanguageName")).toBe(expected);
 	});
 
-	test("自分の提出でも URL の言語を使い、選択を変更した後は後始末で戻さない", async () => {
-		const select = renderLanguageFilter("python", true);
-		const dispose = await run(submissionQuery, undefined, {page: createFakePage()});
-		expect(select.value).toBe("Python");
-		select.value = "C++";
-		dispose?.();
-		expect(select.value).toBe("C++");
-	});
-
 	test.each([null, "", "py", "unknown"])("言語が %s なら選択欄を変更しない", async (language) => {
 		const select = renderLanguageFilter(language);
 		const triggerChange = mock((_element: object) => undefined);
@@ -232,18 +221,12 @@ describe("submissionQuery", () => {
 		expect(triggerChange).not.toHaveBeenCalled();
 	});
 
-	test("後始末で言語欄を戻し、ページが選択済みの値は変更しない", async () => {
+	test("ページが選択済みの値は変更しない", async () => {
 		const select = renderLanguageFilter("python");
+		select.value = "C++";
 		const triggerChange = mock((_element: object) => undefined);
-		const services = {page: createFakePage({triggerChange})};
-		const dispose = await run(submissionQuery, undefined, services);
-		dispose?.();
-		expect(select.value).toBe("");
-		expect(triggerChange).toHaveBeenCalledTimes(2);
-		select.value = "Python";
-		triggerChange.mockClear();
-		await run(submissionQuery, undefined, services);
-		expect(select.value).toBe("Python");
+		await run(submissionQuery, undefined, {page: createFakePage({triggerChange})});
+		expect(select.value).toBe("C++");
 		expect(triggerChange).not.toHaveBeenCalled();
 	});
 });
