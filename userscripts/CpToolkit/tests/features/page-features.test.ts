@@ -87,6 +87,78 @@ describe("submissionShortcuts", () => {
 		expect(document.querySelector(".cp-title-control")).toBeNull();
 	});
 
+	const renderLanguageFilter = (language: string | null, mine = false): HTMLSelectElement => {
+		const query = new URLSearchParams({"f.Task": "abc420_a", "f.Status": "AC", orderBy: "source_length"});
+		if (language !== null) query.set("f.LanguageName", language);
+		history.replaceState(null, "", `/contests/abc420/submissions${mine ? "/me" : ""}?${query}`);
+		document.body.innerHTML = `<select id="select-language" name="f.LanguageName">
+			<option value=""></option><option value="Python">Python</option>
+			<option value="JavaScript">JavaScript</option><option value="C++">C++</option>
+		</select>`;
+		return document.querySelector<HTMLSelectElement>("#select-language")!;
+	};
+
+	test.each([
+		["python", "Python"], ["PYTHON", "Python"], ["Python", "Python"],
+		["javascript", "JavaScript"], ["c++", "C++"],
+	])("%s の検索条件を言語欄にも表示する", async (language, expected) => {
+		const select = renderLanguageFilter(language);
+		const search = location.search;
+		expect(submissionShortcuts.routes).toContain("atcoder:submissions");
+		const triggerChange = mock((_element: object) => undefined);
+		await run(submissionShortcuts, {language: "Java"}, {
+			isOnRoute: (route: string) => route === "atcoder:submissions",
+			page: createFakePage({triggerChange}),
+		});
+		expect(select.value).toBe(expected);
+		expect(triggerChange).toHaveBeenCalledWith(select);
+		expect(location.search).toBe(search);
+		const form = document.createElement("form");
+		form.append(select);
+		expect(new FormData(form).get("f.LanguageName")).toBe(expected);
+	});
+
+	test("自分の提出でも URL の言語を使い、選択を変更した後は後始末で戻さない", async () => {
+		const select = renderLanguageFilter("python", true);
+		const dispose = await run(submissionShortcuts, undefined, {
+			isOnRoute: (route: string) => route === "atcoder:submissions",
+			page: createFakePage(),
+		});
+		expect(select.value).toBe("Python");
+		select.value = "C++";
+		dispose?.();
+		expect(select.value).toBe("C++");
+	});
+
+	test.each([null, "", "py", "unknown"])("言語が %s なら選択欄を変更しない", async (language) => {
+		const select = renderLanguageFilter(language);
+		const triggerChange = mock((_element: object) => undefined);
+		await run(submissionShortcuts, {language: "Python"}, {
+			isOnRoute: (route: string) => route === "atcoder:submissions",
+			page: createFakePage({triggerChange}),
+		});
+		expect(select.value).toBe("");
+		expect(triggerChange).not.toHaveBeenCalled();
+	});
+
+	test("後始末で言語欄を戻し、ページが選択済みの値は変更しない", async () => {
+		const select = renderLanguageFilter("python");
+		const triggerChange = mock((_element: object) => undefined);
+		const services = {
+			isOnRoute: (route: string) => route === "atcoder:submissions",
+			page: createFakePage({triggerChange}),
+		};
+		const dispose = await run(submissionShortcuts, undefined, services);
+		dispose?.();
+		expect(select.value).toBe("");
+		expect(triggerChange).toHaveBeenCalledTimes(2);
+		select.value = "Python";
+		triggerChange.mockClear();
+		await run(submissionShortcuts, undefined, services);
+		expect(select.value).toBe("Python");
+		expect(triggerChange).not.toHaveBeenCalled();
+	});
+
 	test("コンテスト中は出さない", async () => {
 		renderTitle();
 		const period = {startMs: Date.now() - 60_000, endMs: Date.now() + 60_000};

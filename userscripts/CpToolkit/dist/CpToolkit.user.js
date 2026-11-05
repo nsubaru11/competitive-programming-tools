@@ -9733,13 +9733,36 @@ ${statement_highlight_default}`);
 		{option: "byCreated", orderBy: "created", label: "submissionShortcuts.created"},
 		{option: "byMemory", orderBy: "memory_consumption", label: "submissionShortcuts.memory"},
 	];
+
+	function restoreLanguageSelection(page) {
+		const language = new URLSearchParams(location.search).get("f.LanguageName");
+		const select = document.querySelector('select[name="f.LanguageName"]');
+		if (!language || !select || select.value)
+			return () => {
+				return;
+			};
+		const option2 = [...select.options].find(({value}) => value.toLowerCase() === language.toLowerCase());
+		if (!option2)
+			return () => {
+				return;
+			};
+		const previous = select.value;
+		select.value = option2.value;
+		page.triggerChange(select);
+		return () => {
+			if (select.value !== option2.value) return;
+			select.value = previous;
+			page.triggerChange(select);
+		};
+	}
+
 	var submissionShortcuts = defineFeature({
 		id: "submission-shortcuts",
 		title: "submissionShortcuts.title",
 		description: "submissionShortcuts.description",
 		category: "category.submission",
 		defaultEnabled: true,
-		routes: ["atcoder:task"],
+		routes: ["atcoder:task", "atcoder:submissions"],
 		phase: "ready",
 		options: {
 			language: option.text("", "submissionShortcuts.language"),
@@ -9749,7 +9772,8 @@ ${statement_highlight_default}`);
 			byMemory: option.boolean(true, "submissionShortcuts.byMemory"),
 		},
 		live: true,
-		start({options, page, translate}) {
+		start({options, page, translate, isOnRoute}) {
+			if (isOnRoute("atcoder:submissions")) return restoreLanguageSelection(page);
 			const task = parseAtCoderTaskUrl(location.href);
 			const title = document.querySelector(".h2");
 			const period = page.contestPeriod();

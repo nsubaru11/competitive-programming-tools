@@ -12,6 +12,7 @@
 - Other people's submissions are hidden during a contest, so the buttons appear only after the contest ends
 - Choose the buttons to show with the checkboxes in the detailed settings. Nothing is shown when none is checked
 - Setting a language in the detailed settings narrows the list to that language
+- Language names are matched against the submission page's options without regard to case, so `python` also displays `Python` in the language filter
 
 ## Detailed settings
 
@@ -28,3 +29,4 @@ Change these under "Detailed settings" of each feature in the settings.
 ## Pages
 
 - Task pages
+- Submission list pages (reflects the URL's language filter in the selection)
