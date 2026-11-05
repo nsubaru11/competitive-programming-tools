@@ -1973,7 +1973,8 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.samples": "Samples",
 		"efficientLayout.ioFormat": "Input and output",
 		"submissionQuery.title": "Keep submission filters",
-		"submissionQuery.description": "Keeps search filters when switching between All and My submissions.",
+		"submissionQuery.description":
+			"Keeps search filters when switching between All and My submissions, and shows the language in the filter even when the URL uses different letter case.",
 		"submissionShortcuts.title": "AC submission buttons",
 		"submissionShortcuts.description":
 			"Adds buttons that open the AC submissions for the task, sorted by time, code size, submission time or memory. Choose the buttons to show in the detailed settings. They are hidden during a contest.",
@@ -2189,7 +2190,8 @@ a:focus > .cp-settings-entry {
 		"efficientLayout.samples": "入出力例",
 		"efficientLayout.ioFormat": "入出力形式",
 		"submissionQuery.title": "提出一覧の検索条件の保持",
-		"submissionQuery.description": "提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。",
+		"submissionQuery.description":
+			"提出一覧の「すべての提出」と「自分の提出」を切り替えても、検索条件を保ちます。URL の言語名の大文字と小文字が選択肢と違っていても、言語欄に表示します。",
 		"submissionShortcuts.title": "AC 提出へのボタン",
 		"submissionShortcuts.description":
 			"問題ページに、この問題の AC 提出を実行時間、コード長、提出時間、メモリの順で開くボタンを追加します。出すボタンは詳細設定で選べます。コンテスト中は表示しません。",
@@ -9708,6 +9710,30 @@ ${statement_highlight_default}`);
 
 	// CpToolkit/src/features/submission-query/index.ts
 	var SUBMISSION_PAGE_TABS = "#main-container > div.row > div:nth-child(2) > ul > li > a";
+	var LANGUAGE_SELECT2 = 'select[name="f.LanguageName"]';
+
+	function restoreLanguageSelection(services) {
+		const language = new URLSearchParams(location.search).get("f.LanguageName");
+		const select = document.querySelector(LANGUAGE_SELECT2);
+		if (!language || !select || select.value)
+			return () => {
+				return;
+			};
+		const option = [...select.options].find(({value}) => value.toLowerCase() === language.toLowerCase());
+		if (!option)
+			return () => {
+				return;
+			};
+		const previous = select.value;
+		select.value = option.value;
+		services.page.triggerChange(select);
+		return () => {
+			if (select.value !== option.value) return;
+			select.value = previous;
+			services.page.triggerChange(select);
+		};
+	}
+
 	var submissionQuery = defineFeature({
 		id: "submission-query",
 		title: "submissionQuery.title",
@@ -9717,12 +9743,23 @@ ${statement_highlight_default}`);
 		routes: ["atcoder:submissions"],
 		phase: "ready",
 		options: {},
-		start() {
-			for (const tab of [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2)) {
-				const url = new URL(tab.getAttribute("href") ?? "", location.origin);
+		live: true,
+		start(services) {
+			const tabs = [...document.querySelectorAll(SUBMISSION_PAGE_TABS)].slice(0, 2).map((tab) => {
+				const original = tab.getAttribute("href");
+				const url = new URL(original ?? "", location.origin);
 				url.search = location.search;
 				tab.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
-			}
+				return {tab, original};
+			});
+			const restoreLanguage = restoreLanguageSelection(services);
+			return () => {
+				restoreLanguage();
+				for (const {tab, original} of tabs) {
+					if (original === null) tab.removeAttribute("href");
+					else tab.setAttribute("href", original);
+				}
+			};
 		},
 	});
 
