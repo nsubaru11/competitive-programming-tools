@@ -10679,11 +10679,6 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 	max-width: 100% !important;
 	transition: none !important;
 }
-
-/* エディタは背景と同じ白なので、広げると右端が分からなくなる */
-#editor {
-	border: 1px solid #ccc;
-}
 `;
 
 	// CpToolkit/src/features/wide-layout/index.ts
