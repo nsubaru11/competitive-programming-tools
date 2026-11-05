@@ -113,7 +113,7 @@ All features are enabled from the start, except those marked <sub>off by default
 </thead>
 <tbody><tr>
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-query.en.md"><strong>Keep submission filters</strong></a>&emsp;</td>
-<td>Keeps search filters when switching between All and My submissions</td>
+<td>Keeps search filters when switching between All and My submissions, and tolerates letter case in the URL's language name</td>
 </tr>
 <tr style="background-color: rgba(128, 128, 128, 0.1)">
 <td><a href="https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/docs/features/submission-shortcuts.en.md"><strong>AC submission buttons</strong></a>&emsp;</td>

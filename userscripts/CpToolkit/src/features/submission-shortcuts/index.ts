@@ -1,7 +1,6 @@
 import {buildAtCoderSubmissionsQuery, parseAtCoderTaskUrl} from "@atcoder-tools/shared";
 import {option} from "@domain/settings/option";
 import {defineFeature} from "@application/feature/definition";
-import type {PageBridge} from "@application/ports/page-bridge";
 import {h} from "@ui/element";
 
 /** ボタンにできる並び順。表示するかどうかは詳細設定で選ぶ。 */
@@ -12,31 +11,13 @@ const ORDERS = [
 	{option: "byMemory", orderBy: "memory_consumption", label: "submissionShortcuts.memory"},
 ] as const;
 
-/** 検索は大小文字を区別しないが、サイトの言語欄の選択は完全一致なので補う。 */
-function restoreLanguageSelection(page: PageBridge): () => void {
-	const language = new URLSearchParams(location.search).get("f.LanguageName");
-	const select = document.querySelector<HTMLSelectElement>('select[name="f.LanguageName"]');
-	if (!language || !select || select.value) return () => undefined;
-	const option = [...select.options].find(({value}) => value.toLowerCase() === language.toLowerCase());
-	if (!option) return () => undefined;
-	const previous = select.value;
-	select.value = option.value;
-	page.triggerChange(select);
-	return () => {
-		// ユーザーが別の言語を選んだ場合は、その選択を残す。
-		if (select.value !== option.value) return;
-		select.value = previous;
-		page.triggerChange(select);
-	};
-}
-
 export const submissionShortcuts = defineFeature({
 	id: "submission-shortcuts",
 	title: "submissionShortcuts.title",
 	description: "submissionShortcuts.description",
 	category: "category.submission",
 	defaultEnabled: true,
-	routes: ["atcoder:task", "atcoder:submissions"],
+	routes: ["atcoder:task"],
 	phase: "ready",
 	options: {
 		language: option.text("", "submissionShortcuts.language"),
@@ -46,8 +27,7 @@ export const submissionShortcuts = defineFeature({
 		byMemory: option.boolean(true, "submissionShortcuts.byMemory"),
 	},
 	live: true,
-	start({options, page, translate, isOnRoute}) {
-		if (isOnRoute("atcoder:submissions")) return restoreLanguageSelection(page);
+	start({options, page, translate}) {
 		const task = parseAtCoderTaskUrl(location.href);
 		const title = document.querySelector(".h2");
 		// コンテスト中は他の人の提出を見られないので、終わるまで出さない
