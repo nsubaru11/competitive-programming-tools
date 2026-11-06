@@ -136,7 +136,6 @@ export class CreateJsRatingGraph implements RatingGraph {
 		const count = history.length;
 		if (count === 0) return;
 
-		cj.Ticker.removeAllEventListeners("tick");
 		stageGraph.removeAllChildren();
 		stageStatus.removeAllChildren();
 		const graphSize = scaleStage(stageGraph, graphCanvas);

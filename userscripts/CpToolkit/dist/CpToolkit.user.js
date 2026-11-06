@@ -3570,7 +3570,6 @@ a:focus > .cp-settings-entry {
 			const performances = this.prepared.performances.slice(-shown);
 			const count = history.length;
 			if (count === 0) return;
-			cj.Ticker.removeAllEventListeners("tick");
 			stageGraph.removeAllChildren();
 			stageStatus.removeAllChildren();
 			const graphSize = scaleStage(stageGraph, graphCanvas);
