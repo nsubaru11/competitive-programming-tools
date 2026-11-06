@@ -26,13 +26,17 @@ export function splitNumbers(text: string): TextSegment[] {
 	return segments;
 }
 
-/** 「Time Limit: 2 sec」のような表記を、数値とそれ以外に分ける。表記がなければ null を返す。 */
-export function splitLimitValue(text: string, keyword: string): TextSegment[] | null {
+/**
+ * 「Time Limit: 2 sec」のような表記を、数値とそれ以外に分ける。
+ * 値が ignoredValue と等しい表記は強調しない。強調する値がなければ null を返す。
+ */
+export function splitLimitValue(text: string, keyword: string, ignoredValue?: number): TextSegment[] | null {
 	const pattern = new RegExp(`${keyword}\\s*[:：]\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)`, "g");
 	const segments: TextSegment[] = [];
 	let position = 0;
 	for (const match of text.matchAll(pattern)) {
 		const value = match[1] ?? "";
+		if (Number(value.replaceAll(",", "")) === ignoredValue) continue;
 		const valueStart = match.index + match[0].length - value.length;
 		segments.push({text: text.slice(position, valueStart), emphasized: false});
 		segments.push({text: value, emphasized: true});

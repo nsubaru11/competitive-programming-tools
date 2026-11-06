@@ -57,20 +57,26 @@ function highlightNumbers(): void {
 	}
 }
 
-function emphasizeLimit(root: Element, keywords: readonly string[], className: string): void {
+function emphasizeLimit(
+	root: Element,
+	keywords: readonly string[],
+	className: string,
+	ignoredValue: number | undefined,
+): void {
 	for (const keyword of keywords) {
 		for (const node of collectTextNodes(root, (text) => text.includes(keyword))) {
-			const segments = splitLimitValue(node.data, keyword);
+			const segments = splitLimitValue(node.data, keyword, ignoredValue);
 			if (segments) replaceWithSegments(node, segments, className);
 		}
 	}
 }
 
-function emphasizeLimits(): void {
+function emphasizeLimits(always: boolean): void {
 	const root = document.getElementById("main-container");
 	if (!root) return;
-	emphasizeLimit(root, statementCatalog.timeLimitKeywords, TIME_CLASS);
-	emphasizeLimit(root, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
+	const {timeLimitKeywords, memoryLimitKeywords, commonTimeLimit, commonMemoryLimit} = statementCatalog;
+	emphasizeLimit(root, timeLimitKeywords, TIME_CLASS, always ? undefined : commonTimeLimit);
+	emphasizeLimit(root, memoryLimitKeywords, MEMORY_CLASS, always ? undefined : commonMemoryLimit);
 }
 
 export const statementHighlight = defineFeature({
@@ -86,6 +92,7 @@ export const statementHighlight = defineFeature({
 		variableColor: option.color("#9e2927", "statementHighlight.variableColor"),
 		timeColor: option.color("#b3542a", "statementHighlight.timeColor"),
 		memoryColor: option.color("#1d643b", "statementHighlight.memoryColor"),
+		alwaysEmphasizeLimits: option.boolean(false, "statementHighlight.alwaysEmphasizeLimits"),
 	},
 	live: true,
 	start({options}) {
@@ -105,7 +112,7 @@ ${css}`);
 				timer = undefined;
 				markTargetSections();
 				highlightNumbers();
-				emphasizeLimits();
+				emphasizeLimits(options.alwaysEmphasizeLimits);
 			}, HIGHLIGHT_DELAY_MS);
 		};
 		schedule();

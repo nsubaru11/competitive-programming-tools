@@ -40,6 +40,8 @@ export type StatementCatalog = {
 	readonly sampleHeadings: readonly string[];
 	readonly timeLimitKeywords: readonly string[];
 	readonly memoryLimitKeywords: readonly string[];
+	readonly commonTimeLimit: number;
+	readonly commonMemoryLimit: number;
 	readonly skipTags: readonly string[];
 };
 

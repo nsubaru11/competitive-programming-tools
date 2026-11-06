@@ -39,6 +39,7 @@ statementHighlight.numberColor: Number color
 statementHighlight.variableColor: Variable color
 statementHighlight.timeColor: Time limit color
 statementHighlight.memoryColor: Memory limit color
+statementHighlight.alwaysEmphasizeLimits: Also emphasize limits of 2 sec and 1024 MiB
 
 statementCopy.title: Copy statement
 statementCopy.description: Adds buttons that copy each section or the whole statement.

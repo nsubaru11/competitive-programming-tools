@@ -40,6 +40,7 @@ statementHighlight.numberColor: 数字の色
 statementHighlight.variableColor: 変数の色
 statementHighlight.timeColor: 実行時間制限の色
 statementHighlight.memoryColor: メモリ制限の色
+statementHighlight.alwaysEmphasizeLimits: 2 秒と 1024 MiB の制限も強調する
 
 statementCopy.title: 問題文のコピー
 statementCopy.description: 問題文の各項目と全体をコピーするボタンを追加します。

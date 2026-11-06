@@ -47,6 +47,13 @@ describe("問題文の字句分割", () => {
 		expect(segments?.map((part) => part.text).join("")).toBe("Time Limit: 2 sec / Memory Limit: 1024 MiB");
 	});
 
+	test("除外する値と等しい制限は強調しない", () => {
+		expect(splitLimitValue("Time Limit: 2 sec", "Time Limit", 2)).toBeNull();
+		expect(splitLimitValue("Memory Limit: 1,024 MiB", "Memory Limit", 1024)).toBeNull();
+		const segments = splitLimitValue("実行時間制限: 3 sec", "実行時間制限", 2);
+		expect(segments?.filter((part) => part.emphasized).map((part) => part.text)).toEqual(["3"]);
+	});
+
 	test("値が書かれていなければ null を返す", () => {
 		expect(splitLimitValue("実行時間制限について", "実行時間制限")).toBeNull();
 	});

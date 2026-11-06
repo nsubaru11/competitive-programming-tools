@@ -27,24 +27,38 @@ afterEach(() => {
 });
 
 describe("statementHighlight", () => {
-	test("対象の見出しの数字と、実行時間の値を強調する", async () => {
+	const renderStatement = (limits: string): void => {
 		document.body.innerHTML = `
 			<div id="main-container">
-				<p>Time Limit: 2 sec / Memory Limit: 1024 MiB</p>
+				<p>${limits}</p>
 				<div id="task-statement">
 					<section><h3>制約</h3><p>1 以上 100 以下</p></section>
 					<section><h3>入力例 1</h3><p>42</p></section>
 				</div>
 			</div>`;
+	};
+
+	test("対象の見出しの数字と、よくある値と異なる制限を強調する", async () => {
+		renderStatement("Time Limit: 3 sec / Memory Limit: 1024 MiB");
 		const dispose = await run(statementHighlight);
 		await wait(150);
 
 		expect([...document.querySelectorAll(".cp-number")].map((element) => element.textContent)).toEqual(["1", "100"]);
-		expect(document.querySelector(".cp-time-limit")?.textContent).toBe("2");
-		expect(document.querySelector(".cp-memory-limit")?.textContent).toBe("1024");
-		expect(document.querySelector("#main-container p")?.textContent).toBe("Time Limit: 2 sec / Memory Limit: 1024 MiB");
+		expect(document.querySelector(".cp-time-limit")?.textContent).toBe("3");
+		expect(document.querySelector(".cp-memory-limit")).toBeNull();
+		expect(document.querySelector("#main-container p")?.textContent).toBe("Time Limit: 3 sec / Memory Limit: 1024 MiB");
 		dispose?.();
 		expect(document.querySelector("style")).toBeNull();
+	});
+
+	test("設定すると 2 秒と 1024 MiB の制限も強調する", async () => {
+		renderStatement("Time Limit: 2 sec / Memory Limit: 1024 MiB");
+		const dispose = await run(statementHighlight, {alwaysEmphasizeLimits: true});
+		await wait(150);
+
+		expect(document.querySelector(".cp-time-limit")?.textContent).toBe("2");
+		expect(document.querySelector(".cp-memory-limit")?.textContent).toBe("1024");
+		dispose?.();
 	});
 
 	test("設定した色を反映する", async () => {

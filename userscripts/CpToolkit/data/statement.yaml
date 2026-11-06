@@ -4,5 +4,9 @@ sampleHeadings: [入力例, 出力例, Sample Input, Sample Output]
 timeLimitKeywords: [Time Limit, 実行時間制限]
 memoryLimitKeywords: [Memory Limit, メモリ制限]
 
+# よくある制限の値。既定ではこの値と同じ制限は強調しない
+commonTimeLimit: 2
+commonMemoryLimit: 1024
+
 # 数字の強調から除外するタグ
 skipTags: [SCRIPT, STYLE, CODE, PRE, VAR, KBD, SAMP]

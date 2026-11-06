@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.34
+// @version        1.0.35
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1958,6 +1958,7 @@ a:focus > .cp-settings-entry {
 		"statementHighlight.variableColor": "Variable color",
 		"statementHighlight.timeColor": "Time limit color",
 		"statementHighlight.memoryColor": "Memory limit color",
+		"statementHighlight.alwaysEmphasizeLimits": "Also emphasize limits of 2 sec and 1024 MiB",
 		"statementCopy.title": "Copy statement",
 		"statementCopy.description": "Adds buttons that copy each section or the whole statement.",
 		"statementCopy.format": "Copy format",
@@ -2174,6 +2175,7 @@ a:focus > .cp-settings-entry {
 		"statementHighlight.variableColor": "変数の色",
 		"statementHighlight.timeColor": "実行時間制限の色",
 		"statementHighlight.memoryColor": "メモリ制限の色",
+		"statementHighlight.alwaysEmphasizeLimits": "2 秒と 1024 MiB の制限も強調する",
 		"statementCopy.title": "問題文のコピー",
 		"statementCopy.description": "問題文の各項目と全体をコピーするボタンを追加します。",
 		"statementCopy.format": "コピーする形式",
@@ -3012,6 +3014,8 @@ a:focus > .cp-settings-entry {
 		sampleHeadings: ["入力例", "出力例", "Sample Input", "Sample Output"],
 		timeLimitKeywords: ["Time Limit", "実行時間制限"],
 		memoryLimitKeywords: ["Memory Limit", "メモリ制限"],
+		commonTimeLimit: 2,
+		commonMemoryLimit: 1024,
 		skipTags: ["SCRIPT", "STYLE", "CODE", "PRE", "VAR", "KBD", "SAMP"],
 	};
 	// CpToolkit/data/tessoku.yaml
@@ -9542,12 +9546,13 @@ ${body}`.trim();
 		return segments;
 	}
 
-	function splitLimitValue(text, keyword) {
+	function splitLimitValue(text, keyword, ignoredValue) {
 		const pattern = new RegExp(`${keyword}\\s*[:：]\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)`, "g");
 		const segments = [];
 		let position = 0;
 		for (const match of text.matchAll(pattern)) {
 			const value = match[1] ?? "";
+			if (Number(value.replaceAll(",", "")) === ignoredValue) continue;
 			const valueStart = match.index + match[0].length - value.length;
 			segments.push({text: text.slice(position, valueStart), emphasized: false});
 			segments.push({text: value, emphasized: true});
@@ -9642,20 +9647,21 @@ ${body}`.trim();
 		}
 	}
 
-	function emphasizeLimit(root, keywords, className) {
+	function emphasizeLimit(root, keywords, className, ignoredValue) {
 		for (const keyword of keywords) {
 			for (const node of collectTextNodes(root, (text) => text.includes(keyword))) {
-				const segments = splitLimitValue(node.data, keyword);
+				const segments = splitLimitValue(node.data, keyword, ignoredValue);
 				if (segments) replaceWithSegments(node, segments, className);
 			}
 		}
 	}
 
-	function emphasizeLimits() {
+	function emphasizeLimits(always) {
 		const root = document.getElementById("main-container");
 		if (!root) return;
-		emphasizeLimit(root, statementCatalog.timeLimitKeywords, TIME_CLASS);
-		emphasizeLimit(root, statementCatalog.memoryLimitKeywords, MEMORY_CLASS);
+		const {timeLimitKeywords, memoryLimitKeywords, commonTimeLimit, commonMemoryLimit} = statementCatalog;
+		emphasizeLimit(root, timeLimitKeywords, TIME_CLASS, always ? undefined : commonTimeLimit);
+		emphasizeLimit(root, memoryLimitKeywords, MEMORY_CLASS, always ? undefined : commonMemoryLimit);
 	}
 
 	var statementHighlight = defineFeature({
@@ -9671,6 +9677,7 @@ ${body}`.trim();
 			variableColor: option.color("#9e2927", "statementHighlight.variableColor"),
 			timeColor: option.color("#b3542a", "statementHighlight.timeColor"),
 			memoryColor: option.color("#1d643b", "statementHighlight.memoryColor"),
+			alwaysEmphasizeLimits: option.boolean(false, "statementHighlight.alwaysEmphasizeLimits"),
 		},
 		live: true,
 		start({options}) {
@@ -9688,7 +9695,7 @@ ${statement_highlight_default}`);
 					timer = undefined;
 					markTargetSections();
 					highlightNumbers();
-					emphasizeLimits();
+					emphasizeLimits(options.alwaysEmphasizeLimits);
 				}, HIGHLIGHT_DELAY_MS);
 			};
 			schedule();
