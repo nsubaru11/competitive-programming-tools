@@ -12,6 +12,12 @@ type Prepared = {
 	readonly performances: readonly number[];
 	readonly graphCanvas: HTMLCanvasElement;
 	readonly statusCanvas: HTMLCanvasElement;
+	/**
+	 * canvas ごとに1つだけ作り、描き直すときは中身を空にして使い回す。
+	 * 作り直すと古い Stage が同じ canvas のマウス操作に反応し続け、前の図を描き戻してしまう。
+	 */
+	readonly stageGraph: Stage;
+	readonly stageStatus: Stage;
 };
 
 type Particle = {
@@ -92,7 +98,6 @@ function scaleStage(stage: Stage, canvas: HTMLCanvasElement): {width: number; he
 		maxWidth: `${width}px`,
 		maxHeight: `${height}px`,
 	});
-	stage.enableMouseOver();
 	return {width, height};
 }
 
@@ -113,13 +118,17 @@ export class CreateJsRatingGraph implements RatingGraph {
 		const graphCanvas = replaceCanvas("ratingGraph");
 		const statusCanvas = replaceCanvas("ratingStatus");
 		if (!graphCanvas || !statusCanvas) return false;
-		this.prepared = {cj, history, performances, graphCanvas, statusCanvas};
+		const stageGraph = new cj.Stage(graphCanvas);
+		const stageStatus = new cj.Stage(statusCanvas);
+		stageGraph.enableMouseOver();
+		stageStatus.enableMouseOver();
+		this.prepared = {cj, history, performances, graphCanvas, statusCanvas, stageGraph, stageStatus};
 		return history.length > 0;
 	}
 
 	draw({showPerformance, recent}: RatingGraphView): void {
 		if (!this.prepared) return;
-		const {cj, graphCanvas, statusCanvas} = this.prepared;
+		const {cj, graphCanvas, statusCanvas, stageGraph, stageStatus} = this.prepared;
 		const total = this.prepared.history.length;
 		const shown = recent ? recentCount(recent, total) : total;
 		const history = this.prepared.history.slice(-shown);
@@ -127,8 +136,9 @@ export class CreateJsRatingGraph implements RatingGraph {
 		const count = history.length;
 		if (count === 0) return;
 
-		const stageGraph = new cj.Stage(graphCanvas);
-		const stageStatus = new cj.Stage(statusCanvas);
+		cj.Ticker.removeAllEventListeners("tick");
+		stageGraph.removeAllChildren();
+		stageStatus.removeAllChildren();
 		const graphSize = scaleStage(stageGraph, graphCanvas);
 		const statusSize = scaleStage(stageStatus, statusCanvas);
 		const panelWidth = graphSize.width - OFFSET_X - 10;

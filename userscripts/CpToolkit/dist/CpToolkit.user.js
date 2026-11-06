@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.36
+// @version        1.0.37
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -3534,7 +3534,6 @@ a:focus > .cp-settings-entry {
 			maxWidth: `${width}px`,
 			maxHeight: `${height}px`,
 		});
-		stage.enableMouseOver();
 		return {width, height};
 	}
 
@@ -3554,21 +3553,26 @@ a:focus > .cp-settings-entry {
 			const graphCanvas = replaceCanvas("ratingGraph");
 			const statusCanvas = replaceCanvas("ratingStatus");
 			if (!graphCanvas || !statusCanvas) return false;
-			this.prepared = {cj, history, performances, graphCanvas, statusCanvas};
+			const stageGraph = new cj.Stage(graphCanvas);
+			const stageStatus = new cj.Stage(statusCanvas);
+			stageGraph.enableMouseOver();
+			stageStatus.enableMouseOver();
+			this.prepared = {cj, history, performances, graphCanvas, statusCanvas, stageGraph, stageStatus};
 			return history.length > 0;
 		}
 
 		draw({showPerformance, recent}) {
 			if (!this.prepared) return;
-			const {cj, graphCanvas, statusCanvas} = this.prepared;
+			const {cj, graphCanvas, statusCanvas, stageGraph, stageStatus} = this.prepared;
 			const total = this.prepared.history.length;
 			const shown = recent ? recentCount(recent, total) : total;
 			const history = this.prepared.history.slice(-shown);
 			const performances = this.prepared.performances.slice(-shown);
 			const count = history.length;
 			if (count === 0) return;
-			const stageGraph = new cj.Stage(graphCanvas);
-			const stageStatus = new cj.Stage(statusCanvas);
+			cj.Ticker.removeAllEventListeners("tick");
+			stageGraph.removeAllChildren();
+			stageStatus.removeAllChildren();
 			const graphSize = scaleStage(stageGraph, graphCanvas);
 			const statusSize = scaleStage(stageStatus, statusCanvas);
 			const panelWidth = graphSize.width - OFFSET_X - 10;

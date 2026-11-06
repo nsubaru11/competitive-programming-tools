@@ -49,6 +49,7 @@ export type Shadow = object;
 export type Container = DisplayObject & {
 	shadow: Shadow | null;
 	addChild(child: DisplayObject): void;
+	removeAllChildren(): void;
 };
 
 export type Stage = Container & {
