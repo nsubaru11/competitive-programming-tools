@@ -10,7 +10,7 @@
 
 - Every occurrence of the hovered variable or number in the statement is highlighted. Moving away clears it
 - Click to pin the highlight. Click again or press <kbd>Esc</kbd> to clear it
-- A number with an exponent, such as the "10" in "10<sup>5</sup>", counts as the same number as any other "10"
+- Numbers such as "998244353" and "10<sup>9</sup>" are treated as single units. A number with an exponent matches only numbers with the same exponent
 - Variables and numbers can be switched separately in the detailed settings
 
 ## Detailed settings

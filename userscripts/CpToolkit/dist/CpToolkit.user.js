@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.35
+// @version        1.0.36
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -10415,12 +10415,17 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 	var HIGHLIGHT_CLASS = "cp-variable";
 	var PINNED_CLASS = "cp-variable-pinned";
 
-	function isNumberLeaf(element) {
+	function isPlainLeaf(element) {
 		return (
+			element !== null &&
+			element.classList.contains("mord") &&
 			element.childElementCount === 0 &&
-			!element.classList.contains("mathnormal") &&
-			NUMBER_PATTERN2.test(element.textContent ?? "")
+			!element.classList.contains("mathnormal")
 		);
+	}
+
+	function isNumberLeaf(element) {
+		return isPlainLeaf(element) && NUMBER_PATTERN2.test(element.textContent ?? "");
 	}
 
 	function containerOf(leaf) {
@@ -10432,6 +10437,46 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 		return wrapped && parent ? parent : leaf;
 	}
 
+	function numberLeafAt(element) {
+		if (!element || isNumberLeaf(element)) return element;
+		const first = element.firstElementChild;
+		return first && isNumberLeaf(first) && containerOf(first) === element ? first : null;
+	}
+
+	function collectNumbers(statement) {
+		const tokens = [];
+		const consumed = new Set();
+		for (const leaf of statement.querySelectorAll(LEAVES)) {
+			if (consumed.has(leaf) || !isNumberLeaf(leaf)) continue;
+			const elements = [leaf];
+			let text = leaf.textContent ?? "";
+			let unit = containerOf(leaf);
+			while (unit === elements.at(-1)) {
+				let next = unit.nextElementSibling;
+				const point = isPlainLeaf(next) && next.textContent === "." ? next : null;
+				if (point) next = point.nextElementSibling;
+				const following = numberLeafAt(next);
+				if (!following) break;
+				if (point) {
+					elements.push(point);
+					text += ".";
+				}
+				elements.push(following);
+				consumed.add(following);
+				text += following.textContent ?? "";
+				unit = containerOf(following);
+			}
+			const scripts = unit === elements.at(-1) ? null : unit.querySelector(":scope > .msupsub");
+			if (scripts) {
+				for (const inner of scripts.querySelectorAll(LEAVES)) consumed.add(inner);
+				text += `^${(scripts.textContent ?? "").replace(/[\s​]/g, "")}`;
+				elements[elements.length - 1] = unit;
+			}
+			tokens.push({key: `number:${text}`, elements});
+		}
+		return tokens;
+	}
+
 	function collectTokens(statement, targets) {
 		const tokens = [];
 		if (targets.variables) {
@@ -10439,25 +10484,7 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 				tokens.push({key: `variable:${element.textContent}`, elements: [element]});
 			}
 		}
-		if (targets.numbers) {
-			let last = null;
-			for (const leaf of [...statement.querySelectorAll(LEAVES)].filter(isNumberLeaf)) {
-				const container = containerOf(leaf);
-				const continues =
-					last !== null &&
-					container !== leaf &&
-					last.container === last.token.elements.at(-1) &&
-					last.container.nextElementSibling === container;
-				if (last && continues) {
-					last.token.key += leaf.textContent;
-					last.token.elements.push(leaf);
-				} else {
-					const token = {key: `number:${leaf.textContent}`, elements: [leaf]};
-					tokens.push(token);
-					last = {token, container};
-				}
-			}
-		}
+		if (targets.numbers) tokens.push(...collectNumbers(statement));
 		return tokens;
 	}
 

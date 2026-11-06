@@ -11,8 +11,8 @@ const PINNED_CLASS = "cp-variable-pinned";
 
 /** 同じ値として一緒に強調する要素のまとまり。 */
 type Token = {
-	key: string;
-	readonly elements: Element[];
+	readonly key: string;
+	readonly elements: readonly Element[];
 };
 
 type Targets = {
@@ -20,9 +20,13 @@ type Targets = {
 	readonly numbers: boolean;
 };
 
-function isNumberLeaf(element: Element): boolean {
-	return element.childElementCount === 0 && !element.classList.contains("mathnormal")
-		&& NUMBER_PATTERN.test(element.textContent ?? "");
+function isPlainLeaf(element: Element | null): element is Element {
+	return element !== null && element.classList.contains("mord") && element.childElementCount === 0
+		&& !element.classList.contains("mathnormal");
+}
+
+function isNumberLeaf(element: Element | null): boolean {
+	return isPlainLeaf(element) && NUMBER_PATTERN.test(element.textContent ?? "");
 }
 
 /** 添字や指数の付く数字は、KaTeX が数字と添字を1つの要素で包むので、その要素を返す。 */
@@ -33,10 +37,52 @@ function containerOf(leaf: Element): Element {
 	return wrapped && parent ? parent : leaf;
 }
 
+/** 隣の要素が数字(添字を包む要素なら、その中の数字)なら返す。 */
+function numberLeafAt(element: Element | null): Element | null {
+	if (!element || isNumberLeaf(element)) return element;
+	const first = element.firstElementChild;
+	return first && isNumberLeaf(first) && containerOf(first) === element ? first : null;
+}
+
 /**
- * 問題文の変数と数値を集める。KaTeX は隣り合う数字を1つの要素にまとめるが、
- * 「10^5」は「1」と「0^5」に分けて描くので、添字の付く数字だけは直前の数字とまとめる。
+ * 問題文の数値を集める。KaTeX は「998244353」や「2.5」を1文字ずつ別の要素に描き、
+ * 「10^9」は「1」と、指数を包む要素の中の「0」に分けて描くので、隣り合う要素をつなげる。
+ * 指数の付く数値は指数までを1つの数値とし、指数で数値を終える。
  */
+function collectNumbers(statement: Element): Token[] {
+	const tokens: Token[] = [];
+	const consumed = new Set<Element>();
+	for (const leaf of statement.querySelectorAll(LEAVES)) {
+		if (consumed.has(leaf) || !isNumberLeaf(leaf)) continue;
+		const elements = [leaf];
+		let text = leaf.textContent ?? "";
+		let unit = containerOf(leaf);
+		while (unit === elements.at(-1)) {
+			let next = unit.nextElementSibling;
+			const point = isPlainLeaf(next) && next.textContent === "." ? next : null;
+			if (point) next = point.nextElementSibling;
+			const following = numberLeafAt(next);
+			if (!following) break;
+			if (point) {
+				elements.push(point);
+				text += ".";
+			}
+			elements.push(following);
+			consumed.add(following);
+			text += following.textContent ?? "";
+			unit = containerOf(following);
+		}
+		const scripts = unit === elements.at(-1) ? null : unit.querySelector(":scope > .msupsub");
+		if (scripts) {
+			for (const inner of scripts.querySelectorAll(LEAVES)) consumed.add(inner);
+			text += `^${(scripts.textContent ?? "").replace(/[\s​]/g, "")}`;
+			elements[elements.length - 1] = unit;
+		}
+		tokens.push({key: `number:${text}`, elements});
+	}
+	return tokens;
+}
+
 function collectTokens(statement: Element, targets: Targets): Token[] {
 	const tokens: Token[] = [];
 	if (targets.variables) {
@@ -44,24 +90,7 @@ function collectTokens(statement: Element, targets: Targets): Token[] {
 			tokens.push({key: `variable:${element.textContent}`, elements: [element]});
 		}
 	}
-	if (targets.numbers) {
-		let last: {readonly token: Token; readonly container: Element} | null = null;
-		for (const leaf of [...statement.querySelectorAll(LEAVES)].filter(isNumberLeaf)) {
-			const container = containerOf(leaf);
-			// 前の数字に添字が付いていれば、そこで数値は終わる
-			const continues = last !== null && container !== leaf
-				&& last.container === last.token.elements.at(-1)
-				&& last.container.nextElementSibling === container;
-			if (last && continues) {
-				last.token.key += leaf.textContent;
-				last.token.elements.push(leaf);
-			} else {
-				const token = {key: `number:${leaf.textContent}`, elements: [leaf]};
-				tokens.push(token);
-				last = {token, container};
-			}
-		}
-	}
+	if (targets.numbers) tokens.push(...collectNumbers(statement));
 	return tokens;
 }
 

@@ -430,29 +430,38 @@ describe("variableHover", () => {
 
 	describe("数値", () => {
 		const digit = (text: string, id = "") => `<span class="mord"${id && ` id="${id}"`}>${text}</span>`;
-		// KaTeX は「10^5」の「10」を「1」と、指数を包む要素の中の「0」に分けて描く
-		const power = `${digit("1", "power")}<span class="mord">${digit("0")}<span class="msupsub">${digit("5", "exponent")}</span></span>`;
+		// KaTeX は数字を1文字ずつ描き、「10^5」は「1」と、指数を包む要素の中の「0」に分けて描く
+		const power = (id = "", exponentId = "") => `${digit("1", id)}<span class="mord">${digit("0")}`
+			+ `<span class="msupsub">${digit("5", exponentId)}</span></span>`;
+		const katex = (html: string) => `<span class="katex"><span class="katex-html">${html}</span></span>`;
 		const hover = (id: string) => {
 			document.querySelector(`#${id}`)?.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}));
 		};
 
 		beforeEach(() => {
 			document.body.innerHTML = `<div id="task-statement">
-				<span class="katex"><span class="katex-html">${symbol("N")}${power}</span></span>
-				<span class="katex"><span class="katex-html">${digit("10")}${digit("0", "zero")}${digit("5")}</span></span>
+				${katex(`${symbol("N")}${power("power", "exponent")}`)}
+				${katex(`${digit("3")}<span class="mbin">×</span>${power()}`)}
+				${katex(`${digit("1", "ten")}${digit("0")}`)}
+				${katex(`${digit("2")}${digit(".")}${digit("5", "decimal")}`)}
+				${katex(`${digit("0", "zero")}<span class="mpunct">,</span>${digit("5")}`)}
 			</div>`;
 		});
 
-		test("分かれて描かれた数字も1つの数値として強調する", async () => {
+		test("1文字ずつ描かれた数字を1つの数値として強調する", async () => {
 			await run(variableHover);
-			hover("power");
-			expect(highlighted()).toEqual(["1", "0", "10"]);
+			hover("ten");
+			expect(highlighted()).toEqual(["1", "0"]);
+			hover("decimal");
+			expect(highlighted()).toEqual(["2", ".", "5"]);
 		});
 
-		test("指数は別の数値として扱う", async () => {
+		test("指数の付く数値は指数までを1つの数値とする", async () => {
 			await run(variableHover);
+			hover("power");
+			expect(highlighted()).toEqual(["1", "05", "1", "05"]);
 			hover("exponent");
-			expect(highlighted()).toEqual(["5", "5"]);
+			expect(highlighted()).toEqual(["1", "05", "1", "05"]);
 			hover("zero");
 			expect(highlighted()).toEqual(["0"]);
 		});
