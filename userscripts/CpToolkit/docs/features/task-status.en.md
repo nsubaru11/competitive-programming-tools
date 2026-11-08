@@ -18,9 +18,9 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Color of accepted tasks | `#c3e6cb` |
+| Setting                     | Default   |
+|-----------------------------|-----------|
+| Color of accepted tasks     | `#c3e6cb` |
 | Color of tasks not accepted | `#f5c6cb` |
 
 ## Pages

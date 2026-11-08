@@ -17,13 +17,13 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Language (empty for all) | (empty) |
-| Show the button sorted by time | On |
-| Show the button sorted by code size | On |
-| Show the button sorted by submission time | On |
-| Show the button sorted by memory | On |
+| Setting                                   | Default |
+|-------------------------------------------|---------|
+| Language (empty for all)                  | (empty) |
+| Show the button sorted by time            | On      |
+| Show the button sorted by code size       | On      |
+| Show the button sorted by submission time | On      |
+| Show the button sorted by memory          | On      |
 
 ## Pages
 

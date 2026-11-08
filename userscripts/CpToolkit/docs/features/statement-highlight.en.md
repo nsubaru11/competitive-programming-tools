@@ -16,13 +16,13 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Number color | `#0033b3` |
-| Variable color | `#9e2927` |
-| Time limit color | `#b3542a` |
-| Memory limit color | `#1d643b` |
-| Also emphasize limits of 2 sec and 1024 MiB | Off |
+| Setting                                     | Default   |
+|---------------------------------------------|-----------|
+| Number color                                | `#0033b3` |
+| Variable color                              | `#9e2927` |
+| Time limit color                            | `#b3542a` |
+| Memory limit color                          | `#1d643b` |
+| Also emphasize limits of 2 sec and 1024 MiB | Off       |
 
 ## Pages
 

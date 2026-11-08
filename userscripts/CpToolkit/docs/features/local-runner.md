@@ -15,8 +15,8 @@
 
 設定画面の各機能の「詳細設定」で変えられます。
 
-| 項目 | 既定値 |
-|---|---|
+| 項目         | 既定値                  |
+|--------------|-------------------------|
 | 接続先の URL | `http://localhost:8080` |
 
 ## 自作のサーバーに必要な API
@@ -25,12 +25,12 @@
 - CP Toolkit が通信を許可しているのは `localhost` と `127.0.0.1` だけです。サーバーは手元の PC で動かしてください
 - 要求の `mode` で処理を分けます。Easy Test+ だけを使うなら `list`、`prepare`、`run` の3つで足ります
 
-| `mode` | 使う機能 | 要求の項目 | 応答 |
-|---|---|---|---|
-| `list` | Easy Test+ | なし | `{language, compilerName, label}` の配列。`language` は言語名(例: `Java`、`C++`、`Python`)で、提出言語と同じ系統のものが実行環境の候補になります。`label` は画面に出す名前です |
-| `prepare` | Easy Test+ | `sourceCode`、`compilerName` | `status`(`success` か `compileError`)、`programId`(成功したとき)、`diagnostics`(コンパイルエラーの内容) |
-| `run` | Easy Test+ | `programId`、`stdin`、`compilerName` | `status`、`exitCode`、`stdout`、`stderr`、`time`(ミリ秒)、`memory`(KB。0 なら表示しません) |
-| `transform` | Java の提出補助 | `sourceCode`、`header` | `status`(`success` か `compileError`)、`sourceCode`(変換後のコード)、`diagnostics`、`libraryMissing`(任意) |
+| `mode`      | 使う機能        | 要求の項目                           | 応答                                                                                                                                                                           |
+|-------------|-----------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `list`      | Easy Test+      | なし                                 | `{language, compilerName, label}` の配列。`language` は言語名(例: `Java`、`C++`、`Python`)で、提出言語と同じ系統のものが実行環境の候補になります。`label` は画面に出す名前です |
+| `prepare`   | Easy Test+      | `sourceCode`、`compilerName`         | `status`(`success` か `compileError`)、`programId`(成功したとき)、`diagnostics`(コンパイルエラーの内容)                                                                        |
+| `run`       | Easy Test+      | `programId`、`stdin`、`compilerName` | `status`、`exitCode`、`stdout`、`stderr`、`time`(ミリ秒)、`memory`(KB。0 なら表示しません)                                                                                     |
+| `transform` | Java の提出補助 | `sourceCode`、`header`               | `status`(`success` か `compileError`)、`sourceCode`(変換後のコード)、`diagnostics`、`libraryMissing`(任意)                                                                     |
 
 - `compilerName` は `list` で返した値です。複数の言語を扱うサーバーは、これで言語を選びます
 - `run` の `status` は `success`、`compileError`、`timeLimitExceeded`、`runtimeError`、`internalError`、`badRequest` のいずれかです

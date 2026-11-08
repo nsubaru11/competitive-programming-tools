@@ -55,12 +55,12 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `prepare` し、
 
 ## 開発用の環境変数
 
-| 変数                             | 説明                                                  | 既定値                 |
-|----------------------------------|-------------------------------------------------------|------------------------|
-| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐 javac を無効にし、外部の javac を使う      | 有効                   |
-| `LOCAL_RUNNER_RUN_STACK_BYTES`   | 解答を実行するスレッドのスタックサイズ(バイト)        | `268435456`(256 MiB)   |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`  | 自動起動で準備を待つ時間(ms)                          | `60000`                |
-| `LOCAL_RUNNER_BUN`               | `LOCAL_RUNNER_BACKEND=native` の起動に使う Bun の命令 | `bun`                  |
+| 変数                             | 説明                                                  | 既定値               |
+|----------------------------------|-------------------------------------------------------|----------------------|
+| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐 javac を無効にし、外部の javac を使う      | 有効                 |
+| `LOCAL_RUNNER_RUN_STACK_BYTES`   | 解答を実行するスレッドのスタックサイズ(バイト)        | `268435456`(256 MiB) |
+| `LOCAL_RUNNER_START_TIMEOUT_MS`  | 自動起動で準備を待つ時間(ms)                          | `60000`              |
+| `LOCAL_RUNNER_BUN`               | `LOCAL_RUNNER_BACKEND=native` の起動に使う Bun の命令 | `bun`                |
 
 `ATCODER_JAVA_VER` は自動起動で使う JDK を選びます。起動した JDK の方が新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
 

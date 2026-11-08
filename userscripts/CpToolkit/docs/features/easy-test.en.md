@@ -25,12 +25,12 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Precompile edited code with Local Runner | On |
-| Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc) | On |
-| Number of saved solutions | `10` |
-| Allowed error | `1e-6` |
+| Setting                                        | Default |
+|------------------------------------------------|---------|
+| Precompile edited code with Local Runner       | On      |
+| Use shortcuts (Ctrl+Enter, Alt+Enter, Alt+Esc) | On      |
+| Number of saved solutions                      | `10`    |
+| Allowed error                                  | `1e-6`  |
 
 ## Pages
 

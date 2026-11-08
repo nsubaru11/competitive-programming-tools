@@ -15,8 +15,8 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
+| Setting     | Default  |
+|-------------|----------|
 | Copy format | Markdown |
 
 ## Pages

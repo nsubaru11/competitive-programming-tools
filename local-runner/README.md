@@ -91,16 +91,16 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 
 オプションは引数の前後どちらに置いても構いません。
 
-| オプション                    | 対象                                           | 説明                                                                                   |
-|-------------------------------|------------------------------------------------|----------------------------------------------------------------------------------------|
-| `-f`, `--force`               | `submit`、`tomain`                             | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする       |
-| `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                     | ソースの `DEBUG` の有効と無効を切り替える(既定は有効)                                  |
-| `--no-header`                 | `submit`、`tomain`、`toclip`                   | 提出物の先頭にヘッダーを付けない                                                       |
-| `--header=<name>`             | `submit`、`tomain`、`toclip`                   | `setheader` で `<name>` に設定したファイルをヘッダーに使う(既定は `java`)              |
-| `--full`                      | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                        |
-| `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分のうち、一致しない行だけを表示する                                            |
-| `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck`    | WA の差分を折りたたむ行数を変える(既定は 20)                                           |
-| `--time-limit=N`              | `localtest`、`run`、`crosscheck`               | 実行時間の警告に使う制限(ms)。既定は 2000。表示だけで、実行は打ち切らない              |
+| オプション                    | 対象                                        | 説明                                                                             |
+|-------------------------------|---------------------------------------------|----------------------------------------------------------------------------------|
+| `-f`, `--force`               | `submit`、`tomain`                          | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする |
+| `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                  | ソースの `DEBUG` の有効と無効を切り替える(既定は有効)                            |
+| `--no-header`                 | `submit`、`tomain`、`toclip`                | 提出物の先頭にヘッダーを付けない                                                 |
+| `--header=<name>`             | `submit`、`tomain`、`toclip`                | `setheader` で `<name>` に設定したファイルをヘッダーに使う(既定は `java`)        |
+| `--full`                      | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                  |
+| `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck` | WA の差分のうち、一致しない行だけを表示する                                      |
+| `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたむ行数を変える(既定は 20)                                     |
+| `--time-limit=N`              | `localtest`、`run`、`crosscheck`            | 実行時間の警告に使う制限(ms)。既定は 2000。表示だけで、実行は打ち切らない        |
 
 ### 実行例
 

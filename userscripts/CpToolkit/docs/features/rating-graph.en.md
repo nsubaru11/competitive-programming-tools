@@ -16,10 +16,10 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Show only recent results at first | On |
-| Recent range (e.g. 20 for the last 20 contests, 50% for the latest half) | `20` |
+| Setting                                                                  | Default |
+|--------------------------------------------------------------------------|---------|
+| Show only recent results at first                                        | On      |
+| Recent range (e.g. 20 for the last 20 contests, 50% for the latest half) | `20`    |
 
 ## Pages
 

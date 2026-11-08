@@ -17,9 +17,9 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Width of each sample pair (% of the screen; 20 to 30 recommended) | `23` |
+| Setting                                                           | Default |
+|-------------------------------------------------------------------|---------|
+| Width of each sample pair (% of the screen; 20 to 30 recommended) | `23`    |
 
 ## Pages
 

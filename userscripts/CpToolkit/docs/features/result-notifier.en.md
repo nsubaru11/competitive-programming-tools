@@ -15,9 +15,9 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Use desktop notifications while you are away from AtCoder | On |
+| Setting                                                   | Default |
+|-----------------------------------------------------------|---------|
+| Use desktop notifications while you are away from AtCoder | On      |
 
 ## Pages
 

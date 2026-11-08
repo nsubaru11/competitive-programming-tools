@@ -17,10 +17,10 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Highlight variables | On |
-| Highlight numbers | On |
+| Setting             | Default |
+|---------------------|---------|
+| Highlight variables | On      |
+| Highlight numbers   | On      |
 
 ## Pages
 

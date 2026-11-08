@@ -15,8 +15,8 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
+| Setting    | Default                 |
+|------------|-------------------------|
 | Server URL | `http://localhost:8080` |
 
 ## API required for your own server
@@ -25,12 +25,12 @@ Change these under "Detailed settings" of each feature in the settings.
 - CP Toolkit is allowed to connect only to `localhost` and `127.0.0.1`. Run the server on your own PC
 - The `mode` of the request selects the operation. For Easy Test+ alone, `list`, `prepare` and `run` are enough
 
-| `mode` | Used by | Request fields | Response |
-|---|---|---|---|
-| `list` | Easy Test+ | None | An array of `{language, compilerName, label}`. `language` is a language name (e.g. `Java`, `C++`, `Python`), and entries of the same family as the submission language become candidate environments. `label` is the name shown on screen |
-| `prepare` | Easy Test+ | `sourceCode`, `compilerName` | `status` (`success` or `compileError`), `programId` (on success), `diagnostics` (compile errors) |
-| `run` | Easy Test+ | `programId`, `stdin`, `compilerName` | `status`, `exitCode`, `stdout`, `stderr`, `time` (ms), `memory` (KB; 0 hides it) |
-| `transform` | Java submission helper | `sourceCode`, `header` | `status` (`success` or `compileError`), `sourceCode` (transformed code), `diagnostics`, `libraryMissing` (optional) |
+| `mode`      | Used by                | Request fields                       | Response                                                                                                                                                                                                                                  |
+|-------------|------------------------|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `list`      | Easy Test+             | None                                 | An array of `{language, compilerName, label}`. `language` is a language name (e.g. `Java`, `C++`, `Python`), and entries of the same family as the submission language become candidate environments. `label` is the name shown on screen |
+| `prepare`   | Easy Test+             | `sourceCode`, `compilerName`         | `status` (`success` or `compileError`), `programId` (on success), `diagnostics` (compile errors)                                                                                                                                          |
+| `run`       | Easy Test+             | `programId`, `stdin`, `compilerName` | `status`, `exitCode`, `stdout`, `stderr`, `time` (ms), `memory` (KB; 0 hides it)                                                                                                                                                          |
+| `transform` | Java submission helper | `sourceCode`, `header`               | `status` (`success` or `compileError`), `sourceCode` (transformed code), `diagnostics`, `libraryMissing` (optional)                                                                                                                       |
 
 - `compilerName` is the value returned by `list`. A server that handles several languages uses it to pick one
 - The `status` of `run` is one of `success`, `compileError`, `timeLimitExceeded`, `runtimeError`, `internalError` and `badRequest`

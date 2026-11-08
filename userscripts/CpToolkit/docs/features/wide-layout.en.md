@@ -13,8 +13,8 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
+| Setting                                                                 | Default |
+|-------------------------------------------------------------------------|---------|
 | Width (e.g. 75%, 1200px; empty for the original width; 75% recommended) | (empty) |
 
 ## Pages

@@ -23,8 +23,8 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
+| Setting               | Default              |
+|-----------------------|----------------------|
 | Default comment style | Single-line comments |
 
 ## Pages

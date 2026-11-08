@@ -13,8 +13,8 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
+| Setting                            | Default |
+|------------------------------------|---------|
 | Language (e.g. c++, java, python3) | (empty) |
 
 ## Pages

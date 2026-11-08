@@ -17,14 +17,14 @@
 
 Change these under "Detailed settings" of each feature in the settings.
 
-| Setting | Default |
-|---|---|
-| Remove package declarations when Local Runner is unavailable | On |
-| Rename the class to Main when Local Runner is unavailable | On |
-| Set DEBUG to false when Local Runner is unavailable | On |
-| Add the submission header | On |
-| Header name (empty for the default) | (empty) |
-| Fold classes and comments after pasting | On |
+| Setting                                                      | Default |
+|--------------------------------------------------------------|---------|
+| Remove package declarations when Local Runner is unavailable | On      |
+| Rename the class to Main when Local Runner is unavailable    | On      |
+| Set DEBUG to false when Local Runner is unavailable          | On      |
+| Add the submission header                                    | On      |
+| Header name (empty for the default)                          | (empty) |
+| Fold classes and comments after pasting                      | On      |
 
 ## Pages
 
