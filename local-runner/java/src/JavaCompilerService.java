@@ -1,8 +1,9 @@
-import javax.tools.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
+
+import javax.tools.*;
 
 /**
  * 常駐 JVM 内の Java コンパイラ（{@link ToolProvider} 経由）でコンパイルする専任クラスです。
@@ -22,16 +23,16 @@ final class JavaCompilerService {
 	private static final Charset UTF_8 = StandardCharsets.UTF_8;
 	private final JavaCompiler compiler;
 
-	private static List<String> resolveReleaseOptions() {
-		final String raw = System.getenv(RELEASE_ENV);
-		return raw == null || raw.isBlank() ? List.of() : List.of("--release", raw.trim());
-	}
-
 	public JavaCompilerService() {
 		compiler = ToolProvider.getSystemJavaCompiler();
 		if (compiler == null) {
 			throw new IllegalStateException("No system Java compiler is available (JDK required).");
 		}
+	}
+
+	private static List<String> resolveReleaseOptions() {
+		final String raw = System.getenv(RELEASE_ENV);
+		return raw == null || raw.isBlank() ? List.of() : List.of("--release", raw.trim());
 	}
 
 	/**

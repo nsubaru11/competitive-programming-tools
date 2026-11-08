@@ -37,8 +37,7 @@ final class ProtocolCodec {
 	private static final int COMPILE_PARTS_MIN_SIZE = 4;
 	private static final int TRANSFORM_PARTS_MIN_SIZE = 6;
 
-	private ProtocolCodec() {
-	}
+	private ProtocolCodec() {}
 
 	/**
 	 * 受信した 1 行を解析します。失敗は例外ではなく {@link ProtocolError} として返します。

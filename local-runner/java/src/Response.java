@@ -64,7 +64,7 @@ record ErrorResponse(String requestId, String message) implements Response {}
  * @param leftoverThreads 提出コードのスレッドが実行後も残ったかどうかです。残れば JVM は結果の送信後に終了します。
  */
 record ExecutionResult(int exitCode, long timeMillis, byte[] stdout, byte[] stderr, boolean stdoutTruncated,
-                       boolean stderrTruncated, long memoryBytes, boolean leftoverThreads) {}
+					   boolean stderrTruncated, long memoryBytes, boolean leftoverThreads) {}
 
 /**
  * コンパイル結果を保持する値オブジェクトです。
@@ -74,9 +74,9 @@ record ExecutionResult(int exitCode, long timeMillis, byte[] stdout, byte[] stde
  * @param requiresIsolation 常駐 JVM 内で実行すると危険な API を参照しており、隔離実行が必要なら true
  */
 record CompileResult(int exitCode, String diagnostics, boolean requiresIsolation,
-                     List<CompilerDiagnostic> diagnosticItems) {}
+					 List<CompilerDiagnostic> diagnosticItems) {}
 
 record SourceTransformResult(int exitCode, String sourceCode, String diagnostics, List<String> inlinedClasses,
-                             List<String> addedImports, List<CompilerDiagnostic> diagnosticItems) {}
+							 List<String> addedImports, List<CompilerDiagnostic> diagnosticItems) {}
 
 record CompilerDiagnostic(String kind, long line, long column, String code, String message) {}

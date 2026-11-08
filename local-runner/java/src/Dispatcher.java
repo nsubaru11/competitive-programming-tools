@@ -8,8 +8,7 @@ import java.io.*;
  * </p>
  */
 public final class Dispatcher {
-	private Dispatcher() {
-	}
+	private Dispatcher() {}
 
 	/**
 	 * ディスパッチャのエントリポイントです。

@@ -1,6 +1,3 @@
-import javax.lang.model.element.*;
-import javax.lang.model.type.*;
-import javax.tools.*;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.*;
@@ -8,6 +5,10 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
+
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
+import javax.tools.*;
 
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
@@ -539,7 +540,7 @@ final class JavaSourceTransformer {
 	private record LibraryType(String simpleName, String fqcn, Path path) {}
 
 	private record LibraryIndex(Map<String, List<LibraryType>> bySimpleName, Map<String, LibraryType> byFqcn,
-	                            Path classPath, Map<Path, Set<Path>> dependencies) {}
+								Path classPath, Map<Path, Set<Path>> dependencies) {}
 
 	private record AutoImportResult(List<String> imports, String error) {}
 
@@ -548,8 +549,8 @@ final class JavaSourceTransformer {
 	private record Parsed(CompilationUnitTree unit, SourcePositions positions) {}
 
 	private record Analysis(CompilationUnitTree solution, List<CompilationUnitTree> units, Trees trees,
-	                        SourcePositions positions, String diagnostics, boolean hasErrors,
-	                        List<CompilerDiagnostic> diagnosticItems) {}
+							SourcePositions positions, String diagnostics, boolean hasErrors,
+							List<CompilerDiagnostic> diagnosticItems) {}
 
 	private record MainClass(ClassTree tree, TypeElement element) {}
 

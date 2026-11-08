@@ -34,8 +34,7 @@ final class IsolationAnalyzer {
 	 */
 	private static final Set<String> DANGEROUS_MEMBERS = Set.of("java/lang/System.exit", "java/lang/System.setOut", "java/lang/System.setErr", "java/lang/System.setIn", "java/lang/System.setProperty", "java/lang/System.setProperties", "java/lang/System.clearProperty", "java/lang/System.setSecurityManager", "java/lang/Runtime.exit", "java/lang/Runtime.halt", "java/lang/Runtime.addShutdownHook", "java/lang/Runtime.removeShutdownHook", "java/lang/Runtime.exec", "java/lang/ProcessBuilder.<init>", "java/util/Locale.setDefault", "java/util/TimeZone.setDefault", "java/io/FileDescriptor.in", "java/io/FileDescriptor.out", "java/io/FileDescriptor.err");
 
-	private IsolationAnalyzer() {
-	}
+	private IsolationAnalyzer() {}
 
 	/**
 	 * 出力ディレクトリ配下の全 {@code .class}（内部クラス・ラムダ含む）を走査し、

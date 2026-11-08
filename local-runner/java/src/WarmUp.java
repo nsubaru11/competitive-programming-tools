@@ -9,8 +9,7 @@ import lib.io.*;
 public final class WarmUp {
 	private static final int REPEAT = 20_000;
 
-	private WarmUp() {
-	}
+	private WarmUp() {}
 
 	public static void main(final String[] args) {
 		final byte[] input = "123 -4567890123 ".repeat(REPEAT).getBytes(StandardCharsets.US_ASCII);

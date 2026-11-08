@@ -9,4 +9,4 @@ record Run(String requestId, Path classDirectory, String mainClassName, byte[] s
 record Compile(String requestId, Path sourceFile, Path outputDirectory) implements Request {}
 
 record Transform(String requestId, String sourceCode, Path librarySourceRoot, boolean debug, boolean autoImport,
-                 boolean validate) implements Request {}
+				 boolean validate) implements Request {}
