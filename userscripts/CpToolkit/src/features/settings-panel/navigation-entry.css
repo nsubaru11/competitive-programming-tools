@@ -1,12 +1,15 @@
-/* サイトのメニューに紛れないよう、黒と白のどちらのヘッダーでも目立つ色にする */
+/* サイトのメニューに紛れないよう、黒と白のどちらのヘッダーでも目立つ色にする。
+   ヘッダーの高さを変えないよう、文字の行の高さ(20px)に収める */
 .cp-settings-entry {
 	display: inline-block;
-	padding: 1px 10px;
+	padding: 0 8px;
 	border-radius: 999px;
 	background: #0969da;
 	color: #fff !important;
+	font-size: 12px;
 	font-weight: 600;
-	line-height: 1.6;
+	line-height: 20px;
+	vertical-align: top;
 	white-space: nowrap;
 }
 
@@ -18,4 +21,57 @@
 a:hover > .cp-settings-entry,
 a:focus > .cp-settings-entry {
 	background: #0550ae;
+}
+
+/* コンテストのページのヘッダーは、項目を足すと幅の狭い画面で2段になり、固定されたヘッダーが本文のメニューを隠す。
+   1段に保つため、足りない幅はコンテスト名を省略して詰める */
+@media (min-width: 768px) {
+	#navbar-collapse.collapse {
+		display: flex !important;
+	}
+
+	#navbar-collapse > .navbar-nav {
+		display: flex;
+		float: none;
+		flex-shrink: 0;
+	}
+
+	#navbar-collapse > .navbar-nav:not(.navbar-right) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	#navbar-collapse > .navbar-nav > li {
+		float: none;
+		flex-shrink: 0;
+	}
+
+	#navbar-collapse > .navbar-nav > li > a {
+		white-space: nowrap;
+	}
+
+	#navbar-collapse > .navbar-nav > li:has(> .contest-title) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	#navbar-collapse .contest-title {
+		max-width: 100%;
+	}
+
+	#navbar-collapse > .navbar-right {
+		margin-left: auto;
+	}
+}
+
+/* トップページなどのヘッダーは、幅 1023px 以下で文字と項目の幅が画面幅に比例し、タブレットほどの幅では大きくなりすぎる。
+   文字に上限を設け、項目の幅は中身に合わせて1行に収める */
+@media (min-width: 640px) and (max-width: 1023px) {
+	#header .header-sub_page li a {
+		width: auto;
+		padding-right: 10px;
+		padding-left: 10px;
+		font-size: min(3vw, 16px);
+		white-space: nowrap;
+	}
 }

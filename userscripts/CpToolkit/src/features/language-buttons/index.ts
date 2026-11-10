@@ -1,8 +1,24 @@
 import {PinnedLanguages} from "@application/execution/pinned-languages";
 import {defineFeature} from "@application/feature/definition";
 import {createModal} from "@ui/dialog/modal";
-import {h} from "@ui/element";
+import {h, injectStyle} from "@ui/element";
+import barCss from "./language-bar.css" with {type: "text"};
 import css from "./language-buttons.css" with {type: "text"};
+
+/**
+ * 言語欄の列は狭く、ボタンが1つずつ縦に並ぶので、フォームの行の右端(エディタの右端)まで広げる。
+ * 行の幅は画面の大きさで変わるので、変わるたびに測り直す。
+ */
+function fitToRow(bar: HTMLElement, column: Element): void {
+	const row = column.closest(".form-group") ?? column.parentElement;
+	if (!row) return;
+	// 監視を始めた時点でも1回呼ばれる
+	new ResizeObserver(() => {
+		const right = row.getBoundingClientRect().right - (parseFloat(getComputedStyle(column).paddingRight) || 0);
+		const width = Math.floor(right - bar.getBoundingClientRect().left);
+		bar.style.width = width > 0 ? `${width}px` : "";
+	}).observe(row);
+}
 
 export const languageButtons = defineFeature({
 	id: "language-buttons",
@@ -20,8 +36,8 @@ export const languageButtons = defineFeature({
 
 		const pinned = new PinnedLanguages(state);
 		// サイトは #select-lang の直下の div を問題の切り替えで隠すので、span に入れる
-		const bar = h("span");
-		Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
+		const bar = h("span", {className: "cp-language-bar"});
+		injectStyle(barCss);
 
 		/** 問題を切り替えると選択欄も変わるので、そのたびに作り直す。 */
 		const render = (): void => {
@@ -69,6 +85,7 @@ export const languageButtons = defineFeature({
 			h("span", {className: "glyphicon glyphicon-cog"}),
 		);
 		container.append(bar);
+		fitToRow(bar, container);
 
 		render();
 		site.onLanguageChange(render);

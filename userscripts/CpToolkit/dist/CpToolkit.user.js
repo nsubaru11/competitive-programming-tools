@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.1
+// @version        1.1.2
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1707,15 +1707,18 @@ ${settings_panel_default}`,
 	}
 
 	// CpToolkit/src/features/settings-panel/navigation-entry.css
-	var navigation_entry_default = `/* サイトのメニューに紛れないよう、黒と白のどちらのヘッダーでも目立つ色にする */
+	var navigation_entry_default = `/* サイトのメニューに紛れないよう、黒と白のどちらのヘッダーでも目立つ色にする。
+   ヘッダーの高さを変えないよう、文字の行の高さ(20px)に収める */
 .cp-settings-entry {
 	display: inline-block;
-	padding: 1px 10px;
+	padding: 0 8px;
 	border-radius: 999px;
 	background: #0969da;
 	color: #fff !important;
+	font-size: 12px;
 	font-weight: 600;
-	line-height: 1.6;
+	line-height: 20px;
+	vertical-align: top;
 	white-space: nowrap;
 }
 
@@ -1727,6 +1730,59 @@ ${settings_panel_default}`,
 a:hover > .cp-settings-entry,
 a:focus > .cp-settings-entry {
 	background: #0550ae;
+}
+
+/* コンテストのページのヘッダーは、項目を足すと幅の狭い画面で2段になり、固定されたヘッダーが本文のメニューを隠す。
+   1段に保つため、足りない幅はコンテスト名を省略して詰める */
+@media (min-width: 768px) {
+	#navbar-collapse.collapse {
+		display: flex !important;
+	}
+
+	#navbar-collapse > .navbar-nav {
+		display: flex;
+		float: none;
+		flex-shrink: 0;
+	}
+
+	#navbar-collapse > .navbar-nav:not(.navbar-right) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	#navbar-collapse > .navbar-nav > li {
+		float: none;
+		flex-shrink: 0;
+	}
+
+	#navbar-collapse > .navbar-nav > li > a {
+		white-space: nowrap;
+	}
+
+	#navbar-collapse > .navbar-nav > li:has(> .contest-title) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	#navbar-collapse .contest-title {
+		max-width: 100%;
+	}
+
+	#navbar-collapse > .navbar-right {
+		margin-left: auto;
+	}
+}
+
+/* トップページなどのヘッダーは、幅 1023px 以下で文字と項目の幅が画面幅に比例し、タブレットほどの幅では大きくなりすぎる。
+   文字に上限を設け、項目の幅は中身に合わせて1行に収める */
+@media (min-width: 640px) and (max-width: 1023px) {
+	#header .header-sub_page li a {
+		width: auto;
+		padding-right: 10px;
+		padding-left: 10px;
+		font-size: min(3vw, 16px);
+		white-space: nowrap;
+	}
 }
 `;
 
@@ -8318,6 +8374,20 @@ ${efficient_layout_default}`);
 		}
 	}
 
+	// CpToolkit/src/features/language-buttons/language-bar.css
+	var language_bar_default = `/* サイトは選択欄の幅を作成時のピクセルで固定するので、画面の大きさを変えても列に合わせる */
+#select-lang .select2-container {
+	width: 100% !important;
+}
+
+.cp-language-bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 4px;
+}
+`;
+
 	// CpToolkit/src/features/language-buttons/language-buttons.css
 	var language_buttons_default = `.language-hint {
 	margin: 0 0 12px;
@@ -8343,6 +8413,16 @@ ${efficient_layout_default}`);
 `;
 
 	// CpToolkit/src/features/language-buttons/index.ts
+	function fitToRow(bar, column) {
+		const row = column.closest(".form-group") ?? column.parentElement;
+		if (!row) return;
+		new ResizeObserver(() => {
+			const right = row.getBoundingClientRect().right - (parseFloat(getComputedStyle(column).paddingRight) || 0);
+			const width = Math.floor(right - bar.getBoundingClientRect().left);
+			bar.style.width = width > 0 ? `${width}px` : "";
+		}).observe(row);
+	}
+
 	var languageButtons = defineFeature({
 		id: "language-buttons",
 		title: "languageButtons.title",
@@ -8357,8 +8437,8 @@ ${efficient_layout_default}`);
 			const site = await judgeSite();
 			if (!container || !site) return;
 			const pinned = new PinnedLanguages(state);
-			const bar = h("span");
-			Object.assign(bar.style, {display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px"});
+			const bar = h("span", {className: "cp-language-bar"});
+			injectStyle(language_bar_default);
 			const render = () => {
 				const pinnedIds = pinned.ids();
 				const currentId = site.language()?.id;
@@ -8410,6 +8490,7 @@ ${efficient_layout_default}`);
 				h("span", {className: "glyphicon glyphicon-cog"}),
 			);
 			container.append(bar);
+			fitToRow(bar, container);
 			render();
 			site.onLanguageChange(render);
 		},
@@ -8443,6 +8524,14 @@ ${efficient_layout_default}`);
 	// CpToolkit/src/features/latest-contests/latest-contests.css
 	var latest_contests_default = `.cp-latest {
 	position: relative;
+}
+
+/* トップページなどのヘッダーは、項目を1つ足すと幅 1024px 前後で2段に折り返すので、項目の間隔を画面幅に合わせて詰める */
+@media (min-width: 1024px) {
+	#header .header-sub_page:has(> .cp-latest) > li {
+		padding-right: min(22px, 1.4vw);
+		padding-left: min(22px, 1.4vw);
+	}
 }
 
 .cp-latest-menu {

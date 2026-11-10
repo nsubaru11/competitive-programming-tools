@@ -2,6 +2,14 @@
 	position: relative;
 }
 
+/* トップページなどのヘッダーは、項目を1つ足すと幅 1024px 前後で2段に折り返すので、項目の間隔を画面幅に合わせて詰める */
+@media (min-width: 1024px) {
+	#header .header-sub_page:has(> .cp-latest) > li {
+		padding-right: min(22px, 1.4vw);
+		padding-left: min(22px, 1.4vw);
+	}
+}
+
 .cp-latest-menu {
 	display: none;
 	position: absolute;

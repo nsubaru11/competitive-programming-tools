@@ -1,0 +1,11 @@
+/* サイトは選択欄の幅を作成時のピクセルで固定するので、画面の大きさを変えても列に合わせる */
+#select-lang .select2-container {
+	width: 100% !important;
+}
+
+.cp-language-bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 4px;
+}
