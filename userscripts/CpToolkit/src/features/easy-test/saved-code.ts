@@ -21,7 +21,8 @@ export class SavedCodes {
 
 	save(path: string, code: string): void {
 		const others = this.list().filter((saved) => saved.path !== path);
-		this.state.set(SAVED_CODE_KEY, [...others, {path, code}].slice(-this.limit));
+		// slice(-0) は全件を返すので、上限が 0 のときは別に扱う
+		this.state.set(SAVED_CODE_KEY, this.limit > 0 ? [...others, {path, code}].slice(-this.limit) : []);
 	}
 
 	find(path: string): string | null {

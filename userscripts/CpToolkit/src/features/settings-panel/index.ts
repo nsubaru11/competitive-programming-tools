@@ -26,7 +26,21 @@ function downloadText(fileName: string, text: string): void {
 	URL.revokeObjectURL(url);
 }
 
+/**
+ * 画面は最初に開くときに作る。起動する document-start の時点ではページの言語を読めないので、
+ * ここで文言を決めるとブラウザの言語のまま残る。
+ */
 export function createSettingsPanel(dependencies: SettingsPanelDependencies): SettingsPanel {
+	let view: SettingsPanel | null = null;
+	return {
+		open() {
+			view ??= createPanelView(dependencies);
+			view.open();
+		},
+	};
+}
+
+function createPanelView(dependencies: SettingsPanelDependencies): SettingsPanel {
 	const {features, settings, runtime, translate, version} = dependencies;
 	const notice = h(
 		"div",

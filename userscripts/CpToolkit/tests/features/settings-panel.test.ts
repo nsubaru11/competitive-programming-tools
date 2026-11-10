@@ -99,6 +99,36 @@ describe("設定画面", () => {
 		expect(query<HTMLDialogElement>(root, "dialog").open).toBe(true);
 	});
 
+	test("画面を作った後にページの言語が決まっても、開いた時点の言語で表示する", async () => {
+		// document-start の時点ではページの言語を読めず、ブラウザの言語になる
+		let locale: "ja" | "en" = "en";
+		const features = [reloadFeature];
+		settings = new SettingsService(new MemoryStore());
+		runtime = new FeatureRuntime({
+			features,
+			page: matchPage(judges, "https://atcoder.jp/home"),
+			lifecycle: immediateLifecycle,
+			settings,
+			services: createFakeServices(),
+			logger: new RecordingLogger(),
+		});
+		const panel = createSettingsPanel({
+			features,
+			settings,
+			runtime,
+			translate: createTranslator(() => locale),
+			version: "1.2.3",
+		});
+		locale = "ja";
+		panel.open();
+
+		const root = document.body.lastElementChild?.shadowRoot;
+		if (!root) throw new Error("設定画面が表示されていません");
+		expect(query(root, ".notice span").textContent).toBe(translate("settings.reloadNotice"));
+		expect(query(root, ".notice button").textContent).toBe(translate("settings.reload"));
+		expect(query(root, ".error").textContent).toBe(translate("settings.importFailed"));
+	});
+
 	test("機能がなければその旨を表示する", async () => {
 		const root = await openPanel([]);
 		expect(query(root, ".empty").textContent).toBe(translate("settings.empty"));

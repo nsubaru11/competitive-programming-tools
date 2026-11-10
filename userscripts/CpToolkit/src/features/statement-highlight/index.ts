@@ -13,18 +13,19 @@ const SKIPPED_ANCESTORS = `.katex, var, .${NUMBER_CLASS}, .${TIME_CLASS}, .${MEM
 const HIGHLIGHT_DELAY_MS = 100;
 const SKIPPED_TAGS: ReadonlySet<string> = new Set(statementCatalog.skipTags);
 
+/**
+ * 問題文は文字のノードが数千個あるので、1個あたりの処理を軽くする。
+ * TreeWalker のフィルターはノードごとの呼び出しが重いので使わず、文字列の判定で絞ってから祖先を調べる。
+ */
 function collectTextNodes(root: Node, accepts: (text: string) => boolean): Text[] {
-	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-		acceptNode(node) {
-			const parent = node.parentElement;
-			if (!parent || SKIPPED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-			return parent.closest(SKIPPED_ANCESTORS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
-		},
-	});
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 	const nodes: Text[] = [];
 	while (walker.nextNode()) {
 		const node = walker.currentNode;
-		if (node instanceof Text && accepts(node.data)) nodes.push(node);
+		if (!(node instanceof Text) || !accepts(node.data)) continue;
+		const parent = node.parentElement;
+		if (!parent || SKIPPED_TAGS.has(parent.tagName) || parent.closest(SKIPPED_ANCESTORS)) continue;
+		nodes.push(node);
 	}
 	return nodes;
 }
@@ -113,6 +114,8 @@ ${css}`);
 				markTargetSections();
 				highlightNumbers();
 				emphasizeLimits(options.alwaysEmphasizeLimits);
+				// 強調で加えた変更の通知を捨て、同じ走査をもう一度行わないようにする
+				observer.takeRecords();
 			}, HIGHLIGHT_DELAY_MS);
 		};
 		schedule();

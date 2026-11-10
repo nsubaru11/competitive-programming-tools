@@ -44,15 +44,21 @@ function parseSubmissionPage(html: string): SubmissionPage {
 async function loadStatuses(site: HttpClient, contestId: string): Promise<TaskStatuses> {
 	const accepted = new Map<string, boolean>();
 	let lastPage = 1;
+	let complete = true;
 	// 通信が重ならないよう、ページは順に取得する
 	for (let page = 1; page <= lastPage; page++) {
 		const response = await site.send({url: `/contests/${contestId}/submissions/me?page=${page}`});
-		if (response.status !== 200) break;
+		if (response.status !== 200) {
+			complete = false;
+			break;
+		}
 		const parsed = parseSubmissionPage(response.text);
 		for (const [id, ok] of parsed.results) accepted.set(id, (accepted.get(id) ?? false) || ok);
 		lastPage = parsed.lastPage;
 	}
-	return new Map([...accepted].map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS] as const));
+	// 途中で読めなかったら、残りのページに正解があるかもしれないので、不正解とは決めない
+	const known = [...accepted].filter(([, ok]) => ok || complete);
+	return new Map(known.map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS] as const));
 }
 
 function paint(statuses: TaskStatuses, links: string): void {

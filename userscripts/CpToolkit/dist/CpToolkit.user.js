@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.2
+// @version        1.1.3
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1623,6 +1623,16 @@ ${css}`,
 	}
 
 	function createSettingsPanel(dependencies) {
+		let view = null;
+		return {
+			open() {
+				view ??= createPanelView(dependencies);
+				view.open();
+			},
+		};
+	}
+
+	function createPanelView(dependencies) {
 		const {features, settings, runtime, translate, version} = dependencies;
 		const notice = h(
 			"div",
@@ -7442,7 +7452,7 @@ summary {
 
 		save(path, code) {
 			const others = this.list().filter((saved) => saved.path !== path);
-			this.state.set(SAVED_CODE_KEY, [...others, {path, code}].slice(-this.limit));
+			this.state.set(SAVED_CODE_KEY, this.limit > 0 ? [...others, {path, code}].slice(-this.limit) : []);
 		}
 
 		find(path) {
@@ -9729,17 +9739,14 @@ ${body}`.trim();
 	var SKIPPED_TAGS = new Set(statementCatalog.skipTags);
 
 	function collectTextNodes(root, accepts) {
-		const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-			acceptNode(node) {
-				const parent = node.parentElement;
-				if (!parent || SKIPPED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-				return parent.closest(SKIPPED_ANCESTORS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
-			},
-		});
+		const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 		const nodes = [];
 		while (walker.nextNode()) {
 			const node = walker.currentNode;
-			if (node instanceof Text && accepts(node.data)) nodes.push(node);
+			if (!(node instanceof Text) || !accepts(node.data)) continue;
+			const parent = node.parentElement;
+			if (!parent || SKIPPED_TAGS.has(parent.tagName) || parent.closest(SKIPPED_ANCESTORS)) continue;
+			nodes.push(node);
 		}
 		return nodes;
 	}
@@ -9827,6 +9834,7 @@ ${statement_highlight_default}`);
 					markTargetSections();
 					highlightNumbers();
 					emphasizeLimits(options.alwaysEmphasizeLimits);
+					observer.takeRecords();
 				}, HIGHLIGHT_DELAY_MS);
 			};
 			schedule();
@@ -10394,14 +10402,19 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 	async function loadStatuses(site, contestId) {
 		const accepted = new Map();
 		let lastPage = 1;
+		let complete = true;
 		for (let page = 1; page <= lastPage; page++) {
 			const response = await site.send({url: `/contests/${contestId}/submissions/me?page=${page}`});
-			if (response.status !== 200) break;
+			if (response.status !== 200) {
+				complete = false;
+				break;
+			}
 			const parsed = parseSubmissionPage(response.text);
 			for (const [id, ok] of parsed.results) accepted.set(id, (accepted.get(id) ?? false) || ok);
 			lastPage = parsed.lastPage;
 		}
-		return new Map([...accepted].map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS]));
+		const known = [...accepted].filter(([, ok]) => ok || complete);
+		return new Map(known.map(([id, ok]) => [id, ok ? ACCEPTED_CLASS : REJECTED_CLASS]));
 	}
 
 	function paint(statuses, links) {
@@ -10619,6 +10632,59 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 		return tokens;
 	}
 
+	function watchStatement(statement, targets, signal) {
+		let pinned = null;
+		let highlighted = [];
+		const keyAt = (target) => {
+			if (!(target instanceof Element) || !target.closest(LEAVES)) return null;
+			return (
+				collectTokens(statement, targets).find(({elements}) =>
+					elements.some((element) => element.contains(target)),
+				)?.key ?? null
+			);
+		};
+		const highlight = (key) => {
+			for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
+			highlighted =
+				key === null
+					? []
+					: collectTokens(statement, targets)
+							.filter((token) => token.key === key)
+							.flatMap(({elements}) => elements);
+			const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
+			for (const element of highlighted) element.classList.add(...names);
+		};
+		statement.addEventListener(
+			"mouseover",
+			(event) => {
+				const key = keyAt(event.target);
+				if (key !== null && pinned === null) highlight(key);
+			},
+			{signal},
+		);
+		statement.addEventListener(
+			"mouseout",
+			(event) => {
+				if (keyAt(event.target) !== null && pinned === null) highlight(null);
+			},
+			{signal},
+		);
+		statement.addEventListener(
+			"click",
+			(event) => {
+				const key = keyAt(event.target);
+				if (key === null) return;
+				pinned = key === pinned ? null : key;
+				highlight(key);
+			},
+			{signal},
+		);
+		return () => {
+			pinned = null;
+			highlight(null);
+		};
+	}
+
 	var variableHover = defineFeature({
 		id: "variable-hover",
 		title: "variableHover.title",
@@ -10633,73 +10699,28 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 		},
 		live: true,
 		start({options}) {
-			const statement = document.querySelector("#task-statement");
-			if (!statement || (!options.variables && !options.numbers))
+			const statements = [...document.querySelectorAll("#task-statement")];
+			if (statements.length === 0 || (!options.variables && !options.numbers))
 				return () => {
 					return;
 				};
 			const style = injectStyle(variable_hover_default);
 			const controller = new AbortController();
 			const {signal} = controller;
-			let pinned = null;
-			let highlighted = [];
-			const keyAt = (target) => {
-				if (!(target instanceof Element) || !target.closest(LEAVES)) return null;
-				return (
-					collectTokens(statement, options).find(({elements}) =>
-						elements.some((element) => element.contains(target)),
-					)?.key ?? null
-				);
+			const clearers = statements.map((statement) => watchStatement(statement, options, signal));
+			const clearAll = () => {
+				for (const clear of clearers) clear();
 			};
-			const highlight = (key) => {
-				for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
-				highlighted =
-					key === null
-						? []
-						: collectTokens(statement, options)
-								.filter((token) => token.key === key)
-								.flatMap(({elements}) => elements);
-				const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
-				for (const element of highlighted) element.classList.add(...names);
-			};
-			statement.addEventListener(
-				"mouseover",
-				(event) => {
-					const key = keyAt(event.target);
-					if (key !== null && pinned === null) highlight(key);
-				},
-				{signal},
-			);
-			statement.addEventListener(
-				"mouseout",
-				(event) => {
-					if (keyAt(event.target) !== null && pinned === null) highlight(null);
-				},
-				{signal},
-			);
-			statement.addEventListener(
-				"click",
-				(event) => {
-					const key = keyAt(event.target);
-					if (key === null) return;
-					pinned = key === pinned ? null : key;
-					highlight(key);
-				},
-				{signal},
-			);
 			document.addEventListener(
 				"keydown",
 				(event) => {
-					if (event.key !== "Escape") return;
-					pinned = null;
-					highlight(null);
+					if (event.key === "Escape") clearAll();
 				},
 				{signal},
 			);
 			return () => {
 				controller.abort();
-				pinned = null;
-				highlight(null);
+				clearAll();
 				style.remove();
 			};
 		},

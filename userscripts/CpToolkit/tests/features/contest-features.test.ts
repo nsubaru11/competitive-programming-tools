@@ -329,6 +329,28 @@ describe("taskStatus", () => {
 		expect(classOf("tr:nth-child(4)")).toBe("cp-task-rejected");
 	});
 
+	test("途中のページを読めなかったら、正解だけを塗り、不正解とは決めない", async () => {
+		document.body.innerHTML = `<div id="main-container"><table><tbody>
+			${taskRow("a")}${taskRow("b")}
+		</tbody></table></div>`;
+		// a の正解は、読めなかった2ページ目にあるかもしれない
+		const firstPage = submissionPage(submissionRow("a", 0, "WA") + submissionRow("b", 100, "AC"), 2);
+		const site = new FakeHttpClient((request) => {
+			return request.url.endsWith("page=1") ? {status: 200, text: firstPage} : {status: 429, text: ""};
+		});
+		await run(taskStatus, {
+			isOnRoute: (route) => route === "atcoder:tasks",
+			page: createFakePage(),
+			site,
+		});
+		await flush();
+		await flush();
+
+		expect(site.requests).toHaveLength(2);
+		expect(classOf("tr:nth-child(1)")).toBe("");
+		expect(classOf("tr:nth-child(2)")).toBe("cp-task-accepted");
+	});
+
 	test("ドロップダウンは開くまで取得せず、取得は1回にする", async () => {
 		document.body.innerHTML = `<div id="contest-nav-tabs"><ul><li class="dropdown">
 			<a id="toggle" href="#">Tasks</a>
@@ -426,6 +448,34 @@ describe("variableHover", () => {
 		expect(highlighted()).toEqual([]);
 		fire(0, "mouseover");
 		expect(highlighted()).toEqual([]);
+	});
+
+	test("問題の一括表示では、どの問題文でも、その問題の中だけを強調する", async () => {
+		// 一括表示のページには、問題ごとに同じ ID の問題文がある
+		const statement = (...symbols: string[]) => `<div id="task-statement">
+			<span class="katex"><span class="katex-html">${symbols.map(symbol).join("")}</span></span>
+		</div>`;
+		document.body.innerHTML = statement("N", "M") + statement("N", "K", "N");
+		const inStatement = (index: number) => {
+			return [...(document.querySelectorAll("#task-statement")[index]?.querySelectorAll(".cp-variable") ?? [])]
+				.map((element) => element.textContent);
+		};
+		const dispose = await run(variableHover);
+
+		fire(2, "mouseover");
+		expect(inStatement(0)).toEqual([]);
+		expect(inStatement(1)).toEqual(["N", "N"]);
+		fire(2, "mouseout");
+
+		fire(3, "click");
+		fire(0, "mouseover");
+		expect(inStatement(0)).toEqual(["N"]);
+		expect(inStatement(1)).toEqual(["K"]);
+
+		document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}));
+		fire(0, "mouseout");
+		expect(highlighted()).toEqual([]);
+		dispose?.();
 	});
 
 	describe("数値", () => {

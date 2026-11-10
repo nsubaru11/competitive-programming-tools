@@ -94,6 +94,46 @@ function collectTokens(statement: Element, targets: Targets): Token[] {
 	return tokens;
 }
 
+/** 1つの問題文の中で、同じ変数や数値を強調する。強調と固定を解除する関数を返す。 */
+function watchStatement(statement: Element, targets: Targets, signal: AbortSignal): () => void {
+	let pinned: string | null = null;
+	let highlighted: readonly Element[] = [];
+
+	const keyAt = (target: EventTarget | null): string | null => {
+		if (!(target instanceof Element) || !target.closest(LEAVES)) return null;
+		return collectTokens(statement, targets)
+			.find(({elements}) => elements.some((element) => element.contains(target)))?.key ?? null;
+	};
+
+	const highlight = (key: string | null): void => {
+		for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
+		highlighted = key === null ? [] : collectTokens(statement, targets)
+			.filter((token) => token.key === key)
+			.flatMap(({elements}) => elements);
+		const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
+		for (const element of highlighted) element.classList.add(...names);
+	};
+
+	statement.addEventListener("mouseover", (event) => {
+		const key = keyAt(event.target);
+		if (key !== null && pinned === null) highlight(key);
+	}, {signal});
+	statement.addEventListener("mouseout", (event) => {
+		if (keyAt(event.target) !== null && pinned === null) highlight(null);
+	}, {signal});
+	statement.addEventListener("click", (event) => {
+		const key = keyAt(event.target);
+		if (key === null) return;
+		pinned = key === pinned ? null : key;
+		highlight(key);
+	}, {signal});
+
+	return () => {
+		pinned = null;
+		highlight(null);
+	};
+}
+
 export const variableHover = defineFeature({
 	id: "variable-hover",
 	title: "variableHover.title",
@@ -108,53 +148,24 @@ export const variableHover = defineFeature({
 	},
 	live: true,
 	start({options}) {
-		const statement = document.querySelector("#task-statement");
-		if (!statement || (!options.variables && !options.numbers)) return () => undefined;
+		// 問題の一括表示のページには、問題ごとに同じ ID の問題文がある
+		const statements = [...document.querySelectorAll("#task-statement")];
+		if (statements.length === 0 || (!options.variables && !options.numbers)) return () => undefined;
 
 		const style = injectStyle(css);
 		const controller = new AbortController();
 		const {signal} = controller;
-		let pinned: string | null = null;
-		let highlighted: readonly Element[] = [];
-
-		const keyAt = (target: EventTarget | null): string | null => {
-			if (!(target instanceof Element) || !target.closest(LEAVES)) return null;
-			return collectTokens(statement, options)
-				.find(({elements}) => elements.some((element) => element.contains(target)))?.key ?? null;
+		const clearers = statements.map((statement) => watchStatement(statement, options, signal));
+		const clearAll = (): void => {
+			for (const clear of clearers) clear();
 		};
-
-		const highlight = (key: string | null): void => {
-			for (const element of highlighted) element.classList.remove(HIGHLIGHT_CLASS, PINNED_CLASS);
-			highlighted = key === null ? [] : collectTokens(statement, options)
-				.filter((token) => token.key === key)
-				.flatMap(({elements}) => elements);
-			const names = pinned === null ? [HIGHLIGHT_CLASS] : [HIGHLIGHT_CLASS, PINNED_CLASS];
-			for (const element of highlighted) element.classList.add(...names);
-		};
-
-		statement.addEventListener("mouseover", (event) => {
-			const key = keyAt(event.target);
-			if (key !== null && pinned === null) highlight(key);
-		}, {signal});
-		statement.addEventListener("mouseout", (event) => {
-			if (keyAt(event.target) !== null && pinned === null) highlight(null);
-		}, {signal});
-		statement.addEventListener("click", (event) => {
-			const key = keyAt(event.target);
-			if (key === null) return;
-			pinned = key === pinned ? null : key;
-			highlight(key);
-		}, {signal});
 		document.addEventListener("keydown", (event) => {
-			if (event.key !== "Escape") return;
-			pinned = null;
-			highlight(null);
+			if (event.key === "Escape") clearAll();
 		}, {signal});
 
 		return () => {
 			controller.abort();
-			pinned = null;
-			highlight(null);
+			clearAll();
 			style.remove();
 		};
 	},

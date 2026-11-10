@@ -47,4 +47,24 @@ describe("readStored", () => {
 		codes.save("/task", "code");
 		expect(codes.find("/task")).toBe("code");
 	});
+
+	test("上限を超えた分は古いものから捨てる", () => {
+		const codes = new SavedCodes(new MemoryStore(), 2);
+		codes.save("/a", "a");
+		codes.save("/b", "b");
+		codes.save("/c", "c");
+		expect(codes.find("/a")).toBeNull();
+		expect(codes.find("/b")).toBe("b");
+		expect(codes.find("/c")).toBe("c");
+	});
+
+	test("上限が 0 なら保存しない", () => {
+		const store = new MemoryStore();
+		const codes = new SavedCodes(store, 0);
+		codes.save("/a", "a");
+		codes.save("/b", "b");
+		expect(codes.find("/a")).toBeNull();
+		expect(codes.find("/b")).toBeNull();
+		expect(store.get("easy-test:saved-code")).toEqual([]);
+	});
 });
