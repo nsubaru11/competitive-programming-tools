@@ -12,6 +12,7 @@
 	position: relative;
 	width: 100%;
 	overflow-x: auto;
+	container-type: inline-size;
 }
 
 .cp-samples-row {
@@ -26,7 +27,8 @@
 	width: var(--cp-sample-width);
 }
 
-/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う */
+/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う。
+   組が少ないときに上限で折り返さないように、画面を組数で割った幅までは上限を超えて広げる */
 .cp-samples-row[data-width="auto"] {
 	width: max-content;
 	min-width: 100%;
@@ -36,7 +38,7 @@
 	flex: 1 0 auto;
 	width: max-content;
 	min-width: 15vw;
-	max-width: var(--cp-sample-max-width);
+	max-width: max(var(--cp-sample-max-width), calc(100cqw / var(--cp-sample-count) - 2em));
 }
 
 /* 上限を超える長い行は、その例の中で横にスクロールする */

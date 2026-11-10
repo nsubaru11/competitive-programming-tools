@@ -69,8 +69,9 @@ export const efficientLayout = defineFeature({
 		injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw; --cp-sample-max-width: ${options.maxSampleWidth}vw;}\n${css}`);
 		for (const row of document.querySelectorAll<HTMLElement>(".cp-samples-row")) {
 			row.dataset.width = options.widthMode;
-			// 自動のときは中身の長さに合わせ、CSS だけで幅を決める
 			if (options.widthMode === "fixed") row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
+			// 自動のときは中身の長さと組数から CSS で幅を決める
+			else row.style.setProperty("--cp-sample-count", String(row.children.length));
 		}
 	},
 });

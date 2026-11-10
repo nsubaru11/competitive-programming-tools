@@ -11,7 +11,7 @@
 ## How it works
 
 - Places the input and output formats side by side, and each sample pair next to the others. Scroll sideways when they do not fit
-- By default, each sample pair is as wide as its content. When everything fits, the pairs share the spare space, and lines longer than the maximum scroll sideways within the sample
+- By default, each sample pair is as wide as its content
 - Set the sizing to "Fixed" to give every pair the same width as a percentage of the screen. **20 to 30 is recommended by the author**
 
 ## Detailed settings

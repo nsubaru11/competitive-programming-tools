@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.0
+// @version        1.1.1
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -8024,6 +8024,7 @@ pre code {tab-size: 4;}`;
 	position: relative;
 	width: 100%;
 	overflow-x: auto;
+	container-type: inline-size;
 }
 
 .cp-samples-row {
@@ -8038,7 +8039,8 @@ pre code {tab-size: 4;}`;
 	width: var(--cp-sample-width);
 }
 
-/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う */
+/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う。
+   組が少ないときに上限で折り返さないように、画面を組数で割った幅までは上限を超えて広げる */
 .cp-samples-row[data-width="auto"] {
 	width: max-content;
 	min-width: 100%;
@@ -8048,7 +8050,7 @@ pre code {tab-size: 4;}`;
 	flex: 1 0 auto;
 	width: max-content;
 	min-width: 15vw;
-	max-width: var(--cp-sample-max-width);
+	max-width: max(var(--cp-sample-max-width), calc(100cqw / var(--cp-sample-count) - 2em));
 }
 
 /* 上限を超える長い行は、その例の中で横にスクロールする */
@@ -8123,6 +8125,7 @@ ${efficient_layout_default}`);
 				row.dataset.width = options.widthMode;
 				if (options.widthMode === "fixed")
 					row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
+				else row.style.setProperty("--cp-sample-count", String(row.children.length));
 			}
 		},
 	});
