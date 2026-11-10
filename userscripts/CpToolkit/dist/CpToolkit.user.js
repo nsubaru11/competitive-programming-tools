@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.37
+// @version        1.0.38
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1778,7 +1778,7 @@ a:focus > .cp-settings-entry {
 			customTest: "^/contests/[^/]+/custom_test",
 			submissions: "^/contests/[^/]+/submissions(/me)?/?(\\?|$)",
 			submissionDetail: "^/contests/[^/]+/submissions/\\d+",
-			editorial: "^/contests/[^/]+/editorial/?(\\?|$)",
+			editorial: "^/contests/[^/]+/(tasks/[^/?#]+/)?editorial/?(\\?|$)",
 			virtual: "^/contests/[^/]+/virtual/?(\\?|$)",
 			user: "^/users/[^/?#]+/?(\\?(?!.*graph=(rank|dist)).*)?$",
 		},

@@ -18,7 +18,7 @@ routes:
   customTest: '^/contests/[^/]+/custom_test'
   submissions: '^/contests/[^/]+/submissions(/me)?/?(\?|$)'
   submissionDetail: '^/contests/[^/]+/submissions/\d+'
-  editorial: '^/contests/[^/]+/editorial/?(\?|$)'
+  editorial: '^/contests/[^/]+/(tasks/[^/?#]+/)?editorial/?(\?|$)'
   virtual: '^/contests/[^/]+/virtual/?(\?|$)'
   user: '^/users/[^/?#]+/?(\?(?!.*graph=(rank|dist)).*)?$'
 

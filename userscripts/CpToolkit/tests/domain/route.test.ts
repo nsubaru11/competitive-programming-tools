@@ -69,6 +69,8 @@ describe("AtCoder のルート", () => {
 
 	test("解説の一覧だけを対象にする", () => {
 		expect(routesOf("https://atcoder.jp/contests/abc420/editorial?lang=ja")).toContain("atcoder:editorial");
+		expect(routesOf("https://atcoder.jp/contests/abc420/tasks/abc420_f/editorial")).toContain("atcoder:editorial");
+		expect(routesOf("https://atcoder.jp/contests/abc420/tasks/abc420_f/editorial?lang=en")).toContain("atcoder:editorial");
 		expect(routesOf("https://atcoder.jp/contests/abc420/editorial/123")).not.toContain("atcoder:editorial");
 	});
 });
