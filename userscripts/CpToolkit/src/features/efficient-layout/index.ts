@@ -52,7 +52,12 @@ export const efficientLayout = defineFeature({
 	routes: ["atcoder:task", "atcoder:tasksPrint"],
 	phase: "ready",
 	options: {
+		widthMode: option.select("auto", "efficientLayout.widthMode", [
+			{value: "auto", label: "efficientLayout.widthModeAuto"},
+			{value: "fixed", label: "efficientLayout.widthModeFixed"},
+		]),
 		sampleWidth: option.number(23, "efficientLayout.sampleWidth", {min: 10, max: 100}),
+		maxSampleWidth: option.number(40, "efficientLayout.maxSampleWidth", {min: 10, max: 100}),
 	},
 	start({options, translate}) {
 		for (const ioStyle of document.querySelectorAll(".io-style")) {
@@ -61,9 +66,11 @@ export const efficientLayout = defineFeature({
 			ioStyle.before(details);
 			details.append(ioStyle);
 		}
-		injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw;}\n${css}`);
+		injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw; --cp-sample-max-width: ${options.maxSampleWidth}vw;}\n${css}`);
 		for (const row of document.querySelectorAll<HTMLElement>(".cp-samples-row")) {
-			row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
+			row.dataset.width = options.widthMode;
+			// 自動のときは中身の長さに合わせ、CSS だけで幅を決める
+			if (options.widthMode === "fixed") row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
 		}
 	},
 });

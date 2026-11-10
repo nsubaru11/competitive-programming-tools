@@ -344,6 +344,30 @@ describe("efficientLayout", () => {
 		const container = document.querySelector(".cp-samples-container");
 		expect(container && getComputedStyle(container).position).toBe("relative");
 	});
+
+	const twoSamples = `<span class="lang">
+		<div class="io-style"><div class="part">入力</div></div>
+		<div class="part"><h3>入力例 1</h3></div><div class="part"><h3>出力例 1</h3></div>
+		<div class="part"><h3>入力例 2</h3></div><div class="part"><h3>出力例 2</h3></div>
+	</span>`;
+
+	test("既定は自動で、行の幅を指定しない", async () => {
+		document.body.innerHTML = twoSamples;
+		await run(efficientLayout);
+
+		const row = document.querySelector<HTMLElement>(".cp-samples-row");
+		expect(row?.dataset.width).toBe("auto");
+		expect(row?.style.width).toBe("");
+	});
+
+	test("固定のときは組数に応じて行の幅を決める", async () => {
+		document.body.innerHTML = twoSamples;
+		await run(efficientLayout, {widthMode: "fixed"});
+
+		const row = document.querySelector<HTMLElement>(".cp-samples-row");
+		expect(row?.dataset.width).toBe("fixed");
+		expect(row?.style.width).toBe("calc(var(--cp-sample-width) * 2)");
+	});
 });
 
 describe("tessokuDifficulty", () => {

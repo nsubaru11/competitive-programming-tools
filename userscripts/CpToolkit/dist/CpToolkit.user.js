@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.0.38
+// @version        1.1.0
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -1970,7 +1970,11 @@ a:focus > .cp-settings-entry {
 		"statementCopy.defaultTitle": "Task",
 		"efficientLayout.title": "Side-by-side samples",
 		"efficientLayout.description": "Places the input and output formats and samples side by side.",
-		"efficientLayout.sampleWidth": "Width of each sample pair (% of the screen; 20 to 30 recommended)",
+		"efficientLayout.widthMode": "How to size each sample pair",
+		"efficientLayout.widthModeAuto": "Auto (fit the content)",
+		"efficientLayout.widthModeFixed": "Fixed",
+		"efficientLayout.sampleWidth": "Fixed width (% of the screen; 20 to 30 recommended)",
+		"efficientLayout.maxSampleWidth": "Maximum width in auto mode (% of the screen)",
 		"efficientLayout.samples": "Samples",
 		"efficientLayout.ioFormat": "Input and output",
 		"submissionQuery.title": "Keep submission filters",
@@ -2187,7 +2191,11 @@ a:focus > .cp-settings-entry {
 		"statementCopy.defaultTitle": "問題",
 		"efficientLayout.title": "サンプルの横並び",
 		"efficientLayout.description": "入出力の形式とサンプルを横に並べて表示します。",
-		"efficientLayout.sampleWidth": "サンプル1組の幅(画面幅に対する %。おすすめは 20〜30)",
+		"efficientLayout.widthMode": "サンプル1組の幅の決め方",
+		"efficientLayout.widthModeAuto": "自動(中身の長さに合わせる)",
+		"efficientLayout.widthModeFixed": "固定",
+		"efficientLayout.sampleWidth": "固定のときの幅(画面幅に対する %。おすすめは 20〜30)",
+		"efficientLayout.maxSampleWidth": "自動のときの上限(画面幅に対する %)",
 		"efficientLayout.samples": "入出力例",
 		"efficientLayout.ioFormat": "入出力形式",
 		"submissionQuery.title": "提出一覧の検索条件の保持",
@@ -8023,8 +8031,29 @@ pre code {tab-size: 4;}`;
 }
 
 .cp-samples-row > * {
-	width: var(--cp-sample-width);
 	margin: 0 1em;
+}
+
+.cp-samples-row[data-width="fixed"] > * {
+	width: var(--cp-sample-width);
+}
+
+/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う */
+.cp-samples-row[data-width="auto"] {
+	width: max-content;
+	min-width: 100%;
+}
+
+.cp-samples-row[data-width="auto"] > * {
+	flex: 1 0 auto;
+	width: max-content;
+	min-width: 15vw;
+	max-width: var(--cp-sample-max-width);
+}
+
+/* 上限を超える長い行は、その例の中で横にスクロールする */
+.cp-samples-row[data-width="auto"] pre {
+	overflow-x: auto;
 }
 `;
 
@@ -8074,7 +8103,12 @@ pre code {tab-size: 4;}`;
 		routes: ["atcoder:task", "atcoder:tasksPrint"],
 		phase: "ready",
 		options: {
+			widthMode: option.select("auto", "efficientLayout.widthMode", [
+				{value: "auto", label: "efficientLayout.widthModeAuto"},
+				{value: "fixed", label: "efficientLayout.widthModeFixed"},
+			]),
 			sampleWidth: option.number(23, "efficientLayout.sampleWidth", {min: 10, max: 100}),
+			maxSampleWidth: option.number(40, "efficientLayout.maxSampleWidth", {min: 10, max: 100}),
 		},
 		start({options, translate}) {
 			for (const ioStyle of document.querySelectorAll(".io-style")) {
@@ -8083,10 +8117,12 @@ pre code {tab-size: 4;}`;
 				ioStyle.before(details);
 				details.append(ioStyle);
 			}
-			injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw;}
+			injectStyle(`:root {--cp-sample-width: ${options.sampleWidth}vw; --cp-sample-max-width: ${options.maxSampleWidth}vw;}
 ${efficient_layout_default}`);
 			for (const row of document.querySelectorAll(".cp-samples-row")) {
-				row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
+				row.dataset.width = options.widthMode;
+				if (options.widthMode === "fixed")
+					row.style.width = `calc(var(--cp-sample-width) * ${row.children.length})`;
 			}
 		},
 	});

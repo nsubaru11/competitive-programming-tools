@@ -53,7 +53,11 @@ statementCopy.defaultTitle: Task
 
 efficientLayout.title: Side-by-side samples
 efficientLayout.description: Places the input and output formats and samples side by side.
-efficientLayout.sampleWidth: Width of each sample pair (% of the screen; 20 to 30 recommended)
+efficientLayout.widthMode: How to size each sample pair
+efficientLayout.widthModeAuto: Auto (fit the content)
+efficientLayout.widthModeFixed: Fixed
+efficientLayout.sampleWidth: Fixed width (% of the screen; 20 to 30 recommended)
+efficientLayout.maxSampleWidth: Maximum width in auto mode (% of the screen)
 efficientLayout.samples: Samples
 efficientLayout.ioFormat: Input and output
 

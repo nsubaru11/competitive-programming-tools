@@ -54,7 +54,11 @@ statementCopy.defaultTitle: 問題
 
 efficientLayout.title: サンプルの横並び
 efficientLayout.description: 入出力の形式とサンプルを横に並べて表示します。
-efficientLayout.sampleWidth: サンプル1組の幅(画面幅に対する %。おすすめは 20〜30)
+efficientLayout.widthMode: サンプル1組の幅の決め方
+efficientLayout.widthModeAuto: 自動(中身の長さに合わせる)
+efficientLayout.widthModeFixed: 固定
+efficientLayout.sampleWidth: 固定のときの幅(画面幅に対する %。おすすめは 20〜30)
+efficientLayout.maxSampleWidth: 自動のときの上限(画面幅に対する %)
 efficientLayout.samples: 入出力例
 efficientLayout.ioFormat: 入出力形式
 

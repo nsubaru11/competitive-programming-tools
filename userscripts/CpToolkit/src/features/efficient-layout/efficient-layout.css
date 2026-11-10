@@ -19,6 +19,27 @@
 }
 
 .cp-samples-row > * {
-	width: var(--cp-sample-width);
 	margin: 0 1em;
+}
+
+.cp-samples-row[data-width="fixed"] > * {
+	width: var(--cp-sample-width);
+}
+
+/* 中身の最長行に合わせ、下限と上限の間に収める。画面に収まるときは余白を分け合う */
+.cp-samples-row[data-width="auto"] {
+	width: max-content;
+	min-width: 100%;
+}
+
+.cp-samples-row[data-width="auto"] > * {
+	flex: 1 0 auto;
+	width: max-content;
+	min-width: 15vw;
+	max-width: var(--cp-sample-max-width);
+}
+
+/* 上限を超える長い行は、その例の中で横にスクロールする */
+.cp-samples-row[data-width="auto"] pre {
+	overflow-x: auto;
 }
