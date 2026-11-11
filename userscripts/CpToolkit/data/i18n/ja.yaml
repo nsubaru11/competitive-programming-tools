@@ -218,6 +218,7 @@ easyTest.memory: メモリ
 easyTest.allocated: 累積の割り当て
 easyTest.noSavedCode: この問題の保存済みコードはありません。
 easyTest.noSamples: サンプルが見つかりませんでした。テストと提出は行っていません。
+easyTest.noSource: ソースコードが空なので、実行していません。
 easyTest.internalError: 実行環境でエラーが起きたので、コードを実行できませんでした。別の実行環境を選んでやり直してください。
 easyTest.restoreConfirm: 現在のコードを置き換えます。よろしいですか?
 

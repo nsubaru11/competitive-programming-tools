@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.3
+// @version        1.1.4
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -2198,6 +2198,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.allocated": "allocated in total",
 		"easyTest.noSavedCode": "No saved code was found for this task.",
 		"easyTest.noSamples": "No samples were found. Nothing was tested or submitted.",
+		"easyTest.noSource": "The source code is empty, so nothing was run.",
 		"easyTest.internalError":
 			"The code could not be run because the environment failed. Choose another environment and try again.",
 		"easyTest.restoreConfirm": "Your current code will be replaced. Continue?",
@@ -2420,6 +2421,7 @@ a:focus > .cp-settings-entry {
 		"easyTest.allocated": "累積の割り当て",
 		"easyTest.noSavedCode": "この問題の保存済みコードはありません。",
 		"easyTest.noSamples": "サンプルが見つかりませんでした。テストと提出は行っていません。",
+		"easyTest.noSource": "ソースコードが空なので、実行していません。",
 		"easyTest.internalError":
 			"実行環境でエラーが起きたので、コードを実行できませんでした。別の実行環境を選んでやり直してください。",
 		"easyTest.restoreConfirm": "現在のコードを置き換えます。よろしいですか?",
@@ -4216,6 +4218,8 @@ a:focus > .cp-settings-entry {
 	}
 
 	// CpToolkit/src/adapters/judges/yukicoder.ts
+	var EDITOR_CONTENT = ".cm-source-editor .cm-content";
+
 	class YukicoderSite extends JudgeSiteBase {
 		id = "yukicoder";
 
@@ -4240,22 +4244,35 @@ a:focus > .cp-settings-entry {
 		}
 
 		get editor() {
-			return pageGlobals().ace?.edit("rich_source");
+			const content = pageGlobals().document?.querySelector(EDITOR_CONTENT);
+			return content?.cmTile?.view ?? null;
 		}
 
 		onSourceChange(listener) {
-			this.editor?.getSession().on("change", listener);
+			const watch = () => {
+				const content = document.querySelector(EDITOR_CONTENT);
+				if (!content) return false;
+				new MutationObserver(listener).observe(content, {childList: true, subtree: true, characterData: true});
+				return true;
+			};
+			const host = document.querySelector("#rich_source")?.parentElement;
+			if (watch() || !host) return;
+			const waiting = new MutationObserver(() => {
+				if (watch()) waiting.disconnect();
+			});
+			waiting.observe(host, {childList: true, subtree: true});
 		}
 
 		sourceCode() {
 			const textarea = this.textarea;
 			if (textarea && textarea.offsetParent !== null) return textarea.value;
-			return this.editor?.getSession().getValue() ?? "";
+			return this.editor?.state.doc.toString() ?? "";
 		}
 
 		setSourceCode(code) {
 			if (this.textarea) this.textarea.value = code;
-			this.editor?.getSession().setValue(code);
+			const editor = this.editor;
+			editor?.dispatch({changes: {from: 0, to: editor.state.doc.length, insert: code}});
 		}
 
 		submit() {
@@ -5001,6 +5018,14 @@ ${body}
 		}
 	}
 
+	// CpToolkit/src/domain/source/java-public.ts
+	var PUBLIC_TYPE_PATTERN =
+		/^((?:(?:abstract|final|sealed|non-sealed|strictfp)[ \t]+)*)public[ \t]+(?=(?:(?:abstract|final|sealed|non-sealed|strictfp)[ \t]+)*(?:class|interface|enum|record|@interface)\b)/gm;
+
+	function withoutPublicTypes(source) {
+		return source.replace(PUBLIC_TYPE_PATTERN, "$1");
+	}
+
 	// CpToolkit/src/domain/validation/guards.ts
 	var isBoolean = (value) => typeof value === "boolean";
 	var isString = (value) => typeof value === "string";
@@ -5070,6 +5095,7 @@ ${body}
 		async run(sourceCode, input, _options) {
 			const usesAcl = this.compiler.language === "C++";
 			const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map();
+			const code = this.compiler.language === "Java" ? withoutPublicTypes(sourceCode) : sourceCode;
 			const startedAt = Date.now();
 			const response = await this.http.send({
 				url: runnerCatalog.wandbox.compileUrl,
@@ -5077,7 +5103,7 @@ ${body}
 				headers: {"Content-Type": "application/json"},
 				body: JSON.stringify({
 					compiler: this.compiler.name,
-					code: sourceCode,
+					code,
 					stdin: input,
 					options: this.optimization,
 					...(usesAcl
@@ -7922,13 +7948,21 @@ ${label}`,
 			return {result, tab};
 		}
 
+		hasSource() {
+			if (this.site.sourceCode()) return true;
+			window.alert(this.context.translate("easyTest.noSource"));
+			return false;
+		}
+
 		async runPanel() {
+			if (!this.hasSource()) return;
 			await this.refreshEnvironment();
 			const {input, expected} = this.panel;
 			this.execute({title: "Run", input: input.value, output: expected.value || null}, {});
 		}
 
 		async runSample(sample) {
+			if (!this.hasSource()) return;
 			await this.refreshEnvironment();
 			const {result, tab} = this.execute(sample, {});
 			await result;
@@ -7940,6 +7974,7 @@ ${label}`,
 		}
 
 		async runSamples(onClose) {
+			if (!this.hasSource()) return false;
 			const samples = await this.readSamples();
 			if (samples.length === 0) {
 				window.alert(this.context.translate("easyTest.noSamples"));

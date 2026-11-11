@@ -217,6 +217,7 @@ easyTest.memory: Memory
 easyTest.allocated: allocated in total
 easyTest.noSavedCode: No saved code was found for this task.
 easyTest.noSamples: No samples were found. Nothing was tested or submitted.
+easyTest.noSource: The source code is empty, so nothing was run.
 easyTest.internalError: The code could not be run because the environment failed. Choose another environment and try again.
 easyTest.restoreConfirm: Your current code will be replaced. Continue?
 

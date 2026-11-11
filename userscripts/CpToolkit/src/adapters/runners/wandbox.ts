@@ -1,6 +1,7 @@
 import {languageCatalog, runnerCatalog} from "@catalog/tables";
 import {resolveFamily} from "@domain/execution/language";
 import type {JudgeLanguage, RunOptions, RunResult} from "@domain/execution/result";
+import {withoutPublicTypes} from "@domain/source/java-public";
 import {type Guard, isArrayOf, isNumber, isObjectOf, isString} from "@domain/validation/guards";
 import type {CodeRunner, RunnerProvider} from "@application/execution/runner-catalog";
 import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
@@ -64,6 +65,8 @@ class WandboxRunner implements CodeRunner {
 	async run(sourceCode: string, input: string, _options: RunOptions): Promise<RunResult> {
 		const usesAcl = this.compiler.language === "C++";
 		const files = usesAcl ? await this.collectAclFiles(sourceCode) : new Map<string, string>();
+		// Wandbox は Java を prog.java として保存するので、public な型はコンパイルできない
+		const code = this.compiler.language === "Java" ? withoutPublicTypes(sourceCode) : sourceCode;
 		const startedAt = Date.now();
 		const response = await this.http.send({
 			url: runnerCatalog.wandbox.compileUrl,
@@ -71,7 +74,7 @@ class WandboxRunner implements CodeRunner {
 			headers: {"Content-Type": "application/json"},
 			body: JSON.stringify({
 				compiler: this.compiler.name,
-				code: sourceCode,
+				code,
 				stdin: input,
 				options: this.optimization,
 				...(usesAcl ? {

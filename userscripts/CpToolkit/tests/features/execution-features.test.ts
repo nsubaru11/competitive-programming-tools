@@ -258,6 +258,29 @@ describe("easyTest", () => {
 		}
 	});
 
+	describe("ソースが空のとき", () => {
+		const originalAlert = window.alert;
+
+		afterEach(() => {
+			window.alert = originalAlert;
+		});
+
+		test("実行も提出もせず知らせる", async () => {
+			const alert = mock(() => undefined);
+			window.alert = alert;
+			const run = mock(echo);
+			const site = createSite({sourceCode: () => ""});
+			await start(site, run);
+			button("Test & Submit")?.click();
+			await wait(30);
+			expect(run).not.toHaveBeenCalled();
+			expect(site.submit).not.toHaveBeenCalled();
+			expect(alert).toHaveBeenCalledTimes(1);
+			expect(row()).toBeNull();
+			expect(button("Test & Submit")?.classList.contains("btn-info")).toBe(true);
+		});
+	});
+
 	test("実行環境がなければボタンを無効の表示にして理由を示す", async () => {
 		await start(createSite({language: () => null}), echo);
 		expect(button("Test & Submit")?.classList.contains("disabled")).toBe(true);

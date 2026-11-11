@@ -252,13 +252,22 @@ class EasyTest {
 		return {result, tab};
 	}
 
+	/** ソースが空なら知らせる。サイトのエディタを読めなかったときに、空のコードを実行しないようにする。 */
+	private hasSource(): boolean {
+		if (this.site.sourceCode()) return true;
+		window.alert(this.context.translate("easyTest.noSource"));
+		return false;
+	}
+
 	private async runPanel(): Promise<void> {
+		if (!this.hasSource()) return;
 		await this.refreshEnvironment();
 		const {input, expected} = this.panel;
 		this.execute({title: "Run", input: input.value, output: expected.value || null}, {});
 	}
 
 	private async runSample(sample: SampleCase): Promise<void> {
+		if (!this.hasSource()) return;
 		await this.refreshEnvironment();
 		const {result, tab} = this.execute(sample, {});
 		await result;
@@ -269,8 +278,9 @@ class EasyTest {
 		return this.site.samples().catch(() => []);
 	}
 
-	/** サンプルをすべて実行し、全問正解かを返す。サンプルを読めなければ何も実行しない。 */
+	/** サンプルをすべて実行し、全問正解かを返す。ソースが空か、サンプルを読めなければ何も実行しない。 */
 	private async runSamples(onClose?: () => void): Promise<boolean> {
+		if (!this.hasSource()) return false;
 		const samples = await this.readSamples();
 		if (samples.length === 0) {
 			window.alert(this.context.translate("easyTest.noSamples"));

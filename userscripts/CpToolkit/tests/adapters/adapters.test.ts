@@ -261,11 +261,84 @@ describe("AtCoderSite", () => {
 });
 
 describe("YukicoderSite", () => {
+	const globals = globalThis as {unsafeWindow?: unknown};
+	const wait = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+	afterEach(() => {
+		delete globals.unsafeWindow;
+	});
+
+	/** CodeMirror と同じ場所に編集領域を置き、本体の参照を付ける。 */
+	function mountEditor(initial: string) {
+		const editor = {text: initial};
+		const view = {
+			get state() {
+				return {doc: {length: editor.text.length, toString: () => editor.text}};
+			},
+			dispatch({changes}: {changes: {from: number; to: number; insert: string}}) {
+				editor.text = editor.text.slice(0, changes.from) + changes.insert + editor.text.slice(changes.to);
+			},
+		};
+		const content = document.createElement("div");
+		content.className = "cm-content";
+		Object.assign(content, {cmTile: {view}});
+		const wrapper = document.createElement("div");
+		wrapper.className = "cm-source-editor";
+		wrapper.append(content);
+		document.querySelector("#rich_source")?.after(wrapper);
+		return {editor, content};
+	}
+
+	/** happy-dom は表示の有無を計算しないので、textarea が見えているかを指定して置く。 */
+	function mountTextarea(visible: boolean): HTMLTextAreaElement {
+		document.body.innerHTML = '<div><div id="rich_source"></div><textarea id="source"></textarea></div>';
+		const textarea = document.querySelector<HTMLTextAreaElement>("#source")!;
+		Object.defineProperty(textarea, "offsetParent", {value: visible ? document.body : null});
+		return textarea;
+	}
+
 	test("サンプルと実行ボタンの位置を読み取る", async () => {
 		document.body.innerHTML = '<div class="sample"><button class="copy-sample-input"></button><pre>1</pre><pre>2</pre></div>';
 		const samples = await new YukicoderSite(bridge).samples();
 		expect(samples[0]).toMatchObject({input: "1", output: "2"});
 		expect(samples[0]?.anchor).toBe(document.querySelector(".copy-sample-input"));
+	});
+
+	test("CodeMirror のエディタからソースを読み書きする", () => {
+		globals.unsafeWindow = window;
+		const textarea = mountTextarea(false);
+		const {editor} = mountEditor("print(1)");
+		const site = new YukicoderSite(bridge);
+		expect(site.sourceCode()).toBe("print(1)");
+		site.setSourceCode("print(2)");
+		expect(editor.text).toBe("print(2)");
+		expect(textarea.value).toBe("print(2)");
+	});
+
+	test("textarea に切り替えている間は textarea から読む", () => {
+		globals.unsafeWindow = window;
+		const textarea = mountTextarea(true);
+		mountEditor("print(1)");
+		textarea.value = "print(3)";
+		expect(new YukicoderSite(bridge).sourceCode()).toBe("print(3)");
+	});
+
+	test("エディタがなければ空のソースを返す", () => {
+		globals.unsafeWindow = window;
+		mountTextarea(false);
+		expect(new YukicoderSite(bridge).sourceCode()).toBe("");
+	});
+
+	test("あとから作られたエディタの編集も知らせる", async () => {
+		document.body.innerHTML = '<div><div id="rich_source"></div></div>';
+		const listener = mock(() => undefined);
+		new YukicoderSite(bridge).onSourceChange(listener);
+		const {content} = mountEditor("");
+		await wait();
+		expect(listener).not.toHaveBeenCalled();
+		content.append(document.createElement("div"));
+		await wait();
+		expect(listener).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -436,6 +509,26 @@ describe("実行環境", () => {
 		expect((await provider.runnersFor(java)).map(({id}) => id)).toEqual(["wandbox:openjdk-21"]);
 		await provider.runnersFor(java);
 		expect(http.requests).toHaveLength(1);
+	});
+
+	test("Wandbox へは Java の型から public を外して送り、ほかの言語はそのまま送る", async () => {
+		const compilers = [
+			{name: "openjdk-21", language: "Java", version: "21", switches: []},
+			{name: "gcc", language: "C++", version: "13", switches: []},
+		];
+		const http = new FakeHttpClient(({url}) => {
+			return {status: 200, text: JSON.stringify(url.endsWith("list.json") ? compilers : {status: 0})};
+		});
+		const provider = new WandboxRunnerProvider(http, new MemoryStore());
+		const sentCode = () => (JSON.parse(http.requests.at(-1)?.body ?? "{}") as {code?: string}).code;
+
+		const [javaRunner] = await provider.runnersFor(java);
+		await javaRunner?.run("public final class Main {\n}\n", "", {});
+		expect(sentCode()).toBe("final class Main {\n}\n");
+
+		const [cppRunner] = await provider.runnersFor({id: "2", label: "C++ 23", family: "cpp"});
+		await cppRunner?.run("public final class Main {\n}\n", "", {});
+		expect(sentCode()).toBe("public final class Main {\n}\n");
 	});
 
 	test("Local Runner は同じ言語のコンパイラだけを候補にする", async () => {

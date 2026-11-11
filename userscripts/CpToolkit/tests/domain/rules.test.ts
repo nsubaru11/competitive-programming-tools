@@ -6,6 +6,7 @@ import {judgeResult} from "@domain/execution/result";
 import {parseRecentRange, ratedPerformances, recentCount} from "@domain/rating/history";
 import {tierOf, tierProgress} from "@domain/rating/scale";
 import {findFoldStartLines} from "@domain/source/fold-lines";
+import {withoutPublicTypes} from "@domain/source/java-public";
 import {isPureNumber, splitLimitValue, splitNumbers} from "@domain/statement/tokens";
 import {
 	fillVariables,
@@ -288,5 +289,39 @@ describe("Java の折りたたみ", () => {
 	test("型の宣言とコメントの開始行を返す", () => {
 		const source = ["/* a */", "import java.util.*;", "public final class Main {", "\tvoid f() {}", "}", "record P() {}"].join("\n");
 		expect(findFoldStartLines(source)).toEqual([0, 2, 5]);
+	});
+});
+
+describe("Java の public な型", () => {
+	test("行頭から始まる型の宣言だけ public を外す", () => {
+		const source = [
+			"import java.util.*;",
+			"public final class Main {",
+			"\tpublic static void main(String[] args) {}",
+			"\tpublic static final class Inner {}",
+			"}",
+			"final public class A {}",
+			"public interface B {}",
+			"public record C() {}",
+			"public @interface D {}",
+			"public enum E {}",
+		].join("\n");
+		expect(withoutPublicTypes(source)).toBe([
+			"import java.util.*;",
+			"final class Main {",
+			"\tpublic static void main(String[] args) {}",
+			"\tpublic static final class Inner {}",
+			"}",
+			"final class A {}",
+			"interface B {}",
+			"record C() {}",
+			"@interface D {}",
+			"enum E {}",
+		].join("\n"));
+	});
+
+	test("public な型がなければ変えない", () => {
+		const source = "class Main {\n\tpublic int value;\n}\n";
+		expect(withoutPublicTypes(source)).toBe(source);
 	});
 });

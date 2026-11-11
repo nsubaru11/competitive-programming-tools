@@ -39,6 +39,15 @@ export type MonacoEditor = {
 	onDidPaste(listener: (event: {range: unknown}) => void): void;
 };
 
+/** CodeMirror 6 の EditorView。 */
+export type CodeMirrorView = {
+	readonly state: {readonly doc: {readonly length: number; toString(): string}};
+	dispatch(transaction: {changes: {from: number; to: number; insert: string}}): void;
+};
+
+/** CodeMirror 6 の編集領域の要素。エディタを取得する公開の方法はないので、要素に付いた参照からたどる。 */
+export type CodeMirrorContent = Element & {cmTile?: {view?: CodeMirrorView}};
+
 type JQueryObject = {
 	on(event: string, listener: () => void): JQueryObject;
 	trigger(event: string): JQueryObject;
@@ -69,6 +78,8 @@ export type RatingEntry = {
 type PageMoment = {valueOf(): number};
 
 export type PageGlobals = {
+	/** ページ側のスクリプトが要素に付けた値は、ここから取った要素で読む。 */
+	document?: Document;
 	ace?: {edit(target: Element | string): AceEditor};
 	monaco?: {editor: {getEditors(): MonacoEditor[]}};
 	jQuery?: (target: unknown) => JQueryObject;
