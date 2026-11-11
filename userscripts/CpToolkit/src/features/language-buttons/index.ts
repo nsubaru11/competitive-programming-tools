@@ -43,7 +43,10 @@ export const languageButtons = defineFeature({
 		const render = (): void => {
 			const pinnedIds = pinned.ids();
 			const currentId = site.language()?.id;
-			bar.replaceChildren(...site.languages().filter(({id}) => pinnedIds.has(id)).map(({id, label}) => h("button", {
+			bar.replaceChildren(...site.languages().filter(({id}) => pinnedIds.has(id)).map(({
+				id,
+				label
+			}) => h("button", {
 				type: "button",
 				className: `btn btn-sm ${id === currentId ? "btn-success" : "btn-default"}`,
 				textContent: label,

@@ -10,7 +10,14 @@ import type {KeyValueStore} from "@application/ports/key-value-store";
 import type {PageBridge} from "@application/ports/page-bridge";
 import type {PagePhase} from "@application/ports/page-lifecycle";
 import type {RatingGraph} from "@application/ports/rating-graph";
-import type {Clipboard, HttpClient, Notifier, ScriptLoader, StatementConverter, Ticker} from "@application/ports/services";
+import type {
+	Clipboard,
+	HttpClient,
+	Notifier,
+	ScriptLoader,
+	StatementConverter,
+	Ticker
+} from "@application/ports/services";
 import type {PastePipeline} from "@application/source/paste-pipeline";
 
 export type Disposer = () => void;

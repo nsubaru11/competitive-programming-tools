@@ -192,7 +192,12 @@ describe("resultNotifier", () => {
 		dispose?.();
 		expect(ticker.listeners.size).toBe(0);
 
-		state.changeRemotely("result-notifier:pending", [{id: "9", contestId: "abc1", taskName: "A", addedAt: Date.now()}]);
+		state.changeRemotely("result-notifier:pending", [{
+			id: "9",
+			contestId: "abc1",
+			taskName: "A",
+			addedAt: Date.now()
+		}]);
 		expect(ticker.listeners.size).toBe(0);
 	});
 });

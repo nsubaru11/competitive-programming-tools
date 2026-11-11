@@ -113,12 +113,22 @@ describe("submissionShortcuts", () => {
 
 	test("詳細設定で選んだボタンだけを出し、1つもなければ何も出さない", async () => {
 		renderTitle();
-		await run(submissionShortcuts, {byTime: false, byLength: true, byCreated: false, byMemory: true}, {page: createFakePage()});
+		await run(submissionShortcuts, {
+			byTime: false,
+			byLength: true,
+			byCreated: false,
+			byMemory: true
+		}, {page: createFakePage()});
 		const links = [...document.querySelectorAll(".cp-title-control .btn-group a")];
 		expect(links.map(({textContent}) => textContent)).toEqual(["コード長", "メモリ"]);
 
 		renderTitle();
-		await run(submissionShortcuts, {byTime: false, byLength: false, byCreated: false, byMemory: false}, {page: createFakePage()});
+		await run(submissionShortcuts, {
+			byTime: false,
+			byLength: false,
+			byCreated: false,
+			byMemory: false
+		}, {page: createFakePage()});
 		expect(document.querySelector(".cp-title-control")).toBeNull();
 	});
 

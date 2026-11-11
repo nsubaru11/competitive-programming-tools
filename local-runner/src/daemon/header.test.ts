@@ -41,7 +41,12 @@ describe("applySubmissionHeader", () => {
 	});
 
 	test("言語ごとに別のファイルを使う", () => {
-		writeLocalSettings(settingsFile, {headerFiles: {java: writeHeader("java.txt", "// java"), cpp: writeHeader("cpp.txt", "// cpp")}});
+		writeLocalSettings(settingsFile, {
+			headerFiles: {
+				java: writeHeader("java.txt", "// java"),
+				cpp: writeHeader("cpp.txt", "// cpp")
+			}
+		});
 		expect(applySubmissionHeader(success, true, "cpp").sourceCode).toBe(`// cpp\n\n${SOURCE}`);
 	});
 

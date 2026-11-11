@@ -39,7 +39,7 @@ const SOURCE_LANGUAGE = "java";
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
-							 validate = true): Promise<LocalRunnerTransformResponse> {
+	validate = true): Promise<LocalRunnerTransformResponse> {
 	const result = await dispatcher.queueDispatcherTransform(sourceCode, config.resolveLibrarySourceRoot(), debug, autoImport, validate);
 	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && usesJavaLibrary(sourceCode);
 	return {

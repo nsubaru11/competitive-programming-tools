@@ -51,12 +51,12 @@ export class AtCoderSite extends JudgeSiteBase {
 		};
 	}
 
-	private get taskSelect(): HTMLSelectElement | null {
-		return document.querySelector("#select-task");
-	}
-
 	protected get languageSelect(): HTMLSelectElement | null {
 		return document.querySelector("#select-lang select.current");
+	}
+
+	private get taskSelect(): HTMLSelectElement | null {
+		return document.querySelector("#select-task");
 	}
 
 	override taskUri(): string {

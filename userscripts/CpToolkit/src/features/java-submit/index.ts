@@ -77,7 +77,10 @@ export const javaSubmit = defineFeature({
 			order: PASTE_ORDER,
 			async transform(code, {editor}) {
 				if (!editor.isJava() || code.length < MIN_SOURCE_LENGTH) return code;
-				const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner, {...options, header});
+				const {sourceCode, connected, libraryMissing} = await transformJava(code, localRunner, {
+					...options,
+					header
+				});
 				if (libraryMissing) {
 					showToast({
 						title: translate("javaSubmit.libraryRequired"),

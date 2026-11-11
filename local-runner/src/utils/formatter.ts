@@ -75,7 +75,6 @@ export function thresholdsFromTimeLimit(timeLimitMs?: number): ExecTimeThreshold
 	return {warnMs: Math.round(limit * 0.8), dangerMs: limit};
 }
 
-
 function toRunLabel(status: string) {
 	switch (status) {
 		case "success":

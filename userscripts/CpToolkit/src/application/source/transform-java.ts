@@ -28,7 +28,11 @@ export async function transformJava(
 		try {
 			const transformed = await localRunner.transform(code, options.header);
 			connected = true;
-			if (transformed.status === "success") return {sourceCode: transformed.sourceCode, connected, libraryMissing};
+			if (transformed.status === "success") return {
+				sourceCode: transformed.sourceCode,
+				connected,
+				libraryMissing
+			};
 			libraryMissing = transformed.libraryMissing === true;
 		} catch {
 			// Local Runner が起動していなければ、下の字句変換を使う

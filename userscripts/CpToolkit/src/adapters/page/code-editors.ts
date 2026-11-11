@@ -142,7 +142,10 @@ export class PageCodeEditorLocator implements CodeEditorLocator {
 	/** 同じ条件の探索は1本にまとめ、ページ全体の監視を重ねない。見つからなかった結果は残さない。 */
 	private readonly lookups = new Map<string, Promise<CodeEditor | null>>();
 
-	locate(target: SubmissionTarget, {timeoutMs = DEFAULT_TIMEOUT_MS, delayMs = 0}: EditorLookup = {}): Promise<CodeEditor | null> {
+	locate(target: SubmissionTarget, {
+		timeoutMs = DEFAULT_TIMEOUT_MS,
+		delayMs = 0
+	}: EditorLookup = {}): Promise<CodeEditor | null> {
 		const key = JSON.stringify([target, timeoutMs, delayMs]);
 		const shared = this.lookups.get(key);
 		if (shared) return shared;

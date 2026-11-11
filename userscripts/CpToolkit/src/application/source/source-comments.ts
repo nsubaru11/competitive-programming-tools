@@ -1,4 +1,12 @@
-import {type Guard, isArrayOf, isBoolean, isObjectOf, isOptional, isRecordOf, isString} from "@domain/validation/guards";
+import {
+	type Guard,
+	isArrayOf,
+	isBoolean,
+	isObjectOf,
+	isOptional,
+	isRecordOf,
+	isString
+} from "@domain/validation/guards";
 import {type KeyValueStore, readStored} from "@application/ports/key-value-store";
 
 export type CommentSlot = "header" | "footer";
@@ -22,7 +30,11 @@ export type SlotContent = CommentEntry & {
 const HISTORY_LIMIT = 20;
 const EMPTY_ENTRY: CommentEntry = {text: "", commentOut: true};
 
-const isEntry: Guard<CommentEntry> = isObjectOf<CommentEntry>({text: isString, commentOut: isBoolean, multiline: isOptional(isBoolean)});
+const isEntry: Guard<CommentEntry> = isObjectOf<CommentEntry>({
+	text: isString,
+	commentOut: isBoolean,
+	multiline: isOptional(isBoolean)
+});
 const isNamed: Guard<NamedComment> = isObjectOf<NamedComment>({
 	name: isString,
 	text: isString,

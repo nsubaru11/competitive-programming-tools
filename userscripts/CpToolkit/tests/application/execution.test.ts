@@ -66,7 +66,10 @@ describe("LocalRunnerClient", () => {
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
 		await client.run("code", "in", "python3");
 		const bodies = http.requests.map(({body}) => JSON.parse(body ?? "{}"));
-		expect(bodies.map(({mode, compilerName}) => [mode, compilerName])).toEqual([["prepare", "python3"], ["run", "python3"]]);
+		expect(bodies.map(({
+			mode,
+			compilerName
+		}) => [mode, compilerName])).toEqual([["prepare", "python3"], ["run", "python3"]]);
 	});
 
 	test("コンパイルエラーの内容を返す", async () => {

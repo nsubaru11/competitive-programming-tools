@@ -107,7 +107,12 @@ describe("配布物", () => {
 	});
 
 	test("無効にした機能は動かさない", async () => {
-		run(createGmApi({settings: {version: 1, features: {"wide-layout": {enabled: false, options: {width: "50%"}}}}}));
+		run(createGmApi({
+			settings: {
+				version: 1,
+				features: {"wide-layout": {enabled: false, options: {width: "50%"}}}
+			}
+		}));
 		await nextTask();
 
 		expect(injectedCss()).not.toContain("--cp-main-width");

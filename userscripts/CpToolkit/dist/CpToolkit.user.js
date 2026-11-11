@@ -3292,7 +3292,14 @@ a:focus > .cp-settings-entry {
 		}
 
 		transform(sourceCode, header) {
-			const request = {mode: "transform", sourceCode, debug: false, autoImport: true, validate: false, header};
+			const request = {
+				mode: "transform",
+				sourceCode,
+				debug: false,
+				autoImport: true,
+				validate: false,
+				header,
+			};
 			return this.post(request, TRANSFORM_TIMEOUT_MS);
 		}
 
@@ -3980,12 +3987,12 @@ a:focus > .cp-settings-entry {
 			};
 		}
 
-		get taskSelect() {
-			return document.querySelector("#select-task");
-		}
-
 		get languageSelect() {
 			return document.querySelector("#select-lang select.current");
+		}
+
+		get taskSelect() {
+			return document.querySelector("#select-task");
 		}
 
 		taskUri() {
@@ -8247,7 +8254,11 @@ ${efficient_layout_default}`);
 				const transformed = await localRunner.transform(code, options.header);
 				connected = true;
 				if (transformed.status === "success")
-					return {sourceCode: transformed.sourceCode, connected, libraryMissing};
+					return {
+						sourceCode: transformed.sourceCode,
+						connected,
+						libraryMissing,
+					};
 				libraryMissing = transformed.libraryMissing === true;
 			} catch {
 			}
@@ -9119,7 +9130,11 @@ ${efficient_layout_default}`);
 	// CpToolkit/src/application/source/source-comments.ts
 	var HISTORY_LIMIT = 20;
 	var EMPTY_ENTRY = {text: "", commentOut: true};
-	var isEntry = isObjectOf({text: isString, commentOut: isBoolean, multiline: isOptional(isBoolean)});
+	var isEntry = isObjectOf({
+		text: isString,
+		commentOut: isBoolean,
+		multiline: isOptional(isBoolean),
+	});
 	var isNamed = isObjectOf({
 		name: isString,
 		text: isString,

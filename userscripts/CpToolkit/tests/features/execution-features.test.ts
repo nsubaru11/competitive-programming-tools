@@ -537,7 +537,10 @@ describe("javaSubmit", () => {
 	test("Local Runner に接続できず lib を使うコードなら、導入方法を案内する", async () => {
 		const code = "import lib.ds.UnionFind;\npublic class Solution {\n\tpublic static void main(String[] args) {}\n}\n";
 		const {editor, paste} = createEditor(code);
-		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner: offline, ...editorServices(editor)}));
+		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
+			judge,
+			localRunner: offline, ...editorServices(editor)
+		}));
 		await wait();
 		paste();
 		await wait();
@@ -567,7 +570,10 @@ describe("javaSubmit", () => {
 
 	test("lib を使わないコードなら Local Runner がなくても案内しない", async () => {
 		const {editor, paste} = createEditor(source);
-		await javaSubmit.run({foldOnPaste: false}, createFakeServices({judge, localRunner: offline, ...editorServices(editor)}));
+		await javaSubmit.run({foldOnPaste: false}, createFakeServices({
+			judge,
+			localRunner: offline, ...editorServices(editor)
+		}));
 		await wait();
 		paste();
 		await wait();
@@ -612,7 +618,11 @@ describe("paizaLanguage", () => {
 		</select><input id="programming_language_id" type="hidden">`;
 		const triggerChange = mock(() => undefined);
 		const page = createFakePage({triggerChange});
-		void paizaLanguage.run({language: "Java"}, createFakeServices({page, judge: null, editors: {locate: async () => null}}));
+		void paizaLanguage.run({language: "Java"}, createFakeServices({
+			page,
+			judge: null,
+			editors: {locate: async () => null}
+		}));
 		await wait();
 
 		expect(document.querySelector<HTMLSelectElement>("#language_id")?.value).toBe("2");
@@ -626,7 +636,11 @@ describe("paizaLanguage", () => {
 		</select>`;
 		const triggerChange = mock(() => undefined);
 		const locate = mock(async () => null);
-		void paizaLanguage.run({language: " "}, createFakeServices({page: createFakePage({triggerChange}), judge: null, editors: {locate}}));
+		void paizaLanguage.run({language: " "}, createFakeServices({
+			page: createFakePage({triggerChange}),
+			judge: null,
+			editors: {locate}
+		}));
 		await wait();
 
 		expect(document.querySelector<HTMLSelectElement>("#language_id")?.value).toBe("");

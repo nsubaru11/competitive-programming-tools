@@ -73,7 +73,10 @@ describe("PaizaRunnerProvider の確認", () => {
 				times.push(Date.now());
 				return {status: 200, text: `{"status": "${++checks < 2 ? "running" : "completed"}"}`};
 			}
-			return {status: 200, text: '{"exit_code": 0, "time": "0", "memory": "0", "stdout": "1", "result": "success"}'};
+			return {
+				status: 200,
+				text: '{"exit_code": 0, "time": "0", "memory": "0", "stdout": "1", "result": "success"}'
+			};
 		});
 		const [runner] = await new PaizaRunnerProvider(http).runnersFor(java);
 		const result = await runner?.run("print(1)", "", {});
@@ -357,7 +360,11 @@ describe("AtCoder のコードテスト", () => {
 			if (url.endsWith("/submit/json")) return {status: 200, text: ++submits === 1 ? "busy" : ""};
 			return {status: 200, text: JSON.stringify(statuses.shift())};
 		});
-		expect(await (await runner(http)).run("code", "input", {})).toMatchObject({status: "OK", output: "ok", execTime: 12});
+		expect(await (await runner(http)).run("code", "input", {})).toMatchObject({
+			status: "OK",
+			output: "ok",
+			execTime: 12
+		});
 		expect(submits).toBe(2);
 		expect(statuses).toHaveLength(0);
 	});

@@ -143,7 +143,10 @@ export function prepareLibrarySourceRoot(): {source: string | null; prepared: st
 	const prepared = path.join(RUNNER_CONFIG.baseDir, "library-source");
 	fs.rmSync(prepared, {recursive: true, force: true});
 	fs.mkdirSync(path.join(prepared, "lib"), {recursive: true});
-	if (source !== null) fs.cpSync(path.join(source, "lib"), path.join(prepared, "lib"), {recursive: true, force: true});
+	if (source !== null) fs.cpSync(path.join(source, "lib"), path.join(prepared, "lib"), {
+		recursive: true,
+		force: true
+	});
 	preparedLibrarySourceRoot = prepared;
 	return {source, prepared};
 }

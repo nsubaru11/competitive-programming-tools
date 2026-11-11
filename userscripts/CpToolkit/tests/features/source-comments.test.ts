@@ -12,7 +12,12 @@ const python: JudgeLanguage = {id: "2", label: "Python 3", family: "python3"};
 const ocaml: JudgeLanguage = {id: "3", label: "OCaml", family: "ocaml"};
 const text: JudgeLanguage = {id: "4", label: "Text", family: "text"};
 
-const target = {editor: "ace", editorElements: ["#editor"], shortcut: "Ctrl+Shift+Enter", submitButtons: ["#submit"]} as const;
+const target = {
+	editor: "ace",
+	editorElements: ["#editor"],
+	shortcut: "Ctrl+Shift+Enter",
+	submitButtons: ["#submit"]
+} as const;
 const judge = {id: "atcoder", name: "AtCoder", matches: [], routes: {}, navigationLists: [], submission: target};
 const taskUrl = "https://atcoder.jp/contests/abc1/tasks/abc1_a";
 

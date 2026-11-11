@@ -45,7 +45,14 @@ export class LocalRunnerClient {
 	}
 
 	transform(sourceCode: string, header: LocalRunnerHeaderOption): Promise<LocalRunnerTransformResponse> {
-		const request = {mode: "transform", sourceCode, debug: false, autoImport: true, validate: false, header} as const;
+		const request = {
+			mode: "transform",
+			sourceCode,
+			debug: false,
+			autoImport: true,
+			validate: false,
+			header
+		} as const;
 		return this.post(request, TRANSFORM_TIMEOUT_MS);
 	}
 

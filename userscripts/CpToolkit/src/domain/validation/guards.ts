@@ -23,7 +23,7 @@ export function isOptional<T>(isItem: Guard<T>): Guard<T | undefined> {
 }
 
 /** 指定した項目がすべて正しいオブジェクトか判定する。それ以外の項目は見ない。 */
-export function isObjectOf<T extends object>(fields: {readonly [K in keyof T]: Guard<T[K]>}): Guard<T> {
+export function isObjectOf<T extends object>(fields: { readonly [K in keyof T]: Guard<T[K]> }): Guard<T> {
 	const entries: ReadonlyArray<readonly [string, Guard<unknown>]> = Object.entries(fields);
 	return (value): value is T => isPlainObject(value) && entries.every(([key, isField]) => isField(value[key]));
 }
