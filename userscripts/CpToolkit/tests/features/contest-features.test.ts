@@ -334,6 +334,46 @@ describe("taskStatus", () => {
 		expect(classOf("tr:nth-child(4)")).toBe("cp-task-rejected");
 	});
 
+	test("ページ送りが前後のリンクだけでも、最後のページまで読む", async () => {
+		document.body.innerHTML = `<div id="main-container"><table><tbody>
+			${taskRow("a")}${taskRow("b")}
+		</tbody></table></div>`;
+		const pagerLink = (page: number, label: string, exists: boolean) => {
+			const href = exists ? ` href="/contests/abc1/submissions/me?page=${page}"` : "";
+			return `<li${exists ? "" : ' class="disabled"'}><a${href}>${label}</a></li>`;
+		};
+		const pagerPage = (rows: string, page: number, lastPage: number) => `<div class="table-responsive">
+			<table><tbody>${rows}</tbody></table></div>
+			<nav><ul class="pager">
+				${pagerLink(page - 1, "&lt; Prev", page > 1)}${pagerLink(page + 1, "Next &gt;", page < lastPage)}
+			</ul></nav>`;
+		const pages: Record<string, string> = {
+			1: pagerPage(submissionRow("a", 0, "WA"), 1, 3),
+			2: pagerPage(submissionRow("b", 0, "WA"), 2, 3),
+			3: pagerPage(submissionRow("a", 100, "AC"), 3, 3),
+		};
+		const site = new FakeHttpClient((request) => ({
+			status: 200,
+			text: pages[/page=(\d+)/.exec(request.url)?.[1] ?? ""] ?? "",
+		}));
+		await run(taskStatus, {
+			isOnRoute: (route) => route === "atcoder:tasks",
+			page: createFakePage(),
+			site,
+		});
+		await flush();
+		await flush();
+		await flush();
+
+		expect(site.requests.map(({url}) => url)).toEqual([
+			"/contests/abc1/submissions/me?page=1",
+			"/contests/abc1/submissions/me?page=2",
+			"/contests/abc1/submissions/me?page=3",
+		]);
+		expect(classOf("tr:nth-child(1)")).toBe("cp-task-accepted");
+		expect(classOf("tr:nth-child(2)")).toBe("cp-task-rejected");
+	});
+
 	test("途中のページを読めなかったら、正解だけを塗り、不正解とは決めない", async () => {
 		document.body.innerHTML = `<div id="main-container"><table><tbody>
 			${taskRow("a")}${taskRow("b")}

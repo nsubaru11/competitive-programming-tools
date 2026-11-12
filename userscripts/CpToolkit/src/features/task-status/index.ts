@@ -35,7 +35,8 @@ function parseSubmissionPage(html: string): SubmissionPage {
 		if (!id || isJudging(status)) return [];
 		return [[id, status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0] as const];
 	});
-	const pages = [...page.querySelectorAll(".pagination a")]
+	// ページ送りが前後のリンクだけのときは、次のページがある間だけ現在より大きい番号が見つかる
+	const pages = [...page.querySelectorAll(".pagination a, .pager a")]
 		.map((link) => Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1));
 	return {results, lastPage: Math.max(1, ...pages)};
 }

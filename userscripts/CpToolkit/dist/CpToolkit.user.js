@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.4
+// @version        1.1.5
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -10443,7 +10443,7 @@ li.cp-task-rejected > a:is(:hover, :focus) {
 			if (!id || isJudging(status)) return [];
 			return [[id, status === "AC" || Number(row.querySelector(".submission-score")?.textContent) > 0]];
 		});
-		const pages = [...page.querySelectorAll(".pagination a")].map((link) =>
+		const pages = [...page.querySelectorAll(".pagination a, .pager a")].map((link) =>
 			Number(PAGE_PATTERN.exec(link.getAttribute("href") ?? "")?.[1] ?? 1),
 		);
 		return {results, lastPage: Math.max(1, ...pages)};
