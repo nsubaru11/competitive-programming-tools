@@ -2,7 +2,7 @@ import * as shared from "@atcoder-tools/shared";
 import fs from "node:fs";
 import path from "node:path";
 import type {SubmissionFinalResult, SubmitResult, Task} from "../types";
-import {CLI_CONFIG} from "../config";
+import {CLI_CONFIG, resolveConfiguredPath, SETTINGS} from "../config";
 import * as color from "../utils/color";
 import * as parser from "./parser";
 
@@ -22,12 +22,6 @@ function ensureNotLoginPage(body: string) {
 }
 
 export function toCookieHeader() {
-	if (process.env.ATCODER_COOKIE && process.env.ATCODER_COOKIE.trim()) {
-		return process.env.ATCODER_COOKIE.trim();
-	}
-	if (process.env.ATCODER_SESSION && process.env.ATCODER_SESSION.trim()) {
-		return `REVEL_SESSION=${process.env.ATCODER_SESSION.trim()}`;
-	}
 	const sessionFromFile = readSessionFromFile();
 	if (sessionFromFile) {
 		return `REVEL_SESSION=${sessionFromFile}`;
@@ -35,25 +29,14 @@ export function toCookieHeader() {
 	return "";
 }
 
+/** 設定の atcoder.sessionFile から REVEL_SESSION の値を読む。読めなければ空にし、呼び出し側が案内を出す。 */
 function readSessionFromFile() {
-	const explicitPath = process.env.ATCODER_SESSION_FILE;
-	const homeDir = process.env.USERPROFILE || process.env.HOME || "";
-	const defaultPath = homeDir ? path.join(homeDir, CLI_CONFIG.defaultSessionFileRelative) : "";
-	const candidates = [explicitPath, defaultPath].filter(Boolean) as string[];
-	for (const candidate of candidates) {
-		try {
-			if (!fs.existsSync(candidate)) continue;
-			const raw = fs.readFileSync(candidate, "utf8").trim();
-			if (!raw) continue;
-			if (/^REVEL_SESSION=/i.test(raw)) {
-				return raw.replace(/^REVEL_SESSION=/i, "").trim();
-			}
-			return raw;
-		} catch {
-			// ignore and continue fallback candidates
-		}
+	try {
+		const raw = fs.readFileSync(resolveConfiguredPath(SETTINGS.atcoder.sessionFile), "utf8").trim();
+		return raw.replace(/^REVEL_SESSION=/i, "").trim();
+	} catch {
+		return "";
 	}
-	return "";
 }
 
 /** 429 が返ったときは maxAttempts 回まで待って取り直す。既定では取り直さない。 */

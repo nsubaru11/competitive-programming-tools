@@ -2,7 +2,7 @@ import {type ChildProcessWithoutNullStreams, spawn} from "node:child_process";
 import readline from "node:readline";
 import type {CompilerDiagnostic} from "@atcoder-tools/shared";
 import type {CompileEntry, DispatcherRunResult} from "../types";
-import {RUNNER_CONFIG, WARMUP_REPEAT_COUNT,} from "../config";
+import {RUNNER_CONFIG} from "../config";
 import * as logging from "../utils/logging";
 import * as compiler from "./compiler";
 import fs from "node:fs";
@@ -173,7 +173,13 @@ async function startDispatcher() {
 	await new Promise<void>((resolve, reject) => {
 		const proc = spawn(compiler.JAVA_PATH, ["-cp", RUNNER_CONFIG.dispatcherBuildDir, "Dispatcher"], {
 			cwd: RUNNER_CONFIG.dispatcherBuildDir,
-			env: {...compiler.JAVA_ENV, LOCAL_RUNNER_JAVAC_RELEASE: compiler.JAVAC_RELEASE},
+			// 常駐 JVM へは、設定から決めた値を環境変数で渡す。
+			env: {
+				...compiler.JAVA_ENV,
+				LOCAL_RUNNER_JAVAC_RELEASE: compiler.JAVAC_RELEASE,
+				LOCAL_RUNNER_RUN_STACK_BYTES: String(RUNNER_CONFIG.runStackBytes),
+				LOCAL_RUNNER_CAPTURE_LIMIT_BYTES: String(RUNNER_CONFIG.dispatcherCaptureLimitBytes),
+			},
 			stdio: ["pipe", "pipe", "pipe"],
 		});
 		const lineReader = readline.createInterface({
@@ -276,7 +282,7 @@ export async function warmUpDispatcher(librarySourceRoot: string) {
 		return;
 	}
 	logging.logInfo(
-		`Warm up dispatcher and common I/O... profile=${RUNNER_CONFIG.warmUpProfile} repeat=${WARMUP_REPEAT_COUNT} timeout=${RUNNER_CONFIG.warmUpRunTimeoutMs}ms`,
+		`Warm up dispatcher and common I/O... repeat=${RUNNER_CONFIG.warmUpRepeatCount} timeout=${RUNNER_CONFIG.warmUpRunTimeoutMs}ms`,
 	);
 	const warmupSourceCode = buildWarmUpSourceCode();
 	const transformed = await queueDispatcherTransform(warmupSourceCode, librarySourceRoot, false, true, false);
@@ -287,16 +293,16 @@ export async function warmUpDispatcher(librarySourceRoot: string) {
 	if (warmupEntry.status !== "compiled") {
 		throw new Error(`[WarmUp] compile failed: ${firstLine(warmupEntry.error) || "unknown error"}`);
 	}
-	for (let i = 1; i <= WARMUP_REPEAT_COUNT; i++) {
+	for (let i = 1; i <= RUNNER_CONFIG.warmUpRepeatCount; i++) {
 		const result = await queueDispatcherRun(warmupEntry, RUNNER_CONFIG.warmUpStdin, RUNNER_CONFIG.warmUpRunTimeoutMs);
 		if (result.timedOut) {
-			throw new Error(`[WarmUp] run ${i}/${WARMUP_REPEAT_COUNT} timeout ${RUNNER_CONFIG.warmUpRunTimeoutMs}ms`);
+			throw new Error(`[WarmUp] run ${i}/${RUNNER_CONFIG.warmUpRepeatCount} timeout ${RUNNER_CONFIG.warmUpRunTimeoutMs}ms`);
 		}
 		if (result.exitCode !== 0) {
 			const err = firstLine(result.stderr);
-			throw new Error(`[WarmUp] run ${i}/${WARMUP_REPEAT_COUNT} runtime error${err ? `: ${logging.trimForLog(err)}` : ""}`);
+			throw new Error(`[WarmUp] run ${i}/${RUNNER_CONFIG.warmUpRepeatCount} runtime error${err ? `: ${logging.trimForLog(err)}` : ""}`);
 		}
-		logging.logInfo(`[WarmUp] run ${i}/${WARMUP_REPEAT_COUNT} done ${result.time}ms`);
+		logging.logInfo(`[WarmUp] run ${i}/${RUNNER_CONFIG.warmUpRepeatCount} done ${result.time}ms`);
 	}
 	hasDispatcherWarmedUp = true;
 }
@@ -304,7 +310,7 @@ export async function warmUpDispatcher(librarySourceRoot: string) {
 export function logCaptureAndBodySizeBalance() {
 	if (RUNNER_CONFIG.maxBodySize < RUNNER_CONFIG.dispatcherCaptureLimitBytes) {
 		logging.logWarn(
-			`[Config] MAX_BODY_SIZE (${RUNNER_CONFIG.maxBodySize}) is smaller than LOCAL_RUNNER_CAPTURE_LIMIT_BYTES (${RUNNER_CONFIG.dispatcherCaptureLimitBytes}).`,
+			`[Config] MAX_BODY_SIZE (${RUNNER_CONFIG.maxBodySize} bytes) is smaller than run.outputLimitMb (${RUNNER_CONFIG.dispatcherCaptureLimitBytes} bytes).`,
 		);
 	}
 }

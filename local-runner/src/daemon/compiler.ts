@@ -7,42 +7,18 @@ import type {CompileEntry, ProcessResult} from "../types";
 import * as config from "../config";
 import * as logging from "../utils/logging";
 import * as filesystem from "../utils/filesystem";
+import {isPathLike} from "../settings/settings";
 import * as dispatcher from "./dispatcher";
 
-function isWindowsStylePath(targetPath: string) {
-	return /^[A-Za-z]:\\/.test(targetPath);
-}
+// 設定の languages.java.command がパスなら、同じフォルダの javac を使う。命令の名前なら、どちらも PATH から探す。
+const JAVA_COMMAND = config.SETTINGS.languages.java.command;
+const JAVA_BIN_DIR = isPathLike(JAVA_COMMAND) ? path.dirname(config.resolveConfiguredPath(JAVA_COMMAND)) : null;
 
-function resolveJavaHome() {
-	const javaHome = process.env.JAVA_HOME;
-	if (!javaHome) {
-		return "";
-	}
-	if (process.platform === "linux" && isWindowsStylePath(javaHome)) {
-		logging.logInfo(`Ignoring Windows-style JAVA_HOME on Linux: ${javaHome}`);
-		return "";
-	}
-	return javaHome;
-}
-
-const RESOLVED_JAVA_HOME = resolveJavaHome();
-
-function getJavaEnv() {
-	if (!RESOLVED_JAVA_HOME) {
-		logging.logInfo("JAVA_HOME is not set. Using java/javac from PATH.");
-		return process.env;
-	}
-	logging.logInfo(`Using Java from: ${RESOLVED_JAVA_HOME}`);
-	return {
-		...process.env,
-		JAVA_HOME: RESOLVED_JAVA_HOME,
-		PATH: path.join(RESOLVED_JAVA_HOME, "bin") + path.delimiter + process.env.PATH,
-	};
-}
-
-export const JAVA_ENV = getJavaEnv();
-export const JAVA_PATH = RESOLVED_JAVA_HOME ? path.join(RESOLVED_JAVA_HOME, "bin", "java") : "java";
-export const JAVAC_PATH = RESOLVED_JAVA_HOME ? path.join(RESOLVED_JAVA_HOME, "bin", "javac") : "javac";
+export const JAVA_PATH = JAVA_BIN_DIR === null ? JAVA_COMMAND : config.resolveConfiguredPath(JAVA_COMMAND);
+export const JAVAC_PATH = JAVA_BIN_DIR === null ? "javac" : path.join(JAVA_BIN_DIR, "javac");
+export const JAVA_ENV: NodeJS.ProcessEnv = JAVA_BIN_DIR === null
+	? process.env
+	: {...process.env, PATH: JAVA_BIN_DIR + path.delimiter + process.env.PATH};
 const DISPATCHER_SOURCE_FILE = config.resolveDispatcherSourceFile();
 const DISPATCHER_SOURCE_DIR = path.dirname(DISPATCHER_SOURCE_FILE);
 
@@ -248,8 +224,8 @@ export async function compileDispatcher() {
 	}
 }
 
-// 外部 javac 経路・マーカー欠落時のフォールバック検出（ソース正規表現）。
-// 既定の常駐内コンパイル経路では Java 側のバイトコード検査（COMPILED.requiresIsolation）を使う。
+// マーカー欠落時とコンパイル失敗時のフォールバック検出（ソース正規表現）。
+// コンパイルに成功したときは Java 側のバイトコード検査（COMPILED.requiresIsolation）を使う。
 // バイトコード検査(IsolationAnalyzer.DANGEROUS_MEMBERS)と検出範囲を揃えるため、
 // System.setOut/setErr/setIn・setProperty 系・Locale/TimeZone.setDefault・
 // addShutdownHook/removeShutdownHook・Runtime.exec・ProcessBuilder も対象に含める。
@@ -316,31 +292,13 @@ async function compileSource(sourceCode: string, hash: string): Promise<CompileE
 	filesystem.ensureDirectory(classDir);
 	fs.writeFileSync(sourceFile, sourceCode, "utf8");
 
-	// 既定では常駐 Dispatcher 内の javac でコンパイルし、外部 javac の JVM 起動コストを回避する。
-	// LOCAL_RUNNER_INPROCESS_COMPILE=0 で従来の外部 javac にフォールバックできる。
-	const useInProcessCompile = process.env.LOCAL_RUNNER_INPROCESS_COMPILE !== "0";
+	// 常駐 Dispatcher 内の javac でコンパイルし、外部 javac の JVM 起動コストを回避する。
 	const compileStart = Date.now();
-	let compiled: boolean;
-	let timedOut;
-	let errorText;
-	let requiresIsolation: boolean;
-	if (useInProcessCompile) {
-		const compileResult = await dispatcher.queueDispatcherCompile(sourceFile, classDir);
-		timedOut = !!compileResult.timedOut;
-		compiled = compileResult.exitCode === 0 && fs.existsSync(classFile);
-		errorText = compileResult.diagnostics;
-		requiresIsolation = !!compileResult.requiresIsolation;
-	} else {
-		const result = await runProcessCommand(
-			JAVAC_PATH,
-			["-encoding", "UTF-8", "-g", ...(JAVAC_RELEASE ? ["--release", JAVAC_RELEASE] : []), "-d", "classes", "Main.java"],
-			{cwd: rootDir, env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs},
-		);
-		timedOut = result.timedOut;
-		compiled = result.code === 0 && !result.timedOut && fs.existsSync(classFile);
-		errorText = result.stderr;
-		requiresIsolation = requiresIsolatedProcess(sourceCode);
-	}
+	const compileResult = await dispatcher.queueDispatcherCompile(sourceFile, classDir);
+	const timedOut = !!compileResult.timedOut;
+	const compiled = compileResult.exitCode === 0 && fs.existsSync(classFile);
+	const errorText = compileResult.diagnostics;
+	const requiresIsolation = !!compileResult.requiresIsolation;
 	const compileTime = Date.now() - compileStart;
 
 	if (compiled) {

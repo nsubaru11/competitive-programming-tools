@@ -1,0 +1,27 @@
+{
+	"server": {
+		"port": 8080,
+		"backend": "wsl",
+		"autoStart": true,
+		"startTimeoutMs": 60000,
+		"extraOrigins": []
+	},
+	"run": {
+		"timeoutMs": 10000,
+		"compileTimeoutMs": 30000,
+		"outputLimitMb": 2
+	},
+	"languages": {
+		"java": {
+			"command": "java",
+			"release": 24,
+			"stackMb": 256
+		}
+	},
+	"headers": {},
+	"atcoder": {
+		"sessionFile": "~/.atcoder/session.txt",
+		"sampleCache": true,
+		"resultWaitMs": 300000
+	}
+}

@@ -11,6 +11,7 @@ import {StatusCommand} from "./StatusCommand";
 import {CacheClearCommand} from "./CacheClearCommand";
 import {SetLibCommand} from "./SetLibCommand";
 import {SetHeaderCommand} from "./SetHeaderCommand";
+import {SettingsCommand} from "./SettingsCommand";
 import {CrossCheck} from "./CrossCheck";
 
 /**
@@ -30,6 +31,7 @@ const COMMAND_LIST: readonly Command[] = [
 	new StatusCommand(),
 	new SetLibCommand(),
 	new SetHeaderCommand(),
+	new SettingsCommand(),
 	new CacheClearCommand(),
 	new CrossCheck(),
 ];

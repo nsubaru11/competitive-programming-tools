@@ -59,7 +59,9 @@ export type RunnerStatusInfo = {
 	librarySource: string | null;
 	compileCacheSize: number;
 	compileCacheMax: number;
-	warmUpProfile: string;
+	settingsFile: string;
+	/** サーバーが起動時に読んだ設定の要約。CLI が今の設定と比べる。 */
+	settingsDigest: string;
 	baseDir: string;
 	logFile: string;
 };

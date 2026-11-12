@@ -2,7 +2,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {isHeaderName, readLocalSettings, toRuntimePath} from "./localSettings";
+import {
+	isHeaderName,
+	loadSettings,
+	readUserSettings,
+	resolveSettingPath,
+	type Settings,
+	SettingsError,
+	type UserSettings,
+	writeUserSettings,
+} from "./settings/settings";
 
 const importMetaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -26,25 +35,56 @@ function resolveProjectRoot() {
 
 export const PROJECT_ROOT = resolveProjectRoot();
 
-// 提出先の Java バージョン。これより新しい JDK では javac の --release で揃える。
-export const TARGET_JAVA_VERSION = process.env.ATCODER_JAVA_VER || "24";
+// 利用者の設定を置くファイル。Windows の CLI と WSL のサーバーの両方から読めるよう、リポジトリの中に置く。
+// 場所だけは設定ファイルに書けないので、テストなどで変えるときは環境変数で指定する。
+export const SETTINGS_FILE = process.env.LOCAL_RUNNER_SETTINGS_FILE || path.join(PROJECT_ROOT, "local-runner.settings.json");
+const SETTINGS_SCHEMA_FILE = path.join(PROJECT_ROOT, "local-runner", "settings.schema.json");
 
-// setlib の設定を置くファイル。Windows の CLI と WSL のサーバーの両方から読めるよう、リポジトリの中に置く。
-export const LOCAL_SETTINGS_FILE = process.env.LOCAL_RUNNER_SETTINGS_FILE || path.join(PROJECT_ROOT, "local-runner.settings.json");
+/** 設定を読む。内容が正しくなければ、理由を表示して終了する。 */
+function loadSettingsOrExit(): Settings {
+	try {
+		return loadSettings(SETTINGS_FILE);
+	} catch (error) {
+		if (!(error instanceof SettingsError)) throw error;
+		console.error(`Error: ${error.message}`);
+		process.exit(1);
+	}
+}
+
+/** 起動したときの設定。サーバーが使う値は、起動し直すまで変わらない。 */
+export const SETTINGS = loadSettingsOrExit();
+
+/** 設定に書かれたパスを、このプロセスが動いている OS のパスにする。 */
+export function resolveConfiguredPath(value: string): string {
+	return resolveSettingPath(value, SETTINGS_FILE);
+}
+
+/** 設定ファイルの項目を書き換える。エディターの補完に使うスキーマの場所が無ければ足す。 */
+export function updateUserSettings(mutate: (user: UserSettings) => void): void {
+	const {$schema, ...user} = readUserSettings(SETTINGS_FILE);
+	mutate(user);
+	const relative = path.relative(path.dirname(SETTINGS_FILE), SETTINGS_SCHEMA_FILE).replaceAll("\\", "/");
+	const schemaReference = $schema ?? (relative.startsWith(".") ? relative : `./${relative}`);
+	writeUserSettings(SETTINGS_FILE, {$schema: schemaReference, ...user});
+}
+
+// 提出先の Java バージョン。これより新しい JDK では javac の --release で揃える。
+export const TARGET_JAVA_VERSION = String(SETTINGS.languages.java.release);
 
 let preparedLibrarySourceRoot: string | null = null;
 let librarySource: string | null = null;
 
-/** 設定された Java のライブラリの場所。ATCODER_LIB_SRC があれば setlib の設定より優先する。 */
+/** 設定された Java のライブラリの場所。setlib の直後にも正しく表示できるよう、ファイルを読み直す。 */
 export function configuredLibrarySourceRoot(): string | null {
-	return process.env.ATCODER_LIB_SRC || readLocalSettings(LOCAL_SETTINGS_FILE).librarySourceRoot || null;
+	return loadSettings(SETTINGS_FILE).languages.java.library ?? null;
 }
 
+/** ライブラリのルートと、lib の親の src のどちらが書かれていても受け付ける。 */
 function findLibrarySourceRoot(): string | null {
-	const configured = configuredLibrarySourceRoot();
+	const configured = SETTINGS.languages.java.library;
 	if (!configured) return null;
-	const runtimePath = toRuntimePath(configured);
-	return fs.existsSync(path.join(runtimePath, "lib")) ? path.resolve(runtimePath) : null;
+	const root = resolveConfiguredPath(configured);
+	return [root, path.join(root, "src")].find((candidate) => fs.existsSync(path.join(candidate, "lib"))) ?? null;
 }
 
 export function resolveLibrarySourceRoot(): string {
@@ -57,79 +97,68 @@ export function loadedLibrarySource(): string | null {
 }
 
 /**
- * setheader で設定したヘッダーファイルを返す。設定が無ければ null。
+ * 設定の headers に書かれたヘッダーファイルを返す。設定が無ければ null。
  * name は HTTP で受け取る値なので、設定済みの名前だけを引き、パスとしては扱わない。
+ * 再起動なしで反映できるよう、ファイルを読み直す。
  */
 export function resolveSubmissionHeaderFile(name: string): string | null {
 	if (!isHeaderName(name)) throw new Error(`Invalid header name: "${name}"`);
-	const file = readLocalSettings(LOCAL_SETTINGS_FILE).headerFiles?.[name];
-	return typeof file === "string" ? toRuntimePath(file) : null;
+	const headers = loadSettings(SETTINGS_FILE).headers;
+	return Object.hasOwn(headers, name) ? resolveConfiguredPath(headers[name]!) : null;
 }
 
 export const CLI_CONFIG = {
-	defaultLocalRunnerUrl: process.env.LOCAL_RUNNER_URL || "http://localhost:8080",
+	defaultLocalRunnerUrl: `http://localhost:${SETTINGS.server.port}`,
 	submissionPollIntervalMs: 1000,
-	// 提出→確定まで（混雑時は数分かかることがある）。既定5分、ATCODER_SUBMISSION_POLL_TIMEOUT_MS で上書き可。
-	submissionPollTimeoutMs: Number(process.env.ATCODER_SUBMISSION_POLL_TIMEOUT_MS || 300000),
+	// 提出→確定まで（混雑時は数分かかることがある）。
+	submissionPollTimeoutMs: SETTINGS.atcoder.resultWaitMs,
 	submissionIdDetectTimeoutMs: 45000,
 	submissionIdDetectIntervalMs: 800,
-	submitPostRetryMax: Number(process.env.ATCODER_SUBMIT_RETRY_MAX || 5),
-	submitPostRetryBaseMs: Number(process.env.ATCODER_SUBMIT_RETRY_BASE_MS || 1200),
-	defaultSessionFileRelative: path.join(".atcoder", "session.txt"),
+	submitPostRetryMax: 5,
+	submitPostRetryBaseMs: 1200,
 	defaultLanguageId: "6056",
 	userAgent: "AtCoder-JavaCodeSubmitter-CLI/1.0",
 	// サンプルキャッシュ: パース済みサンプルを ~/.atcoder/cache/samples/<task>.json に保存する。
-	// サンプルは確定後不変なので TTL なし。ATCODER_NO_CACHE=1 で無効化。
+	// サンプルは確定後不変なので TTL なし。
+	sampleCacheEnabled: SETTINGS.atcoder.sampleCache,
 	sampleCacheDirRelative: path.join(".atcoder", "cache", "samples"),
-	// 上限超過時は古いものから削除（1件あたり概ね数KB なので既定 2000 件 ≒ 最大十数MB 程度）。
-	sampleCacheMaxEntries: Number(process.env.ATCODER_SAMPLE_CACHE_MAX || 2000),
+	// 上限超過時は古いものから削除（1件あたり概ね数KB なので 2000 件 ≒ 最大十数MB 程度）。
+	sampleCacheMaxEntries: 2000,
 };
 
-// 提出コードのスタックサイズ。常駐 JVM の ProgramRunner と同じ環境変数と既定値を使う。
-const DEFAULT_RUN_STACK_BYTES = 256 * 1024 * 1024;
-const MAX_JVM_STACK_BYTES = 1024 * 1024 * 1024;
+const MEBIBYTE = 1024 * 1024;
 
-function resolveRunStackBytes() {
-	const parsed = Number(process.env.LOCAL_RUNNER_RUN_STACK_BYTES);
-	return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, MAX_JVM_STACK_BYTES) : DEFAULT_RUN_STACK_BYTES;
-}
-
-const defaultRunnerBaseDir = process.platform === "linux"
+// コンパイル結果を置く場所。Linux ではメモリ上の /dev/shm を使い、NTFS をまたぐ負荷を避ける。
+const runnerBaseDir = process.platform === "linux"
 	? "/dev/shm/atcoder-local-runner"
 	: path.join(os.tmpdir(), "atcoder-local-runner");
 
 export function resolveDispatcherSourceFile() {
-	const envPath = process.env.LOCAL_RUNNER_DISPATCHER_SOURCE;
-	const candidates = [
-		envPath,
-		path.join(PROJECT_ROOT, "local-runner", "java", "src", "Dispatcher.java")
-	].filter(Boolean) as string[];
-	for (const candidate of candidates) {
-		if (fs.existsSync(candidate)) {
-			return candidate;
-		}
-	}
-	throw new Error(`Dispatcher source not found. Tried: ${candidates.join(", ")}`);
+	const sourceFile = path.join(PROJECT_ROOT, "local-runner", "java", "src", "Dispatcher.java");
+	if (!fs.existsSync(sourceFile)) throw new Error(`Dispatcher source not found: ${sourceFile}`);
+	return sourceFile;
 }
 
 export const RUNNER_CONFIG = {
-	port: Number(process.env.LOCAL_RUNNER_PORT || 8080),
-	maxBodySize: 4 * 1024 * 1024,
-	maxLogFileSize: Number(process.env.LOCAL_RUNNER_MAX_LOG_FILE_SIZE_BYTES || (8 * 1024 * 1024)),
+	// ループバックだけで待ち受け、同じネットワークの端末からコードを実行できないようにする。
+	host: "127.0.0.1",
+	port: SETTINGS.server.port,
+	maxBodySize: 4 * MEBIBYTE,
+	maxLogFileSize: 8 * MEBIBYTE,
 	maxCacheSize: 10,
-	compileTimeoutMs: 30000,
-	runTimeoutMs: 10000,
-	runStackBytes: resolveRunStackBytes(),
+	compileTimeoutMs: SETTINGS.run.compileTimeoutMs,
+	runTimeoutMs: SETTINGS.run.timeoutMs,
+	runStackBytes: SETTINGS.languages.java.stackMb * MEBIBYTE,
 	dispatcherStartupTimeoutMs: 10000,
-	dispatcherCaptureLimitBytes: Number(process.env.LOCAL_RUNNER_CAPTURE_LIMIT_BYTES || (2 << 20)),
-	baseDir: process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir,
-	compileRootDir: path.join(process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir, "compiled"),
-	dispatcherBuildDir: path.join(process.env.LOCAL_RUNNER_BASE_DIR || defaultRunnerBaseDir, "dispatcher"),
+	dispatcherCaptureLimitBytes: SETTINGS.run.outputLimitMb * MEBIBYTE,
+	baseDir: runnerBaseDir,
+	compileRootDir: path.join(runnerBaseDir, "compiled"),
+	dispatcherBuildDir: path.join(runnerBaseDir, "dispatcher"),
 	warmUpSourceFile: path.join(PROJECT_ROOT, "local-runner", "java", "src", "WarmUp.java"),
 	warmUpSourceClassName: "WarmUp",
 	warmUpStdin: "",
-	warmUpProfile: (process.env.LOCAL_RUNNER_WARMUP_PROFILE || "full").toLowerCase(),
-	warmUpRunTimeoutMs: Number(process.env.LOCAL_RUNNER_WARMUP_TIMEOUT_MS || 30000),
+	warmUpRepeatCount: 2,
+	warmUpRunTimeoutMs: 30000,
 };
 
 /** ライブラリが無くても、空の lib を渡して解答の変換と実行を同じ経路で行う。 */
@@ -153,19 +182,3 @@ export function prepareLibrarySourceRoot(): {source: string | null; prepared: st
 
 export const LOG_FILE_PATH = path.join(RUNNER_CONFIG.baseDir, "local-runner.log");
 export const DISPATCHER_CLASS_FILE = path.join(RUNNER_CONFIG.dispatcherBuildDir, "Dispatcher.class");
-
-export function parseWarmUpRepeatCount(rawValue: string | undefined, fallbackValue: number) {
-	if (rawValue == null) {
-		return fallbackValue;
-	}
-	const parsed = Number(rawValue);
-	if (!Number.isFinite(parsed) || parsed < 1) {
-		return fallbackValue;
-	}
-	return Math.floor(parsed);
-}
-
-export const WARMUP_REPEAT_COUNT = parseWarmUpRepeatCount(
-	process.env.LOCAL_RUNNER_WARMUP_REPEAT,
-	RUNNER_CONFIG.warmUpProfile === "quick" ? 1 : 2,
-);

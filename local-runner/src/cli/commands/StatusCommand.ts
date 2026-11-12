@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import type {RunnerStatusInfo} from "../../types";
-import {CLI_CONFIG, configuredLibrarySourceRoot} from "../../config";
+import {CLI_CONFIG, configuredLibrarySourceRoot, SETTINGS, SETTINGS_FILE} from "../../config";
+import {serverSettingsDigest} from "../../settings/settings";
 import * as color from "../../utils/color";
 import {postToRunner} from "../runnerClient";
 import * as sampleCache from "../sampleCache";
@@ -52,6 +53,7 @@ export class StatusCommand implements Command {
 		if (!info) {
 			const label = isSupportCliColor ? `${color.ANSI.RED}stopped${color.ANSI.RESET}` : "stopped";
 			console.log(`Local Runner: ${label} (${CLI_CONFIG.defaultLocalRunnerUrl})`);
+			console.log(`  settings:      ${SETTINGS_FILE}`);
 			console.log(`  java library:  ${configuredLibrarySourceRoot() ?? "not set (setlib <path>)"}`);
 			console.log(`  sample cache:  ${sampleCacheCount} task(s) (${sampleCache.getSampleCacheDir() || "-"})`);
 			console.log(`  To start it: serve (test, localtest and run also start it automatically)`);
@@ -70,10 +72,14 @@ export class StatusCommand implements Command {
 		console.log(`  dispatcher:    ${dispatcher}`);
 		console.log(`  java library:  ${info.librarySource ?? "not loaded (setlib <path>)"}`);
 		console.log(`  compile cache: ${info.compileCacheSize}/${info.compileCacheMax} entries`);
-		console.log(`  warmup:        ${info.warmUpProfile}`);
 		console.log(`  base dir:      ${info.baseDir}`);
 		console.log(`  log file:      ${info.logFile}`);
 		console.log(`  sample cache:  ${sampleCacheCount} task(s) (${sampleCache.getSampleCacheDir() || "-"})`);
+		console.log(`  settings:      ${info.settingsFile}`);
+		if (info.settingsDigest !== serverSettingsDigest(SETTINGS)) {
+			const note = "The settings changed after the server started. Apply them with stop and serve.";
+			console.log(isSupportCliColor ? `  ${color.ANSI.YELLOW}${note}${color.ANSI.RESET}` : `  ${note}`);
+		}
 		return 0;
 	}
 }

@@ -1,9 +1,11 @@
-import {configuredLibrarySourceRoot, LOCAL_SETTINGS_FILE} from "../../config";
-import {readLocalSettings, resolveLibrarySource, writeLocalSettings} from "../../localSettings";
+import {configuredLibrarySourceRoot, updateUserSettings} from "../../config";
+import {deleteSetting, resolveLibrarySource, setSetting} from "../../settings/settings";
 import type {Command} from "./Command";
 import {CliUsageError} from "./Command";
 
 const RESTART_HINT = "If Local Runner is running, apply this with stop and serve.";
+
+const LIBRARY_SETTING = ["languages", "java", "library"] as const;
 
 /** Java のライブラリの場所を設定する。設定はこのリポジトリのファイルに置き、WSL のサーバーからも読む。 */
 export class SetLibCommand implements Command {
@@ -21,15 +23,13 @@ export class SetLibCommand implements Command {
 			console.log(`Java library: ${configuredLibrarySourceRoot() ?? "not set"}`);
 			return 0;
 		}
-		const settings = readLocalSettings(LOCAL_SETTINGS_FILE);
 		if (target === "--clear") {
-			delete settings.librarySourceRoot;
-			writeLocalSettings(LOCAL_SETTINGS_FILE, settings);
+			updateUserSettings((user) => deleteSetting(user, LIBRARY_SETTING));
 			console.log("Java library: not set");
 		} else {
 			if (target.startsWith("-")) throw new CliUsageError(`Unknown option: ${target}`);
 			const librarySourceRoot = resolveLibrarySource(target);
-			writeLocalSettings(LOCAL_SETTINGS_FILE, {...settings, librarySourceRoot});
+			updateUserSettings((user) => setSetting(user, LIBRARY_SETTING, librarySourceRoot));
 			console.log(`Java library: ${librarySourceRoot}`);
 		}
 		console.log(RESTART_HINT);

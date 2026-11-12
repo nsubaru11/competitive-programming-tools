@@ -10,9 +10,11 @@ local-runner/
 ├── src/
 │   ├── cli/           # test、submit、短縮表記、AtCoder との通信、サンプルの判定
 │   ├── daemon/        # server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、compiler.ts(javac のキャッシュ)
-│   ├── config.ts      # 設定
+│   ├── settings/      # 設定ファイルの読み込みと検査、既定値(defaults.json)
+│   ├── config.ts      # 設定から決めた値と定数
 │   ├── utils/         # ログ、色、整形、ファイル操作
 │   └── types/         # 型定義
+├── settings.schema.json  # 設定ファイルの項目の定義
 ├── bin/               # test.cmd、submit.cmd、起動スクリプト
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
@@ -23,12 +25,7 @@ local-runner/
 
 提出前の処理は TypeScript の正規表現ではなく、常駐 JVM の Java Compiler API(`JavacTask`、`Trees`、`SourcePositions`)で行います。型の解決、`Main` の対象、コンストラクタと自己参照、`DEBUG` のフィールド、package と import の範囲を javac の構文木とシンボルから決め、生成した単一のソースも再び解析します。
 
-ライブラリの場所は推測せず、次の順で読みます。
-
-1. 環境変数 `ATCODER_LIB_SRC`
-2. `setlib` が `local-runner.settings.json` に保存した値
-
-設定は、Windows の CLI と WSL のサーバーの両方から読めるようリポジトリの中に置き、Git には入れません。CLI は Windows のパスのまま保存し、サーバーが `toRuntimePath` で `/mnt/c/...` の形に直します。
+ライブラリの場所は推測せず、設定の `languages.java.library` から読みます。`setlib` はこの項目を書き込みます。
 
 場所が設定されていないか見つからないときは、空の `lib` を渡して起動します。解答の変換は同じ経路を通り、`lib.*` の import はコンパイルエラーになります。このとき `server.ts` は診断の先頭に設定の案内を足し、応答の `libraryMissing` を立てます。CP Toolkit はこの値で案内を切り替えます。`WarmUp.java` は `lib.io` を使うので、ライブラリなしではウォームアップを行いません。
 
@@ -38,7 +35,7 @@ local-runner/
 
 ヘッダーはデーモンが付けます(`daemon/header.ts`)。CLI と CP Toolkit が同じ設定を使えるようにするためで、設定は要求ごとに読むので再起動はいりません。
 
-要求の `header` は `true`(言語の設定)、文字列(設定した名前)、`false`(付けない)のいずれかです。名前は HTTP で受け取る値なので、`local-runner.settings.json` の `headerFiles` を引くキーとしてだけ使い、パスとしては扱いません。言語は `server.ts` の `SOURCE_LANGUAGE` で固定しています。変換できる言語が増えたら、要求から受け取るようにします。
+要求の `header` は `true`(言語の設定)、文字列(設定した名前)、`false`(付けない)のいずれかです。名前は HTTP で受け取る値なので、`local-runner.settings.json` の `headers` を引くキーとしてだけ使い、パスとしては扱いません。言語は `server.ts` の `SOURCE_LANGUAGE` で固定しています。変換できる言語が増えたら、要求から受け取るようにします。
 
 ## 起動とウォームアップ
 
@@ -53,16 +50,29 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `prepare` し、
 
 短縮表記では、コンテスト ID と問題 ID の接頭辞が異なる `jsc2025advance-final`、`jsc2026advance-final`、`tessoku-book` を、それぞれ `abc422`、`abc474`、`tessoku_book` に固定で対応させています。範囲のフォルダ(`451-500` など)はコンテスト名に使いません。
 
-## 開発用の環境変数
+## 設定
 
-| 変数                             | 説明                                                  | 既定値               |
-|----------------------------------|-------------------------------------------------------|----------------------|
-| `LOCAL_RUNNER_INPROCESS_COMPILE` | `0` で常駐 javac を無効にし、外部の javac を使う      | 有効                 |
-| `LOCAL_RUNNER_RUN_STACK_BYTES`   | 解答を実行するスレッドのスタックサイズ(バイト)        | `268435456`(256 MiB) |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`  | 自動起動で準備を待つ時間(ms)                          | `60000`              |
-| `LOCAL_RUNNER_BUN`               | `LOCAL_RUNNER_BACKEND=native` の起動に使う Bun の命令 | `bun`                |
+利用者向けの説明は [SETTINGS.md](./SETTINGS.md) にあります。
 
-`ATCODER_JAVA_VER` は自動起動で使う JDK を選びます。起動した JDK の方が新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
+設定は `local-runner.settings.json` の1ファイルで、Windows の CLI と WSL のサーバーの両方から読めるようリポジトリの中に置き、Git には入れません。利用者が書くのは変えたい項目だけで、`src/settings/settings.ts` が既定値(`src/settings/defaults.json`)に重ねます。
+
+- 項目の名前、型、範囲は `settings.schema.json` だけに書く。`src/settings/schema.ts` がこのファイルで検査するので、エディターの補完と実行時の検査が食い違わない
+- 項目を足すときは、`settings.schema.json`、`defaults.json`、`settings.ts` の `Settings` 型、`SETTINGS.md` を直す
+- パスは Windows と WSL のどちらの形でも書ける。使う側が `resolveConfiguredPath` で、自分の OS の形に直す
+- サーバーが起動時に読む項目は、`serverSettingsDigest` の対象にする。`status` は、この値で起動後の変更を見つける
+- `headers` は要求のたびに読み直す。それ以外は、プロセスの起動時に一度だけ読む
+
+環境変数は設定に使いません。読むのは次の3つだけです。
+
+| 変数                         | 用途                                                                     |
+|------------------------------|--------------------------------------------------------------------------|
+| `LOCAL_RUNNER_SETTINGS_FILE` | 設定ファイルの場所。テストが、利用者の設定を読まないようにするために使う |
+| `LOCAL_RUNNER_PROJECT_ROOT`  | `tools` フォルダの場所。`bin/_runner.cmd` が、exe にした CLI へ渡す      |
+| `NO_COLOR`                   | 色付きの表示を止める                                                     |
+
+サーバーは、常駐 JVM へ設定の値を環境変数(`LOCAL_RUNNER_JAVAC_RELEASE`、`LOCAL_RUNNER_RUN_STACK_BYTES`、`LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`)で渡します。これらは起動のたびにサーバーが決めるので、利用者が設定しても使われません。
+
+起動した JDK が `languages.java.release` より新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
 
 ## ビルド
 

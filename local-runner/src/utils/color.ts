@@ -12,8 +12,7 @@ export function supportsCliColor() {
 }
 
 export function supportsRunnerColor() {
-	if (process.env.NO_COLOR) return false;
-	return process.env.LOCAL_RUNNER_FORCE_COLOR !== "0";
+	return !process.env.NO_COLOR;
 }
 
 export function colorizeStatus(status: string, mode: "cli" | "runner" = "cli") {

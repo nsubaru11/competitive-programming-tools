@@ -8,12 +8,12 @@ const ALLOWED_ORIGIN_SUFFIXES = [".codeforces.com"];
 
 /**
  * ブラウザ Origin を検査する。Origin 無し（非ブラウザ＝CLI 等）は許可。
- * overrides があれば、完全一致のオリジン許可リストとして使う。
- * http のオリジンは経路上で書き換えられるので許可しない。
+ * extraOrigins は、設定で足された完全一致のオリジン。
+ * 対応サイトの http のオリジンは、経路上で書き換えられるので許可しない。
  */
-export function isAllowedOrigin(origin: string | undefined, overrides: readonly string[] = []): boolean {
+export function isAllowedOrigin(origin: string | undefined, extraOrigins: readonly string[] = []): boolean {
 	if (!origin) return true;
-	if (overrides.length > 0) return overrides.includes(origin);
+	if (extraOrigins.includes(origin)) return true;
 	let url: URL;
 	try {
 		url = new URL(origin);

@@ -33,7 +33,7 @@ export type CachedTaskData = {
 };
 
 function isCacheEnabled(): boolean {
-	return process.env.ATCODER_NO_CACHE !== "1";
+	return CLI_CONFIG.sampleCacheEnabled;
 }
 
 function resolveHomeDir(): string {

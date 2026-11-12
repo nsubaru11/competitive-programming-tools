@@ -1,9 +1,9 @@
 import {spawn, spawnSync} from "node:child_process";
 import path from "node:path";
-import {PROJECT_ROOT, TARGET_JAVA_VERSION} from "../config";
+import {PROJECT_ROOT, SETTINGS, SETTINGS_FILE} from "../config";
 import {postToRunner} from "./runnerClient";
 
-const READY_TIMEOUT_MS = Number(process.env.LOCAL_RUNNER_START_TIMEOUT_MS || 60000);
+const READY_TIMEOUT_MS = SETTINGS.server.startTimeoutMs;
 const POLL_INTERVAL_MS = 500;
 
 /** ヘルスチェック: POST {mode:"list"} が 200 を返せば daemon は利用可能（warmUp 済み）。 */
@@ -26,23 +26,20 @@ function commandAvailable(command: string, args: string[]): boolean {
 
 /**
  * Local Runner サーバーを起動する。
- * Windows: 既定は WSL で起動し、LOCAL_RUNNER_BACKEND=native のときだけ Windows の Bun/JDK を使う。
+ * Windows: 既定は WSL で起動し、設定の server.backend が native のときだけ Windows の Bun/JDK を使う。
  * WSL/Linux 内: setsid でバックグラウンド化し、ログは ~/.atcoder/runner-autostart.log へ。
  */
 function startServer(): void {
 	const binDir = path.join(PROJECT_ROOT, "local-runner", "bin");
 
 	if (process.platform === "win32") {
-		const backend = (process.env.LOCAL_RUNNER_BACKEND || "wsl").toLowerCase();
-		const bunCommand = process.env.LOCAL_RUNNER_BUN || "bun";
-		if (backend === "native") {
-			const nativeAvailable = commandAvailable(bunCommand, ["--version"]) &&
-				commandAvailable("java", ["-version"]) && commandAvailable("javac", ["-version"]);
-			if (!nativeAvailable) {
-				throw new Error("LOCAL_RUNNER_BACKEND=native requires bun, java, and javac on Windows PATH.");
+		if (SETTINGS.server.backend === "native") {
+			// Java の有無は、サーバーが設定の languages.java.command で確かめる。
+			if (!commandAvailable("bun", ["--version"])) {
+				throw new Error('"server.backend": "native" requires bun on the Windows PATH.');
 			}
 			const serverPath = path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "server.ts");
-			const child = spawn(bunCommand, [serverPath], {
+			const child = spawn("bun", [serverPath], {
 				cwd: PROJECT_ROOT,
 				detached: true,
 				windowsHide: true,
@@ -57,7 +54,7 @@ function startServer(): void {
 		// cmd /k により .sh 終了後も窓が残り、エラーログを読める。
 		const child = spawn(
 			"cmd.exe",
-			["/c", "start", "Local Runner", "cmd", "/k", "wsl.exe", "--cd", binDir, "--", "bash", "./start-local-runner.sh", TARGET_JAVA_VERSION],
+			["/c", "start", "Local Runner", "cmd", "/k", "wsl.exe", "--cd", binDir, "--", "bash", "./start-local-runner.sh"],
 			{stdio: "ignore"},
 		);
 		child.unref();
@@ -65,22 +62,18 @@ function startServer(): void {
 	}
 
 	// CLI 自身が WSL/Linux 内の場合: setsid で背景化し、ログはファイルへ。
-	const envExports: string[] = [];
-	if (process.env.LOCAL_RUNNER_PORT) envExports.push(`export LOCAL_RUNNER_PORT=${shq(process.env.LOCAL_RUNNER_PORT)}`);
-	if (process.env.LOCAL_RUNNER_BASE_DIR) envExports.push(`export LOCAL_RUNNER_BASE_DIR=${shq(process.env.LOCAL_RUNNER_BASE_DIR)}`);
-	const exportsPart = envExports.length ? envExports.join("; ") + "; " : "";
 	const inner =
 		`mkdir -p "$HOME/.atcoder" && ` +
 		`echo "=== autostart $(date) ===" >> "$HOME/.atcoder/runner-autostart.log" && ` +
 		`cd ${shq(binDir)} && chmod +x ./start-local-runner.sh && ` +
-		`{ ${exportsPart}setsid nohup ./start-local-runner.sh ${shq(TARGET_JAVA_VERSION)} < /dev/null >> "$HOME/.atcoder/runner-autostart.log" 2>&1 & }`;
+		`{ setsid nohup ./start-local-runner.sh < /dev/null >> "$HOME/.atcoder/runner-autostart.log" 2>&1 & }`;
 	const child = spawn("bash", ["-lc", inner], {stdio: "ignore"});
 	child.unref();
 }
 
 /** CLI が server を叩く前に呼ぶ。未起動なら自動起動して ready まで待つ。 */
 export async function ensureLocalRunnerReady(): Promise<void> {
-	if (process.env.ATCODER_RUNNER_AUTOSTART === "0") return; // 自動起動を無効化（常駐運用に切替時）
+	if (!SETTINGS.server.autoStart) return;                    // 自動起動を無効化（常駐運用に切替時）
 	if (await pingServer()) return;                            // 既に起動済み
 
 	try {
@@ -100,6 +93,6 @@ export async function ensureLocalRunnerReady(): Promise<void> {
 	throw new Error(
 		`Local Runner did not become ready within ${READY_TIMEOUT_MS}ms.\n` +
 		`  Check the Local Runner log. Bun and a JDK are required.\n` +
-		`  Related variables: LOCAL_RUNNER_BACKEND=native|wsl, ATCODER_JAVA_VER, LOCAL_RUNNER_START_TIMEOUT_MS`,
+		`  Related settings in ${SETTINGS_FILE}: server.backend, server.startTimeoutMs, languages.java.command`,
 	);
 }

@@ -1,4 +1,6 @@
 import {pathToFileURL} from "node:url";
+import {SETTINGS_FILE} from "../config";
+import {legacyEnvironmentWarnings} from "../settings/settings";
 import {CliUsageError} from "./commands/Command";
 import * as registry from "./commands/registry";
 
@@ -14,6 +16,8 @@ export async function main(rawArgs = process.argv.slice(2)): Promise<number> {
 		registry.printUsage();
 		return 1;
 	}
+
+	for (const warning of legacyEnvironmentWarnings(process.env, SETTINGS_FILE)) console.error(`Warning: ${warning}`);
 
 	try {
 		return await command.execute(rest);

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import {LOCAL_SETTINGS_FILE} from "../../config";
-import {isHeaderName, readLocalSettings, writeLocalSettings} from "../../localSettings";
+import {SETTINGS_FILE, updateUserSettings} from "../../config";
+import {deleteSetting, isHeaderName, loadSettings, setSetting} from "../../settings/settings";
 import type {Command} from "./Command";
 import {CliUsageError} from "./Command";
 
@@ -18,8 +18,7 @@ export class SetHeaderCommand implements Command {
 	async execute(args: string[]): Promise<number> {
 		const [name, target, extra] = args;
 		if (extra !== undefined) throw new CliUsageError("setheader takes two arguments.");
-		const settings = readLocalSettings(LOCAL_SETTINGS_FILE);
-		const headerFiles = {...settings.headerFiles};
+		const headerFiles = loadSettings(SETTINGS_FILE).headers;
 		if (name === undefined) {
 			const entries = Object.entries(headerFiles);
 			if (entries.length === 0) console.log("No header files are set.");
@@ -32,16 +31,15 @@ export class SetHeaderCommand implements Command {
 			return 0;
 		}
 		if (target === "--clear") {
-			delete headerFiles[name];
+			updateUserSettings((user) => deleteSetting(user, ["headers", name]));
 			console.log(`${name}: not set`);
 		} else {
 			if (target.startsWith("-")) throw new CliUsageError(`Unknown option: ${target}`);
 			const file = path.resolve(target);
 			if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`Header file not found: ${file}`);
-			headerFiles[name] = file;
+			updateUserSettings((user) => setSetting(user, ["headers", name], file));
 			console.log(`${name}: ${file}`);
 		}
-		writeLocalSettings(LOCAL_SETTINGS_FILE, {...settings, headerFiles});
 		return 0;
 	}
 }

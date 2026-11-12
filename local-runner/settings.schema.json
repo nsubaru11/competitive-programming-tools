@@ -1,0 +1,150 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Local Runner の設定",
+	"description": "変えたい項目だけを書く。書かなかった項目は既定値で動く。",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"$schema": {
+			"type": "string"
+		},
+		"server": {
+			"description": "サーバーの起動と接続。変更したら stop のあと serve で反映する。",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"port": {
+					"description": "サーバーのポート。CLI の接続先もここから決まる。",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 65535,
+					"default": 8080
+				},
+				"backend": {
+					"description": "Windows でサーバーを動かす場所。wsl は WSL の中、native は Windows の Bun と JDK。",
+					"enum": ["wsl", "native"],
+					"default": "wsl"
+				},
+				"autoStart": {
+					"description": "サーバーが動いていないとき、test などのコマンドが自動で起動する。",
+					"type": "boolean",
+					"default": true
+				},
+				"startTimeoutMs": {
+					"description": "自動で起動したサーバーの準備を待つ時間(ms)。",
+					"type": "integer",
+					"minimum": 1000,
+					"default": 60000
+				},
+				"extraOrigins": {
+					"description": "対応するジャッジサイトのほかに、ブラウザからの要求を許すオリジン(例: http://localhost:4173)。",
+					"type": "array",
+					"items": {
+						"type": "string",
+						"pattern": "^https?://[^/]+$"
+					},
+					"default": []
+				}
+			}
+		},
+		"run": {
+			"description": "実行の制限。変更したら stop のあと serve で反映する。",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"timeoutMs": {
+					"description": "1回の実行を打ち切る時間(ms)。",
+					"type": "integer",
+					"minimum": 100,
+					"default": 10000
+				},
+				"compileTimeoutMs": {
+					"description": "コンパイルと提出用の変換を打ち切る時間(ms)。",
+					"type": "integer",
+					"minimum": 1000,
+					"default": 30000
+				},
+				"outputLimitMb": {
+					"description": "標準出力と標準エラー出力のそれぞれについて、取り込む量の上限(MB)。",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 64,
+					"default": 2
+				}
+			}
+		},
+		"languages": {
+			"description": "言語ごとの実行環境。変更したら stop のあと serve で反映する。",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"java": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"command": {
+							"description": "java の命令。名前だけなら PATH から探し、javac も PATH から探す。パスなら同じフォルダの javac を使う。",
+							"type": "string",
+							"minLength": 1,
+							"default": "java"
+						},
+						"release": {
+							"description": "提出先の Java のバージョン。JDK の方が新しいときは javac の --release で揃える。",
+							"type": "integer",
+							"minimum": 8,
+							"default": 24
+						},
+						"library": {
+							"description": "lib フォルダを持つ、Java のライブラリの src フォルダ。書かなければライブラリなしで動く。",
+							"type": "string",
+							"minLength": 1
+						},
+						"stackMb": {
+							"description": "解答を実行するスレッドのスタック(MB)。",
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 1024,
+							"default": 256
+						}
+					}
+				}
+			}
+		},
+		"headers": {
+			"description": "提出物の先頭に付けるファイル。キーは言語(java)か、--header=<名前> で選ぶ名前。",
+			"type": "object",
+			"propertyNames": {
+				"pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+			},
+			"additionalProperties": {
+				"type": "string",
+				"minLength": 1
+			},
+			"default": {}
+		},
+		"atcoder": {
+			"description": "AtCoder との通信。CLI が実行のたびに読む。",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"sessionFile": {
+					"description": "REVEL_SESSION の値を保存したファイル。",
+					"type": "string",
+					"minLength": 1,
+					"default": "~/.atcoder/session.txt"
+				},
+				"sampleCache": {
+					"description": "取得したサンプルを保存して使い回す。",
+					"type": "boolean",
+					"default": true
+				},
+				"resultWaitMs": {
+					"description": "提出の結果が確定するのを待つ時間(ms)。",
+					"type": "integer",
+					"minimum": 1000,
+					"default": 300000
+				}
+			}
+		}
+	}
+}

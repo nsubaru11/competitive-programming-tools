@@ -47,8 +47,8 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 
 サーバーは受け取ったコードを実行するので、次の点に注意してください。
 
-- サーバーは既定で `127.0.0.1` にだけ接続を許します。`LOCAL_RUNNER_HOST` を変更すると同じネットワークの端末からコードを実行できるようになるので、変更しないでください
-- ブラウザからの要求は、対応するジャッジサイトからのものだけを受け付けます。`LOCAL_RUNNER_ALLOWED_ORIGINS` で許可するオリジンを差し替えられます
+- サーバーは `127.0.0.1` にだけ接続を許します。同じネットワークのほかの端末からは接続できません
+- ブラウザからの要求は、対応するジャッジサイトからのものだけを受け付けます。設定の `server.extraOrigins` に書いたオリジンは、追加で受け付けます
 - 同じ PC で動くプログラムからの要求は拒否できません
 - 実行するコードはサンドボックスに入らず、起動したユーザーの権限で動きます。内容を確認していないコードは実行しないでください
 - `REVEL_SESSION` は AtCoder のログイン情報です。他人に渡さないでください
@@ -71,6 +71,7 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 | `status`                                                       | サーバーの状態を表示する。稼働中なら終了コード 0、停止中なら 1                                     |
 | `setlib <path>`                                                | Java のライブラリのフォルダを設定する。引数なしで現在の設定を表示し、`--clear` で解除する          |
 | `setheader <language\|name> <file>`                            | 言語の既定のヘッダーか、名前付きのヘッダーを設定する。引数なしで一覧を表示し、`--clear` で解除する |
+| `settings`                                                     | 全部の設定と今の値を表示する。既定値と違う項目には `*` が付く                                      |
 | `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                                   |
 
 `taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
@@ -134,7 +135,7 @@ setlib C:\path\to\competitive-programming-java-library
 
 - ライブラリのルートと、`lib` の親の `src` のどちらを指定しても構いません
 - 相対パスは、コマンドを実行したフォルダを基準にします。保存するのは絶対パスです
-- 設定は `local-runner.settings.json` に保存します。Windows で設定したパスは、WSL のサーバーでも使えます
+- 設定は `local-runner.settings.json` の `languages.java.library` に保存します。Windows で設定したパスは、WSL のサーバーでも使えます
 - 設定したら `stop` のあと `serve` で読み込み直してください
 - `setlib` だけで現在の設定を表示し、`setlib --clear` で解除します
 
@@ -171,7 +172,7 @@ setheader java C:\path\to\header.txt
 setheader short C:\path\to\short.txt
 ```
 
-- 設定は `local-runner.settings.json` に保存します。サーバーの再起動はいりません
+- 設定は `local-runner.settings.json` の `headers` に保存します。サーバーの再起動はいりません
 - 相対パスは、コマンドを実行したフォルダを基準にします。保存するのは絶対パスです
 - `setheader` だけで一覧を表示し、`setheader java --clear` で解除します
 - 設定が無ければヘッダーは付けません。設定したファイルが見つからないときはエラーで止まります
@@ -198,24 +199,13 @@ New-Item -ItemType Directory -Force "$HOME\.atcoder" | Out-Null
 Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -Encoding UTF8
 ```
 
-## 環境変数
+## 設定
 
-| 変数                       | 説明                                                                        | 既定値                   |
-|----------------------------|-----------------------------------------------------------------------------|--------------------------|
-| `LOCAL_RUNNER_URL`         | サーバーの URL                                                              | `http://localhost:8080`  |
-| `LOCAL_RUNNER_PORT`        | サーバーのポート                                                            | `8080`                   |
-| `LOCAL_RUNNER_BACKEND`     | Windows で `native` にすると、WSL を使わずに Windows の Bun と JDK で動かす | `wsl`                    |
-| `ATCODER_RUNNER_AUTOSTART` | `0` でサーバーの自動起動を止める                                            | 有効                     |
-| `ATCODER_JAVA_VER`         | 提出先の Java のバージョン                                                  | `24`                     |
-| `ATCODER_LIB_SRC`          | Java のライブラリの `src` フォルダ。`setlib` の設定より優先する             | なし                     |
-| `ATCODER_SESSION_FILE`     | `REVEL_SESSION` を保存したファイル                                          | `~/.atcoder/session.txt` |
-| `ATCODER_SESSION`          | `REVEL_SESSION` の値                                                        | なし                     |
-| `ATCODER_COOKIE`           | 提出に使う Cookie 全体                                                      | なし                     |
-| `NO_COLOR`                 | `1` で色付きの表示を止める                                                  | なし                     |
+ポート、タイムアウト、JDK の場所などは、`tools` フォルダの `local-runner.settings.json` に書きます。変えたい項目だけを書けばよく、ファイルが無ければすべて既定値で動きます。Windows の CLI と WSL のサーバーが同じファイルを読みます。
 
-既定値の相対パスは `tools` からの位置です。
+項目の一覧、パスの書き方、以前のバージョンからの移行は [SETTINGS.md](./SETTINGS.md) を参照してください。今の値は `settings` で確かめられます。
 
-Windows から WSL のサーバーを起動するときは、Windows 側の環境変数が引き継がれません。サーバーが読む変数(`LOCAL_RUNNER_PORT`、`ATCODER_LIB_SRC`)は、WSL の `~/.profile` に設定してください。`setlib` と `setheader` の設定は引き継がれます。
+環境変数 `NO_COLOR` を `1` にすると、色付きの表示を止めます。
 
 ## 開発
 

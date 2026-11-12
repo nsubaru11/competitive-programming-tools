@@ -12,6 +12,7 @@ import {
 } from "@atcoder-tools/shared";
 import type {RunnerStatusInfo} from "../types";
 import * as config from "../config";
+import {legacyEnvironmentWarnings, serverSettingsDigest} from "../settings/settings";
 import * as filesystem from "../utils/filesystem";
 import * as formatter from "../utils/formatter";
 import * as color from "../utils/color";
@@ -28,11 +29,7 @@ let precompileTimer: NodeJS.Timeout | null = null;
 let scheduledPrecompileSource = "";
 const prepareCache = new Map<string, Promise<LocalRunnerPrepareResponse>>();
 
-// LOCAL_RUNNER_ALLOWED_ORIGINS で完全一致のオリジン許可リストに差し替え可能（カンマ区切り）。
-const ALLOWED_ORIGINS_OVERRIDE = (process.env.LOCAL_RUNNER_ALLOWED_ORIGINS || "")
-	.split(",")
-	.map((s) => s.trim())
-	.filter(Boolean);
+const EXTRA_ORIGINS = config.SETTINGS.server.extraOrigins;
 
 // 変換できるのは Java だけ。言語が増えたら要求から受け取る。
 const SOURCE_LANGUAGE = "java";
@@ -245,7 +242,7 @@ const server = http.createServer(async (req, res) => {
 	//   CORS 応答ヘッダだけでなくサーバ側で 403 を返して実行そのものを止める必要がある。）
 	// Origin ヘッダの無い要求（CLI/bun の fetch 等、非ブラウザ）は従来どおり許可する。
 	const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
-	const originAllowed = isAllowedOrigin(origin, ALLOWED_ORIGINS_OVERRIDE);
+	const originAllowed = isAllowedOrigin(origin, EXTRA_ORIGINS);
 	if (origin && originAllowed) {
 		res.setHeader("Access-Control-Allow-Origin", origin);
 		res.setHeader("Vary", "Origin");
@@ -351,7 +348,8 @@ const server = http.createServer(async (req, res) => {
 				librarySource: config.loadedLibrarySource(),
 				compileCacheSize: compiler.getCompileCacheSize(),
 				compileCacheMax: config.RUNNER_CONFIG.maxCacheSize,
-				warmUpProfile: config.RUNNER_CONFIG.warmUpProfile,
+				settingsFile: config.SETTINGS_FILE,
+				settingsDigest: serverSettingsDigest(config.SETTINGS),
 				baseDir: config.RUNNER_CONFIG.baseDir,
 				logFile: config.LOG_FILE_PATH,
 			} satisfies RunnerStatusInfo;
@@ -377,12 +375,17 @@ const server = http.createServer(async (req, res) => {
 });
 
 async function bootstrap() {
+	for (const warning of legacyEnvironmentWarnings(process.env, config.SETTINGS_FILE)) logging.logWarn(warning);
+	if (compiler.JAVA_VERSION === "Unknown") {
+		throw new Error(`Java was not found: ${compiler.JAVA_PATH}. Install a JDK, or write its java command in "languages.java.command" of ${config.SETTINGS_FILE}.`);
+	}
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.baseDir);
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.compileRootDir);
 	const libraryRoots = config.prepareLibrarySourceRoot();
+	logging.logInfo(`Settings file: ${config.SETTINGS_FILE}`);
 	logging.logInfo(`Local Runner base directory: ${config.RUNNER_CONFIG.baseDir}`);
 	if (libraryRoots.source === null) {
-		const configured = config.configuredLibrarySourceRoot();
+		const configured = config.SETTINGS.languages.java.library;
 		logging.logWarn(configured
 			? `Java library not found: ${configured}. Starting without it.`
 			: "Java library is not set. Starting without it. To use lib.*, run setlib <path>.");
@@ -396,7 +399,6 @@ async function bootstrap() {
 		logging.logWarn(`Java ${compiler.JAVA_VERSION} differs from the submission target Java ${config.TARGET_JAVA_VERSION}.`);
 	}
 	logging.logInfo(`Dispatcher capture limit: ${config.RUNNER_CONFIG.dispatcherCaptureLimitBytes} bytes`);
-	logging.logInfo(`WarmUp profile: ${config.RUNNER_CONFIG.warmUpProfile} (repeat=${config.WARMUP_REPEAT_COUNT}, timeout=${config.RUNNER_CONFIG.warmUpRunTimeoutMs}ms)`);
 	dispatcher.logCaptureAndBodySizeBalance();
 	if (process.platform === "linux" && config.RUNNER_CONFIG.baseDir.startsWith("/dev/shm")) {
 		logging.logInfo("Using /dev/shm for low-latency compile cache.");
@@ -406,14 +408,12 @@ async function bootstrap() {
 	await dispatcher.ensureDispatcherReady();
 	// WarmUp.java は lib.io を使うので、ライブラリなしでは温めない。最初の実行が遅くなるだけで動作は変わらない。
 	if (libraryRoots.source !== null) await dispatcher.warmUpDispatcher(config.resolveLibrarySourceRoot());
-	// 既定でループバック(127.0.0.1)にのみバインドし、LAN/リモートからの無認証アクセスを遮断する。
-	// どうしても外部公開が必要な場合のみ LOCAL_RUNNER_HOST で上書き可能（非推奨）。
-	const host = process.env.LOCAL_RUNNER_HOST || "127.0.0.1";
+	const host = config.RUNNER_CONFIG.host;
 	server.listen(config.RUNNER_CONFIG.port, host, () => {
 		const message = "✓ Local Runner server is ready:";
 		const link = `http://${host}:${config.RUNNER_CONFIG.port}`;
 		logging.logInfo(color.supportsRunnerColor() ? `${color.ANSI.GREEN}${message}${color.ANSI.RESET} ${color.ANSI.CYAN}${link}${color.ANSI.RESET}` : `${message} ${link}`);
-		logging.logInfo(`Allowed browser origins: ${ALLOWED_ORIGINS_OVERRIDE.length > 0 ? ALLOWED_ORIGINS_OVERRIDE.join(", ") : ALLOWED_ORIGIN_HOSTS.join(", ")}`);
+		logging.logInfo(`Allowed browser origins: ${[...ALLOWED_ORIGIN_HOSTS, ...EXTRA_ORIGINS].join(", ")}`);
 		logging.logInfo(`Runner label: ${compiler.RUNNER_LABEL}`);
 	});
 }

@@ -28,9 +28,10 @@ describe("isAllowedOrigin", () => {
 		expect(isAllowedOrigin("not a url")).toBe(false);
 	});
 
-	test("許可リストを指定すると完全一致だけを許可する", () => {
-		const overrides = ["http://localhost:4173"];
-		expect(isAllowedOrigin("http://localhost:4173", overrides)).toBe(true);
-		expect(isAllowedOrigin("https://atcoder.jp", overrides)).toBe(false);
+	test("設定で足したオリジンは、完全一致のときだけ追加で許可する", () => {
+		const extraOrigins = ["http://localhost:4173"];
+		expect(isAllowedOrigin("http://localhost:4173", extraOrigins)).toBe(true);
+		expect(isAllowedOrigin("http://localhost:4174", extraOrigins)).toBe(false);
+		expect(isAllowedOrigin("https://atcoder.jp", extraOrigins)).toBe(true);
 	});
 });
