@@ -35,12 +35,7 @@ export class LocalTestCommand implements Command {
 		const [sourceFilePath, testDir] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {resolvedSourcePath, program, restoreNames} = await source.prepareSource(
-			sourceFilePath,
-			debug,
-			{compile: true, validate: false, lang},
-		);
-		if (!program) throw new Error("Local Runner did not return a prepared program.");
+		const {resolvedSourcePath, program, restoreNames} = await source.compileSource(sourceFilePath, debug, {lang});
 		const samples = localSamples.loadLocalSamples(resolvedSourcePath, testDir);
 		const allAccepted = await sampleJudge.runAndReportSamples(program, samples, restoreNames, display);
 		return allAccepted ? 0 : 5;

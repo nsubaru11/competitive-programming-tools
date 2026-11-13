@@ -11,8 +11,6 @@ export type JavaLanguageSettings = {
 	family: string;
 	name: string;
 	match?: string[];
-	engine: "jvm";
-	bundle: "builtin:java-library";
 	command: string;
 	release: number;
 	library?: string;
@@ -114,11 +112,15 @@ export function readUserSettings(file: string): UserSettings {
 	return user;
 }
 
-function assertValidSettings(user: UserSettings, file: string): void {
-	const errors = validateAgainstSchema(user, schema as SchemaNode);
+/** 誤りが1つでもあれば、ファイルの場所と項目ごとの理由を並べた SettingsError にする。 */
+function throwIfInvalid(errors: readonly string[], file: string): void {
 	if (errors.length > 0) {
 		throw new SettingsError(`Invalid settings in ${file}:\n${errors.map((line) => `  ${line}`).join("\n")}`);
 	}
+}
+
+function assertValidSettings(user: UserSettings, file: string): void {
+	throwIfInvalid(validateAgainstSchema(user, schema as SchemaNode), file);
 }
 
 /** 設定ファイルを書く。正しくない内容は書かずに SettingsError にする。 */
@@ -190,9 +192,7 @@ function assertCompleteLanguages(settings: Settings, file: string): void {
 			errors.push(`${joinSettingName("extensions", extension)}: unknown language "${name}"`);
 		}
 	}
-	if (errors.length > 0) {
-		throw new SettingsError(`Invalid settings in ${file}:\n${errors.map((line) => `  ${line}`).join("\n")}`);
-	}
+	throwIfInvalid(errors, file);
 }
 
 /** 既定値に設定ファイルを重ねた設定を返す。 */
@@ -266,16 +266,27 @@ export function resolveSettingPath(value: string, settingsFile: string, environm
 	return pathApi.resolve(pathApi.dirname(settingsFile), value);
 }
 
-/** 指定されたフォルダから、`lib` を直下に持つ `src` フォルダを探す。ライブラリのルートでも `src` でも受け付ける。 */
+function libraryCandidates(root: string): string[] {
+	return [root, path.join(root, "src")];
+}
+
+/** `lib` を直下に持つ `src` フォルダを探す。ライブラリのルートでも `src` でも受け付ける。見つからなければ null。 */
+export function findLibrarySource(root: string): string | null {
+	return libraryCandidates(root).find((candidate) => fs.existsSync(path.join(candidate, "lib"))) ?? null;
+}
+
+/** setlib が受け取った場所から、ライブラリの `src` フォルダを決める。見つからなければエラーにする。 */
 export function resolveLibrarySource(input: string): string {
 	const root = path.resolve(input);
-	const candidates = [root, path.join(root, "src")];
-	const found = candidates.find((candidate) => fs.existsSync(path.join(candidate, "lib")));
-	if (!found) throw new Error(`The lib folder was not found. Tried: ${candidates.join(", ")}`);
+	const found = findLibrarySource(root);
+	if (!found) throw new Error(`The lib folder was not found. Tried: ${libraryCandidates(root).join(", ")}`);
 	return found;
 }
 
-/** 以前のバージョンが読んでいた環境変数と、代わりに書く設定の項目。値が null のものは、代わりの項目が無い。 */
+/**
+ * 以前のバージョンの文書に載せていた環境変数と、代わりに書く設定の項目。値が null のものは、代わりの項目が無い。
+ * 文書に載せていなかった開発用の変数は、利用者が設定していることがないので案内しない。
+ */
 const LEGACY_ENVIRONMENT: Readonly<Record<string, string | null>> = {
 	LOCAL_RUNNER_URL: "server.port",
 	LOCAL_RUNNER_PORT: "server.port",
@@ -283,28 +294,15 @@ const LEGACY_ENVIRONMENT: Readonly<Record<string, string | null>> = {
 	ATCODER_RUNNER_AUTOSTART: "server.autoStart",
 	LOCAL_RUNNER_START_TIMEOUT_MS: "server.startTimeoutMs",
 	LOCAL_RUNNER_ALLOWED_ORIGINS: "server.extraOrigins",
-	LOCAL_RUNNER_CAPTURE_LIMIT_BYTES: "run.outputLimitMb",
 	ATCODER_JAVA_VER: "languages.java.release",
 	ATCODER_LIB_SRC: "languages.java.library",
 	LOCAL_RUNNER_RUN_STACK_BYTES: "languages.java.stackMb",
 	ATCODER_SESSION_FILE: "atcoder.sessionFile",
-	ATCODER_NO_CACHE: "atcoder.sampleCache",
-	ATCODER_SUBMISSION_POLL_TIMEOUT_MS: "atcoder.resultWaitMs",
 	ATCODER_SESSION: null,
 	ATCODER_COOKIE: null,
 	LOCAL_RUNNER_HOST: null,
-	LOCAL_RUNNER_BASE_DIR: null,
 	LOCAL_RUNNER_BUN: null,
-	LOCAL_RUNNER_FORCE_COLOR: null,
 	LOCAL_RUNNER_INPROCESS_COMPILE: null,
-	LOCAL_RUNNER_DISPATCHER_SOURCE: null,
-	LOCAL_RUNNER_MAX_LOG_FILE_SIZE_BYTES: null,
-	LOCAL_RUNNER_WARMUP_PROFILE: null,
-	LOCAL_RUNNER_WARMUP_TIMEOUT_MS: null,
-	LOCAL_RUNNER_WARMUP_REPEAT: null,
-	ATCODER_SUBMIT_RETRY_MAX: null,
-	ATCODER_SUBMIT_RETRY_BASE_MS: null,
-	ATCODER_SAMPLE_CACHE_MAX: null,
 };
 
 /** 設定されたままの古い環境変数について、移行先を案内する文を返す。値は秘密になりうるので表示しない。 */

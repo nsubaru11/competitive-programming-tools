@@ -1,15 +1,16 @@
-import {spawn, spawnSync} from "node:child_process";
+import {spawnSync} from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type {LocalRunnerRunResponse} from "@atcoder-tools/shared";
-import type {CompileEntry, ProcessResult} from "../types";
+import type {CompileEntry} from "../types";
 import * as config from "../config";
 import * as formatter from "../utils/formatter";
 import * as logging from "../utils/logging";
 import * as filesystem from "../utils/filesystem";
 import {isPathLike} from "../settings/settings";
 import * as dispatcher from "./dispatcher";
+import {runCommand} from "./processRunner";
 
 // 設定の languages.java.command がパスなら、同じフォルダの javac を使う。命令の名前なら、どちらも PATH から探す。
 const JAVA_COMMAND = config.SETTINGS.languages.java.command;
@@ -106,98 +107,6 @@ function cleanupOldCache() {
 	});
 }
 
-export function runProcessCommand(
-	command: string,
-	args: string[],
-	options: {cwd?: string; env?: NodeJS.ProcessEnv; input?: string; timeoutMs?: number} = {},
-) {
-	return new Promise<ProcessResult>((resolve) => {
-		const proc = spawn(command, args, {
-			cwd: options.cwd,
-			env: options.env,
-			stdio: ["pipe", "pipe", "pipe"],
-		});
-		// 出力はチャンクごとに toString せず Buffer のまま蓄積し、最後に一括デコードする。
-		// これによりマルチバイト文字がチャンク境界で分断されて文字化けするのを防ぐ。
-		// さらに上限（常駐経路と同じ CAPTURE_LIMIT）で切り詰め、隔離実行や巨大診断で
-		// daemon 側メモリが際限なく膨らむのを防ぐ。
-		const captureLimit = Math.max(1, config.RUNNER_CONFIG.dispatcherCaptureLimitBytes);
-		type OutputSink = {chunks: Buffer[]; length: number; truncated: boolean};
-		const createSink = (): OutputSink => ({chunks: [], length: 0, truncated: false});
-		const stdoutSink = createSink();
-		const stderrSink = createSink();
-		const appendChunk = (sink: OutputSink, data: unknown) => {
-			const buffer = Buffer.isBuffer(data) ? data : Buffer.from(String(data), "utf8");
-			if (sink.length >= captureLimit) {
-				sink.truncated = true;
-				return;
-			}
-			const writable = Math.min(buffer.length, captureLimit - sink.length);
-			sink.chunks.push(writable === buffer.length ? buffer : buffer.subarray(0, writable));
-			sink.length += writable;
-			if (writable < buffer.length) sink.truncated = true;
-		};
-		const decodeSink = (sink: OutputSink) => Buffer.concat(sink.chunks).toString("utf8");
-		let timedOut = false;
-		let settled = false;
-		let killTimer: NodeJS.Timeout | null = null;
-		const finish = (result: ProcessResult) => {
-			if (settled) {
-				return;
-			}
-			settled = true;
-			if (killTimer) {
-				clearTimeout(killTimer);
-			}
-			resolve(result);
-		};
-
-		if (proc.stdout) {
-			proc.stdout.on("data", (data) => appendChunk(stdoutSink, data));
-		}
-		if (proc.stderr) {
-			proc.stderr.on("data", (data) => appendChunk(stderrSink, data));
-		}
-		if (options.input !== undefined && proc.stdin) {
-			proc.stdin.end(options.input, "utf8");
-		} else if (proc.stdin) {
-			proc.stdin.end();
-		}
-
-		proc.on("close", (code, signal) => {
-			finish({
-				code: code ?? -1,
-				signal,
-				stdout: decodeSink(stdoutSink),
-				stderr: decodeSink(stderrSink),
-				timedOut,
-				stdoutTruncated: stdoutSink.truncated,
-				stderrTruncated: stderrSink.truncated,
-			});
-		});
-
-		proc.on("error", (error) => {
-			const stderrText = decodeSink(stderrSink);
-			finish({
-				code: -1,
-				signal: null,
-				stdout: decodeSink(stdoutSink),
-				stderr: stderrText ? `${stderrText}\n${error.message}` : error.message,
-				timedOut,
-				stdoutTruncated: stdoutSink.truncated,
-				stderrTruncated: stderrSink.truncated,
-			});
-		});
-
-		if (options.timeoutMs) {
-			killTimer = setTimeout(() => {
-				timedOut = true;
-				proc.kill("SIGKILL");
-			}, options.timeoutMs);
-		}
-	});
-}
-
 export async function compileDispatcher() {
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.dispatcherBuildDir);
 	const sources = listDispatcherSources();
@@ -215,12 +124,11 @@ export async function compileDispatcher() {
 	} catch {
 		// stat 失敗時は通常コンパイルにフォールバック
 	}
-	const result = await runProcessCommand(
-		JAVAC_PATH,
-		["-encoding", "UTF-8", "-g", "-d", config.RUNNER_CONFIG.dispatcherBuildDir, ...sources],
-		{env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs},
+	const result = await runCommand(
+		[JAVAC_PATH, "-encoding", "UTF-8", "-g", "-d", config.RUNNER_CONFIG.dispatcherBuildDir, ...sources],
+		{env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs, outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes},
 	);
-	if (result.code !== 0 || result.timedOut || !fs.existsSync(config.DISPATCHER_CLASS_FILE)) {
+	if (result.exitCode !== 0 || result.timedOut || !fs.existsSync(config.DISPATCHER_CLASS_FILE)) {
 		throw new Error(result.stderr || "Failed to compile Dispatcher.java.");
 	}
 }
@@ -363,29 +271,23 @@ export async function getCompiledEntryByProgramId(programId: string): Promise<Co
 }
 
 export async function runCodeInIsolatedJvm(entry: CompileEntry, standardInput: string): Promise<LocalRunnerRunResponse> {
-	const execStart = Date.now();
-	const result = await runProcessCommand(
-		JAVA_PATH,
+	const result = await runCommand(
 		// 常駐 JVM と同じスタックと最適化で動かし、実行経路によって結果が変わらないようにする。
-		[
-			`-Xss${config.RUNNER_CONFIG.runStackBytes}`,
-			"-cp",
-			entry.classDir,
-			entry.mainClass,
-		],
+		[JAVA_PATH, `-Xss${config.RUNNER_CONFIG.runStackBytes}`, "-cp", entry.classDir, entry.mainClass],
 		{
 			cwd: entry.rootDir,
 			env: JAVA_ENV,
-			input: standardInput,
+			stdin: standardInput,
 			timeoutMs: config.RUNNER_CONFIG.runTimeoutMs,
+			outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes,
 		},
 	);
 	return {
-		status: result.timedOut ? "timeLimitExceeded" : (result.code === 0 ? "success" : "runtimeError"),
-		exitCode: result.timedOut ? 124 : result.code,
+		status: result.timedOut ? "timeLimitExceeded" : (result.exitCode === 0 ? "success" : "runtimeError"),
+		exitCode: result.timedOut ? 124 : result.exitCode,
 		stdout: result.stdout,
 		stderr: result.timedOut ? (`Execution timed out after ${config.RUNNER_CONFIG.runTimeoutMs}ms.\n${result.stderr}`).trim() : result.stderr,
-		time: result.timedOut ? config.RUNNER_CONFIG.runTimeoutMs : (Date.now() - execStart),
+		time: result.timedOut ? config.RUNNER_CONFIG.runTimeoutMs : result.timeMs,
 		stdoutTruncated: result.stdoutTruncated,
 		stderrTruncated: result.stderrTruncated,
 		memory: 0,

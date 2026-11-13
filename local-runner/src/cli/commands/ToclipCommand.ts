@@ -35,7 +35,7 @@ export class ToclipCommand implements Command {
 		const sourceArg = /^(ex|[a-z])\d*$/i.test(positionals[0])
 			? taskCommand.resolveShortSourceArg(positionals[0], lang)
 			: positionals[0];
-		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceArg, false, {header, lang});
+		const {resolvedSourcePath, transformed} = await source.transformSource(sourceArg, {header, lang});
 		clipboard.copyToClipboard(transformed);
 		console.log(`Copied submission source to clipboard: ${resolvedSourcePath}`);
 		return 0;

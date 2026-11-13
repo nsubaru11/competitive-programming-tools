@@ -82,16 +82,6 @@ export type CompileEntry = {
 	error: string | null;
 };
 
-export type ProcessResult = {
-	code: number;
-	signal: NodeJS.Signals | null;
-	stdout: string;
-	stderr: string;
-	timedOut: boolean;
-	stdoutTruncated: boolean;
-	stderrTruncated: boolean;
-};
-
 export type DispatcherRunResult = {
 	kind: "run";
 	/** 常駐 JVM へ実行を頼んだ時刻(Date.now() の値)。前の要求の順番待ちは含まない。 */

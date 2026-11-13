@@ -38,7 +38,7 @@ export class TomainCommand implements Command {
 		const [sourceFilePath, outFilePath] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {resolvedSourcePath, transformed, language} = await source.prepareSource(sourceFilePath, false, {header, lang});
+		const {resolvedSourcePath, transformed, language} = await source.transformSource(sourceFilePath, {header, lang});
 		const outPath = outFilePath
 			? path.resolve(outFilePath)
 			: path.join(path.dirname(resolvedSourcePath), language.runtimeFileName);

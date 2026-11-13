@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {
+	findLibrarySource,
 	isHeaderName,
 	loadSettings,
 	readUserSettings,
@@ -83,8 +84,7 @@ export function configuredLibrarySourceRoot(): string | null {
 function findLibrarySourceRoot(): string | null {
 	const configured = SETTINGS.languages.java.library;
 	if (!configured) return null;
-	const root = resolveConfiguredPath(configured);
-	return [root, path.join(root, "src")].find((candidate) => fs.existsSync(path.join(candidate, "lib"))) ?? null;
+	return findLibrarySource(resolveConfiguredPath(configured));
 }
 
 export function resolveLibrarySourceRoot(): string {

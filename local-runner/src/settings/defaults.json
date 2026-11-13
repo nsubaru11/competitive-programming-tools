@@ -15,8 +15,6 @@
 		"java": {
 			"family": "java",
 			"name": "Java",
-			"engine": "jvm",
-			"bundle": "builtin:java-library",
 			"command": "java",
 			"release": 24,
 			"stackMb": 256

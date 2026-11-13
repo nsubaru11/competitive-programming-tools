@@ -124,12 +124,7 @@ export abstract class TaskCommand implements Command {
 
 	async execute(args: readonly string[]): Promise<number> {
 		const {task, sourceFilePath, force, debug, header, display, lang} = this.validate(args);
-		const {transformed, language, program, restoreNames} = await source.prepareSource(
-			sourceFilePath,
-			debug,
-			{compile: true, validate: false, header, lang},
-		);
-		if (!program) throw new Error("Local Runner did not return a prepared program.");
+		const {transformed, language, program, restoreNames} = await source.compileSource(sourceFilePath, debug, {header, lang});
 
 		const cookieHeader = atcoder.toCookieHeader();
 		const {samples, timeLimitMs} = await getSamplesWithCache(task, cookieHeader);

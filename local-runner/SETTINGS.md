@@ -85,8 +85,6 @@ Local Runner の設定は、`tools` フォルダの `local-runner.settings.json`
 | `library` | なし     | `lib` フォルダを持つ、Java のライブラリの `src` フォルダ。`setlib` が書き込む                         |
 | `stackMb` | `256`    | 解答を実行するスレッドのスタック(MB)                                                                  |
 
-`engine` と `bundle` は、Java が常駐する JVM と組み込みの変換を使うことを表す項目で、変えられません。
-
 #### Java 以外の言語
 
 コンパイルと実行をコマンドで行います。
@@ -238,21 +236,18 @@ Java 以外の言語は、サンプルごとにプロセスを起動して測り
 
 `setlib` と `setheader` で設定していた内容は、初回の実行で新しい形式へ自動で書き換わります。元のファイルは `local-runner.settings.json.bak` に残ります。
 
-| 以前の環境変数                                  | 今の設定                                                                |
-|-------------------------------------------------|-------------------------------------------------------------------------|
-| `LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_URL`         | `server.port`                                                           |
-| `LOCAL_RUNNER_BACKEND`                          | `server.backend`                                                        |
-| `ATCODER_RUNNER_AUTOSTART`                      | `server.autoStart`                                                      |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`                 | `server.startTimeoutMs`                                                 |
-| `LOCAL_RUNNER_ALLOWED_ORIGINS`                  | `server.extraOrigins`。対応サイトに足す形になった                       |
-| `LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`              | `run.outputLimitMb`。単位が MB になった                                 |
-| `JAVA_HOME`、`JAVA_HOME_24` など                | `languages.java.command`。PATH の `java` と違う JDK を使うときだけ書く  |
-| `ATCODER_JAVA_VER`                              | `languages.java.release`                                                |
-| `ATCODER_LIB_SRC`                               | `languages.java.library`                                                |
-| `LOCAL_RUNNER_RUN_STACK_BYTES`                  | `languages.java.stackMb`。単位が MB になった                            |
-| `ATCODER_SESSION_FILE`                          | `atcoder.sessionFile`                                                   |
-| `ATCODER_NO_CACHE`                              | `atcoder.sampleCache`                                                   |
-| `ATCODER_SUBMISSION_POLL_TIMEOUT_MS`            | `atcoder.resultWaitMs`                                                  |
-| `ATCODER_SESSION`、`ATCODER_COOKIE`             | なし。`REVEL_SESSION` の値を `atcoder.sessionFile` のファイルに保存する |
-| `LOCAL_RUNNER_HOST`                             | なし。`127.0.0.1` に固定した                                            |
-| `LOCAL_RUNNER_BASE_DIR`、そのほかの開発用の変数 | なし                                                                    |
+| 以前の環境変数                                       | 今の設定                                                                |
+|------------------------------------------------------|-------------------------------------------------------------------------|
+| `LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_URL`              | `server.port`                                                           |
+| `LOCAL_RUNNER_BACKEND`                               | `server.backend`                                                        |
+| `ATCODER_RUNNER_AUTOSTART`                           | `server.autoStart`                                                      |
+| `LOCAL_RUNNER_START_TIMEOUT_MS`                      | `server.startTimeoutMs`                                                 |
+| `LOCAL_RUNNER_ALLOWED_ORIGINS`                       | `server.extraOrigins`。対応サイトに足す形になった                       |
+| `JAVA_HOME`、`JAVA_HOME_24` など                     | `languages.java.command`。PATH の `java` と違う JDK を使うときだけ書く  |
+| `ATCODER_JAVA_VER`                                   | `languages.java.release`                                                |
+| `ATCODER_LIB_SRC`                                    | `languages.java.library`                                                |
+| `LOCAL_RUNNER_RUN_STACK_BYTES`                       | `languages.java.stackMb`。単位が MB になった                            |
+| `ATCODER_SESSION_FILE`                               | `atcoder.sessionFile`                                                   |
+| `ATCODER_SESSION`、`ATCODER_COOKIE`                  | なし。`REVEL_SESSION` の値を `atcoder.sessionFile` のファイルに保存する |
+| `LOCAL_RUNNER_HOST`                                  | なし。`127.0.0.1` に固定した                                            |
+| `LOCAL_RUNNER_BUN`、`LOCAL_RUNNER_INPROCESS_COMPILE` | なし                                                                    |

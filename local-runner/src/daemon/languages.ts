@@ -1,7 +1,6 @@
-import fs from "node:fs";
 import {type CommandLanguageSettings, commandLanguageSettings, isPathLike, type Settings} from "../settings/settings";
 import type {CommandLanguage} from "./commandEngine";
-import {findOnPath} from "./processRunner";
+import {findOnPath, isExecutableFile} from "./processRunner";
 
 const MEBIBYTE = 1024 * 1024;
 const DEFAULT_STACK_MB = 1024;
@@ -25,20 +24,11 @@ export type ResolvedLanguages = {
 	readonly skipped: ReadonlyArray<{readonly name: string; readonly reason: string}>;
 };
 
-function isExecutable(file: string): boolean {
-	try {
-		fs.accessSync(file, fs.constants.X_OK);
-		return fs.statSync(file).isFile();
-	} catch {
-		return false;
-	}
-}
-
 /** 設定の command を実体の場所にする。見つからなければ null。 */
 function locateCommand(command: string, resolvePath: (value: string) => string): string | null {
 	if (!isPathLike(command)) return findOnPath(command);
 	const file = resolvePath(command);
-	return isExecutable(file) ? file : null;
+	return isExecutableFile(file) ? file : null;
 }
 
 function toCommandLanguage(name: string, settings: CommandLanguageSettings, command: string): CommandLanguage {

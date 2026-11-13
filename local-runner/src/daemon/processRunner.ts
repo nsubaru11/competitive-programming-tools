@@ -19,6 +19,8 @@ export type ProcessOutcome = {
 
 export type ProcessOptions = {
 	cwd?: string;
+	/** 省略時はサーバーの環境変数を引き継ぐ。 */
+	env?: NodeJS.ProcessEnv;
 	stdin?: string;
 	timeoutMs: number;
 	/** 標準出力と標準エラー出力のそれぞれについて、取り込む量の上限。 */
@@ -81,6 +83,7 @@ async function spawnAndCollect(cmd: string[], options: ProcessOptions, killAfter
 	const proc = Bun.spawn({
 		cmd,
 		cwd: options.cwd,
+		...(options.env && {env: options.env}),
 		stdin: options.stdin === undefined ? "ignore" : Buffer.from(options.stdin, "utf8"),
 		stdout: "pipe",
 		stderr: "pipe",
@@ -183,17 +186,22 @@ export async function runMeasured(cmd: string[], options: MeasuredOptions): Prom
 	};
 }
 
+/** 実行できるファイルか。 */
+export function isExecutableFile(file: string): boolean {
+	try {
+		fs.accessSync(file, fs.constants.X_OK);
+		return fs.statSync(file).isFile();
+	} catch {
+		return false;
+	}
+}
+
 /** PATH から命令を探し、見つかった場所を返す。 */
 export function findOnPath(command: string, searchPath = process.env.PATH ?? ""): string | null {
 	for (const dir of searchPath.split(path.delimiter)) {
 		if (!dir) continue;
 		const candidate = path.join(dir, command);
-		try {
-			fs.accessSync(candidate, fs.constants.X_OK);
-			if (fs.statSync(candidate).isFile()) return candidate;
-		} catch {
-			// 次のフォルダを探す
-		}
+		if (isExecutableFile(candidate)) return candidate;
 	}
 	return null;
 }

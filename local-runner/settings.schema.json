@@ -291,20 +291,6 @@
 								"minLength": 1
 							}
 						},
-						"engine": {
-							"description": "jvm は、常駐する JVM がコンパイルと実行を受け持つことを表す。Java だけが使える。",
-							"enum": [
-								"jvm"
-							],
-							"default": "jvm"
-						},
-						"bundle": {
-							"description": "builtin:java-library は、lib.* の展開と Main への変換を行う組み込みの処理。",
-							"enum": [
-								"builtin:java-library"
-							],
-							"default": "builtin:java-library"
-						},
 						"command": {
 							"description": "java の命令。名前だけなら PATH から探し、javac も PATH から探す。パスなら同じフォルダの javac を使う。",
 							"type": "string",

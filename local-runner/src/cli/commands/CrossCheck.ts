@@ -46,13 +46,8 @@ export class CrossCheck implements Command {
 		const [actualSourceFile, expectedSourceFile, testDir] = positionals;
 		if (!actualSourceFile || !expectedSourceFile) throw new CliUsageError();
 
-		const actual = await source.prepareSource(actualSourceFile, false, {compile: true, validate: false, lang});
-		const expected = await source.prepareSource(expectedSourceFile, false, {
-			compile: true,
-			validate: false,
-			lang: expectedLang
-		});
-		if (!actual.program || !expected.program) throw new Error("Local Runner did not return a prepared program.");
+		const actual = await source.compileSource(actualSourceFile, false, {lang});
+		const expected = await source.compileSource(expectedSourceFile, false, {lang: expectedLang});
 		// テストケース（.in）はテスト対象である actual 側のソースの近傍/指定 testDir から探す。
 		// .out は無視する（あっても比較対象は「もう一方の実行結果」であって .out ではない）。
 		const samples = localSamples.loadLocalSamples(actual.resolvedSourcePath, testDir);

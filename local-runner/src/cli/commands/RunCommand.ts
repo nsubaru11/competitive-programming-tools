@@ -61,8 +61,7 @@ export class RunCommand implements Command {
 		const [sourceFilePath, inputFile] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {program, restoreNames} = await source.prepareSource(sourceFilePath, debug, {compile: true, validate: false, lang});
-		if (!program) throw new Error("Local Runner did not return a prepared program.");
+		const {program, restoreNames} = await source.compileSource(sourceFilePath, debug, {lang});
 		const stdin = inputFile
 			? shared.normalizeNewlines(fs.readFileSync(path.resolve(inputFile), "utf8"))
 			: "";
