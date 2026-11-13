@@ -14,9 +14,12 @@ export function postToRunner(request: LocalRunnerRequest | ManagementRequest, ti
 	});
 }
 
-/** 要求を送り、2xx 以外なら例外にして JSON を返す。 */
+/** 要求を送り、2xx 以外なら例外にして JSON を返す。サーバーが理由を返していれば、それを例外のメッセージにする。 */
 export async function requestRunner<T>(request: LocalRunnerRequest, failure: string): Promise<T> {
 	const response = await postToRunner(request);
-	if (!response.ok) throw new Error(`${failure}: ${response.status}`);
+	if (!response.ok) {
+		const reason = await response.json().then((body: {stderr?: unknown}) => body.stderr).catch(() => undefined);
+		throw new Error(typeof reason === "string" && reason !== "" ? reason : `${failure}: ${response.status}`);
+	}
 	return await response.json() as T;
 }
