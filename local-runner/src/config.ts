@@ -150,7 +150,7 @@ export const RUNNER_CONFIG = {
 	runTimeoutMs: SETTINGS.run.timeoutMs,
 	runStackBytes: SETTINGS.languages.java.stackMb * MEBIBYTE,
 	dispatcherStartupTimeoutMs: 10000,
-	dispatcherCaptureLimitBytes: SETTINGS.run.outputLimitMb * MEBIBYTE,
+	outputLimitBytes: SETTINGS.run.outputLimitMb * MEBIBYTE,
 	baseDir: runnerBaseDir,
 	compileRootDir: path.join(runnerBaseDir, "compiled"),
 	dispatcherBuildDir: path.join(runnerBaseDir, "dispatcher"),

@@ -9,7 +9,6 @@ import {requestRunner} from "../runnerClient";
 /** コンパイル済みのプログラム。サーバーから消えていたら、refresh で作り直す。 */
 export type PreparedProgram = {
 	programId: string;
-	readonly compilerName: string;
 	/** 同じソースをコンパイルし直し、新しい programId を返す。 */
 	readonly refresh: () => Promise<string>;
 };
@@ -116,7 +115,6 @@ export async function compileSource(sourceFilePath: string, debug: boolean, opti
 		...source,
 		program: {
 			programId: programIdOf(result),
-			compilerName: source.language.name,
 			refresh: async () => programIdOf(await request()),
 		},
 	};

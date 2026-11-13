@@ -31,7 +31,7 @@ export function judgeByLines(expected: string, actual: string): boolean {
 
 export async function postLocalRunner(program: PreparedProgram, stdinText: string): Promise<shared.LocalRunnerRunResponse> {
 	const run = () => requestRunner<shared.LocalRunnerRunResponse>(
-		{mode: "run", compilerName: program.compilerName, programId: program.programId, stdin: stdinText},
+		{mode: "run", programId: program.programId, stdin: stdinText},
 		"Local Runner request failed",
 	);
 	const result = await run();

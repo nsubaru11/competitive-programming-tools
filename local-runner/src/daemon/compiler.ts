@@ -126,7 +126,7 @@ export async function compileDispatcher() {
 	}
 	const result = await runCommand(
 		[JAVAC_PATH, "-encoding", "UTF-8", "-g", "-d", config.RUNNER_CONFIG.dispatcherBuildDir, ...sources],
-		{env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs, outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes},
+		{env: JAVA_ENV, timeoutMs: config.RUNNER_CONFIG.compileTimeoutMs, outputLimitBytes: config.RUNNER_CONFIG.outputLimitBytes},
 	);
 	if (result.exitCode !== 0 || result.timedOut || !fs.existsSync(config.DISPATCHER_CLASS_FILE)) {
 		throw new Error(result.stderr || "Failed to compile Dispatcher.java.");
@@ -279,7 +279,7 @@ export async function runCodeInIsolatedJvm(entry: CompileEntry, standardInput: s
 			env: JAVA_ENV,
 			stdin: standardInput,
 			timeoutMs: config.RUNNER_CONFIG.runTimeoutMs,
-			outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes,
+			outputLimitBytes: config.RUNNER_CONFIG.outputLimitBytes,
 		},
 	);
 	return {

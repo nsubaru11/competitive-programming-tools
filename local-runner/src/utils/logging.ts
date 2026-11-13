@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import {LOG_FILE_PATH, RUNNER_CONFIG} from "../config";
+import {stripAnsi} from "./color";
 
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
@@ -25,10 +26,6 @@ export function trimForLog(text: string | null | undefined, maxLen = 72) {
 	if (!text) return "";
 	if (text.length <= maxLen) return text;
 	return `${text.slice(0, maxLen - 3)}...`;
-}
-
-function stripAnsi(text: string) {
-	return String(text || "").replace(/\x1B\[[0-9;]*m/g, "");
 }
 
 /** 実行環境のタイムゾーンによらず JST で返す。JST に夏時間はないので固定オフセットでよい。 */

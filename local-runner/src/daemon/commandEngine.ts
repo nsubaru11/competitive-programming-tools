@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {stripAnsi} from "../utils/color";
 import {formatCompileSummary} from "../utils/formatter";
 import {ensureHeaderUnit} from "./headerUnit";
 import {CanceledError, type ProcessOutcome, runCommand, runMeasured} from "./processRunner";
@@ -84,11 +85,6 @@ export function rewriteDebugFlag(sourceCode: string, debug: boolean): string {
 /** 一時的なフォルダの場所を、利用者が書いたファイルの名前だけに見えるようにする。 */
 function hideDirectory(text: string, dir: string): string {
 	return text.replaceAll(`${dir}${path.sep}`, "").replaceAll(dir, ".");
-}
-
-/** 端末でなくても色を付ける処理系があるので、メッセージから色の指定を除く。 */
-function stripColors(text: string): string {
-	return text.replace(/\x1B\[[0-9;]*m/g, "");
 }
 
 function describeFailure(outcome: ProcessOutcome, what: string, timeoutMs: number): string {
@@ -263,7 +259,8 @@ export class CommandEngine {
 			return success;
 		}
 		this.options.log(formatCompileSummary(language.name, "NG", programId, elapsed));
-		const diagnostics = stripColors(hideDirectory(describeFailure(outcome, "Compilation", this.options.compileTimeoutMs), dir));
+		// 端末でなくても色を付ける処理系があるので、色の指定を除く
+		const diagnostics = stripAnsi(hideDirectory(describeFailure(outcome, "Compilation", this.options.compileTimeoutMs), dir));
 		return {language, dir, result: {status: "compileError", diagnostics, sourceCode}};
 	}
 

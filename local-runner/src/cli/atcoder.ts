@@ -1,6 +1,5 @@
 import * as shared from "@atcoder-tools/shared";
 import fs from "node:fs";
-import path from "node:path";
 import type {SubmissionFinalResult, SubmitResult, Task} from "../types";
 import {CLI_CONFIG, resolveConfiguredPath, SETTINGS} from "../config";
 import * as color from "../utils/color";

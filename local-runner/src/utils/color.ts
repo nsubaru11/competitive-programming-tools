@@ -7,6 +7,11 @@ export const ANSI = {
 	CYAN: "\x1b[36m",
 };
 
+/** 色の指定(ANSI のエスケープ)を除く。 */
+export function stripAnsi(text: string): string {
+	return text.replace(/\x1B\[[0-9;]*m/g, "");
+}
+
 export function supportsCliColor() {
 	return process.stdout.isTTY && !process.env.NO_COLOR;
 }

@@ -44,10 +44,19 @@ let commandEngine: CommandEngine | null = null;
 class BadRequestError extends Error {
 }
 
+function findLanguage(name: string): RunnerLanguage | undefined {
+	return runnerLanguages.find((candidate) => candidate.name === name);
+}
+
+/** 使えない言語を「名前 (理由)」の形で並べる。 */
+function describeSkippedLanguages(): string[] {
+	return skippedLanguages.map(({name, reason}) => `${name} (${reason})`);
+}
+
 /** 要求の compilerName から言語を決める。省略されていれば Java にする。 */
 function requireLanguage(compilerName: unknown): RunnerLanguage {
 	const name = typeof compilerName === "string" && compilerName !== "" ? compilerName : "java";
-	const language = runnerLanguages.find((candidate) => candidate.name === name);
+	const language = findLanguage(name);
 	if (language) return language;
 	const reason = skippedLanguages.find((candidate) => candidate.name === name)?.reason;
 	throw new BadRequestError(reason ? `The language "${name}" is not available: ${reason}.` : `Unknown language: "${name}".`);
@@ -132,7 +141,7 @@ async function runCommandProgram(programId: string, stdin: string, receivedAt: n
 
 /** 言語に合った経路で、変換とコンパイルを行う。コンパイルの順番待ちの中から呼ばれる。 */
 const prepareInQueue: PrepareFunction = async (name, sourceCode, {debug, autoImport, validate}, signal) => {
-	const language = runnerLanguages.find((candidate) => candidate.name === name);
+	const language = findLanguage(name);
 	if (!language) throw new Error(`Unknown language: "${name}".`);
 	return language.command === null
 		? prepareCode(sourceCode, debug, autoImport, validate, signal)
@@ -181,30 +190,21 @@ async function prepareCode(
 	return {...transformed, programId: compiler.getProgramId(transformed.sourceCode)};
 }
 
-function missingProgramResponse(programId: string): LocalRunnerRunResponse {
-	return {
-		status: "badRequest",
-		exitCode: -1,
-		stdout: "",
-		stderr: `${STALE_PROGRAM_MESSAGE} ${programId}`,
-		time: 0,
-		stdoutTruncated: false,
-		stderrTruncated: false,
-		memory: 0,
-	};
+/** 実行の結果が無いときの応答。 */
+function notRunResponse(status: LocalRunnerRunResponse["status"], exitCode: number, stderr: string, time = 0): LocalRunnerRunResponse {
+	return {status, exitCode, stdout: "", stderr, time, stdoutTruncated: false, stderrTruncated: false, memory: 0};
 }
 
-function compileErrorResponse(diagnostics: string): LocalRunnerRunResponse {
-	return {
-		status: "compileError",
-		exitCode: 1,
-		stdout: "",
-		stderr: diagnostics,
-		time: 0,
-		stdoutTruncated: false,
-		stderrTruncated: false,
-		memory: 0,
-	};
+function missingProgramResponse(programId: string): LocalRunnerRunResponse {
+	return notRunResponse("badRequest", -1, `${STALE_PROGRAM_MESSAGE} ${programId}`);
+}
+
+/** コンパイルエラーを実行の応答にして、記録する。Wait と Total は、コンパイルを待った時間になる。 */
+function compileErrorResponse(diagnostics: string, language: string, receivedAt: number): LocalRunnerRunResponse {
+	const response = notRunResponse("compileError", 1, diagnostics);
+	const waitTime = Date.now() - receivedAt;
+	logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", language));
+	return response;
 }
 
 /**
@@ -223,10 +223,7 @@ async function runSource(
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const prepared = await preparations.wait(language.name, sourceCode, options);
 		if (prepared.status !== "success" || !prepared.programId) {
-			const response = compileErrorResponse(prepared.diagnostics);
-			const waitTime = Date.now() - receivedAt;
-			logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", language.name));
-			return response;
+			return compileErrorResponse(prepared.diagnostics, language.name, receivedAt);
 		}
 		const response = await runProgram(prepared.programId, stdin, receivedAt);
 		if (response) return response;
@@ -244,21 +241,7 @@ async function runProgram(programId: string, stdin: string, receivedAt: number):
 }
 
 async function runJavaEntry(entry: CompileEntry, stdin: string, receivedAt: number): Promise<LocalRunnerRunResponse> {
-	if (entry.status === "error") {
-		const waitTime = Date.now() - receivedAt;
-		const response: LocalRunnerRunResponse = {
-			status: "compileError",
-			exitCode: 1,
-			stdout: "",
-			stderr: entry.error || "",
-			time: 0,
-			stdoutTruncated: false,
-			stderrTruncated: false,
-			memory: 0,
-		};
-		logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", "java"));
-		return response;
-	}
+	if (entry.status === "error") return compileErrorResponse(entry.error || "", "java", receivedAt);
 
 	if (entry.requiresIsolatedProcess) {
 		logging.logInfo("[Run] Falling back to isolated JVM mode due to FileDescriptor/System.exit/Runtime.halt usage.");
@@ -274,16 +257,7 @@ async function runJavaEntry(entry: CompileEntry, stdin: string, receivedAt: numb
 		const result = await dispatcher.queueDispatcherRun(entry, stdin);
 		waitTime = (result.startedAt ?? receivedAt) - receivedAt;
 		if (result.timedOut) {
-			const response: LocalRunnerRunResponse = {
-				status: "timeLimitExceeded",
-				exitCode: 124,
-				stdout: "",
-				stderr: result.error || "",
-				time: config.RUNNER_CONFIG.runTimeoutMs,
-				stdoutTruncated: false,
-				stderrTruncated: false,
-				memory: 0,
-			};
+			const response = notRunResponse("timeLimitExceeded", 124, result.error || "", config.RUNNER_CONFIG.runTimeoutMs);
 			logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - receivedAt, "daemon", "java"));
 			return response;
 		}
@@ -310,16 +284,7 @@ async function runJavaEntry(entry: CompileEntry, stdin: string, receivedAt: numb
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		logging.logError(`[Run] Internal error: ${message}`);
-		const response: LocalRunnerRunResponse = {
-			status: "internalError",
-			exitCode: -1,
-			stdout: "",
-			stderr: message,
-			time: 0,
-			stdoutTruncated: false,
-			stderrTruncated: false,
-			memory: 0,
-		};
+		const response = notRunResponse("internalError", -1, message);
 		const totalTime = Date.now() - receivedAt;
 		logging.logError(formatter.formatRunSummary(response, waitTime ?? totalTime, totalTime, "daemon", "java"));
 		return response;
@@ -451,7 +416,7 @@ const server = http.createServer(async (req, res) => {
 				dispatcherRunning: dispatcher.isDispatcherRunning(),
 				librarySource: config.loadedLibrarySource(),
 				languages: runnerLanguages.map(({name}) => name),
-				skippedLanguages: skippedLanguages.map(({name, reason}) => `${name} (${reason})`),
+				skippedLanguages: describeSkippedLanguages(),
 				compileCacheSize: compiler.getCompileCacheSize(),
 				compileCacheMax: config.RUNNER_CONFIG.maxCacheSize,
 				settingsFile: config.SETTINGS_FILE,
@@ -492,7 +457,7 @@ async function prepareLanguages(): Promise<void> {
 	skippedLanguages = resolved.skipped;
 	logging.logInfo(`Languages: ${runnerLanguages.map(({name}) => name).join(", ")}`);
 	if (skippedLanguages.length > 0) {
-		logging.logInfo(`Languages not available: ${skippedLanguages.map(({name, reason}) => `${name} (${reason})`).join(", ")}`);
+		logging.logInfo(`Languages not available: ${describeSkippedLanguages().join(", ")}`);
 	}
 	const commandLanguages = runnerLanguages.flatMap(({command}) => (command === null ? [] : [command]));
 	if (commandLanguages.length === 0) return;
@@ -508,7 +473,7 @@ async function prepareLanguages(): Promise<void> {
 		headerUnitCacheDir: config.RUNNER_CONFIG.headerUnitCacheDir,
 		compileTimeoutMs: config.RUNNER_CONFIG.compileTimeoutMs,
 		runTimeoutMs: config.RUNNER_CONFIG.runTimeoutMs,
-		outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes,
+		outputLimitBytes: config.RUNNER_CONFIG.outputLimitBytes,
 		maxPrograms: config.RUNNER_CONFIG.maxCacheSize,
 		launcher,
 		log: logging.logInfo,
@@ -546,7 +511,7 @@ async function bootstrap() {
 	if (compiler.JAVA_VERSION !== config.TARGET_JAVA_VERSION) {
 		logging.logWarn(`Java ${compiler.JAVA_VERSION} differs from the submission target Java ${config.TARGET_JAVA_VERSION}.`);
 	}
-	logging.logInfo(`Dispatcher capture limit: ${config.RUNNER_CONFIG.dispatcherCaptureLimitBytes} bytes`);
+	logging.logInfo(`Output limit: ${config.RUNNER_CONFIG.outputLimitBytes} bytes`);
 	dispatcher.logCaptureAndBodySizeBalance();
 	if (process.platform === "linux" && config.RUNNER_CONFIG.baseDir.startsWith("/dev/shm")) {
 		logging.logInfo("Using /dev/shm for low-latency compile cache.");

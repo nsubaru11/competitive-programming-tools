@@ -178,7 +178,7 @@ async function startDispatcher() {
 				...compiler.JAVA_ENV,
 				LOCAL_RUNNER_JAVAC_RELEASE: compiler.JAVAC_RELEASE,
 				LOCAL_RUNNER_RUN_STACK_BYTES: String(RUNNER_CONFIG.runStackBytes),
-				LOCAL_RUNNER_CAPTURE_LIMIT_BYTES: String(RUNNER_CONFIG.dispatcherCaptureLimitBytes),
+				LOCAL_RUNNER_CAPTURE_LIMIT_BYTES: String(RUNNER_CONFIG.outputLimitBytes),
 			},
 			stdio: ["pipe", "pipe", "pipe"],
 		});
@@ -308,9 +308,9 @@ export async function warmUpDispatcher(librarySourceRoot: string) {
 }
 
 export function logCaptureAndBodySizeBalance() {
-	if (RUNNER_CONFIG.maxBodySize < RUNNER_CONFIG.dispatcherCaptureLimitBytes) {
+	if (RUNNER_CONFIG.maxBodySize < RUNNER_CONFIG.outputLimitBytes) {
 		logging.logWarn(
-			`[Config] MAX_BODY_SIZE (${RUNNER_CONFIG.maxBodySize} bytes) is smaller than run.outputLimitMb (${RUNNER_CONFIG.dispatcherCaptureLimitBytes} bytes).`,
+			`[Config] MAX_BODY_SIZE (${RUNNER_CONFIG.maxBodySize} bytes) is smaller than run.outputLimitMb (${RUNNER_CONFIG.outputLimitBytes} bytes).`,
 		);
 	}
 }
