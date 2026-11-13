@@ -159,6 +159,12 @@ export const RUNNER_CONFIG = {
 	warmUpStdin: "",
 	warmUpRepeatCount: 2,
 	warmUpRunTimeoutMs: 30000,
+	// コマンドで動かす言語の作業フォルダと、解答のプロセスを起動して計測するプログラム。
+	programRootDir: path.join(runnerBaseDir, "programs"),
+	launcherSourceFile: path.join(PROJECT_ROOT, "local-runner", "native", "launcher.c"),
+	launcherFile: path.join(runnerBaseDir, "launcher"),
+	// header unit は作るのに数秒かかるので、stop で消える baseDir ではなくホームに置く。
+	headerUnitCacheDir: path.join(os.homedir(), ".cache", "competitive-programming", "local-runner", "header-units"),
 };
 
 /** ライブラリが無くても、空の lib を渡して解答の変換と実行を同じ経路で行う。 */

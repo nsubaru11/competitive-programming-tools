@@ -13,9 +13,145 @@
 	},
 	"languages": {
 		"java": {
+			"family": "java",
+			"name": "Java",
+			"engine": "jvm",
+			"bundle": "builtin:java-library",
 			"command": "java",
 			"release": 24,
 			"stackMb": 256
+		},
+		"cpp": {
+			"family": "cpp",
+			"name": "C++",
+			"command": "g++",
+			"sourceFile": "Main.cpp",
+			"compile": [
+				"{command}",
+				"-std=gnu++23",
+				"-O2",
+				"-march=native",
+				"-DATCODER",
+				"-DNOMINMAX",
+				"-DONLINE_JUDGE",
+				"-fconstexpr-depth=1024",
+				"-fconstexpr-loop-limit=524288",
+				"-fconstexpr-ops-limit=2097152",
+				"-fmodules",
+				"-ftrivial-auto-var-init=zero",
+				"-pthread",
+				"-fopenmp",
+				"-Wall",
+				"-Wextra",
+				"{source}",
+				"-o",
+				"{output}",
+				"-Wl,--as-needed",
+				"-lstdc++exp"
+			],
+			"run": [
+				"{output}"
+			],
+			"debugArgs": [
+				"-DLOCAL"
+			],
+			"setup": "builtin:gcc-header-unit",
+			"stackMb": 1024
+		},
+		"c": {
+			"family": "c",
+			"name": "C",
+			"command": "gcc",
+			"sourceFile": "Main.c",
+			"compile": [
+				"{command}",
+				"-std=c23",
+				"-O2",
+				"-march=native",
+				"-DATCODER",
+				"-DONLINE_JUDGE",
+				"-Wall",
+				"-Wextra",
+				"{source}",
+				"-o",
+				"{output}",
+				"-lm"
+			],
+			"run": [
+				"{output}"
+			],
+			"debugArgs": [
+				"-DLOCAL"
+			],
+			"stackMb": 1024
+		},
+		"cpython": {
+			"family": "python3",
+			"name": "Python (CPython)",
+			"match": [
+				"CPython"
+			],
+			"command": "python3",
+			"sourceFile": "Main.py",
+			"compile": [
+				"{command}",
+				"-m",
+				"py_compile",
+				"{source}"
+			],
+			"run": [
+				"{command}",
+				"-X",
+				"int_max_str_digits=0",
+				"{source}"
+			],
+			"debugRewrite": true,
+			"stackMb": 1024
+		},
+		"pypy": {
+			"family": "python3",
+			"name": "Python (PyPy)",
+			"match": [
+				"PyPy"
+			],
+			"command": "pypy3",
+			"sourceFile": "Main.py",
+			"compile": [
+				"{command}",
+				"-m",
+				"py_compile",
+				"{source}"
+			],
+			"run": [
+				"{command}",
+				"-X",
+				"int_max_str_digits=0",
+				"{source}"
+			],
+			"debugRewrite": true,
+			"stackMb": 1024
+		},
+		"codon": {
+			"family": "python3",
+			"name": "Python (Codon)",
+			"match": [
+				"Codon"
+			],
+			"command": "codon",
+			"sourceFile": "Main.py",
+			"compile": [
+				"{command}",
+				"build",
+				"--release",
+				"-o",
+				"{output}",
+				"{source}"
+			],
+			"run": [
+				"{output}"
+			],
+			"debugRewrite": true,
+			"stackMb": 1024
 		}
 	},
 	"headers": {},

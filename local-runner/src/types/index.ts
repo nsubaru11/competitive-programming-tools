@@ -57,6 +57,10 @@ export type RunnerStatusInfo = {
 	runnerLabel: string;
 	dispatcherRunning: boolean;
 	librarySource: string | null;
+	/** 使える言語の名前。 */
+	languages: string[];
+	/** 処理系が見つからない言語と、その理由。 */
+	skippedLanguages: string[];
 	compileCacheSize: number;
 	compileCacheMax: number;
 	settingsFile: string;

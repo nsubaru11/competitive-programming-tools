@@ -9,13 +9,15 @@ local-runner/
 ├── package.json
 ├── src/
 │   ├── cli/           # test、submit、短縮表記、AtCoder との通信、サンプルの判定
-│   ├── daemon/        # server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、compiler.ts(javac のキャッシュ)
+│   ├── daemon/        # server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、compiler.ts(javac のキャッシュ)、
+│   │                  # commandEngine.ts(コマンドで動かす言語)、processRunner.ts(プロセスの起動と計測)
 │   ├── settings/      # 設定ファイルの読み込みと検査、既定値(defaults.json)
 │   ├── config.ts      # 設定から決めた値と定数
 │   ├── utils/         # ログ、色、整形、ファイル操作
 │   └── types/         # 型定義
 ├── settings.schema.json  # 設定ファイルの項目の定義
 ├── bin/               # test.cmd、submit.cmd、起動スクリプト
+├── native/            # launcher.c(解答のプロセスを起動して計測するプログラム)
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
 
@@ -31,11 +33,42 @@ local-runner/
 
 同名の候補があるときは、パッケージの階層が最短の標準 API を優先します。同順位が複数あれば、曖昧としてエラーで止めます。
 
+## 言語
+
+使える言語は、起動時に設定の `languages` から決めます(`daemon/languages.ts`)。要求の `compilerName` が言語の名前で、省略されていれば Java として扱います。
+
+| 言語     | 経路                                                                               |
+|----------|------------------------------------------------------------------------------------|
+| `java`   | 常駐 JVM(`dispatcher.ts`、`compiler.ts`)。変換、コンパイル、実行を JVM の中で行う  |
+| それ以外 | `commandEngine.ts`。設定のコマンドでコンパイルし、サンプルごとにプロセスを起動する |
+
+`commandEngine.ts` は設定を直接読まず、言語の定義と上限を引数で受け取ります。テストは、PATH の `python3` と `cc` で言語を定義して動かします。
+
+- コンパイルの結果は、言語、コンパイルの引数、ソースから決めた `programId` で使い回す。保存は `/dev/shm` の作業フォルダで、サーバーを起動し直すと消える
+- 実行は1つずつ行う。同時に動かすと時間の測定がぶれる
+- エラーのメッセージは、作業フォルダの場所を除いて返す。利用者には `Main.cpp:4:11` のように見える
+
+### プロセスの計測
+
+解答のプロセスは、`native/launcher.c` をビルドした起動プログラムを通して起動します(`processRunner.ts`)。
+
+サーバー(Bun)から直接起動すると、子プロセスのメモリの最大値に Bun 自身の使用量(約 20MB)が混ざります。Linux は、`exec` の前のメモリの最大値をプロセスに引き継ぐためです。小さな起動プログラムが `fork` して `wait4` で値を受け取ることで、解答だけの値になります。
+
+起動プログラムは、スタックの上限の設定、制限時間での強制終了、終了の理由と時間とメモリの報告も受け持ちます。解答は別のプロセスグループで動かし、解答が起動した子プロセスもまとめて止めます。
+
+C コンパイラが無くて起動プログラムをビルドできないときは、`prlimit` と Bun の計測で代用します。この経路もテストしています。
+
+### header unit
+
+`daemon/headerUnit.ts` が、`builtin:gcc-header-unit` を実装します。コンパイルの引数からソース、出力先、リンクの指定を除いたものを鍵にして、`g++ -x c++-header` の結果を保存し、解答のコンパイルに `-fmodule-mapper` で渡します。
+
+デバッグの有無で引数が変わるので、言語ごとに2つできます。起動時にデバッグありの方を先に作り、今の設定に無い鍵のものを消します。
+
 ## 提出用ヘッダー
 
 ヘッダーはデーモンが付けます(`daemon/header.ts`)。CLI と CP Toolkit が同じ設定を使えるようにするためで、設定は要求ごとに読むので再起動はいりません。
 
-要求の `header` は `true`(言語の設定)、文字列(設定した名前)、`false`(付けない)のいずれかです。名前は HTTP で受け取る値なので、`local-runner.settings.json` の `headers` を引くキーとしてだけ使い、パスとしては扱いません。言語は `server.ts` の `SOURCE_LANGUAGE` で固定しています。変換できる言語が増えたら、要求から受け取るようにします。
+要求の `header` は `true`(言語の設定)、文字列(設定した名前)、`false`(付けない)のいずれかです。名前は HTTP で受け取る値なので、`local-runner.settings.json` の `headers` を引くキーとしてだけ使い、パスとしては扱いません。言語の既定のヘッダーは、言語の名前、種類の順に `headers` を引きます。
 
 ## 起動とウォームアップ
 
@@ -58,6 +91,8 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `prepare` し、
 
 - 項目の名前、型、範囲は `settings.schema.json` だけに書く。`src/settings/schema.ts` がこのファイルで検査するので、エディターの補完と実行時の検査が食い違わない
 - 項目を足すときは、`settings.schema.json`、`defaults.json`、`settings.ts` の `Settings` 型、`SETTINGS.md` を直す
+- 利用者が足す言語に必要な項目は、既定値と重ねたあとで `settings.ts` が確かめる。既定の言語の上書きでは一部しか書かないので、スキーマでは必須にできない
+- `family` に書ける値は、CP Toolkit の `data/languages.yaml` の ID と同じにする。食い違うとテストが失敗する
 - パスは Windows と WSL のどちらの形でも書ける。使う側が `resolveConfiguredPath` で、自分の OS の形に直す
 - サーバーが起動時に読む項目は、`serverSettingsDigest` の対象にする。`status` は、この値で起動後の変更を見つける
 - `headers` は要求のたびに読み直す。それ以外は、プロセスの起動時に一度だけ読む

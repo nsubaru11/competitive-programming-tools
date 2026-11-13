@@ -12,6 +12,10 @@ export type LocalRunnerCompilerInfo = {
 	language: string;
 	compilerName: string;
 	label: string;
+	/** 言語の種類(cpp、python3 など)。ページの言語と同じ種類の実行環境を候補にする。 */
+	family?: string;
+	/** ページの言語の表記にこの語が含まれていれば、同じ種類の中でこの実行環境を先に使う。 */
+	match?: string[];
 };
 
 export type LocalRunnerListRequest = {
@@ -21,6 +25,8 @@ export type LocalRunnerListRequest = {
 export type LocalRunnerPrecompileRequest = {
 	mode: "precompile";
 	sourceCode: string;
+	/** list で返したコンパイラの識別子。省略時は Java。 */
+	compilerName?: string;
 };
 
 /** 提出物の先頭に付けるヘッダー。true は言語の設定、文字列は setheader で設定した名前、false は付けない。 */
@@ -29,6 +35,8 @@ export type LocalRunnerHeaderOption = boolean | string;
 export type LocalRunnerTransformRequest = {
 	mode: "transform";
 	sourceCode: string;
+	/** list で返したコンパイラの識別子。省略時は Java。 */
+	compilerName?: string;
 	debug?: boolean;
 	autoImport?: boolean;
 	validate?: boolean;
@@ -39,7 +47,7 @@ export type LocalRunnerTransformRequest = {
 export type LocalRunnerPrepareRequest = {
 	mode: "prepare";
 	sourceCode: string;
-	/** list で返したコンパイラの識別子。複数の言語を扱うサーバーが言語を選ぶのに使う。 */
+	/** list で返したコンパイラの識別子。複数の言語を扱うサーバーが言語を選ぶのに使う。省略時は Java。 */
 	compilerName?: string;
 	debug?: boolean;
 	autoImport?: boolean;
@@ -96,7 +104,10 @@ export type LocalRunnerRunResponse = {
 	time: number;
 	stdoutTruncated: boolean;
 	stderrTruncated: boolean;
+	/** Java が実行中に確保したメモリの合計(KB)。解放した分も含むので、最大値ではない。測らなければ 0。 */
 	memory: number;
+	/** プロセスが同時に使った物理メモリの最大値(KB)。プロセスとして実行する言語が返す。 */
+	peakMemory?: number;
 };
 
 /** 指定した programId のプログラムがサーバーにないときの stderr の先頭。サーバーの再起動やキャッシュの追い出しで起こる。 */

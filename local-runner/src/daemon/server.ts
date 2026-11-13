@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import http from "node:http";
+import os from "node:os";
 import {pathToFileURL} from "node:url";
 import {
 	type LocalRunnerCompilerInfo,
@@ -17,9 +18,13 @@ import * as filesystem from "../utils/filesystem";
 import * as formatter from "../utils/formatter";
 import * as color from "../utils/color";
 import * as logging from "../utils/logging";
+import {CommandEngine, type CommandLanguage} from "./commandEngine";
 import * as compiler from "./compiler";
 import * as dispatcher from "./dispatcher";
 import {applySubmissionHeader} from "./header";
+import {pruneHeaderUnits} from "./headerUnit";
+import {resolveLanguages, type RunnerLanguage} from "./languages";
+import {ensureLauncher, type ProcessOutcome} from "./processRunner";
 import {ALLOWED_ORIGIN_HOSTS, isAllowedOrigin} from "./origin";
 
 const serverStartedAt = Date.now();
@@ -27,12 +32,106 @@ const PRECOMPILE_IDLE_DELAY_MS = 150;
 const PREPARE_CACHE_MAX = 10;
 let precompileTimer: NodeJS.Timeout | null = null;
 let scheduledPrecompileSource = "";
+let scheduledPrecompileLanguage: RunnerLanguage | null = null;
 const prepareCache = new Map<string, Promise<LocalRunnerPrepareResponse>>();
 
 const EXTRA_ORIGINS = config.SETTINGS.server.extraOrigins;
 
-// 変換できるのは Java だけ。言語が増えたら要求から受け取る。
-const SOURCE_LANGUAGE = "java";
+// 使える言語は、起動時に設定から決める。
+let runnerLanguages: readonly RunnerLanguage[] = [];
+let skippedLanguages: ReadonlyArray<{readonly name: string; readonly reason: string}> = [];
+let commandEngine: CommandEngine | null = null;
+
+/** 要求の内容が正しくないことを表す。400 として返す。 */
+class BadRequestError extends Error {
+}
+
+/** 要求の compilerName から言語を決める。省略されていれば Java にする。 */
+function requireLanguage(compilerName: unknown): RunnerLanguage {
+	const name = typeof compilerName === "string" && compilerName !== "" ? compilerName : "java";
+	const language = runnerLanguages.find((candidate) => candidate.name === name);
+	if (language) return language;
+	const reason = skippedLanguages.find((candidate) => candidate.name === name)?.reason;
+	throw new BadRequestError(reason ? `The language "${name}" is not available: ${reason}.` : `Unknown language: "${name}".`);
+}
+
+/** 言語の既定のヘッダーを探す名前。言語の名前、種類の順に探す。 */
+function headerKeys(language: RunnerLanguage): string[] {
+	return [...new Set([language.name, language.family])];
+}
+
+const NO_JAVA_TRANSFORM = {inlinedClasses: [], addedImports: [], diagnosticItems: []};
+
+async function transformCommandCode(language: CommandLanguage, sourceCode: string, debug: boolean): Promise<LocalRunnerTransformResponse> {
+	const result = await commandEngine!.transformSource(language, sourceCode, debug);
+	return result.ok
+		? {...NO_JAVA_TRANSFORM, status: "success", sourceCode: result.sourceCode, diagnostics: ""}
+		: {...NO_JAVA_TRANSFORM, status: "compileError", sourceCode, diagnostics: result.diagnostics};
+}
+
+async function prepareCommandCode(language: CommandLanguage, sourceCode: string, debug: boolean): Promise<LocalRunnerPrepareResponse> {
+	const result = await commandEngine!.prepare(language, sourceCode, debug);
+	return result.status === "success"
+		? {...NO_JAVA_TRANSFORM, status: "success", sourceCode: result.sourceCode, diagnostics: "", programId: result.programId}
+		: {...NO_JAVA_TRANSFORM, status: "compileError", sourceCode: result.sourceCode, diagnostics: result.diagnostics};
+}
+
+function toRunResponse(outcome: ProcessOutcome): LocalRunnerRunResponse {
+	const base = {
+		stdout: outcome.stdout,
+		stdoutTruncated: outcome.stdoutTruncated,
+		stderrTruncated: outcome.stderrTruncated,
+		memory: 0,
+		peakMemory: outcome.peakMemoryKb,
+	};
+	if (outcome.timedOut) {
+		const timeoutMs = config.RUNNER_CONFIG.runTimeoutMs;
+		return {
+			...base,
+			status: "timeLimitExceeded",
+			exitCode: 124,
+			stderr: `Execution timed out after ${timeoutMs}ms.\n${outcome.stderr}`.trim(),
+			time: timeoutMs
+		};
+	}
+	if (outcome.signal !== null) {
+		const signalNumber = (os.constants.signals as Record<string, number>)[outcome.signal] ?? 0;
+		return {
+			...base,
+			status: "runtimeError",
+			exitCode: 128 + signalNumber,
+			stderr: `${outcome.stderr}${outcome.stderr && !outcome.stderr.endsWith("\n") ? "\n" : ""}Terminated by ${outcome.signal}.`,
+			time: outcome.timeMs,
+		};
+	}
+	return {
+		...base,
+		status: outcome.exitCode === 0 ? "success" : "runtimeError",
+		exitCode: outcome.exitCode,
+		stderr: outcome.stderr,
+		time: outcome.timeMs,
+	};
+}
+
+/** コマンドで動かす言語のプログラムを実行する。programId がその言語のものでなければ null を返す。 */
+async function runCommandProgram(programId: string, stdin: string): Promise<LocalRunnerRunResponse | null> {
+	if (commandEngine === null) return null;
+	const started = Date.now();
+	const outcome = await commandEngine.run(programId, stdin);
+	if (outcome === null) return null;
+	const response = toRunResponse(outcome);
+	const logger = response.status === "success" ? logging.logInfo : logging.logWarn;
+	logger(formatter.formatRunSummary(response, 0, Date.now() - started, "process"));
+	return response;
+}
+
+/** 言語に合った経路でコンパイルまで行う。 */
+function prepareForLanguage(language: RunnerLanguage, sourceCode: string, debug: boolean, autoImport: boolean, validate: boolean) {
+	return language.command === null
+		? prepareCodeCached(sourceCode, debug, autoImport, validate)
+		: prepareCommandCode(language.command, sourceCode, debug);
+}
+
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
@@ -106,7 +205,8 @@ function missingProgramResponse(programId: string): LocalRunnerRunResponse {
 	};
 }
 
-async function runCode({sourceCode, programId, stdin, prepared}: {
+async function runCode({language, sourceCode, programId, stdin, prepared}: {
+	language: RunnerLanguage;
 	sourceCode?: string;
 	programId?: string;
 	stdin?: string;
@@ -115,8 +215,19 @@ async function runCode({sourceCode, programId, stdin, prepared}: {
 	const overallStart = Date.now();
 	let entry;
 	if (programId) {
+		const commandResponse = await runCommandProgram(programId, stdin || "");
+		if (commandResponse) return commandResponse;
 		entry = await compiler.getCompiledEntryByProgramId(programId);
 		if (!entry) return missingProgramResponse(programId);
+	} else if (language.command !== null && typeof sourceCode === "string") {
+		const preparedProgram = await prepareCommandCode(language.command, sourceCode, true);
+		if (preparedProgram.status !== "success" || !preparedProgram.programId) {
+			return {
+				status: "compileError", exitCode: 1, stdout: "", stderr: preparedProgram.diagnostics,
+				time: Date.now() - overallStart, stdoutTruncated: false, stderrTruncated: false, memory: 0,
+			};
+		}
+		return await runCommandProgram(preparedProgram.programId, stdin || "") ?? missingProgramResponse(preparedProgram.programId);
 	} else if (typeof sourceCode === "string" && !prepared) {
 		const transformed = await transformCode(sourceCode, true, true);
 		if (transformed.status !== "success") {
@@ -211,16 +322,19 @@ async function runCode({sourceCode, programId, stdin, prepared}: {
 	}
 }
 
-function schedulePrecompile(sourceCode: string): void {
+function schedulePrecompile(sourceCode: string, language: RunnerLanguage): void {
 	if (precompileTimer) clearTimeout(precompileTimer);
 	scheduledPrecompileSource = sourceCode;
+	scheduledPrecompileLanguage = language;
 	precompileTimer = setTimeout(() => {
 		precompileTimer = null;
 		const scheduledSource = scheduledPrecompileSource;
+		const scheduledLanguage = scheduledPrecompileLanguage ?? language;
 		scheduledPrecompileSource = "";
+		scheduledPrecompileLanguage = null;
 		void (async () => {
 			try {
-				await prepareCodeCached(scheduledSource, true, true, false);
+				await prepareForLanguage(scheduledLanguage, scheduledSource, true, true, false);
 			} catch (error) {
 				logging.logWarn(`[Precompile] ${error instanceof Error ? error.message : String(error)}`);
 			}
@@ -284,7 +398,7 @@ const server = http.createServer(async (req, res) => {
 
 	let request: {
 		mode?: string; sourceCode?: string; programId?: string; stdin?: string; prepared?: boolean; debug?: boolean;
-		autoImport?: boolean; validate?: boolean; header?: LocalRunnerHeaderOption
+		autoImport?: boolean; validate?: boolean; header?: LocalRunnerHeaderOption; compilerName?: unknown
 	};
 	try {
 		request = JSON.parse(body) as {mode?: string; sourceCode?: string; stdin?: string};
@@ -304,34 +418,36 @@ const server = http.createServer(async (req, res) => {
 	try {
 		let response;
 		if (request.mode === "list") {
-			response = [
-				{
-					language: "Java",
-					compilerName: `java${compiler.JAVA_VERSION}`,
-					label: compiler.RUNNER_LABEL,
-				},
-			] satisfies LocalRunnerCompilerInfo[];
+			response = runnerLanguages.map(({name, family, displayName, label, match}) => {
+				return {language: displayName, compilerName: name, label, family, match: [...match]};
+			}) satisfies LocalRunnerCompilerInfo[];
 		} else if (request.mode === "precompile" && typeof request.sourceCode === "string") {
-			schedulePrecompile(request.sourceCode);
+			schedulePrecompile(request.sourceCode, requireLanguage(request.compilerName));
 			response = {status: "accepted"};
 		} else if (request.mode === "transform" && typeof request.sourceCode === "string") {
+			const language = requireLanguage(request.compilerName);
 			response = applySubmissionHeader(
-				await transformCode(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate !== false),
+				language.command === null
+					? await transformCode(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate !== false)
+					: await transformCommandCode(language.command, request.sourceCode, !!request.debug),
 				request.header ?? true,
-				SOURCE_LANGUAGE,
+				headerKeys(language),
 			);
 		} else if (request.mode === "prepare" && typeof request.sourceCode === "string") {
+			const language = requireLanguage(request.compilerName);
 			cancelMatchingPrecompile(request.sourceCode);
 			// コンパイルはヘッダーなしで行い、ローカル実行の行番号を元ソースと揃える。
 			response = applySubmissionHeader(
-				await prepareCodeCached(request.sourceCode, !!request.debug, request.autoImport !== false, request.validate === true),
+				await prepareForLanguage(language, request.sourceCode, !!request.debug, request.autoImport !== false, request.validate === true),
 				request.header ?? false,
-				SOURCE_LANGUAGE,
+				headerKeys(language),
 			);
 		} else if (request.mode === "run" &&
 			(typeof request.sourceCode === "string" || typeof request.programId === "string")) {
 			if (typeof request.sourceCode === "string") cancelMatchingPrecompile(request.sourceCode);
 			response = await runCode({
+				// programId だけの実行は、プログラムから言語が決まる。
+				language: typeof request.programId === "string" ? runnerLanguages[0]! : requireLanguage(request.compilerName),
 				sourceCode: request.sourceCode,
 				programId: request.programId,
 				stdin: request.stdin,
@@ -346,6 +462,8 @@ const server = http.createServer(async (req, res) => {
 				runnerLabel: compiler.RUNNER_LABEL,
 				dispatcherRunning: dispatcher.isDispatcherRunning(),
 				librarySource: config.loadedLibrarySource(),
+				languages: runnerLanguages.map(({name}) => name),
+				skippedLanguages: skippedLanguages.map(({name, reason}) => `${name} (${reason})`),
 				compileCacheSize: compiler.getCompileCacheSize(),
 				compileCacheMax: config.RUNNER_CONFIG.maxCacheSize,
 				settingsFile: config.SETTINGS_FILE,
@@ -369,10 +487,48 @@ const server = http.createServer(async (req, res) => {
 		res.end(JSON.stringify(response));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		res.writeHead(500, {"Content-Type": "application/json"});
-		res.end(JSON.stringify({status: "internalError", stderr: message}));
+		const badRequest = error instanceof BadRequestError;
+		res.writeHead(badRequest ? 400 : 500, {"Content-Type": "application/json"});
+		res.end(JSON.stringify({status: badRequest ? "badRequest" : "internalError", stderr: message}));
 	}
 });
+
+/** 設定から使える言語を決め、コマンドで動かす言語の実行環境を用意する。 */
+async function prepareLanguages(): Promise<void> {
+	const resolved = resolveLanguages(config.SETTINGS, compiler.RUNNER_LABEL, config.resolveConfiguredPath, process.platform === "linux");
+	runnerLanguages = resolved.languages;
+	skippedLanguages = resolved.skipped;
+	logging.logInfo(`Languages: ${runnerLanguages.map(({name}) => name).join(", ")}`);
+	if (skippedLanguages.length > 0) {
+		logging.logInfo(`Languages not available: ${skippedLanguages.map(({name, reason}) => `${name} (${reason})`).join(", ")}`);
+	}
+	const commandLanguages = runnerLanguages.flatMap(({command}) => (command === null ? [] : [command]));
+	if (commandLanguages.length === 0) return;
+
+	// 起動プログラムは C で書いてあるので、C か C++ のコンパイラでビルドする。
+	const compilerCandidates = ["cc", "gcc", ...commandLanguages.map(({command}) => command).filter((command) => /(?:cc|\+\+|clang)[^/]*$/.test(command))];
+	const launcher = await ensureLauncher(config.RUNNER_CONFIG.launcherSourceFile, config.RUNNER_CONFIG.launcherFile, compilerCandidates);
+	if (launcher === null) {
+		logging.logWarn("No C compiler was found, so memory is measured less precisely: values below about 20 MB are not reliable. Install gcc to fix this.");
+	}
+	const engine = new CommandEngine({
+		rootDir: config.RUNNER_CONFIG.programRootDir,
+		headerUnitCacheDir: config.RUNNER_CONFIG.headerUnitCacheDir,
+		compileTimeoutMs: config.RUNNER_CONFIG.compileTimeoutMs,
+		runTimeoutMs: config.RUNNER_CONFIG.runTimeoutMs,
+		outputLimitBytes: config.RUNNER_CONFIG.dispatcherCaptureLimitBytes,
+		maxPrograms: config.RUNNER_CONFIG.maxCacheSize,
+		launcher,
+		log: logging.logInfo,
+	});
+	commandEngine = engine;
+	const headerUnitLanguages = commandLanguages.filter(({headerUnit}) => headerUnit);
+	pruneHeaderUnits(
+		config.RUNNER_CONFIG.headerUnitCacheDir,
+		headerUnitLanguages.flatMap((language) => [true, false].map((debug) => engine.compileTemplate(language, debug) ?? [])),
+	);
+	for (const language of headerUnitLanguages) engine.warmUp(language);
+}
 
 async function bootstrap() {
 	for (const warning of legacyEnvironmentWarnings(process.env, config.SETTINGS_FILE)) logging.logWarn(warning);
@@ -403,6 +559,7 @@ async function bootstrap() {
 	if (process.platform === "linux" && config.RUNNER_CONFIG.baseDir.startsWith("/dev/shm")) {
 		logging.logInfo("Using /dev/shm for low-latency compile cache.");
 	}
+	await prepareLanguages();
 	compiler.warmUpJavaTools();
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.dispatcherBuildDir);
 	await dispatcher.ensureDispatcherReady();

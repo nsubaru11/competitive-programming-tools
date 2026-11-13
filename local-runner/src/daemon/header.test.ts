@@ -37,7 +37,7 @@ describe("applySubmissionHeader", () => {
 
 	test("言語に設定したファイルを付ける", () => {
 		writeUserSettings(settingsFile, {headers: {java: writeHeader("java.txt", "// java\n")}});
-		expect(applySubmissionHeader(success, true, "java").sourceCode).toBe(`// java\n\n${SOURCE}`);
+		expect(applySubmissionHeader(success, true, ["java"]).sourceCode).toBe(`// java\n\n${SOURCE}`);
 	});
 
 	test("言語ごとに別のファイルを使う", () => {
@@ -47,44 +47,56 @@ describe("applySubmissionHeader", () => {
 				cpp: writeHeader("cpp.txt", "// cpp")
 			}
 		});
-		expect(applySubmissionHeader(success, true, "cpp").sourceCode).toBe(`// cpp\n\n${SOURCE}`);
+		expect(applySubmissionHeader(success, true, ["cpp"]).sourceCode).toBe(`// cpp\n\n${SOURCE}`);
+	});
+
+	test("言語の名前に設定が無ければ、言語の種類の設定を使う", () => {
+		writeUserSettings(settingsFile, {headers: {python3: writeHeader("python.txt", "# python")}});
+		expect(applySubmissionHeader(success, true, ["pypy", "python3"]).sourceCode).toBe(`# python\n\n${SOURCE}`);
+		writeUserSettings(settingsFile, {
+			headers: {
+				python3: writeHeader("python.txt", "# python"),
+				pypy: writeHeader("pypy.txt", "# pypy")
+			}
+		});
+		expect(applySubmissionHeader(success, true, ["pypy", "python3"]).sourceCode).toBe(`# pypy\n\n${SOURCE}`);
 	});
 
 	test("設定した名前を指定して別のファイルを使う", () => {
 		writeUserSettings(settingsFile, {headers: {short: writeHeader("short.txt", "// short")}});
-		expect(applySubmissionHeader(success, "short", "java").sourceCode).toBe(`// short\n\n${SOURCE}`);
+		expect(applySubmissionHeader(success, "short", ["java"]).sourceCode).toBe(`// short\n\n${SOURCE}`);
 	});
 
 	test("言語に設定が無ければ付けない", () => {
-		expect(applySubmissionHeader(success, true, "java").sourceCode).toBe(SOURCE);
+		expect(applySubmissionHeader(success, true, ["java"]).sourceCode).toBe(SOURCE);
 	});
 
 	test("付けない指定なら設定があっても付けない", () => {
 		writeUserSettings(settingsFile, {headers: {java: writeHeader("java.txt", "// java")}});
-		expect(applySubmissionHeader(success, false, "java").sourceCode).toBe(SOURCE);
+		expect(applySubmissionHeader(success, false, ["java"]).sourceCode).toBe(SOURCE);
 	});
 
 	test("既にヘッダーで始まるソースには重ねて付けない", () => {
 		writeUserSettings(settingsFile, {headers: {java: writeHeader("java.txt", "// java")}});
 		const withHeader = {...success, sourceCode: `// java\n\n${SOURCE}`};
-		expect(applySubmissionHeader(withHeader, true, "java").sourceCode).toBe(withHeader.sourceCode);
+		expect(applySubmissionHeader(withHeader, true, ["java"]).sourceCode).toBe(withHeader.sourceCode);
 	});
 
 	test("指定した名前に設定が無ければ失敗にする", () => {
-		const result = applySubmissionHeader(success, "short", "java");
+		const result = applySubmissionHeader(success, "short", ["java"]);
 		expect(result.status).toBe("compileError");
 		expect(result.diagnostics).toContain("setheader short <file>");
 	});
 
 	test("設定したファイルが無くなっていれば失敗にする", () => {
 		writeUserSettings(settingsFile, {headers: {java: path.join(dir, "missing.txt")}});
-		const result = applySubmissionHeader(success, true, "java");
+		const result = applySubmissionHeader(success, true, ["java"]);
 		expect(result.status).toBe("compileError");
 		expect(result.diagnostics).toContain("Header file not found");
 	});
 
 	test("名前の形式を検査し、オブジェクトの既定のプロパティを読まない", () => {
-		expect(applySubmissionHeader(success, "../secret", "java").diagnostics).toContain("Invalid header name");
-		expect(applySubmissionHeader(success, "constructor", "java").diagnostics).toContain("Header is not set");
+		expect(applySubmissionHeader(success, "../secret", ["java"]).diagnostics).toContain("Invalid header name");
+		expect(applySubmissionHeader(success, "constructor", ["java"]).diagnostics).toContain("Header is not set");
 	});
 });

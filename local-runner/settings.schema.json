@@ -22,7 +22,10 @@
 				},
 				"backend": {
 					"description": "Windows でサーバーを動かす場所。wsl は WSL の中、native は Windows の Bun と JDK。",
-					"enum": ["wsl", "native"],
+					"enum": [
+						"wsl",
+						"native"
+					],
 					"default": "wsl"
 				},
 				"autoStart": {
@@ -76,12 +79,227 @@
 		"languages": {
 			"description": "言語ごとの実行環境。変更したら stop のあと serve で反映する。",
 			"type": "object",
-			"additionalProperties": false,
+			"additionalProperties": {
+				"description": "コンパイルと実行をコマンドで行う言語。既定の言語は書いた項目だけを上書きし、新しい名前を書けば言語を足せる。",
+				"type": "object",
+				"additionalProperties": false,
+				"properties": {
+					"enabled": {
+						"description": "false にすると、この言語を使わない。",
+						"type": "boolean",
+						"default": true
+					},
+					"family": {
+						"description": "言語の種類。CP Toolkit は、ページの言語と同じ種類の実行環境を候補にする。",
+						"enum": [
+							"cpp",
+							"csharp",
+							"c",
+							"python2",
+							"python3",
+							"java",
+							"javascript",
+							"typescript",
+							"kotlin",
+							"rust",
+							"go",
+							"ruby",
+							"haskell",
+							"d",
+							"scala",
+							"swift",
+							"php",
+							"perl",
+							"bash",
+							"lua",
+							"nim",
+							"ocaml",
+							"crystal",
+							"julia",
+							"elixir",
+							"erlang",
+							"clojure",
+							"fsharp",
+							"scheme",
+							"lisp",
+							"pascal",
+							"fortran",
+							"cobol",
+							"objective-c",
+							"basic",
+							"dart",
+							"zig",
+							"r",
+							"awk",
+							"sed",
+							"fish",
+							"powershell",
+							"raku",
+							"sagemath",
+							"octave",
+							"prolog",
+							"ada",
+							"lean",
+							"text"
+						]
+					},
+					"name": {
+						"description": "表示に使う名前。",
+						"type": "string",
+						"minLength": 1
+					},
+					"match": {
+						"description": "ページの言語の表記にこの語が含まれていれば、同じ種類の中でこの実行環境を先頭にする(例: PyPy)。大文字と小文字は区別しない。",
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						}
+					},
+					"command": {
+						"description": "処理系の命令。名前だけなら PATH から探す。パスなら、サーバーが動く側(WSL)のパスで書く。",
+						"type": "string",
+						"minLength": 1
+					},
+					"sourceFile": {
+						"description": "作業フォルダへ書き出すソースのファイル名(例: Main.cpp)。",
+						"type": "string",
+						"pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]*$"
+					},
+					"compile": {
+						"description": "コンパイルの引数の並び。{command}、{source}、{output}、{dir} が置き換わる。空の並びならコンパイルしない。",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"run": {
+						"description": "実行の引数の並び。{command}、{source}、{output}、{dir} が置き換わる。",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"debugArgs": {
+						"description": "デバッグが有効なとき、compile の末尾に足す引数(例: -DLOCAL)。",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"debugRewrite": {
+						"description": "true にすると、ソースの DEBUG = true をデバッグの有無に合わせて書き換える。提出物では false にする。",
+						"type": "boolean",
+						"default": false
+					},
+					"stackMb": {
+						"description": "スタックの上限(MB)。",
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 4096,
+						"default": 1024
+					},
+					"setup": {
+						"description": "組み込みの準備。builtin:gcc-header-unit は、bits/stdc++.h を読んだ結果を保存してコンパイルを速くする。g++ と -fmodules が要る。",
+						"enum": [
+							"builtin:gcc-header-unit"
+						]
+					},
+					"bundle": {
+						"description": "コンパイルの前と提出物の作成で通す変換のコマンド。ソースを標準入力で受け、変換したソースを標準出力へ返す。",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
 			"properties": {
 				"java": {
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
+						"family": {
+							"description": "言語の種類。CP Toolkit は、ページの言語と同じ種類の実行環境を候補にする。",
+							"enum": [
+								"cpp",
+								"csharp",
+								"c",
+								"python2",
+								"python3",
+								"java",
+								"javascript",
+								"typescript",
+								"kotlin",
+								"rust",
+								"go",
+								"ruby",
+								"haskell",
+								"d",
+								"scala",
+								"swift",
+								"php",
+								"perl",
+								"bash",
+								"lua",
+								"nim",
+								"ocaml",
+								"crystal",
+								"julia",
+								"elixir",
+								"erlang",
+								"clojure",
+								"fsharp",
+								"scheme",
+								"lisp",
+								"pascal",
+								"fortran",
+								"cobol",
+								"objective-c",
+								"basic",
+								"dart",
+								"zig",
+								"r",
+								"awk",
+								"sed",
+								"fish",
+								"powershell",
+								"raku",
+								"sagemath",
+								"octave",
+								"prolog",
+								"ada",
+								"lean",
+								"text"
+							]
+						},
+						"name": {
+							"description": "表示に使う名前。",
+							"type": "string",
+							"minLength": 1
+						},
+						"match": {
+							"description": "ページの言語の表記にこの語が含まれていれば、同じ種類の中でこの実行環境を先頭にする(例: PyPy)。大文字と小文字は区別しない。",
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1
+							}
+						},
+						"engine": {
+							"description": "jvm は、常駐する JVM がコンパイルと実行を受け持つことを表す。Java だけが使える。",
+							"enum": [
+								"jvm"
+							],
+							"default": "jvm"
+						},
+						"bundle": {
+							"description": "builtin:java-library は、lib.* の展開と Main への変換を行う組み込みの処理。",
+							"enum": [
+								"builtin:java-library"
+							],
+							"default": "builtin:java-library"
+						},
 						"command": {
 							"description": "java の命令。名前だけなら PATH から探し、javac も PATH から探す。パスなら同じフォルダの javac を使う。",
 							"type": "string",
@@ -106,8 +324,12 @@
 							"maximum": 1024,
 							"default": 256
 						}
-					}
+					},
+					"description": "Java。常駐する JVM で動かす。"
 				}
+			},
+			"propertyNames": {
+				"pattern": "^[a-z][a-z0-9_-]*$"
 			}
 		},
 		"headers": {

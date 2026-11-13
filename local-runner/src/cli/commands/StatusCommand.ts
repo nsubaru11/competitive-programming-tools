@@ -70,6 +70,8 @@ export class StatusCommand implements Command {
 		console.log(`  java:          ${info.javaVersion}`);
 		console.log(`  label:         ${info.runnerLabel}`);
 		console.log(`  dispatcher:    ${dispatcher}`);
+		console.log(`  languages:     ${info.languages.join(", ")}`);
+		if (info.skippedLanguages.length > 0) console.log(`  not available: ${info.skippedLanguages.join(", ")}`);
 		console.log(`  java library:  ${info.librarySource ?? "not loaded (setlib <path>)"}`);
 		console.log(`  compile cache: ${info.compileCacheSize}/${info.compileCacheMax} entries`);
 		console.log(`  base dir:      ${info.baseDir}`);

@@ -19,6 +19,7 @@ export function formatRunSummary(result: {
 	time?: number;
 	exitCode?: number;
 	memory?: number;
+	peakMemory?: number;
 	stdoutTruncated?: boolean;
 	stderrTruncated?: boolean;
 	stderr?: string;
@@ -37,6 +38,7 @@ export function formatRunSummary(result: {
 		// 累積アロケーション量（ピーク RSS ではない）であることを示すため Alloc と表記する。
 		parts.push(`Alloc=${result.memory}KB`);
 	}
+	if ((result.peakMemory || 0) > 0) parts.push(`Memory=${result.peakMemory}KB`);
 	if (result.stdoutTruncated || result.stderrTruncated) {
 		const flags = [];
 		if (result.stdoutTruncated) flags.push("stdout");

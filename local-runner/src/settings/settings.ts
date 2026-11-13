@@ -6,11 +6,34 @@ import schema from "../../settings.schema.json";
 import defaults from "./defaults.json";
 import {isPlainObject, type SchemaNode, validateAgainstSchema} from "./schema";
 
+/** 常駐する JVM で動かす Java。 */
 export type JavaLanguageSettings = {
+	family: string;
+	name: string;
+	match?: string[];
+	engine: "jvm";
+	bundle: "builtin:java-library";
 	command: string;
 	release: number;
 	library?: string;
 	stackMb: number;
+};
+
+/** コンパイルと実行をコマンドで行う言語。 */
+export type CommandLanguageSettings = {
+	enabled?: boolean;
+	family: string;
+	name: string;
+	match?: string[];
+	command: string;
+	sourceFile: string;
+	compile?: string[];
+	run: string[];
+	debugArgs?: string[];
+	debugRewrite?: boolean;
+	stackMb?: number;
+	setup?: "builtin:gcc-header-unit";
+	bundle?: string[];
 };
 
 /** 既定値に、利用者の設定ファイルを重ねた結果。 */
@@ -27,9 +50,7 @@ export type Settings = {
 		compileTimeoutMs: number;
 		outputLimitMb: number;
 	};
-	languages: {
-		java: JavaLanguageSettings;
-	};
+	languages: {java: JavaLanguageSettings} & Record<string, JavaLanguageSettings | CommandLanguageSettings>;
 	headers: Record<string, string>;
 	atcoder: {
 		sessionFile: string;
@@ -135,10 +156,42 @@ function mergeSettings(base: unknown, override: unknown): unknown {
 	return merged;
 }
 
+/** Java 以外の言語を、設定での名前と一緒に返す。enabled が false のものは除く。 */
+export function commandLanguageSettings(settings: Settings): Array<[string, CommandLanguageSettings]> {
+	return Object.entries(settings.languages)
+		.filter((entry): entry is [string, CommandLanguageSettings] => entry[0] !== "java")
+		.filter(([, language]) => language.enabled !== false);
+}
+
+const REQUIRED_LANGUAGE_SETTINGS = ["family", "name", "command", "sourceFile", "run"] as const;
+
+/**
+ * 既定値と重ねたあとの言語を検査する。
+ * 利用者が足した言語は必要な項目を全部書く必要があるが、既定の言語の上書きでは一部だけを書くので、
+ * 設定ファイル単体ではなく、重ねた結果で確かめる。
+ */
+function assertCompleteLanguages(settings: Settings, file: string): void {
+	const errors: string[] = [];
+	for (const [name, language] of commandLanguageSettings(settings)) {
+		for (const key of REQUIRED_LANGUAGE_SETTINGS) {
+			const value = language[key];
+			if (value === undefined || value.length === 0) errors.push(`languages.${name}.${key}: is required to add a language`);
+		}
+		if (language.setup !== undefined && (language.compile ?? []).length === 0) {
+			errors.push(`languages.${name}.setup: needs "compile"`);
+		}
+	}
+	if (errors.length > 0) {
+		throw new SettingsError(`Invalid settings in ${file}:\n${errors.map((line) => `  ${line}`).join("\n")}`);
+	}
+}
+
 /** 既定値に設定ファイルを重ねた設定を返す。 */
 export function loadSettings(file: string): Settings {
 	const {$schema: _schema, ...user} = readUserSettings(file);
-	return mergeSettings(DEFAULT_SETTINGS, user) as Settings;
+	const settings = mergeSettings(DEFAULT_SETTINGS, user) as Settings;
+	assertCompleteLanguages(settings, file);
+	return settings;
 }
 
 /** 設定を「項目の名前 = 値」の行にする。既定値と違う行は changed を立てる。 */

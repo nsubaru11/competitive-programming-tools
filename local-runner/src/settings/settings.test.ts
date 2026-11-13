@@ -5,6 +5,7 @@ import path from "node:path";
 import schema from "../../settings.schema.json";
 import {type SchemaNode, validateAgainstSchema} from "./schema";
 import {
+	commandLanguageSettings,
 	DEFAULT_SETTINGS,
 	deleteSetting,
 	describeSettings,
@@ -92,6 +93,70 @@ describe("loadSettings", () => {
 	test("列挙の値以外はエラーにする", () => {
 		writeRaw({server: {backend: "docker"}});
 		expect(() => loadSettings(file)).toThrow('server.backend: must be one of "wsl", "native"');
+	});
+});
+
+describe("languages", () => {
+	const rust = {family: "rust", name: "Rust", command: "rustc", sourceFile: "main.rs", run: ["{output}"]};
+
+	test("既定の言語は、書いた項目だけを上書きする", () => {
+		writeRaw({languages: {cpp: {command: "~/gcc/bin/g++"}, pypy: {stackMb: 512}}});
+		const {cpp, pypy} = loadSettings(file).languages;
+		expect(cpp).toEqual({...DEFAULT_SETTINGS.languages.cpp, command: "~/gcc/bin/g++"});
+		expect(pypy).toEqual({...DEFAULT_SETTINGS.languages.pypy, stackMb: 512});
+	});
+
+	test("新しい名前を書くと言語が増える", () => {
+		writeRaw({languages: {rust}});
+		const names = commandLanguageSettings(loadSettings(file)).map(([name]) => name);
+		expect(names).toEqual(["cpp", "c", "cpython", "pypy", "codon", "rust"]);
+	});
+
+	test("足す言語に必要な項目が無ければ、名前を示してエラーにする", () => {
+		writeRaw({languages: {rust: {family: "rust", name: "Rust", command: "rustc", run: []}}});
+		let message = "";
+		try {
+			loadSettings(file);
+		} catch (error) {
+			message = (error as Error).message;
+		}
+		expect(message).toContain("languages.rust.sourceFile: is required to add a language");
+		expect(message).toContain("languages.rust.run: is required to add a language");
+		expect(message).not.toContain("languages.rust.family");
+	});
+
+	test("enabled が false の言語は、一覧から外れる", () => {
+		writeRaw({languages: {codon: {enabled: false}, rust: {...rust, enabled: false}}});
+		const names = commandLanguageSettings(loadSettings(file)).map(([name]) => name);
+		expect(names).toEqual(["cpp", "c", "cpython", "pypy"]);
+	});
+
+	test("言語の名前、種類、Java に書けない項目を検査する", () => {
+		writeRaw({languages: {Rust: rust, go: {...rust, family: "golang"}, java: {compile: ["javac"]}, c: {setup: "builtin:pch"}}});
+		let message = "";
+		try {
+			loadSettings(file);
+		} catch (error) {
+			message = (error as Error).message;
+		}
+		expect(message).toContain("languages.Rust: the name must match");
+		expect(message).toContain("languages.go.family: must be one of");
+		expect(message).toContain("languages.java.compile: unknown setting");
+		expect(message).toContain('languages.c.setup: must be one of "builtin:gcc-header-unit"');
+	});
+
+	test("setup には compile が要る", () => {
+		writeRaw({languages: {rust: {...rust, setup: "builtin:gcc-header-unit"}}});
+		expect(() => loadSettings(file)).toThrow('languages.rust.setup: needs "compile"');
+	});
+
+	test("種類の一覧は、CP Toolkit の言語の表と一致する", () => {
+		const catalogFile = path.resolve(import.meta.dir, "../../../userscripts/CpToolkit/data/languages.yaml");
+		const catalog = [...fs.readFileSync(catalogFile, "utf8").matchAll(/^\s*- \{id: ([\w-]+),/gm)].map((match) => match[1]);
+		const families = (schema as {properties: {languages: {additionalProperties: {properties: {family: {enum: string[]}}}}}})
+			.properties.languages.additionalProperties.properties.family.enum;
+		expect(catalog.length).toBeGreaterThan(10);
+		expect(families).toEqual(catalog as string[]);
 	});
 });
 
