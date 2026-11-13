@@ -140,7 +140,7 @@ test --lang=pypy abc448_d D.py
 | 拡張子  | 名前      | 言語                                                    |
 |---------|-----------|---------------------------------------------------------|
 | `.java` | `java`    | Java                                                    |
-| `.cpp`  | `cpp`     | C++23(AtCoder と同じオプションの GCC)                   |
+| `.cpp`  | `cpp`     | C++23(AtCoder に合わせたオプションの GCC)               |
 | `.c`    | `c`       | C23                                                     |
 | `.py`   | `cpython` | Python(CPython)。`--lang=pypy`、`--lang=codon` でも動く |
 
@@ -173,7 +173,7 @@ setlib C:\path\to\competitive-programming-java-library
 
 解答では、`import lib.ds.unionfind.UnionFind;` のように、通常の Java のコードとしてライブラリを import できます。
 
-`run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit` は、実行の前に `lib.*` の import を検出し、必要なクラスと依存するクラスを1つのソースへ展開します。
+Java の解答では、`run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit` が、実行の前に `lib.*` の import を検出し、必要なクラスと依存するクラスを1つのソースへ展開します。
 
 - 展開したクラスは `Bundled library classes: ...` と表示する
 - `import lib.io.*;` のようなワイルドカードでも、実際に使っている型だけを展開する
@@ -224,7 +224,7 @@ setheader short C:\path\to\short.txt
 - `test`、`submit`: 問題ページの実行時間制限を使う
 - `localtest`、`run`、`crosscheck`: 制限が分からないので 2000ms を使う。`--time-limit=3000` のように指定できる
 
-どちらも表示だけで、実行は最大10秒まで続きます。手元の実行は本番より速く出やすいので、目安として見てください。
+どちらも表示だけで、実行は設定の `run.timeoutMs`(既定は10秒)まで続きます。手元の実行は本番より速く出やすいので、目安として見てください。
 
 ## 提出の準備
 

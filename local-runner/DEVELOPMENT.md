@@ -10,7 +10,9 @@ local-runner/
 ├── src/
 │   ├── cli/           # test、submit、短縮表記、AtCoder との通信、サンプルの判定
 │   ├── daemon/        # server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、compiler.ts(javac のキャッシュ)、
-│   │                  # commandEngine.ts(コマンドで動かす言語)、processRunner.ts(プロセスの起動と計測)
+│   │                  # languages.ts(使える言語)、preparationQueue.ts(コンパイルの順番待ち)、
+│   │                  # commandEngine.ts(コマンドで動かす言語)、processRunner.ts(プロセスの起動と計測)、
+│   │                  # headerUnit.ts(C++ の header unit)
 │   ├── settings/      # 設定ファイルの読み込みと検査、既定値(defaults.json)
 │   ├── config.ts      # 設定から決めた値と定数
 │   ├── utils/         # ログ、色、整形、ファイル操作
@@ -21,7 +23,7 @@ local-runner/
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
 
-`@atcoder-tools/shared` の URL 生成、Local Runner のリクエスト、Easy Test の判定を使っています。CLI のサンプルの判定は、CP Toolkit の Easy Test+ と同じ `evaluateEasyTestOutput` です。
+`@atcoder-tools/shared` の URL 生成、Local Runner の要求と応答の型、結果の表記(`toEasyTestStatus`)を使っています。CLI のサンプルの判定は行ごとの比較(`cli/sampleJudge.ts`)で、CP Toolkit の Easy Test+ の判定(`evaluateEasyTestOutput`)とは別です。
 
 ## 提出前の処理
 
@@ -97,7 +99,7 @@ C コンパイラが無くて起動プログラムをビルドできないとき
 
 ## 起動とウォームアップ
 
-`test`、`submit`、`localtest`、`run` は、サーバーが未起動なら WSL の中へ自動で起動します。
+ソースを扱うコマンド(`run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit`)と `serve` は、サーバーが未起動なら自動で起動します。起動先は `server.backend` で決まり、`server.autoStart` が `false` なら起動しません。
 
 - 起動時にライブラリのソースを `/dev/shm` へ同期して一度だけ class にする。解答の解析はその classpath を使う
 - 提出用の本文だけを同期済みのソースから取得するので、コンパイルと実行の環境を WSL に統一したまま NTFS をまたぐ負荷を避けられる
@@ -122,7 +124,7 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `precompile` を
 - サーバーが起動時に読む項目は、`serverSettingsDigest` の対象にする。`status` は、この値で起動後の変更を見つける
 - `headers` は要求のたびに読み直す。それ以外は、プロセスの起動時に一度だけ読む
 
-環境変数は設定に使いません。読むのは次の3つだけです。
+環境変数は設定に使いません。Local Runner の動作を変える変数は次の3つだけです。ほかに、処理系を探すときに `PATH` を、`~` を展開するときに `HOME` と `USERPROFILE` を読みます。以前の版の文書に載せていた変数(`ATCODER_SESSION` など)が残っていると、起動時に警告します。
 
 | 変数                         | 用途                                                                     |
 |------------------------------|--------------------------------------------------------------------------|

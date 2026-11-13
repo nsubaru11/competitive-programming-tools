@@ -49,7 +49,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 
 ## shared との関係
 
-CP Toolkit は `@atcoder-tools/shared` の Local Runner API、ジャッジ、提出一覧のクエリ、Java の変換を使います。これらは Local Runner の CLI と共通です。
+CP Toolkit は `@atcoder-tools/shared` の Local Runner API、ジャッジ、提出一覧のクエリ、Java の変換を使います。Local Runner の CLI と共通なのは、Local Runner API の型と、AtCoder の URL の生成などの補助関数です。
 
 ## 更新を終了したスクリプト
 
