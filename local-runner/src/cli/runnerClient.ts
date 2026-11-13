@@ -18,7 +18,7 @@ export function postToRunner(request: LocalRunnerRequest | ManagementRequest, ti
 export async function requestRunner<T>(request: LocalRunnerRequest, failure: string): Promise<T> {
 	const response = await postToRunner(request);
 	if (!response.ok) {
-		const reason = await response.json().then((body: {stderr?: unknown}) => body.stderr).catch(() => undefined);
+		const reason = await response.json().then((body) => (body as {stderr?: unknown} | null)?.stderr).catch(() => undefined);
 		throw new Error(typeof reason === "string" && reason !== "" ? reason : `${failure}: ${response.status}`);
 	}
 	return await response.json() as T;
