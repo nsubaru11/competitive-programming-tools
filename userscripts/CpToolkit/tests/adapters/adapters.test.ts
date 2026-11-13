@@ -544,6 +544,65 @@ describe("実行環境", () => {
 		expect((await new LocalRunnerProvider(client).runnersFor(java)).map(({label}) => label)).toEqual(["Java 24 [Local]"]);
 	});
 
+	test("Local Runner が返した種類を、表記からの判定より優先する", async () => {
+		const list = [
+			{language: "My runtime", compilerName: "custom", label: "Custom", family: "java"},
+			{language: "Java", compilerName: "other", label: "Other", family: "cpp"},
+		];
+		const client = new LocalRunnerClient(new FakeHttpClient(() => ({
+			status: 200,
+			text: JSON.stringify(list),
+		})), () => "http://localhost:8080");
+		expect((await new LocalRunnerProvider(client).runnersFor(java)).map(({id}) => id)).toEqual(["local:custom"]);
+	});
+
+	test("Local Runner の候補は、ページの表記に合う処理系を先頭にし、残りをサーバーの順に並べる", async () => {
+		const list = [
+			{language: "Python (CPython)", compilerName: "cpython", label: "Python (CPython)", family: "python3", match: ["CPython"]},
+			{language: "Python (PyPy)", compilerName: "pypy", label: "Python (PyPy)", family: "python3", match: ["PyPy"]},
+			{language: "Python (Codon)", compilerName: "codon", label: "Python (Codon)", family: "python3", match: ["Codon"]},
+			{language: "C++", compilerName: "cpp", label: "C++", family: "cpp", match: []},
+		];
+		const client = new LocalRunnerClient(new FakeHttpClient(() => ({
+			status: 200,
+			text: JSON.stringify(list),
+		})), () => "http://localhost:8080");
+		const order = async (label: string) => {
+			const runners = await new LocalRunnerProvider(client).runnersFor({id: "1", label, family: "python3"});
+			return runners.map(({id, preference}) => `${id}:${preference}`);
+		};
+		expect(await order("Python (PyPy 3.11-v7.3.20)")).toEqual(["local:pypy:0", "local:cpython:1", "local:codon:2"]);
+		expect(await order("PyPy 3-64")).toEqual(["local:pypy:0", "local:cpython:1", "local:codon:2"]);
+		expect(await order("Python (Codon 0.19.3)")).toEqual(["local:codon:0", "local:cpython:1", "local:pypy:2"]);
+		expect(await order("Python3")).toEqual(["local:cpython:0", "local:pypy:1", "local:codon:2"]);
+	});
+
+	test("Local Runner が match を返さなければ、順位を付けずに表記の近さへ任せる", async () => {
+		const list = [{language: "Java", compilerName: "a", label: "Java 21"}, {language: "Java", compilerName: "b", label: "Java 24"}];
+		const client = new LocalRunnerClient(new FakeHttpClient(() => ({
+			status: 200,
+			text: JSON.stringify(list),
+		})), () => "http://localhost:8080");
+		const runners = await new LocalRunnerProvider(client).runnersFor(java);
+		expect(runners.map(({preference}) => preference)).toEqual([undefined, undefined]);
+	});
+
+	test("Local Runner がメモリの最大値を返したら、使用量として返す", async () => {
+		const client = new LocalRunnerClient(new FakeHttpClient(({body}) => {
+			if (body?.includes('"list"')) {
+				return {status: 200, text: JSON.stringify([{language: "C++", compilerName: "cpp", label: "C++", family: "cpp"}])};
+			}
+			const response = body?.includes('"run"')
+				? {status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory: 0, peakMemory: 3616}
+				: {status: "success", programId: "p1", sourceCode: "", diagnostics: ""};
+			return {status: 200, text: JSON.stringify(response)};
+		}), () => "http://localhost:8080");
+		const [runner] = await new LocalRunnerProvider(client).runnersFor({id: "1", label: "C++23 (GCC 15.2.0)", family: "cpp"});
+		const result = await runner!.run("code", "", {});
+		expect(result.memory).toBe(3616);
+		expect(result.allocatedMemory).toBeUndefined();
+	});
+
 	test("Local Runner の計測値は累積の割り当て量として返し、計測できないときは返さない", async () => {
 		const runWith = async (memory: number) => {
 			const client = new LocalRunnerClient(new FakeHttpClient(({body}) => {

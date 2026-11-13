@@ -7,7 +7,7 @@
 ## 使い方
 
 - 手元の PC で動くサーバーへ接続します。[Easy Test+](easy-test.md) での実行と、[Java の提出補助](java-submit.md)での変換に使います
-- 専用の [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) は Java に対応しています。別途導入が必要です
+- 専用の [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) は Java、C++、C、Python に対応していて、設定を足せばほかの言語も動かせます。別途導入が必要です
 - **専用の Local Runner でなくても、下の API を満たす自作のサーバーを接続できます**。たとえば C++ や Python を手元で実行するサーバーを用意すれば、Easy Test+ でその言語を手元で実行できます
 - 接続先の URL は詳細設定で変えられます。コードは手元の PC へ送るだけで、外部には送りません
 
@@ -29,10 +29,14 @@
 |-------------|-----------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `list`      | Easy Test+      | なし                                 | `{language, compilerName, label}` の配列。`language` は言語名(例: `Java`、`C++`、`Python`)で、提出言語と同じ系統のものが実行環境の候補になります。`label` は画面に出す名前です |
 | `prepare`   | Easy Test+      | `sourceCode`、`compilerName`         | `status`(`success` か `compileError`)、`programId`(成功したとき)、`diagnostics`(コンパイルエラーの内容)                                                                        |
-| `run`       | Easy Test+      | `programId`、`stdin`、`compilerName` | `status`、`exitCode`、`stdout`、`stderr`、`time`(ミリ秒)、`memory`(KB。0 なら表示しません)                                                                                     |
+| `run`       | Easy Test+      | `programId`、`stdin`、`compilerName` | `status`、`exitCode`、`stdout`、`stderr`、`time`(ミリ秒)、`memory`(累積の割り当て量。KB。0 なら表示しません)、`peakMemory`(任意。使用量の最大値。KB)                           |
 | `transform` | Java の提出補助 | `sourceCode`、`header`               | `status`(`success` か `compileError`)、`sourceCode`(変換後のコード)、`diagnostics`、`libraryMissing`(任意)                                                                     |
 
 - `compilerName` は `list` で返した値です。複数の言語を扱うサーバーは、これで言語を選びます
+- `list` の各要素には、任意で `family` と `match` を付けられます
+	- `family` は言語の種類の ID(`cpp`、`python3`、`java` など)です。あれば、`language` からの判定の代わりに使います
+	- `match` は語の配列です。同じ種類の実行環境が複数あるとき、ページの言語の表記にその語を含むものを先頭にし、残りは `list` の順に並べます。たとえば PyPy の実行環境に `["PyPy"]` を付けると、PyPy のページで先に選ばれます
+- メモリは、`peakMemory` があれば使用量として、`memory` があれば累積の割り当て量として表示します
 - `run` の `status` は `success`、`compileError`、`timeLimitExceeded`、`runtimeError`、`internalError`、`badRequest` のいずれかです
 - `run` で `programId` のプログラムがもうないときは、`status` を `badRequest`、`stderr` を `Prepared program is unavailable:` で始めて返してください。CP Toolkit がコンパイルからやり直します
 - `prepare` には `debug`、`autoImport`、`validate`、`header` も付きます。使わない項目は無視してかまいません

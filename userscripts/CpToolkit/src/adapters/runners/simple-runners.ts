@@ -1,4 +1,4 @@
-import {buildQueryString, sleep, toEasyTestStatus} from "@atcoder-tools/shared";
+import {buildQueryString, type LocalRunnerCompilerInfo, sleep, toEasyTestStatus} from "@atcoder-tools/shared";
 import {languageCatalog, runnerCatalog} from "@catalog/tables";
 import {resolveFamily} from "@domain/execution/language";
 import type {JudgeLanguage, RunOptions, RunResult} from "@domain/execution/result";
@@ -97,14 +97,16 @@ class LocalCodeRunner implements CodeRunner {
 	readonly kind = "local";
 	readonly id: string;
 	readonly label: string;
+	readonly preference?: number;
 	private readonly client: LocalRunnerClient;
 	private readonly compilerName: string;
 
-	constructor(client: LocalRunnerClient, compilerName: string, label: string) {
+	constructor(client: LocalRunnerClient, compilerName: string, label: string, preference?: number) {
 		this.client = client;
 		this.compilerName = compilerName;
 		this.id = `local:${compilerName}`;
 		this.label = `${label} [Local]`;
+		if (preference !== undefined) this.preference = preference;
 	}
 
 	prepare(sourceCode: string): Promise<unknown> {
@@ -121,6 +123,7 @@ class LocalCodeRunner implements CodeRunner {
 			exitCode: String(response.exitCode),
 			execTime: Number(response.time),
 			...(response.memory > 0 ? {allocatedMemory: Number(response.memory)} : {}),
+			...(response.peakMemory !== undefined && response.peakMemory > 0 ? {memory: Number(response.peakMemory)} : {}),
 			input,
 			output: response.stdout ?? "",
 			error: response.stderr ?? "",
@@ -135,12 +138,26 @@ export class LocalRunnerProvider implements RunnerProvider {
 		this.client = client;
 	}
 
-	async runnersFor({family}: JudgeLanguage): Promise<readonly CodeRunner[]> {
+	/**
+	 * ページの言語と同じ種類の実行環境を返す。種類は、サーバーが返した family を使い、無ければ言語の表記から判定する。
+	 * サーバーが match を返していれば、ページの言語の表記にその語を含む環境を先頭にし、残りはサーバーが返した順に並べる。
+	 * PyPy のページで CPython や Codon が先に選ばれないようにするためで、表記の近さだけでは処理系を選び分けられない。
+	 */
+	async runnersFor({family, label}: JudgeLanguage): Promise<readonly CodeRunner[]> {
 		if (!this.client.isAvailable()) return [];
 		const compilers = await this.client.list();
-		return compilers
-			.filter(({language}) => resolveFamily(languageCatalog, language) === family)
-			.map(({compilerName, label}) => new LocalCodeRunner(this.client, compilerName, label));
+		const sameFamily = compilers.filter((compiler) => {
+			return (compiler.family ?? resolveFamily(languageCatalog, compiler.language)) === family;
+		});
+		if (!sameFamily.some(({match}) => match !== undefined)) {
+			return sameFamily.map(({compilerName, label: name}) => new LocalCodeRunner(this.client, compilerName, name));
+		}
+		const pageLabel = label.toLowerCase();
+		const matches = ({match}: LocalRunnerCompilerInfo): boolean => {
+			return (match ?? []).some((word) => pageLabel.includes(word.toLowerCase()));
+		};
+		return [...sameFamily.filter(matches), ...sameFamily.filter((compiler) => !matches(compiler))]
+			.map(({compilerName, label: name}, index) => new LocalCodeRunner(this.client, compilerName, name, index));
 	}
 }
 

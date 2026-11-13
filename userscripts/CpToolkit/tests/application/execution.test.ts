@@ -104,6 +104,16 @@ describe("RunnerCatalogService", () => {
 		expect(candidates[0]?.id).toBe("near");
 	});
 
+	test("実行環境が順位を決めていれば、表記の近さより優先する", async () => {
+		const runners: CodeRunner[] = [
+			{...runner("far", "local", ok, "Rust"), preference: 0},
+			{...runner("near", "local", ok, "Java 24"), preference: 1},
+			runner("judge", "judge", ok, "Java 24"),
+		];
+		const candidates = await catalog(runners).candidates(language);
+		expect(candidates.map(({id}) => id)).toEqual(["far", "near", "judge"]);
+	});
+
 	test("サイトの言語と同じ表記の環境を、同じ種類の先頭に並べる", async () => {
 		const labels = ["C++23 (GCC 15.2.0)", "C++23 (Clang 21.1.0)", "C++20 (GCC 12.2.0)"];
 		for (const label of labels) {

@@ -15,6 +15,11 @@ export interface CodeRunner {
 	readonly id: string;
 	readonly label: string;
 	readonly kind: RunnerKind;
+	/**
+	 * 同じ種類の実行環境の中での順位。小さいほど先に並べる。
+	 * 実行環境の側が順番を決めているときに付け、表記の近さより優先する。
+	 */
+	readonly preference?: number;
 
 	run(sourceCode: string, input: string, options: RunOptions): Promise<RunResult>;
 
@@ -55,7 +60,11 @@ export class RunnerCatalogService {
 				rank: this.order.indexOf(runner.kind),
 				distance: labelDistance(runner.label.replace(ENVIRONMENT_SUFFIX, ""), language.label),
 			}));
-		return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
+		return ranked
+			.toSorted((a, b) => {
+				return a.rank - b.rank || (a.runner.preference ?? 0) - (b.runner.preference ?? 0) || a.distance - b.distance;
+			})
+			.map(({runner}) => runner);
 	}
 
 	/** 内部エラーのときは、次の候補で実行し直す。外部のサービスへコードを送るのは、選ばれたときだけにする。 */

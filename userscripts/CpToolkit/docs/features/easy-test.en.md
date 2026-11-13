@@ -18,7 +18,7 @@
 - **AtCoder custom tests run one at a time, even across tabs**
 - Output can be compared with an allowable error. The code you ran is saved per task and can be restored with "Restore Last Code"
 - <kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs Test & Submit, <kbd>Alt</kbd>+<kbd>Enter</kbd> runs Test All Samples, and <kbd>Alt</kbd>+<kbd>Esc</kbd> opens or closes the bottom panel
-- With [Local Runner](local-runner.en.md) or a server of your own with the same API, the languages that server supports run on your PC. **The code you are editing is compiled in advance, so results come back sooner.** Memory is shown as the cumulative allocation reported by the server. The dedicated Local Runner supports Java
+- With [Local Runner](local-runner.en.md) or a server of your own with the same API, the languages that server supports run on your PC. **The code you are editing is compiled in advance, so results come back sooner.** The dedicated Local Runner supports Java, C++, C and Python. Memory is the cumulative allocation for Java and the peak usage for the other languages
 - Enable only one of this and AtCoder Easy Test v2, because using both duplicates the buttons
 
 ## Detailed settings

@@ -18,7 +18,7 @@
 - **AtCoder のコードテストは、タブをまたいでも1件ずつ順番に実行します**
 - 出力は許容誤差を指定して比べられます。実行したコードは問題ごとに保存し、「Restore Last Code」で戻せます
 - <kbd>Ctrl</kbd>+<kbd>Enter</kbd> で Test & Submit、<kbd>Alt</kbd>+<kbd>Enter</kbd> で Test All Samples、<kbd>Alt</kbd>+<kbd>Esc</kbd> で下のパネルの開閉です
-- [Local Runner](local-runner.md) か、同じ API を持つ自作のサーバーに接続すると、そのサーバーが対応する言語を手元の PC で実行できます。**編集中のコードを事前にコンパイルするので、結果が早く出ます**。メモリはサーバーが返した値を累積の割り当て量として表示します。専用の Local Runner が対応しているのは Java です
+- [Local Runner](local-runner.md) か、同じ API を持つ自作のサーバーに接続すると、そのサーバーが対応する言語を手元の PC で実行できます。**編集中のコードを事前にコンパイルするので、結果が早く出ます**。専用の Local Runner は Java、C++、C、Python に対応しています。メモリは、Java では累積の割り当て量、ほかの言語では使用量の最大値を表示します
 - AtCoder Easy Test v2 と同時に有効にするとボタンが重なるので、どちらか片方にしてください
 
 ## 詳細設定

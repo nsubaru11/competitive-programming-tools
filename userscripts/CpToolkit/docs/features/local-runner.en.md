@@ -7,7 +7,7 @@
 ## How it works
 
 - Connects to a server running on your PC. It is used to run code in [Easy Test+](easy-test.en.md) and to transform code in the [Java submission helper](java-submit.en.md)
-- The dedicated [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) supports Java. It needs a separate installation
+- The dedicated [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) supports Java, C++, C and Python, and other languages can be added in its settings. It needs a separate installation
 - **Any server of your own that meets the API below can be connected instead of the dedicated Local Runner.** For example, a server that runs C++ or Python locally lets Easy Test+ run those languages on your PC
 - The server URL can be changed in the detailed settings. Code is sent only to your own PC, not to any external service
 
@@ -29,10 +29,14 @@ Change these under "Detailed settings" of each feature in the settings.
 |-------------|------------------------|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `list`      | Easy Test+             | None                                 | An array of `{language, compilerName, label}`. `language` is a language name (e.g. `Java`, `C++`, `Python`), and entries of the same family as the submission language become candidate environments. `label` is the name shown on screen |
 | `prepare`   | Easy Test+             | `sourceCode`, `compilerName`         | `status` (`success` or `compileError`), `programId` (on success), `diagnostics` (compile errors)                                                                                                                                          |
-| `run`       | Easy Test+             | `programId`, `stdin`, `compilerName` | `status`, `exitCode`, `stdout`, `stderr`, `time` (ms), `memory` (KB; 0 hides it)                                                                                                                                                          |
+| `run`       | Easy Test+             | `programId`, `stdin`, `compilerName` | `status`, `exitCode`, `stdout`, `stderr`, `time` (ms), `memory` (cumulative allocation in KB; 0 hides it), `peakMemory` (optional; peak usage in KB)                                                                                      |
 | `transform` | Java submission helper | `sourceCode`, `header`               | `status` (`success` or `compileError`), `sourceCode` (transformed code), `diagnostics`, `libraryMissing` (optional)                                                                                                                       |
 
 - `compilerName` is the value returned by `list`. A server that handles several languages uses it to pick one
+- Each entry of `list` may also carry `family` and `match`
+	- `family` is the ID of the language family (`cpp`, `python3`, `java` and so on). When present, it is used instead of detecting the family from `language`
+	- `match` is an array of words. When several environments share a family, those whose words appear in the language name on the page come first, and the rest follow the order of `list`. For example, `["PyPy"]` on a PyPy environment makes it the first choice on PyPy pages
+- Memory is shown as usage when `peakMemory` is present, and as cumulative allocation when `memory` is present
 - The `status` of `run` is one of `success`, `compileError`, `timeLimitExceeded`, `runtimeError`, `internalError` and `badRequest`
 - When the program for `programId` no longer exists, respond to `run` with `status` `badRequest` and a `stderr` starting with `Prepared program is unavailable:`. CP Toolkit then compiles again
 - `prepare` also carries `debug`, `autoImport`, `validate` and `header`. Unused fields can be ignored

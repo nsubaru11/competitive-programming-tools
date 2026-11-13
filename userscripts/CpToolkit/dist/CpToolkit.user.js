@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.1.5
+// @version        1.2.0
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -3446,7 +3446,15 @@ a:focus > .cp-settings-entry {
 					rank: this.order.indexOf(runner.kind),
 					distance: labelDistance(runner.label.replace(ENVIRONMENT_SUFFIX, ""), language.label),
 				}));
-			return ranked.toSorted((a, b) => a.rank - b.rank || a.distance - b.distance).map(({runner}) => runner);
+			return ranked
+				.toSorted((a, b) => {
+					return (
+						a.rank - b.rank ||
+						(a.runner.preference ?? 0) - (b.runner.preference ?? 0) ||
+						a.distance - b.distance
+					);
+				})
+				.map(({runner}) => runner);
 		}
 
 		async test(candidates, firstRunnerId, sourceCode, testCase, options) {
@@ -4955,14 +4963,16 @@ ${body}
 		kind = "local";
 		id;
 		label;
+		preference;
 		client;
 		compilerName;
 
-		constructor(client, compilerName, label) {
+		constructor(client, compilerName, label, preference) {
 			this.client = client;
 			this.compilerName = compilerName;
 			this.id = `local:${compilerName}`;
 			this.label = `${label} [Local]`;
+			if (preference !== undefined) this.preference = preference;
 		}
 
 		prepare(sourceCode) {
@@ -4979,6 +4989,9 @@ ${body}
 				exitCode: String(response.exitCode),
 				execTime: Number(response.time),
 				...(response.memory > 0 ? {allocatedMemory: Number(response.memory)} : {}),
+				...(response.peakMemory !== undefined && response.peakMemory > 0
+					? {memory: Number(response.peakMemory)}
+					: {}),
 				input,
 				output: response.stdout ?? "",
 				error: response.stderr ?? "",
@@ -4993,12 +5006,24 @@ ${body}
 			this.client = client;
 		}
 
-		async runnersFor({family}) {
+		async runnersFor({family, label}) {
 			if (!this.client.isAvailable()) return [];
 			const compilers = await this.client.list();
-			return compilers
-				.filter(({language}) => resolveFamily(languageCatalog, language) === family)
-				.map(({compilerName, label}) => new LocalCodeRunner(this.client, compilerName, label));
+			const sameFamily = compilers.filter((compiler) => {
+				return (compiler.family ?? resolveFamily(languageCatalog, compiler.language)) === family;
+			});
+			if (!sameFamily.some(({match}) => match !== undefined)) {
+				return sameFamily.map(
+					({compilerName, label: name}) => new LocalCodeRunner(this.client, compilerName, name),
+				);
+			}
+			const pageLabel = label.toLowerCase();
+			const matches = ({match}) => {
+				return (match ?? []).some((word) => pageLabel.includes(word.toLowerCase()));
+			};
+			return [...sameFamily.filter(matches), ...sameFamily.filter((compiler) => !matches(compiler))].map(
+				({compilerName, label: name}, index) => new LocalCodeRunner(this.client, compilerName, name, index),
+			);
 		}
 	}
 
