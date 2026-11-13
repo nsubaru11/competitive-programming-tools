@@ -94,6 +94,8 @@ export type ProcessResult = {
 
 export type DispatcherRunResult = {
 	kind: "run";
+	/** 常駐 JVM へ実行を頼んだ時刻(Date.now() の値)。前の要求の順番待ちは含まない。 */
+	startedAt?: number;
 	exitCode?: number;
 	time?: number;
 	stdout?: string;

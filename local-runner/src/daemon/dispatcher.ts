@@ -328,6 +328,7 @@ function queueDispatcherRequest<K extends DispatcherResponse["kind"]>(
 	fields: readonly string[],
 	timeoutMs: number,
 	timedOut: () => DispatcherResultOf<K>,
+	onSend?: () => void,
 ): Promise<DispatcherResultOf<K>> {
 	const request = dispatcherState.requestQueue
 		.catch(() => null)
@@ -365,6 +366,7 @@ function queueDispatcherRequest<K extends DispatcherResponse["kind"]>(
 					settle(() => resolve(timedOut()));
 				}, timeoutMs);
 				const command = [COMMAND_BY_KIND[kind], requestId, ...fields].join("\t");
+				onSend?.();
 				dispatcherState.proc!.stdin.write(`${command}\n`, "utf8", (error) => {
 					if (!error) return;
 					release();
@@ -376,17 +378,21 @@ function queueDispatcherRequest<K extends DispatcherResponse["kind"]>(
 	return request;
 }
 
-export function queueDispatcherRun(
+export async function queueDispatcherRun(
 	entry: CompileEntry,
 	standardInput: string,
 	timeoutMs = RUNNER_CONFIG.runTimeoutMs,
 ): Promise<DispatcherRunResult> {
 	const fields = [encodeField(entry.classDir), encodeField(entry.mainClass), encodeField(standardInput)];
-	return queueDispatcherRequest("run", fields, timeoutMs, () => ({
+	let startedAt = Date.now();
+	const result = await queueDispatcherRequest("run", fields, timeoutMs, () => ({
 		kind: "run",
 		timedOut: true,
 		error: `Execution timed out after ${timeoutMs}ms.`,
-	}));
+	}), () => {
+		startedAt = Date.now();
+	});
+	return {...result, startedAt};
 }
 
 export function queueDispatcherCompile(

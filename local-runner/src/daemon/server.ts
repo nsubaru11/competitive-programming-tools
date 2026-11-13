@@ -116,15 +116,17 @@ function toRunResponse(outcome: ProcessOutcome): LocalRunnerRunResponse {
 	};
 }
 
-/** コマンドで動かす言語のプログラムを実行する。programId がその言語のものでなければ null を返す。 */
-async function runCommandProgram(programId: string, stdin: string): Promise<LocalRunnerRunResponse | null> {
+/**
+ * コマンドで動かす言語のプログラムを実行する。programId がその言語のものでなければ null を返す。
+ * receivedAt は、サーバーが実行の要求を受け取った時刻。
+ */
+async function runCommandProgram(programId: string, stdin: string, receivedAt: number): Promise<LocalRunnerRunResponse | null> {
 	if (commandEngine === null) return null;
-	const started = Date.now();
 	const outcome = await commandEngine.run(programId, stdin);
 	if (outcome === null) return null;
 	const response = toRunResponse(outcome);
 	const logger = response.status === "success" ? logging.logInfo : logging.logWarn;
-	logger(formatter.formatRunSummary(response, 0, Date.now() - started, "process", outcome.language));
+	logger(formatter.formatRunSummary(response, outcome.startedAt - receivedAt, Date.now() - receivedAt, "process", outcome.language));
 	return response;
 }
 
@@ -209,19 +211,24 @@ function compileErrorResponse(diagnostics: string): LocalRunnerRunResponse {
  * ソースを実行する。そのソースのコンパイルが終わるのを待ち、コンパイルエラーなら実行の応答として返す。
  * 事前コンパイルの結果があれば、それを使う。
  */
-async function runSource(language: RunnerLanguage, sourceCode: string, stdin: string, debug: boolean): Promise<LocalRunnerRunResponse> {
-	const overallStart = Date.now();
+async function runSource(
+	language: RunnerLanguage,
+	sourceCode: string,
+	stdin: string,
+	debug: boolean,
+	receivedAt: number,
+): Promise<LocalRunnerRunResponse> {
 	const options = {...RUN_PREPARE_OPTIONS, debug};
 	// コンパイルの結果が追い出されていたら、作り直して1回だけやり直す
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const prepared = await preparations.wait(language.name, sourceCode, options);
 		if (prepared.status !== "success" || !prepared.programId) {
 			const response = compileErrorResponse(prepared.diagnostics);
-			const waitTime = Date.now() - overallStart;
+			const waitTime = Date.now() - receivedAt;
 			logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", language.name));
 			return response;
 		}
-		const response = await runProgram(prepared.programId, stdin);
+		const response = await runProgram(prepared.programId, stdin, receivedAt);
 		if (response) return response;
 		preparations.forget(language.name, sourceCode, options);
 	}
@@ -229,42 +236,43 @@ async function runSource(language: RunnerLanguage, sourceCode: string, stdin: st
 }
 
 /** コンパイル済みのプログラムを実行する。プログラムが見つからなければ null を返す。 */
-async function runProgram(programId: string, stdin: string): Promise<LocalRunnerRunResponse | null> {
-	const commandResponse = await runCommandProgram(programId, stdin);
+async function runProgram(programId: string, stdin: string, receivedAt: number): Promise<LocalRunnerRunResponse | null> {
+	const commandResponse = await runCommandProgram(programId, stdin, receivedAt);
 	if (commandResponse) return commandResponse;
 	const entry = await compiler.getCompiledEntryByProgramId(programId);
-	return entry === null ? null : runJavaEntry(entry, stdin);
+	return entry === null ? null : runJavaEntry(entry, stdin, receivedAt);
 }
 
-async function runJavaEntry(entry: CompileEntry, stdin: string): Promise<LocalRunnerRunResponse> {
-	const overallStart = Date.now();
-	const waitTime = 0;
-
+async function runJavaEntry(entry: CompileEntry, stdin: string, receivedAt: number): Promise<LocalRunnerRunResponse> {
 	if (entry.status === "error") {
+		const waitTime = Date.now() - receivedAt;
 		const response: LocalRunnerRunResponse = {
 			status: "compileError",
 			exitCode: 1,
 			stdout: "",
 			stderr: entry.error || "",
-			time: waitTime,
+			time: 0,
 			stdoutTruncated: false,
 			stderrTruncated: false,
 			memory: 0,
 		};
-		logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "compile", "java"));
+		logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", "java"));
 		return response;
 	}
 
 	if (entry.requiresIsolatedProcess) {
 		logging.logInfo("[Run] Falling back to isolated JVM mode due to FileDescriptor/System.exit/Runtime.halt usage.");
+		const startedAt = Date.now();
 		const result = await compiler.runCodeInIsolatedJvm(entry, stdin);
-		const totalTime = Date.now() - overallStart;
-		logging.logInfo(formatter.formatRunSummary(result, waitTime, totalTime, "isolated", "java"));
+		logging.logInfo(formatter.formatRunSummary(result, startedAt - receivedAt, Date.now() - receivedAt, "isolated", "java"));
 		return result;
 	}
 
+	// 実行が始まる前に失敗したときは、失敗するまで待った時間を Wait にする
+	let waitTime: number | null = null;
 	try {
 		const result = await dispatcher.queueDispatcherRun(entry, stdin);
+		waitTime = (result.startedAt ?? receivedAt) - receivedAt;
 		if (result.timedOut) {
 			const response: LocalRunnerRunResponse = {
 				status: "timeLimitExceeded",
@@ -276,10 +284,10 @@ async function runJavaEntry(entry: CompileEntry, stdin: string): Promise<LocalRu
 				stderrTruncated: false,
 				memory: 0,
 			};
-			logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon", "java"));
+			logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - receivedAt, "daemon", "java"));
 			return response;
 		}
-		const totalTime = Date.now() - overallStart;
+		const totalTime = Date.now() - receivedAt;
 		if (result.stdoutTruncated || result.stderrTruncated) {
 			logging.logWarn(
 				`[Run] Output truncated by dispatcher (stdout=${result.stdoutTruncated}, stderr=${result.stderrTruncated}).`,
@@ -312,7 +320,8 @@ async function runJavaEntry(entry: CompileEntry, stdin: string): Promise<LocalRu
 			stderrTruncated: false,
 			memory: 0,
 		};
-		logging.logError(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon", "java"));
+		const totalTime = Date.now() - receivedAt;
+		logging.logError(formatter.formatRunSummary(response, waitTime ?? totalTime, totalTime, "daemon", "java"));
 		return response;
 	}
 }
@@ -328,6 +337,8 @@ function sendHeadersEarly(res: http.ServerResponse): void {
 }
 
 const server = http.createServer(async (req, res) => {
+	// 実行の記録の Wait は、この時刻から数える
+	const receivedAt = Date.now();
 	// CORS/Origin ゲート。ブラウザからの要求は Origin ヘッダを必ず伴うため、
 	// 許可した競プロジャッジのサイト以外からの実行を「実処理の前に」拒否する。
 	// （悪意あるサイトの単純 POST は応答を読めないだけで副作用＝任意コード実行は起きてしまうため、
@@ -425,11 +436,11 @@ const server = http.createServer(async (req, res) => {
 		} else if (request.mode === "run" && typeof request.sourceCode === "string") {
 			const language = requireLanguage(request.compilerName);
 			sendHeadersEarly(res);
-			response = await runSource(language, request.sourceCode, request.stdin ?? "", request.debug !== false);
+			response = await runSource(language, request.sourceCode, request.stdin ?? "", request.debug !== false, receivedAt);
 		} else if (request.mode === "run" && typeof request.programId === "string") {
 			// programId だけの実行は、プログラムから言語が決まる。
 			sendHeadersEarly(res);
-			response = await runProgram(request.programId, request.stdin ?? "") ?? missingProgramResponse(request.programId);
+			response = await runProgram(request.programId, request.stdin ?? "", receivedAt) ?? missingProgramResponse(request.programId);
 		} else if (request.mode === "status") {
 			response = {
 				status: "running",

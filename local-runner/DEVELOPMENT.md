@@ -45,7 +45,7 @@ local-runner/
 `commandEngine.ts` は設定を直接読まず、言語の定義と上限を引数で受け取ります。テストは、PATH の `python3` と `cc` で言語を定義して動かします。
 
 - コンパイルの結果は、言語、コンパイルの引数、ソースから決めた `programId` で使い回す。保存は `/dev/shm` の作業フォルダで、サーバーを起動し直しても残っていれば使う(WSL を再起動すると消える)
-- コンパイルの記録は、Java も含めて `[Compile] Lang=<言語> Status=<OK|NG|CACHED|CANCELED> Time=<時間> Id=<programId>` の形にそろえる。`CACHED` は、コンパイルせずに前の結果を使ったことを、`CANCELED` は新しいソースが届いて中断したことを表す。実行の記録は `[Run] Lang=<言語> Mode=<経路> Status=...` で残す
+- コンパイルの記録は、Java も含めて `[Compile] Lang=<言語> Status=<OK|NG|CACHED|CANCELED> Time=<時間> Id=<programId>` の形にそろえる。`CACHED` は、コンパイルせずに前の結果を使ったことを、`CANCELED` は新しいソースが届いて中断したことを表す。実行の記録は `[Run] Lang=<言語> Mode=<経路> Status=... Wait=... Exec=... Total=...` で残す。`Wait` はサーバーが実行の要求を受け取ってから実行が始まるまで(コンパイル待ちと、実行の順番待ちを含む)、`Exec` は実行そのもの、`Total` は結果が出るまでの時間
 - 実行は1つずつ行う。同時に動かすと時間の測定がぶれる
 - エラーのメッセージは、作業フォルダの場所を除いて返す。利用者には `Main.cpp:4:11` のように見える
 

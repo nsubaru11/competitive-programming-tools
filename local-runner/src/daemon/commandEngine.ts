@@ -50,8 +50,8 @@ type Program = {
 	readonly result: PrepareResult;
 };
 
-/** 実行の結果と、そのプログラムの言語の名前。 */
-export type RunOutcome = ProcessOutcome & {readonly language: string};
+/** 実行の結果と、そのプログラムの言語の名前、実行を始めた時刻(Date.now() の値)。 */
+export type RunOutcome = ProcessOutcome & {readonly language: string; readonly startedAt: number};
 
 /** コンパイルに成功した作業フォルダに置く印。サーバーを起動し直したあとも、この印があれば使い回す。 */
 const COMPILED_MARKER = ".compiled";
@@ -276,7 +276,8 @@ export class CommandEngine {
 		}
 	}
 
-	private async execute({language, dir}: Program, stdin: string): Promise<ProcessOutcome> {
+	private async execute({language, dir}: Program, stdin: string): Promise<ProcessOutcome & {startedAt: number}> {
+		const startedAt = Date.now();
 		const outcome = await runMeasured(expandArguments(language.run, this.placeholders(language, dir)), {
 			cwd: dir,
 			stdin,
@@ -286,7 +287,7 @@ export class CommandEngine {
 			launcher: this.options.launcher,
 			reportFile: path.join(dir, `report-${++this.nextRunId}.txt`),
 		});
-		return {...outcome, stderr: hideDirectory(outcome.stderr, dir)};
+		return {...outcome, stderr: hideDirectory(outcome.stderr, dir), startedAt};
 	}
 
 	private evictOldPrograms(): void {

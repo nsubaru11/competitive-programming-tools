@@ -28,6 +28,12 @@ export function formatCompileSummary(
 	return `[Compile] Lang=${language} Status=${result}${timeMs === undefined ? "" : ` Time=${timeMs}ms`} Id=${shortId}`;
 }
 
+/**
+ * 実行の記録を1行にする。言語によらず、時間は次の意味にそろえる。
+ * - Wait: サーバーが実行の要求を受け取ってから、実行が始まるまで(コンパイル待ちと、実行の順番待ちを含む)
+ * - Exec: 実行そのものの時間
+ * - Total: 要求を受け取ってから、結果が出るまで
+ */
 export function formatRunSummary(result: {
 	status: string;
 	time?: number;

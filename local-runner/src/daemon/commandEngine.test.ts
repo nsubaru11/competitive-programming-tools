@@ -263,6 +263,18 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		expect(prepared.status).toBe("success");
 	});
 
+	test("実行を始めた時刻を返す。前の実行を待った時間は含まない", async () => {
+		const engine = createEngine();
+		const prepared = await engine.prepare(pythonLanguage, "import time\ntime.sleep(0.3)\n", true);
+		if (prepared.status !== "success") throw new Error(prepared.diagnostics);
+		const requested = Date.now();
+		const [first, second] = await Promise.all([engine.run(prepared.programId, ""), engine.run(prepared.programId, "")]);
+		expect(first!.startedAt).toBeGreaterThanOrEqual(requested);
+		// 実行は1つずつなので、2つ目は1つ目が終わってから始まる
+		expect(second!.startedAt - requested).toBeGreaterThanOrEqual(250);
+		expect(second!.timeMs).toBeLessThan(second!.startedAt - requested + 1000);
+	});
+
 	test("知らない programId は null を返す", async () => {
 		expect(await createEngine().run("0-00000000000000000000000000000000", "")).toBeNull();
 	});
