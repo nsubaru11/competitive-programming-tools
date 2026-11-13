@@ -2,6 +2,7 @@ import * as shared from "@atcoder-tools/shared";
 import type {SamplePair, SampleResult} from "../types";
 import * as color from "../utils/color";
 import * as formatter from "../utils/formatter";
+import type {PreparedProgram} from "./commands/source";
 import {requestRunner} from "./runnerClient";
 
 /**
@@ -28,20 +29,16 @@ export function judgeByLines(expected: string, actual: string): boolean {
 	return true;
 }
 
-export async function postLocalRunner(
-	sourceCode: string,
-	stdinText: string,
-	programId?: string,
-): Promise<shared.LocalRunnerRunResponse> {
-	const run = (request: shared.LocalRunnerRunRequest) => {
-		return requestRunner<shared.LocalRunnerRunResponse>(request, "Local Runner request failed");
-	};
-	const runSource = () => run({mode: "run", sourceCode, stdin: stdinText, prepared: true});
-	if (!programId) return await runSource();
-
-	const result = await run({mode: "run", programId, stdin: stdinText});
-	// daemon の再起動やキャッシュの追い出しでプログラムが消えたときだけ、ソースを送って実行し直す
-	return shared.isStaleProgramResponse(result) ? await runSource() : result;
+export async function postLocalRunner(program: PreparedProgram, stdinText: string): Promise<shared.LocalRunnerRunResponse> {
+	const run = () => requestRunner<shared.LocalRunnerRunResponse>(
+		{mode: "run", compilerName: program.compilerName, programId: program.programId, stdin: stdinText},
+		"Local Runner request failed",
+	);
+	const result = await run();
+	if (!shared.isStaleProgramResponse(result)) return result;
+	// daemon の再起動やキャッシュの追い出しでプログラムが消えたときだけ、コンパイルし直して実行する
+	program.programId = await program.refresh();
+	return await run();
 }
 
 /**
@@ -51,13 +48,12 @@ export async function postLocalRunner(
  * expectedOutput 省略時は判定せず、実行結果（ステータス・出力）だけを返す。
  */
 export async function evaluateRun(
-	sourceCode: string,
+	program: PreparedProgram,
 	index: number,
 	input: string,
 	expectedOutput?: string,
-	programId?: string,
 ): Promise<SampleResult> {
-	const runnerRaw = await postLocalRunner(sourceCode, input, programId);
+	const runnerRaw = await postLocalRunner(program, input);
 	const easyLikeRun: shared.EasyTestRunResult = {
 		status: shared.toEasyTestStatus(runnerRaw.status, runnerRaw.exitCode),
 		output: runnerRaw.stdout || "",
@@ -80,6 +76,7 @@ export async function evaluateRun(
 		status,
 		execTime: easyLikeRun.execTime || 0,
 		memoryKb: Number(runnerRaw.memory || 0),
+		peakMemoryKb: Number(runnerRaw.peakMemory || 0),
 		runnerStatus: runnerRaw.status || "",
 		exitCode: Number(runnerRaw.exitCode ?? 0),
 		stdoutTruncated: runnerRaw.stdoutTruncated,
@@ -91,8 +88,8 @@ export async function evaluateRun(
 }
 
 /** サンプル1件をローカル実行してジャッジし、1件分の結果を返す（test/localtest/submit 用の薄いラッパー）。 */
-async function evaluateSample(sourceCode: string, sample: SamplePair, programId?: string): Promise<SampleResult> {
-	return evaluateRun(sourceCode, sample.index, sample.input, sample.expectedOutput, programId);
+async function evaluateSample(program: PreparedProgram, sample: SamplePair): Promise<SampleResult> {
+	return evaluateRun(program, sample.index, sample.input, sample.expectedOutput);
 }
 
 /** test / localtest / submit の表示制御オプション。 */
@@ -175,13 +172,14 @@ function getWaMismatchStats(expected: string, actual: string): {mismatch: number
 /** サンプル1件分の結果（ステータス・出力・差分・stderr）を表示する。crosscheck からも直接呼ばれる。 */
 export function printSampleResult(
 	r: SampleResult,
-	originalClassName: string,
-	originalFileName: string,
+	restoreNames: (text: string) => string,
 	display: SampleDisplayOptions,
 ): void {
 	const details = [`exec=${formatter.formatExecTime(r.execTime, formatter.thresholdsFromTimeLimit(display.timeLimitMs))}`];
-	// memory は使用ピーク(RSS)ではなく実行スレッドの累積アロケーション量なので alloc と明示する。
+	// Java の memory は使用ピーク(RSS)ではなく実行スレッドの累積アロケーション量なので alloc と明示する。
 	if (r.memoryKb > 0) details.push(`alloc=${r.memoryKb}KB`);
+	// プロセスとして実行する言語は、同時に使ったメモリの最大値を mem として示す。
+	if (r.peakMemoryKb > 0) details.push(`mem=${r.peakMemoryKb}KB`);
 	if (r.runnerStatus && r.runnerStatus !== "success") details.push(`runner=${r.runnerStatus}`);
 	if (r.exitCode !== 0) details.push(`exit=${r.exitCode}`);
 	if (r.stdoutTruncated || r.stderrTruncated) {
@@ -204,12 +202,7 @@ export function printSampleResult(
 	}
 	if (r.status !== "AC" && r.stderr && r.stderr.trim().length > 0) {
 		console.log(`  [stderr]`);
-		let displayStderr = r.stderr.trim();
-		if (originalClassName) {
-			displayStderr = displayStderr
-				.replace(/Main\.java/g, originalFileName)
-				.replace(/\bMain\b/g, originalClassName);
-		}
+		const displayStderr = restoreNames(r.stderr.trim());
 		const body = displayStderr.split(/\r?\n/).map(line => `    ${line}`).join("\n");
 		console.log(color.supportsCliColor() ? `${color.ANSI.RED}${body}${color.ANSI.RESET}` : body);
 	}
@@ -240,17 +233,15 @@ export function printSampleSummary(results: SampleResult[]): boolean {
  * 戻り値は全件 AC/OK かどうか。
  */
 export async function runAndReportSamples(
-	sourceCode: string,
+	program: PreparedProgram,
 	samplePairs: SamplePair[],
-	originalClassName: string,
-	originalFileName: string,
+	restoreNames: (text: string) => string,
 	display: SampleDisplayOptions = {},
-	programId?: string,
 ): Promise<boolean> {
 	const results: SampleResult[] = [];
 	for (const sample of samplePairs) {
-		const result = await evaluateSample(sourceCode, sample, programId);
-		printSampleResult(result, originalClassName, originalFileName, display);
+		const result = await evaluateSample(program, sample);
+		printSampleResult(result, restoreNames, display);
 		results.push(result);
 	}
 	return printSampleSummary(results);

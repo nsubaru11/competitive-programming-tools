@@ -9,14 +9,20 @@ import * as source from "./source";
 export class ToclipCommand implements Command {
 	readonly name = "toclip";
 	readonly usageLines = [
-		"  toclip [--no-header|--header=<name>] <sourceFile>",
+		"  toclip [--lang=<name>] [--no-header|--header=<name>] <sourceFile>",
 		"  toclip [...options] <task>  (short form, e.g. toclip d -> D.java)",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {
 		const positionals: string[] = [];
 		let header: LocalRunnerHeaderOption = true;
+		let lang: string | undefined;
 		for (const arg of args) {
+			const l = options.parseLangFlag(arg);
+			if (l !== undefined) {
+				lang = l;
+				continue;
+			}
 			const h = options.parseHeaderFlag(arg);
 			if (h !== undefined) {
 				header = h;
@@ -27,9 +33,9 @@ export class ToclipCommand implements Command {
 		}
 		if (positionals.length !== 1) throw new CliUsageError();
 		const sourceArg = /^(ex|[a-z])\d*$/i.test(positionals[0])
-			? taskCommand.resolveShortSourceArg(positionals[0])
+			? taskCommand.resolveShortSourceArg(positionals[0], lang)
 			: positionals[0];
-		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceArg, false, {header});
+		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceArg, false, {header, lang});
 		clipboard.copyToClipboard(transformed);
 		console.log(`Copied submission source to clipboard: ${resolvedSourcePath}`);
 		return 0;

@@ -1,4 +1,5 @@
 import type {IndexedBlock, SamplePair, SubmitForm, Task} from "../types";
+import type {SourceLanguage} from "./language";
 import * as shared from "@atcoder-tools/shared";
 
 export function decodeHtmlEntities(text: string) {
@@ -108,19 +109,43 @@ export function isAtCoderLoginPage(html: string) {
 	);
 }
 
-export function extractLanguageOptionsFromSubmitPage(html: string) {
-	const selectMatch = html.match(/<select[^>]*name=["']data\.LanguageId["'][^>]*>([\s\S]*?)<\/select>/i);
-	if (!selectMatch) return [];
+export type LanguageOption = {value: string; label: string};
+
+/**
+ * 提出フォームから、言語の選択肢を取り出す。
+ * フォームは問題ごとの選択欄(id="select-lang-<問題>")を持つので、指定した問題のものを読む。
+ */
+export function extractLanguageOptionsFromSubmitPage(html: string, taskScreenName?: string): LanguageOption[] {
+	const blocks = [...html.matchAll(/<div[^>]*id=["']select-lang-([^"']+)["'][^>]*>\s*<select[^>]*>([\s\S]*?)<\/select>/gi)];
+	const block = blocks.find(([, name]) => name === taskScreenName) ?? blocks[0];
+	const selectBody = block?.[2];
+	if (selectBody === undefined) return [];
 	const optionRegex = /<option\s+value=["']([^"']+)["'][^>]*>([\s\S]*?)<\/option>/gi;
-	const options: Array<{value: string; label: string}> = [];
+	const options: LanguageOption[] = [];
 	let m: RegExpExecArray | null;
-	while ((m = optionRegex.exec(selectMatch[1])) !== null) {
+	while ((m = optionRegex.exec(selectBody)) !== null) {
 		options.push({
 			value: m[1].trim(),
 			label: decodeHtmlEntities(m[2]).replace(/\s+/g, " ").trim(),
 		});
 	}
 	return options;
+}
+
+/**
+ * 言語名に text を含む選択肢を返す。大文字と小文字は区別しない。
+ * 見つからなければ、同じ書き出しの選択肢を similar に入れて返す。設定を直す手がかりにする。
+ */
+export function findLanguageOptionByLabel(options: readonly LanguageOption[], text: string): {
+	option: LanguageOption | null;
+	similar: string[]
+} {
+	const wanted = text.toLowerCase();
+	const option = options.find(({label}) => label.toLowerCase().includes(wanted)) ?? null;
+	if (option !== null) return {option, similar: []};
+	const head = /^[^\s\d(]+/.exec(wanted)?.[0] ?? "";
+	const similar = head === "" ? [] : options.filter(({label}) => label.toLowerCase().startsWith(head)).map(({label}) => label);
+	return {option: null, similar};
 }
 
 export function chooseJavaLanguageIdFromOptions(options: Array<{value: string; label: string}>) {
@@ -136,6 +161,37 @@ export function chooseJavaLanguageIdFromOptions(options: Array<{value: string; l
 		if (found) return found.value;
 	}
 	return "";
+}
+
+/**
+ * 提出に使う言語の ID の候補を、先に試す順で返す。
+ * Java は固定の ID(javaLanguageId)と、フォームから選んだ ID を試す。ほかの言語は、設定の submit に合う選択肢だけを使い、
+ * 近い言語では代用しない。
+ */
+export function chooseSubmitLanguageIds(
+	options: readonly LanguageOption[],
+	language: SourceLanguage,
+	javaLanguageId: string,
+): string[] {
+	if (language.isJava) {
+		const candidates = [javaLanguageId, chooseJavaLanguageIdFromOptions([...options])];
+		const languageIds = [...new Set(candidates.filter(Boolean))];
+		if (!languageIds.length) throw new Error("Java language ID was not found on submit page.");
+		return languageIds;
+	}
+	const setting = `"languages.${language.name}.submit"`;
+	if (!language.submit) {
+		throw new Error(`${setting} is not set, so the language on AtCoder cannot be chosen. Write a part of the language name shown on the submit form (e.g. "Rust (rustc").`);
+	}
+	if (options.length === 0) throw new Error("The language list was not found on the submit page.");
+	const {option, similar} = findLanguageOptionByLabel(options, language.submit);
+	if (option === null) {
+		const hint = similar.length > 0
+			? `\n  Languages on the submit form:\n${similar.map((label) => `    ${label}`).join("\n")}`
+			: "\n  Open the submit form and copy a part of the language name shown there.";
+		throw new Error(`No language on the submit form contains "${language.submit}" (${setting}).${hint}`);
+	}
+	return [option.value];
 }
 
 export function extractSubmitForm(submitPageHtml: string, task: Task): SubmitForm {

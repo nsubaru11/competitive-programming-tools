@@ -43,6 +43,14 @@ export function parseHeaderFlag(arg: string): LocalRunnerHeaderOption | undefine
 	return undefined;
 }
 
+/** --lang=<名前> を解釈する。arg がこのフラグでなければ undefined を返す。 */
+export function parseLangFlag(arg: string, name = "--lang"): string | undefined {
+	if (!arg.startsWith(`${name}=`)) return undefined;
+	const value = arg.slice(name.length + 1);
+	if (value === "") throw new CliUsageError(`${name} needs a language name (e.g. ${name}=pypy).`);
+	return value;
+}
+
 /**
  * 真偽値オプションを解釈する汎用ヘルパー。
  * 受け付ける形式:

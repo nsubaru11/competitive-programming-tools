@@ -5,18 +5,24 @@ import {CliUsageError, type Command} from "./Command";
 import * as options from "./options";
 import * as source from "./source";
 
-/** ソースを Main クラス化して Main.java（または指定パス）に書き出す。DEBUG は無効（本番想定）。 */
+/** ソースを提出用に変換し、Main.java など言語ごとの名前（または指定パス）に書き出す。DEBUG は無効（本番想定）。 */
 export class TomainCommand implements Command {
 	readonly name = "tomain";
 	readonly usageLines = [
-		"  tomain [-f|--force] [--no-header|--header=<name>] <sourceFile> [outFile]",
+		"  tomain [-f|--force] [--lang=<name>] [--no-header|--header=<name>] <sourceFile> [outFile]",
 	];
 
 	async execute(args: readonly string[]): Promise<number> {
 		const positionals: string[] = [];
 		let force = false;
 		let header: LocalRunnerHeaderOption = true;
+		let lang: string | undefined;
 		for (const arg of args) {
+			const l = options.parseLangFlag(arg);
+			if (l !== undefined) {
+				lang = l;
+				continue;
+			}
 			if (arg === "-f" || arg === "--force") {
 				force = true;
 				continue;
@@ -32,10 +38,10 @@ export class TomainCommand implements Command {
 		const [sourceFilePath, outFilePath] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {resolvedSourcePath, transformed} = await source.prepareSource(sourceFilePath, false, {header});
+		const {resolvedSourcePath, transformed, language} = await source.prepareSource(sourceFilePath, false, {header, lang});
 		const outPath = outFilePath
 			? path.resolve(outFilePath)
-			: path.join(path.dirname(resolvedSourcePath), "Main.java");
+			: path.join(path.dirname(resolvedSourcePath), language.runtimeFileName);
 
 		if (fs.existsSync(outPath) && !force) {
 			throw new Error(`Output already exists: ${outPath} (use -f/--force to overwrite)`);

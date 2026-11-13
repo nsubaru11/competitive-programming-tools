@@ -24,6 +24,7 @@
 		"cpp": {
 			"family": "cpp",
 			"name": "C++",
+			"submit": "C++23 (GCC",
 			"command": "g++",
 			"sourceFile": "Main.cpp",
 			"compile": [
@@ -61,6 +62,7 @@
 		"c": {
 			"family": "c",
 			"name": "C",
+			"submit": "C23 (GCC",
 			"command": "gcc",
 			"sourceFile": "Main.c",
 			"compile": [
@@ -91,6 +93,7 @@
 			"match": [
 				"CPython"
 			],
+			"submit": "Python (CPython",
 			"command": "python3",
 			"sourceFile": "Main.py",
 			"compile": [
@@ -114,6 +117,7 @@
 			"match": [
 				"PyPy"
 			],
+			"submit": "Python (PyPy",
 			"command": "pypy3",
 			"sourceFile": "Main.py",
 			"compile": [
@@ -137,6 +141,7 @@
 			"match": [
 				"Codon"
 			],
+			"submit": "Python (Codon",
 			"command": "codon",
 			"sourceFile": "Main.py",
 			"compile": [
@@ -153,6 +158,12 @@
 			"debugRewrite": true,
 			"stackMb": 1024
 		}
+	},
+	"extensions": {
+		".java": "java",
+		".cpp": "cpp",
+		".c": "c",
+		".py": "cpython"
 	},
 	"headers": {},
 	"atcoder": {

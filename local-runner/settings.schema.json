@@ -156,6 +156,11 @@
 							"minLength": 1
 						}
 					},
+					"submit": {
+						"description": "AtCoder の提出フォームの言語名に含まれる文字列。たとえば「C++23 (GCC」と書く。submit がこの言語で提出する。大文字と小文字は区別しない。",
+						"type": "string",
+						"minLength": 1
+					},
 					"command": {
 						"description": "処理系の命令。名前だけなら PATH から探す。パスなら、サーバーが動く側(WSL)のパスで書く。",
 						"type": "string",
@@ -330,6 +335,17 @@
 			},
 			"propertyNames": {
 				"pattern": "^[a-z][a-z0-9_-]*$"
+			}
+		},
+		"extensions": {
+			"description": "ソースの拡張子から言語を選ぶ対応。値は languages の名前。CLI が実行のたびに読む。",
+			"type": "object",
+			"propertyNames": {
+				"pattern": "^\\.[a-z0-9_+-]+$"
+			},
+			"additionalProperties": {
+				"type": "string",
+				"minLength": 1
 			}
 		},
 		"headers": {

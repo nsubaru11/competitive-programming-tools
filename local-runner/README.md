@@ -1,9 +1,9 @@
 # Local Runner
 
-Java の解答を手元で実行、判定、提出するためのツールです。次の2つからなります。
+競技プログラミングの解答を手元で実行、判定、提出するためのツールです。Java、C++、C、Python に対応し、設定を足せばほかの言語も動かせます。次の2つからなります。
 
 - **CLI**: AtCoder のサンプルでのテスト、提出、提出用コードの作成を行う
-- **サーバー**: Java の実行を速くするために常駐する。[CP Toolkit](../userscripts/CpToolkit/README.md) からも接続できる
+- **サーバー**: 解答をコンパイルして実行する。Java を速く動かすために常駐する。[CP Toolkit](../userscripts/CpToolkit/README.md) からも接続できる
 
 [CP Toolkit](../userscripts/CpToolkit/README.md) の Java の提出補助で `lib.*` の展開や `import` の補完を使うには、Local Runner と[ライブラリの設定](#ライブラリを使う)が必要です。
 
@@ -14,6 +14,7 @@ Java の解答を手元で実行、判定、提出するためのツールです
 - [Bun](https://bun.sh/)
 - JDK 24 以降
 - Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側にも Bun と JDK を入れる
+- Java 以外の言語を使うなら、その処理系を WSL 側に入れる。無い言語は使えないだけで、ほかの言語は動く
 
 ## セットアップ
 
@@ -23,7 +24,7 @@ cd competitive-programming-tools
 bun install
 ```
 
-これだけで、解答の実行、判定、提出、提出用コードの作成が動きます。`lib.*` を使うときは、[ライブラリを使う](#ライブラリを使う)を参照してください。
+これだけで、Java の解答の実行、判定、提出、提出用コードの作成が動きます。`lib.*` を使うときは、[ライブラリを使う](#ライブラリを使う)を参照してください。ほかの言語の準備は、[言語](#言語)を参照してください。
 
 Windows では、次のコマンドで `bin` を PATH に登録すると、どのフォルダからでも `test` や `submit` を実行できます。
 
@@ -64,7 +65,7 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 | `localtest <sourceFile> [testDir]`                             | `.in` と `.out` を自動で探し、オフラインで実行して判定する                                         |
 | `run <sourceFile> [inputFile]`                                 | 1回だけ実行して出力を表示する。`inputFile` を省くと標準入力は空になる                              |
 | `crosscheck <actualSourceFile> <expectedSourceFile> [testDir]` | `.in` を入力に2つのコードを実行し、標準出力を比べる。`.out` は不要                                 |
-| `tomain <sourceFile> [outFile]`                                | 提出用の `Main.java` を書き出す。`-f` で上書きする                                                 |
+| `tomain <sourceFile> [outFile]`                                | 提出用のソースを `Main.java` など言語ごとの名前で書き出す。`-f` で上書きする                       |
 | `toclip <sourceFile>`、`toclip <task>`                         | 提出用のソースをクリップボードへコピーする(例: `toclip d`)                                         |
 | `serve`                                                        | サーバーを起動し、準備が終わるまで待つ                                                             |
 | `stop`                                                         | サーバーを停止する                                                                                 |
@@ -74,7 +75,7 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 | `settings`                                                     | 全部の設定と今の値を表示する。既定値と違う項目には `*` が付く                                      |
 | `cacheclear -a`、`cacheclear -t <taskScreenName>`              | サンプルのキャッシュをすべて、または指定した問題の分だけ削除する                                   |
 
-`taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。
+`taskScreenName` は URL の `/tasks/` より後ろの部分です(例: `abc448_d`)。`sourceFile` の拡張子は省けます(`D` で `D.java` や `D.cpp` を探す)。
 
 ライブラリを編集したら、`stop` のあと `serve` で読み込み直してください。
 
@@ -85,23 +86,24 @@ bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test ab
 - `src` の親のフォルダ名をコンテスト名として使う
 - 問題の記号は大文字と小文字を区別しない
 - 末尾の数字はファイルの違いとして扱う。`test d1` は `D1.java` を問題 `d` のサンプルでテストする
-- ソースは現在のフォルダから探す
+- ソースは現在のフォルダから、[言語](#言語)の拡張子で探す(`D.java`、`D.cpp`、`D.py` など)。同じ名前のソースが複数あるときは、`--lang` で選ぶ
 - `toclip` はコンテスト名を使わないので、どのフォルダでも使える
 
 ### オプション
 
 オプションは引数の前後どちらに置いても構いません。
 
-| オプション                    | 対象                                        | 説明                                                                             |
-|-------------------------------|---------------------------------------------|----------------------------------------------------------------------------------|
-| `-f`, `--force`               | `submit`、`tomain`                          | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする |
-| `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                  | ソースの `DEBUG` の有効と無効を切り替える(既定は有効)                            |
-| `--no-header`                 | `submit`、`tomain`、`toclip`                | 提出物の先頭にヘッダーを付けない                                                 |
-| `--header=<name>`             | `submit`、`tomain`、`toclip`                | `setheader` で `<name>` に設定したファイルをヘッダーに使う(既定は `java`)        |
-| `--full`                      | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                  |
-| `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck` | WA の差分のうち、一致しない行だけを表示する                                      |
-| `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたむ行数を変える(既定は 20)                                     |
-| `--time-limit=N`              | `localtest`、`run`、`crosscheck`            | 実行時間の警告に使う制限(ms)。既定は 2000。表示だけで、実行は打ち切らない        |
+| オプション                    | 対象                                        | 説明                                                                                    |
+|-------------------------------|---------------------------------------------|-----------------------------------------------------------------------------------------|
+| `-f`, `--force`               | `submit`、`tomain`                          | `submit`: サンプルが AC でなくても提出する。`tomain`: 既存のファイルを上書きする        |
+| `-d`, `--debug[=true\|false]` | `test`、`localtest`、`run`                  | デバッグの有効と無効を切り替える(既定は有効)                                            |
+| `--lang=<name>`               | ソースを受け取るコマンド                    | 言語を設定での名前で選ぶ(既定は拡張子から)。`crosscheck` の比較相手は `--expected-lang` |
+| `--no-header`                 | `submit`、`tomain`、`toclip`                | 提出物の先頭にヘッダーを付けない                                                        |
+| `--header=<name>`             | `submit`、`tomain`、`toclip`                | `setheader` で `<name>` に設定したファイルをヘッダーに使う(既定は言語のヘッダー)        |
+| `--full`                      | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたまず、全行を表示する(`--max-lines` より優先)                         |
+| `--wa-only`                   | `test`、`localtest`、`submit`、`crosscheck` | WA の差分のうち、一致しない行だけを表示する                                             |
+| `--max-lines=N`               | `test`、`localtest`、`submit`、`crosscheck` | WA の差分を折りたたむ行数を変える(既定は 20)                                            |
+| `--time-limit=N`              | `localtest`、`run`、`crosscheck`            | 実行時間の警告に使う制限(ms)。既定は 2000。表示だけで、実行は打ち切らない               |
 
 ### 実行例
 
@@ -123,7 +125,35 @@ localtest --full D.java
 
 # 提出する
 submit abc448_d D.java
+
+# C++ の解答をテストする
+test abc448_d D.cpp
+
+# Python の解答を PyPy でテストする
+test --lang=pypy abc448_d D.py
 ```
+
+## 言語
+
+ソースの拡張子から言語を選びます。`--lang=<名前>` を付けると、その言語で実行します。
+
+| 拡張子  | 名前      | 言語                                                    |
+|---------|-----------|---------------------------------------------------------|
+| `.java` | `java`    | Java                                                    |
+| `.cpp`  | `cpp`     | C++23(AtCoder と同じオプションの GCC)                   |
+| `.c`    | `c`       | C23                                                     |
+| `.py`   | `cpython` | Python(CPython)。`--lang=pypy`、`--lang=codon` でも動く |
+
+- Java 以外の言語は、WSL に処理系を入れると使えます。処理系が PATH に無いときは、設定の `languages` に場所を書きます
+- 使える言語は `status` で確かめられます
+- `.py` を PyPy で動かすのを既定にしたいときは、設定の `extensions` を変えます
+- コンパイルと実行のコマンドを設定に書けば、ほかの言語も足せます
+
+設定の書き方は [SETTINGS.md](./SETTINGS.md) の `languages` と `extensions` を参照してください。
+
+サンプルの結果には、実行時間とメモリを表示します。Java 以外は `mem=`(プロセスが使ったメモリの最大値)、Java は `alloc=`(実行中に確保したメモリの合計)で、意味が違います。
+
+`submit` は、言語に合わせて AtCoder の提出先の言語を選びます。設定の `submit` に合う言語がフォームに無いときは、近い言語で代用せずに、候補を表示して止まります。
 
 ## ライブラリを使う
 
@@ -156,13 +186,19 @@ setlib C:\path\to\competitive-programming-java-library
 
 ## DEBUG の扱い
 
-ソースの `DEBUG = true` は、提出物(`submit`、`tomain`、`toclip`)では常に `false` にします。手元の実行(`test`、`localtest`、`run`)では既定で `true` のまま実行し、`--debug=false` で切り替えられます。
+手元の実行(`test`、`localtest`、`run`)では既定でデバッグを有効にし、`--debug=false` で無効にできます。提出物(`submit`、`tomain`、`toclip`)では常に無効にします。
 
-デバッグ出力を `System.err` に出しておけば、判定に影響しません。
+| 言語   | デバッグが有効なとき                   | 無効なとき、提出物           |
+|--------|----------------------------------------|------------------------------|
+| Java   | ソースの `DEBUG = true` のまま実行する | `DEBUG = false` に書き換える |
+| C++、C | `-DLOCAL` を付けてコンパイルする       | `-DLOCAL` を付けない         |
+| Python | ソースの `DEBUG = True` のまま実行する | `DEBUG = False` に書き換える |
+
+デバッグ出力を標準エラー出力に出しておけば、判定に影響しません。
 
 ## 提出用ヘッダー
 
-提出物の先頭に付けるコメントなどのファイルを、`setheader` で設定できます。言語の既定のヘッダーと、名前付きのヘッダーの2通りがあります。`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助が使います。今のところ変換に対応している言語は Java だけなので、使われるのは `java` の設定です。
+提出物の先頭に付けるコメントなどのファイルを、`setheader` で設定できます。言語の既定のヘッダーと、名前付きのヘッダーの2通りがあります。`submit`、`tomain`、`toclip` と CP Toolkit の Java の提出補助が使います。言語の名前には、設定での名前(`java`、`cpp`、`pypy` など)か、言語の種類(`python3` など)を書きます。
 
 ```bash
 # java の既定のヘッダー。--header を付けなければこれを使う

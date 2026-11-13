@@ -30,7 +30,7 @@ function runStatusLabel(status: string): string {
 export class RunCommand implements Command {
 	readonly name = "run";
 	readonly usageLines = [
-		"  run [-d|--debug[=true|false]] [--time-limit=N] <sourceFile> [inputFile]",
+		"  run [-d|--debug[=true|false]] [--lang=<name>] [--time-limit=N] <sourceFile> [inputFile]",
 		"                                          (run once and show the output; inputFile is optional; DEBUG is on by default)",
 	];
 
@@ -38,7 +38,13 @@ export class RunCommand implements Command {
 		const positionals: string[] = [];
 		let debug = true; // 既定で DEBUG 有効。-d/--debug で上書き。
 		let timeLimitMs: number | undefined;
+		let lang: string | undefined;
 		for (const arg of args) {
+			const l = options.parseLangFlag(arg);
+			if (l !== undefined) {
+				lang = l;
+				continue;
+			}
 			const d = options.parseBoolFlag(arg, "--debug", "-d");
 			if (d !== undefined) {
 				debug = d;
@@ -55,20 +61,18 @@ export class RunCommand implements Command {
 		const [sourceFilePath, inputFile] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {transformed, originalFileName, originalClassName, programId} = await source.prepareSource(
-			sourceFilePath,
-			debug,
-			{compile: true, validate: false},
-		);
+		const {program, restoreNames} = await source.prepareSource(sourceFilePath, debug, {compile: true, validate: false, lang});
+		if (!program) throw new Error("Local Runner did not return a prepared program.");
 		const stdin = inputFile
 			? shared.normalizeNewlines(fs.readFileSync(path.resolve(inputFile), "utf8"))
 			: "";
-		const result = await sampleJudge.postLocalRunner(transformed, stdin, programId);
+		const result = await sampleJudge.postLocalRunner(program, stdin);
 
 		// ステータスは「OK / RE / CE / TLE / IE」に集約。OK=緑、エラー=色付き。遅い実行は time が黄色。
 		const label = runStatusLabel(result.status);
 		const coloredLabel = label === "OK" && color.supportsCliColor() ? `${color.ANSI.GREEN}OK${color.ANSI.RESET}` : color.colorizeStatus(label);
-		console.log(`[run] ${coloredLabel}  time=${formatter.formatExecTime(result.time || 0, formatter.thresholdsFromTimeLimit(timeLimitMs))}`);
+		const memory = (result.peakMemory ?? 0) > 0 ? `  mem=${result.peakMemory}KB` : "";
+		console.log(`[run] ${coloredLabel}  time=${formatter.formatExecTime(result.time || 0, formatter.thresholdsFromTimeLimit(timeLimitMs))}${memory}`);
 
 		// 標準出力は既定色（白）。
 		const stdout = (result.stdout || "").replace(/\s+$/, "");
@@ -79,10 +83,7 @@ export class RunCommand implements Command {
 		const stderr = (result.stderr || "").trim();
 		if (stderr.length > 0) {
 			console.log("[stderr]");
-			const display = originalClassName
-				? stderr.replace(/Main\.java/g, originalFileName).replace(/\bMain\b/g, originalClassName)
-				: stderr;
-			const body = display.split(/\r?\n/).map((line) => `  ${line}`).join("\n");
+			const body = restoreNames(stderr).split(/\r?\n/).map((line) => `  ${line}`).join("\n");
 			console.log(color.supportsCliColor() ? `${color.ANSI.RED}${body}${color.ANSI.RESET}` : body);
 		}
 		return result.exitCode === 0 ? 0 : 1;

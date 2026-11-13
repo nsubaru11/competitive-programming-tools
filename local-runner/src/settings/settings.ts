@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import schema from "../../settings.schema.json";
 import defaults from "./defaults.json";
-import {isPlainObject, type SchemaNode, validateAgainstSchema} from "./schema";
+import {isPlainObject, joinSettingName, type SchemaNode, validateAgainstSchema} from "./schema";
 
 /** 常駐する JVM で動かす Java。 */
 export type JavaLanguageSettings = {
@@ -25,6 +25,8 @@ export type CommandLanguageSettings = {
 	family: string;
 	name: string;
 	match?: string[];
+	/** AtCoder の提出フォームの言語名に含まれる文字列。 */
+	submit?: string;
 	command: string;
 	sourceFile: string;
 	compile?: string[];
@@ -51,6 +53,8 @@ export type Settings = {
 		outputLimitMb: number;
 	};
 	languages: {java: JavaLanguageSettings} & Record<string, JavaLanguageSettings | CommandLanguageSettings>;
+	/** ソースの拡張子から言語を選ぶ対応。 */
+	extensions: Record<string, string>;
 	headers: Record<string, string>;
 	atcoder: {
 		sessionFile: string;
@@ -181,6 +185,11 @@ function assertCompleteLanguages(settings: Settings, file: string): void {
 			errors.push(`languages.${name}.setup: needs "compile"`);
 		}
 	}
+	for (const [extension, name] of Object.entries(settings.extensions)) {
+		if (!Object.hasOwn(settings.languages, name)) {
+			errors.push(`${joinSettingName("extensions", extension)}: unknown language "${name}"`);
+		}
+	}
 	if (errors.length > 0) {
 		throw new SettingsError(`Invalid settings in ${file}:\n${errors.map((line) => `  ${line}`).join("\n")}`);
 	}
@@ -201,7 +210,7 @@ export function describeSettings(settings: Settings): Array<{name: string; value
 		if (isPlainObject(value) && Object.keys(value).length > 0) {
 			for (const [key, item] of Object.entries(value)) {
 				const baseItem = isPlainObject(base) && Object.hasOwn(base, key) ? base[key] : undefined;
-				visit(item, baseItem, name ? `${name}.${key}` : key);
+				visit(item, baseItem, joinSettingName(name, key));
 			}
 			return;
 		}

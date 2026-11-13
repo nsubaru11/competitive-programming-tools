@@ -86,7 +86,7 @@ describe("loadSettings", () => {
 		}
 		expect(message).toContain("server.prot: unknown setting");
 		expect(message).toContain("server.port: must be an integer");
-		expect(message).toContain("headers.bad name: the name must match");
+		expect(message).toContain('headers["bad name"]: the name must match');
 		expect(message).toContain("run.timeoutMs: must be 100 or more");
 	});
 
@@ -160,6 +160,20 @@ describe("languages", () => {
 	});
 });
 
+describe("extensions", () => {
+	test("拡張子ごとの言語を上書きし、足せる", () => {
+		writeRaw({extensions: {".py": "pypy", ".cc": "cpp"}});
+		expect(loadSettings(file).extensions).toEqual({...DEFAULT_SETTINGS.extensions, ".py": "pypy", ".cc": "cpp"});
+	});
+
+	test("拡張子の形と、言語の名前を検査する", () => {
+		writeRaw({extensions: {py: "pypy"}});
+		expect(() => loadSettings(file)).toThrow("extensions.py: the name must match");
+		writeRaw({extensions: {".rb": "ruby"}});
+		expect(() => loadSettings(file)).toThrow('extensions[".rb"]: unknown language "ruby"');
+	});
+});
+
 describe("以前の形式の設定ファイル", () => {
 	test("今の形式へ書き換え、元のファイルを .bak に残す", () => {
 		const legacy = {librarySourceRoot: "C:\\library\\src", headerFiles: {java: "C:\\header\\java.txt"}};
@@ -219,6 +233,7 @@ describe("describeSettings", () => {
 		});
 		expect(rows.find(({name}) => name === "headers.java")?.changed).toBe(true);
 		expect(rows.find(({name}) => name === "server.extraOrigins")?.value).toBe("[]");
+		expect(rows.find(({name}) => name === 'extensions[".py"]')?.value).toBe('"cpython"');
 	});
 });
 

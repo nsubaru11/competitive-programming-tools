@@ -33,6 +33,12 @@ function describeType(type: string): string {
 	return /^[aeio]/.test(type) ? `an ${type}` : `a ${type}`;
 }
 
+/** 項目の名前をつなぐ。`.` を含む名前(拡張子など)は、区切りと紛れないよう角かっこで書く。 */
+export function joinSettingName(parent: string, key: string): string {
+	if (!/^[\w$-]+$/.test(key)) return `${parent}[${JSON.stringify(key)}]`;
+	return parent ? `${parent}.${key}` : key;
+}
+
 /** 値をスキーマと照合し、合わない点を「項目の名前: 理由」の形で返す。合っていれば空にする。 */
 export function validateAgainstSchema(value: unknown, schema: SchemaNode, name = ""): string[] {
 	const label = name || "(settings)";
@@ -59,7 +65,7 @@ export function validateAgainstSchema(value: unknown, schema: SchemaNode, name =
 	if (isPlainObject(value)) {
 		const keyPattern = schema.propertyNames === undefined ? null : new RegExp(schema.propertyNames.pattern);
 		for (const [key, item] of Object.entries(value)) {
-			const childName = name ? `${name}.${key}` : key;
+			const childName = joinSettingName(name, key);
 			const child = schema.properties?.[key];
 			if (child !== undefined) {
 				errors.push(...validateAgainstSchema(item, child, childName));

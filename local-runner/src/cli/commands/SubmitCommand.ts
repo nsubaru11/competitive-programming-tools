@@ -7,7 +7,7 @@ import {TaskCommand, type TaskRunContext} from "./TaskCommand";
 export class SubmitCommand extends TaskCommand {
 	readonly name = "submit";
 	readonly usageLines = [
-		"  submit [-f|--force] [--no-header|--header=<name>] [--full] [--wa-only] [--max-lines=N] <taskScreenName> <sourceFile>",
+		"  submit [-f|--force] [--lang=<name>] [--no-header|--header=<name>] [--full] [--wa-only] [--max-lines=N] <taskScreenName> <sourceFile>",
 		"  submit [...options] <task>              (short form, e.g. submit d)",
 	];
 	protected readonly allowForce = true;
@@ -16,7 +16,7 @@ export class SubmitCommand extends TaskCommand {
 	protected readonly supportsDisplayOptions = true;
 	protected readonly supportsHeaderOption = true;
 
-	protected async onSamplesComplete({task, transformed, allAccepted, force}: TaskRunContext): Promise<number> {
+	protected async onSamplesComplete({task, language, transformed, allAccepted, force}: TaskRunContext): Promise<number> {
 		if (!allAccepted) {
 			if (!force) {
 				console.log("Not submitting because at least one sample test is not AC.");
@@ -26,7 +26,7 @@ export class SubmitCommand extends TaskCommand {
 		}
 
 		const cookieHeader = atcoder.toCookieHeader();
-		const submitResult = await atcoder.submitToAtCoder(task, transformed, cookieHeader);
+		const submitResult = await atcoder.submitToAtCoder(task, transformed, cookieHeader, language);
 
 		let submissionId = submitResult.submissionId;
 		let submissionUrl = submitResult.submissionUrl;

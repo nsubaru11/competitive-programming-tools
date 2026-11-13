@@ -1,8 +1,9 @@
-import fs from "node:fs";
 import path from "node:path";
 import type {LocalRunnerHeaderOption} from "@atcoder-tools/shared";
+import {SETTINGS} from "../../config";
 import type {Task} from "../../types";
 import * as atcoder from "../atcoder";
+import {findShortSource, type SourceLanguage} from "../language";
 import * as parser from "../parser";
 import * as taskUtils from "../task";
 import * as sampleJudge from "../sampleJudge";
@@ -11,7 +12,7 @@ import {CliUsageError, type Command} from "./Command";
 import * as options from "./options";
 import * as source from "./source";
 
-// 短縮タスク指定（例: d, e, ex, d1）。AtCoder の問題記号は A〜H と Ex のみ。末尾の数字はファイル変種（D1.java 等）。
+// 短縮タスク指定（例: d, e, ex, d1）。AtCoder の問題記号は A〜H と Ex のみ。末尾の数字はファイル変種（D1.java、D1.cpp 等）。
 const SHORT_TASK_PATTERN = /^(ex|[a-z])\d*$/i;
 // 通常は問題IDの接頭辞にもなるコンテスト名（例: ABC463, typical90）。
 const CONVENTIONAL_CONTEST_DIR_PATTERN = /^[A-Za-z]+\d+$/;
@@ -41,7 +42,7 @@ export function detectContestId(startDir: string): string {
 	}
 	throw new Error(
 		`Could not find the contest name from the folders (no contest folder above src).\n` +
-		`  Use the full form: test <contestId>_<task> <File.java>`,
+		`  Use the full form: test <contestId>_<task> <sourceFile>`,
 	);
 }
 
@@ -51,24 +52,12 @@ export function resolveShortTask(contestId: string, taskLetter: string): Task {
 	return taskUtils.createTask(contestId, `${taskPrefix}_${taskLetter}`);
 }
 
-/** cwd 内で <token>.java を大小無視で探し、実ファイル名（絶対パス）を返す。無ければ大文字版（相対）を返す。 */
-function resolveShortSourceFile(token: string, cwd: string): string {
-	const wanted = `${token}.java`.toLowerCase();
-	try {
-		const hit = fs.readdirSync(cwd).find((name) => name.toLowerCase() === wanted);
-		if (hit) return path.join(cwd, hit);
-	} catch {
-		// ディレクトリ読み取り失敗時はフォールバックへ
-	}
-	return `${token.toUpperCase()}.java`;
-}
-
-/** 短縮指定（d, ex, d1など）から、現在ディレクトリ内のJavaソースを解決する。 */
-export function resolveShortSourceArg(token: string): string {
+/** 短縮指定（d, ex, d1など）から、現在ディレクトリ内のソースを解決する。拡張子は設定の extensions から探す。 */
+export function resolveShortSourceArg(token: string, lang?: string): string {
 	if (!SHORT_TASK_PATTERN.test(token)) {
 		throw new Error(`Invalid short task: "${token}" (e.g. d, e, ex, d1).`);
 	}
-	return resolveShortSourceFile(token, process.cwd());
+	return findShortSource(SETTINGS, token, process.cwd(), lang);
 }
 
 /**
@@ -76,9 +65,9 @@ export function resolveShortSourceArg(token: string): string {
  * - コンテストID: 原則として cwd から上の階層にある src の親フォルダ名を小文字化。
  * - 問題ID: 通常はコンテストIDと記号を連結。並行開催コンテストは固定対応した接頭辞を使う。
  * - タスク記号: 末尾の数字を除いた英字部分（"d1" → "d"）。サンプル取得・提出はこの記号で行う。
- * - ソースファイル: 入力どおりのトークン（数字込み）で cwd 内を大小無視検索（"d" → D.java, "d1" → D1.java）。
+ * - ソースファイル: 入力どおりのトークン（数字込み）で cwd 内を大小無視検索（"d" → D.java や D.cpp, "d1" → D1.java）。
  */
-export function expandShortTaskArg(token: string): {task: Task; sourceFilePath: string} {
+export function expandShortTaskArg(token: string, lang?: string): {task: Task; sourceFilePath: string} {
 	if (!SHORT_TASK_PATTERN.test(token)) {
 		throw new Error(`Invalid short task: "${token}" (e.g. d, e, ex, d1). The full form takes two arguments.`);
 	}
@@ -87,7 +76,7 @@ export function expandShortTaskArg(token: string): {task: Task; sourceFilePath: 
 	const taskLetter = token.replace(/\d+$/, "").toLowerCase(); // 問題記号（末尾の数字は落とす）
 	return {
 		task: resolveShortTask(contestId, taskLetter),
-		sourceFilePath: resolveShortSourceFile(token, cwd),
+		sourceFilePath: findShortSource(SETTINGS, token, cwd, lang),
 	};
 }
 
@@ -108,6 +97,7 @@ async function getSamplesWithCache(task: Task, cookieHeader: string): Promise<sa
 /** サンプル実行を終えた時点で onSamplesComplete に渡すコンテキスト。 */
 export type TaskRunContext = {
 	task: Task;
+	language: SourceLanguage;
 	transformed: string;
 	allAccepted: boolean;
 	force: boolean;
@@ -133,12 +123,13 @@ export abstract class TaskCommand implements Command {
 	protected readonly supportsHeaderOption: boolean = false;
 
 	async execute(args: readonly string[]): Promise<number> {
-		const {task, sourceFilePath, force, debug, header, display} = this.validate(args);
-		const {transformed, originalFileName, originalClassName, programId} = await source.prepareSource(
+		const {task, sourceFilePath, force, debug, header, display, lang} = this.validate(args);
+		const {transformed, language, program, restoreNames} = await source.prepareSource(
 			sourceFilePath,
 			debug,
-			{compile: true, validate: false, header},
+			{compile: true, validate: false, header, lang},
 		);
+		if (!program) throw new Error("Local Runner did not return a prepared program.");
 
 		const cookieHeader = atcoder.toCookieHeader();
 		const {samples, timeLimitMs} = await getSamplesWithCache(task, cookieHeader);
@@ -147,16 +138,9 @@ export abstract class TaskCommand implements Command {
 			display.timeLimitMs = timeLimitMs;
 			console.log(`Time limit: ${timeLimitMs}ms`);
 		}
-		const allAccepted = await sampleJudge.runAndReportSamples(
-			transformed,
-			samples,
-			originalClassName,
-			originalFileName,
-			display,
-			programId,
-		);
+		const allAccepted = await sampleJudge.runAndReportSamples(program, samples, restoreNames, display);
 
-		return this.onSamplesComplete({task, transformed, allAccepted, force});
+		return this.onSamplesComplete({task, language, transformed, allAccepted, force});
 	}
 
 	/** サンプル実行後の処理。終了コードを返す。 */
@@ -170,13 +154,20 @@ export abstract class TaskCommand implements Command {
 		debug: boolean;
 		header: LocalRunnerHeaderOption;
 		display: sampleJudge.SampleDisplayOptions;
+		lang: string | undefined;
 	} {
 		const positionals: string[] = [];
 		let force = false;
 		let debug = this.debug; // 既定値。-d/--debug があれば上書き。
 		let header: LocalRunnerHeaderOption = this.supportsHeaderOption;
 		const display: sampleJudge.SampleDisplayOptions = {};
+		let lang: string | undefined;
 		for (const arg of args) {
+			const l = options.parseLangFlag(arg);
+			if (l !== undefined) {
+				lang = l;
+				continue;
+			}
 			if (arg === "-f" || arg === "--force") {
 				// test は提出しないので force を受け付けない。
 				if (!this.allowForce) {
@@ -208,7 +199,7 @@ export abstract class TaskCommand implements Command {
 		let sourceFilePath: string | undefined;
 		if (positionals.length === 1) {
 			// 短縮表記: test d → フォルダからコンテストを推定し test abc463_d D.java 相当へ展開
-			({task, sourceFilePath} = expandShortTaskArg(positionals[0]));
+			({task, sourceFilePath} = expandShortTaskArg(positionals[0], lang));
 		} else {
 			let taskScreenName: string | undefined;
 			[taskScreenName, sourceFilePath] = positionals;
@@ -217,6 +208,6 @@ export abstract class TaskCommand implements Command {
 		if (!task || !sourceFilePath) {
 			throw new CliUsageError();
 		}
-		return {task, sourceFilePath, force, debug, header, display};
+		return {task, sourceFilePath, force, debug, header, display, lang};
 	}
 }

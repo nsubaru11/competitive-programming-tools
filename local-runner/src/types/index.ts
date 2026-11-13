@@ -38,7 +38,10 @@ export type SampleResult = {
 	index: number;
 	status: string;
 	execTime: number;
+	/** Java が実行中に確保したメモリの合計(KB)。 */
 	memoryKb: number;
+	/** プロセスが同時に使ったメモリの最大値(KB)。プロセスとして実行する言語だけが返す。 */
+	peakMemoryKb: number;
 	runnerStatus: string;
 	exitCode: number;
 	stdoutTruncated: boolean;

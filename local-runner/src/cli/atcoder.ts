@@ -4,6 +4,7 @@ import path from "node:path";
 import type {SubmissionFinalResult, SubmitResult, Task} from "../types";
 import {CLI_CONFIG, resolveConfiguredPath, SETTINGS} from "../config";
 import * as color from "../utils/color";
+import type {SourceLanguage} from "./language";
 import * as parser from "./parser";
 
 /** 提出一覧と提出状況の確認は短い間隔で繰り返すので、429 のときは取り直す。 */
@@ -117,26 +118,23 @@ async function postSubmitWithRetry(url: string, headers: Record<string, string>,
 	throw new Error("Unreachable submit retry state.");
 }
 
-export async function submitToAtCoder(task: Task, sourceCode: string, cookieHeader: string): Promise<SubmitResult> {
+export async function submitToAtCoder(
+	task: Task,
+	sourceCode: string,
+	cookieHeader: string,
+	language: SourceLanguage,
+): Promise<SubmitResult> {
 	if (!cookieHeader) {
 		throw new Error(AUTH_ERROR_MESSAGE);
 	}
 	const submitPage = await httpGetText(task.submitUrl, cookieHeader);
 	const csrfToken = parser.extractCsrfToken(submitPage);
 	const submitForm = parser.extractSubmitForm(submitPage, task);
-	const fixedLanguageId = CLI_CONFIG.defaultLanguageId;
-	const submitPageJavaLanguageId = parser.chooseJavaLanguageIdFromOptions(
-		parser.extractLanguageOptionsFromSubmitPage(submitPage),
+	const languageCandidates = parser.chooseSubmitLanguageIds(
+		parser.extractLanguageOptionsFromSubmitPage(submitPage, task.taskScreenName),
+		language,
+		CLI_CONFIG.defaultLanguageId,
 	);
-	const languageCandidates: string[] = [];
-	for (const candidate of [fixedLanguageId, submitPageJavaLanguageId]) {
-		if (!candidate) continue;
-		if (languageCandidates.includes(candidate)) continue;
-		languageCandidates.push(candidate);
-	}
-	if (!languageCandidates.length) {
-		throw new Error("Java language ID was not found on submit page.");
-	}
 	let previousSubmissionId = "";
 	let canTrackByDiff = true;
 	try {

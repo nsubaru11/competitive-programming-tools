@@ -8,7 +8,7 @@ import * as source from "./source";
 export class LocalTestCommand implements Command {
 	readonly name = "localtest";
 	readonly usageLines = [
-		"  localtest [-d|--debug[=true|false]] [--full] [--wa-only] [--max-lines=N] [--time-limit=N] <sourceFile> [testDir]",
+		"  localtest [-d|--debug[=true|false]] [--lang=<name>] [--full] [--wa-only] [--max-lines=N] [--time-limit=N] <sourceFile> [testDir]",
 		"                                          (run local .in/.out samples; DEBUG is on by default)",
 	];
 
@@ -16,7 +16,13 @@ export class LocalTestCommand implements Command {
 		const positionals: string[] = [];
 		let debug = true; // 既定で DEBUG 有効。-d/--debug で上書き。
 		const display: sampleJudge.SampleDisplayOptions = {};
+		let lang: string | undefined;
 		for (const arg of args) {
+			const l = options.parseLangFlag(arg);
+			if (l !== undefined) {
+				lang = l;
+				continue;
+			}
 			const d = options.parseBoolFlag(arg, "--debug", "-d");
 			if (d !== undefined) {
 				debug = d;
@@ -29,22 +35,14 @@ export class LocalTestCommand implements Command {
 		const [sourceFilePath, testDir] = positionals;
 		if (!sourceFilePath) throw new CliUsageError();
 
-		const {
-			resolvedSourcePath,
-			transformed,
-			originalFileName,
-			originalClassName,
-			programId,
-		} = await source.prepareSource(sourceFilePath, debug, {compile: true, validate: false});
-		const samples = localSamples.loadLocalSamples(resolvedSourcePath, testDir);
-		const allAccepted = await sampleJudge.runAndReportSamples(
-			transformed,
-			samples,
-			originalClassName,
-			originalFileName,
-			display,
-			programId,
+		const {resolvedSourcePath, program, restoreNames} = await source.prepareSource(
+			sourceFilePath,
+			debug,
+			{compile: true, validate: false, lang},
 		);
+		if (!program) throw new Error("Local Runner did not return a prepared program.");
+		const samples = localSamples.loadLocalSamples(resolvedSourcePath, testDir);
+		const allAccepted = await sampleJudge.runAndReportSamples(program, samples, restoreNames, display);
 		return allAccepted ? 0 : 5;
 	}
 }
