@@ -136,6 +136,12 @@ bun run typecheck:runner
 bun run test:runner
 ```
 
+プロセスの起動と計測のテスト(`commandEngine.test.ts`)は Linux の機能を使うので、Windows では実行されません。この部分を変更したら、WSL でも実行します。PATH に `python3` と `cc` が必要です。
+
+```bash
+bun run --cwd local-runner test:unit
+```
+
 ## 関連する文書
 
 - [../README.md](../README.md)
