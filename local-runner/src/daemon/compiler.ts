@@ -5,6 +5,7 @@ import path from "node:path";
 import type {LocalRunnerRunResponse} from "@atcoder-tools/shared";
 import type {CompileEntry, ProcessResult} from "../types";
 import * as config from "../config";
+import * as formatter from "../utils/formatter";
 import * as logging from "../utils/logging";
 import * as filesystem from "../utils/filesystem";
 import {isPathLike} from "../settings/settings";
@@ -277,6 +278,7 @@ async function compileSource(sourceCode: string, hash: string): Promise<CompileE
 	if (fs.existsSync(sourceFile) && fs.existsSync(classFile)) {
 		const existingSource = fs.readFileSync(sourceFile, "utf8");
 		if (existingSource === sourceCode) {
+			logging.logInfo(formatter.formatCompileSummary("java", "CACHED", hash));
 			return {
 				rootDir,
 				classDir,
@@ -302,7 +304,7 @@ async function compileSource(sourceCode: string, hash: string): Promise<CompileE
 	const compileTime = Date.now() - compileStart;
 
 	if (compiled) {
-		logging.logInfo(`[Compile] OK ${compileTime}ms -> ${shortHash(hash)}`);
+		logging.logInfo(formatter.formatCompileSummary("java", "OK", hash, compileTime));
 		writeIsolationMarker(rootDir, requiresIsolation);
 		return {
 			rootDir,
@@ -314,7 +316,7 @@ async function compileSource(sourceCode: string, hash: string): Promise<CompileE
 		};
 	}
 
-	logging.logWarn(`[Compile] NG ${compileTime}ms -> ${shortHash(hash)}`);
+	logging.logWarn(formatter.formatCompileSummary("java", "NG", hash, compileTime));
 	return {
 		rootDir,
 		classDir,
@@ -335,6 +337,7 @@ export function getCompileCacheSize() {
 export function getCompiledEntry(sourceCode: string) {
 	const hash = hashCode(sourceCode);
 	if (compileCache.has(hash)) {
+		logging.logInfo(formatter.formatCompileSummary("java", "CACHED", hash));
 		return compileCache.get(hash)!;
 	}
 	const entryPromise = compileSource(sourceCode, hash);
@@ -387,9 +390,4 @@ export async function runCodeInIsolatedJvm(entry: CompileEntry, standardInput: s
 		stderrTruncated: result.stderrTruncated,
 		memory: 0,
 	};
-}
-
-function shortHash(hash: string) {
-	if (!hash) return "";
-	return hash.length <= 16 ? hash : `${hash.slice(0, 16)}...`;
 }

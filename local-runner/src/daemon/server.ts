@@ -121,7 +121,7 @@ async function runCommandProgram(programId: string, stdin: string): Promise<Loca
 	if (outcome === null) return null;
 	const response = toRunResponse(outcome);
 	const logger = response.status === "success" ? logging.logInfo : logging.logWarn;
-	logger(formatter.formatRunSummary(response, 0, Date.now() - started, "process"));
+	logger(formatter.formatRunSummary(response, 0, Date.now() - started, "process", outcome.language));
 	return response;
 }
 
@@ -256,7 +256,7 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 			stderrTruncated: false,
 			memory: 0,
 		};
-		logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "compile"));
+		logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "compile", "java"));
 		return response;
 	}
 
@@ -264,7 +264,7 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 		logging.logInfo("[Run] Falling back to isolated JVM mode due to FileDescriptor/System.exit/Runtime.halt usage.");
 		const result = await compiler.runCodeInIsolatedJvm(entry, stdin || "");
 		const totalTime = Date.now() - overallStart;
-		logging.logInfo(formatter.formatRunSummary(result, waitTime, totalTime, "isolated"));
+		logging.logInfo(formatter.formatRunSummary(result, waitTime, totalTime, "isolated", "java"));
 		return result;
 	}
 
@@ -281,7 +281,7 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 				stderrTruncated: false,
 				memory: 0,
 			};
-			logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon"));
+			logging.logWarn(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon", "java"));
 			return response;
 		}
 		const totalTime = Date.now() - overallStart;
@@ -302,7 +302,7 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 			memory: result.memory && result.memory > 0 ? Math.round(result.memory / 1024) : 0,
 		};
 		const logger = response.status === "success" ? logging.logInfo : logging.logWarn;
-		logger(formatter.formatRunSummary(response, waitTime, totalTime, "daemon"));
+		logger(formatter.formatRunSummary(response, waitTime, totalTime, "daemon", "java"));
 		return response;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
@@ -317,7 +317,7 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 			stderrTruncated: false,
 			memory: 0,
 		};
-		logging.logError(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon"));
+		logging.logError(formatter.formatRunSummary(response, waitTime, Date.now() - overallStart, "daemon", "java"));
 		return response;
 	}
 }

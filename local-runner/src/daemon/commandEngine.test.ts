@@ -124,6 +124,34 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		expect(engine.size).toBe(1);
 	});
 
+	test("起動し直したあとも、残っているコンパイルの結果を使い回す", async () => {
+		const source = "print('restart')\n";
+		const first = await createEngine().prepare(pythonLanguage, source, true);
+		logs.length = 0;
+		// 新しいエンジンは、サーバーを起動し直した状態にあたる。
+		const restarted = createEngine();
+		const second = await restarted.prepare(pythonLanguage, source, true);
+		expect(second).toEqual(first);
+		expect(logs.filter((line) => line.startsWith("[Compile]"))).toEqual([
+			expect.stringMatching(/^\[Compile\] Lang=cpython Status=CACHED Id=/),
+		]);
+		if (second.status !== "success") return;
+		expect((await restarted.run(second.programId, ""))?.stdout).toBe("restart\n");
+	});
+
+	test("コンパイルの記録は、言語、結果、時間、ID を同じ形で残す", async () => {
+		logs.length = 0;
+		const engine = createEngine();
+		await engine.prepare(pythonLanguage, "print('log')\n", true);
+		await engine.prepare(pythonLanguage, "print('log')\n", true);
+		await engine.prepare(pythonLanguage, "def broken(:\n", true);
+		expect(logs).toEqual([
+			expect.stringMatching(/^\[Compile\] Lang=cpython Status=OK Time=\d+ms Id=[0-9a-f]+-[0-9a-f]{14}\.\.\.$/),
+			expect.stringMatching(/^\[Compile\] Lang=cpython Status=CACHED Id=/),
+			expect.stringMatching(/^\[Compile\] Lang=cpython Status=NG Time=\d+ms Id=/),
+		]);
+	});
+
 	test("コンパイルエラーは、作業フォルダの場所を含まないメッセージで返す", async () => {
 		const prepared = await createEngine().prepare(pythonLanguage, "def f(:\n\tpass\n", true);
 		expect(prepared.status).toBe("compileError");

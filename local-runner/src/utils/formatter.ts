@@ -14,6 +14,15 @@ export function formatExecTime(timeMs: number, thresholds: ExecTimeThresholds = 
 	return text;
 }
 
+/**
+ * コンパイルの記録を1行にする。言語によらず同じ形にして、ログを並べて読めるようにする。
+ * CACHED は、同じソースのコンパイル結果を使い回したことを表す。
+ */
+export function formatCompileSummary(language: string, result: "OK" | "NG" | "CACHED", programId: string, timeMs?: number) {
+	const shortId = programId.length <= 16 ? programId : `${programId.slice(0, 16)}...`;
+	return `[Compile] Lang=${language} Status=${result}${timeMs === undefined ? "" : ` Time=${timeMs}ms`} Id=${shortId}`;
+}
+
 export function formatRunSummary(result: {
 	status: string;
 	time?: number;
@@ -23,10 +32,11 @@ export function formatRunSummary(result: {
 	stdoutTruncated?: boolean;
 	stderrTruncated?: boolean;
 	stderr?: string;
-}, waitMs: number, totalMs: number, modeTag: string) {
+}, waitMs: number, totalMs: number, modeTag: string, language: string) {
 	const status = toRunLabel(result.status);
 	const parts = [
 		`[Run]`,
+		`Lang=${language}`,
 		`Mode=${modeTag}`,
 		`Status=${color.colorizeStatus(status, "runner")}`,
 		`Wait=${waitMs}ms`,

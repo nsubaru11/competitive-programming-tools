@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {formatCompileSummary} from "../utils/formatter";
 import {ensureHeaderUnit} from "./headerUnit";
 import {type ProcessOutcome, runCommand, runMeasured} from "./processRunner";
 
@@ -48,6 +49,12 @@ type Program = {
 	readonly dir: string;
 	readonly result: PrepareResult;
 };
+
+/** 実行の結果と、そのプログラムの言語の名前。 */
+export type RunOutcome = ProcessOutcome & {readonly language: string};
+
+/** コンパイルに成功した作業フォルダに置く印。サーバーを起動し直したあとも、この印があれば使い回す。 */
+const COMPILED_MARKER = ".compiled";
 
 type Placeholders = {
 	readonly command: string;
@@ -137,7 +144,9 @@ export class CommandEngine {
 		const compileTemplate = this.compileTemplate(language, debug);
 		const programId = this.programId(language, compileTemplate, transformed.sourceCode);
 		let program = this.programs.get(programId);
-		if (!program) {
+		if (program) {
+			this.options.log(formatCompileSummary(language.name, "CACHED", programId));
+		} else {
 			program = this.compile(language, compileTemplate, programId, transformed.sourceCode);
 			this.programs.set(programId, program);
 			// 作業フォルダを作れないなどで失敗した結果は残さず、次の要求でやり直す。
@@ -151,7 +160,7 @@ export class CommandEngine {
 	}
 
 	/** コンパイル済みのプログラムを実行する。programId を知らなければ null を返す。 */
-	async run(programId: string, stdin: string): Promise<ProcessOutcome | null> {
+	async run(programId: string, stdin: string): Promise<RunOutcome | null> {
 		const pending = this.programs.get(programId);
 		if (!pending) return null;
 		const program = await pending;
@@ -159,7 +168,7 @@ export class CommandEngine {
 		// 同時に動かすと時間の測定がぶれるので、1つずつ実行する。
 		const outcome = this.runQueue.catch(() => null).then(() => this.execute(program, stdin));
 		this.runQueue = outcome;
-		return outcome;
+		return {...await outcome, language: program.language.name};
 	}
 
 	/** デバッグありの設定で header unit を先に作っておく。失敗しても、最初のコンパイルが遅くなるだけ。 */
@@ -167,8 +176,8 @@ export class CommandEngine {
 		if (!language.headerUnit) return;
 		const started = Date.now();
 		ensureHeaderUnit(this.compileTemplate(language, true) ?? [], this.options.headerUnitCacheDir)
-			.then(() => this.options.log(`[${language.name}] header unit is ready (${Date.now() - started}ms)`))
-			.catch((error: unknown) => this.options.log(`[${language.name}] header unit was not built: ${(error as Error).message}`));
+			.then(() => this.options.log(`[Setup] Lang=${language.name} Status=OK Time=${Date.now() - started}ms header unit`))
+			.catch((error: unknown) => this.options.log(`[Setup] Lang=${language.name} Status=NG header unit: ${(error as Error).message}`));
 	}
 
 	/** デバッグの有無を反映した、コンパイルの引数のひな形。{command} だけを先に置き換える。 */
@@ -202,18 +211,26 @@ export class CommandEngine {
 		sourceCode: string,
 	): Promise<Program> {
 		const dir = path.join(this.ensureRootDir(), programId);
+		const sourceFile = path.join(dir, language.sourceFile);
+		const success: Program = {language, dir, result: {status: "success", programId, sourceCode}};
+		if (this.isCompiledOnDisk(dir, sourceFile, sourceCode)) {
+			this.options.log(formatCompileSummary(language.name, "CACHED", programId));
+			return success;
+		}
 		fs.rmSync(dir, {recursive: true, force: true});
 		fs.mkdirSync(dir, {recursive: true});
-		fs.writeFileSync(path.join(dir, language.sourceFile), sourceCode, "utf8");
-		const success: Program = {language, dir, result: {status: "success", programId, sourceCode}};
-		if (compileTemplate === null) return success;
+		fs.writeFileSync(sourceFile, sourceCode, "utf8");
+		if (compileTemplate === null) {
+			fs.writeFileSync(path.join(dir, COMPILED_MARKER), "");
+			return success;
+		}
 
 		const compileArguments = expandArguments(compileTemplate, this.placeholders(language, dir));
 		if (language.headerUnit) {
 			try {
 				compileArguments.splice(1, 0, ...await ensureHeaderUnit(compileTemplate, this.options.headerUnitCacheDir));
 			} catch (error) {
-				this.options.log(`[${language.name}] compiling without a header unit: ${(error as Error).message}`);
+				this.options.log(`[Setup] Lang=${language.name} Status=NG compiling without a header unit: ${(error as Error).message}`);
 			}
 		}
 		const started = Date.now();
@@ -224,12 +241,22 @@ export class CommandEngine {
 		});
 		const elapsed = Date.now() - started;
 		if (outcome.exitCode === 0 && !outcome.timedOut) {
-			this.options.log(`[${language.name}] compile OK ${elapsed}ms`);
+			fs.writeFileSync(path.join(dir, COMPILED_MARKER), "");
+			this.options.log(formatCompileSummary(language.name, "OK", programId, elapsed));
 			return success;
 		}
-		this.options.log(`[${language.name}] compile NG ${elapsed}ms`);
+		this.options.log(formatCompileSummary(language.name, "NG", programId, elapsed));
 		const diagnostics = stripColors(hideDirectory(describeFailure(outcome, "Compilation", this.options.compileTimeoutMs), dir));
 		return {language, dir, result: {status: "compileError", diagnostics, sourceCode}};
+	}
+
+	/** 前回の起動でコンパイルした結果が、同じソースのまま残っているか。 */
+	private isCompiledOnDisk(dir: string, sourceFile: string, sourceCode: string): boolean {
+		try {
+			return fs.existsSync(path.join(dir, COMPILED_MARKER)) && fs.readFileSync(sourceFile, "utf8") === sourceCode;
+		} catch {
+			return false;
+		}
 	}
 
 	private async execute({language, dir}: Program, stdin: string): Promise<ProcessOutcome> {
