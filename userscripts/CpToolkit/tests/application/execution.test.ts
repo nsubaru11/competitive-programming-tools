@@ -14,7 +14,6 @@ import {FakeHttpClient, MemoryStore} from "../support/fakes";
 const JSON_OK = (body: unknown) => ({status: 200, text: JSON.stringify(body)});
 
 describe("LocalRunnerClient", () => {
-	const success = {status: "success", programId: "p1", sourceCode: "", diagnostics: ""};
 	const output = {status: "success", exitCode: 0, stdout: "ok", stderr: "", time: 1, memory: 1};
 
 	test("URL が未設定なら利用できない", () => {
@@ -22,27 +21,29 @@ describe("LocalRunnerClient", () => {
 		expect(client.isAvailable()).toBe(false);
 	});
 
-	test("同じソースはコンパイルし直さない", async () => {
-		const http = new FakeHttpClient(() => JSON_OK(success));
+	test("事前コンパイルは、言語とソースを送るだけで結果を待たない", async () => {
+		const http = new FakeHttpClient(() => JSON_OK({status: "accepted"}));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		await client.prepare("code");
-		await client.prepare("code");
-		expect(http.requests).toHaveLength(1);
-		await client.prepare("other");
-		expect(http.requests).toHaveLength(2);
+		await client.precompile("code", "cpp");
+		expect(JSON.parse(http.requests[0]?.body ?? "{}")).toEqual({
+			mode: "precompile", sourceCode: "code", compilerName: "cpp", debug: true,
+		});
 	});
 
-	test("プログラムが破棄されていたらコンパイルし直す", async () => {
-		const stale = {status: "badRequest", stderr: "Prepared program is unavailable: p1"};
-		let runs = 0;
-		const http = new FakeHttpClient(({body}) => {
-			if (!body?.includes('"run"')) return JSON_OK(success);
-			runs++;
-			return JSON_OK(runs === 1 ? stale : output);
-		});
+	test("実行は1回の要求で、ソースと入力を送る", async () => {
+		const http = new FakeHttpClient(() => JSON_OK(output));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		expect(await client.run("code", "")).toEqual(output as never);
-		expect(runs).toBe(2);
+		expect(await client.run("code", "in", "python3")).toEqual(output as never);
+		expect(http.requests.map(({body}) => JSON.parse(body ?? "{}"))).toEqual([
+			{mode: "run", sourceCode: "code", compilerName: "python3", stdin: "in", debug: true},
+		]);
+	});
+
+	test("言語を指定しなければ送らない", async () => {
+		const http = new FakeHttpClient(() => JSON_OK(output));
+		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
+		await client.run("code", "");
+		expect(JSON.parse(http.requests[0]?.body ?? "{}")).not.toHaveProperty("compilerName");
 	});
 
 	test("サーバーの失敗はそのまま伝える", async () => {
@@ -52,30 +53,10 @@ describe("LocalRunnerClient", () => {
 		expect(http.requests).toHaveLength(1);
 	});
 
-	test("要求に使わない値を送らない", async () => {
-		const http = new FakeHttpClient(() => JSON_OK(success));
+	test("ヘッダーを先に返すサーバーの、先頭に改行の付いた応答を読める", async () => {
+		const http = new FakeHttpClient(() => ({status: 200, text: `\n${JSON.stringify(output)}`}));
 		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		await client.prepare("code");
-		expect(JSON.parse(http.requests[0]?.body ?? "{}")).toEqual({
-			mode: "prepare", sourceCode: "code", debug: true, autoImport: true, validate: false, header: false,
-		});
-	});
-
-	test("コンパイラの識別子を送り、サーバーが言語を選べるようにする", async () => {
-		const http = new FakeHttpClient(() => JSON_OK(success));
-		const client = new LocalRunnerClient(http, () => "http://localhost:8080");
-		await client.run("code", "in", "python3");
-		const bodies = http.requests.map(({body}) => JSON.parse(body ?? "{}"));
-		expect(bodies.map(({
-			mode,
-			compilerName
-		}) => [mode, compilerName])).toEqual([["prepare", "python3"], ["run", "python3"]]);
-	});
-
-	test("コンパイルエラーの内容を返す", async () => {
-		const failed = {status: "compileError", diagnostics: "error", sourceCode: ""};
-		const client = new LocalRunnerClient(new FakeHttpClient(() => JSON_OK(failed)), () => "http://localhost:8080");
-		expect(await client.run("code", "")).toEqual(failed as never);
+		expect(await client.run("code", "")).toEqual(output as never);
 	});
 });
 

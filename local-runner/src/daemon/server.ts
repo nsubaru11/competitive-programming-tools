@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import http from "node:http";
 import os from "node:os";
 import {pathToFileURL} from "node:url";
@@ -11,7 +10,7 @@ import {
 	STALE_PROGRAM_MESSAGE,
 	usesJavaLibrary,
 } from "@atcoder-tools/shared";
-import type {RunnerStatusInfo} from "../types";
+import type {CompileEntry, RunnerStatusInfo} from "../types";
 import * as config from "../config";
 import {legacyEnvironmentWarnings, serverSettingsDigest} from "../settings/settings";
 import * as filesystem from "../utils/filesystem";
@@ -24,16 +23,15 @@ import * as dispatcher from "./dispatcher";
 import {applySubmissionHeader} from "./header";
 import {pruneHeaderUnits} from "./headerUnit";
 import {resolveLanguages, type RunnerLanguage} from "./languages";
-import {ensureLauncher, type ProcessOutcome} from "./processRunner";
+import {PreparationQueue, type PrepareFunction} from "./preparationQueue";
+import {CanceledError, ensureLauncher, type ProcessOutcome} from "./processRunner";
 import {ALLOWED_ORIGIN_HOSTS, isAllowedOrigin} from "./origin";
 
 const serverStartedAt = Date.now();
-const PRECOMPILE_IDLE_DELAY_MS = 150;
+// 覚えておくコンパイルの結果の数。言語ごとの実行環境が持つコンパイル結果の数と揃える。
 const PREPARE_CACHE_MAX = 10;
-let precompileTimer: NodeJS.Timeout | null = null;
-let scheduledPrecompileSource = "";
-let scheduledPrecompileLanguage: RunnerLanguage | null = null;
-const prepareCache = new Map<string, Promise<LocalRunnerPrepareResponse>>();
+// 事前コンパイルと、実行の前のコンパイルは、言語によらず同じ条件で行う。CLI の prepare と同じ条件にして結果を共有する。
+const RUN_PREPARE_OPTIONS = {autoImport: true, validate: false} as const;
 
 const EXTRA_ORIGINS = config.SETTINGS.server.extraOrigins;
 
@@ -69,8 +67,13 @@ async function transformCommandCode(language: CommandLanguage, sourceCode: strin
 		: {...NO_JAVA_TRANSFORM, status: "compileError", sourceCode, diagnostics: result.diagnostics};
 }
 
-async function prepareCommandCode(language: CommandLanguage, sourceCode: string, debug: boolean): Promise<LocalRunnerPrepareResponse> {
-	const result = await commandEngine!.prepare(language, sourceCode, debug);
+async function prepareCommandCode(
+	language: CommandLanguage,
+	sourceCode: string,
+	debug: boolean,
+	signal: AbortSignal,
+): Promise<LocalRunnerPrepareResponse> {
+	const result = await commandEngine!.prepare(language, sourceCode, debug, signal);
 	return result.status === "success"
 		? {...NO_JAVA_TRANSFORM, status: "success", sourceCode: result.sourceCode, diagnostics: "", programId: result.programId}
 		: {...NO_JAVA_TRANSFORM, status: "compileError", sourceCode: result.sourceCode, diagnostics: result.diagnostics};
@@ -125,12 +128,16 @@ async function runCommandProgram(programId: string, stdin: string): Promise<Loca
 	return response;
 }
 
-/** 言語に合った経路でコンパイルまで行う。 */
-function prepareForLanguage(language: RunnerLanguage, sourceCode: string, debug: boolean, autoImport: boolean, validate: boolean) {
+/** 言語に合った経路で、変換とコンパイルを行う。コンパイルの順番待ちの中から呼ばれる。 */
+const prepareInQueue: PrepareFunction = async (name, sourceCode, {debug, autoImport, validate}, signal) => {
+	const language = runnerLanguages.find((candidate) => candidate.name === name);
+	if (!language) throw new Error(`Unknown language: "${name}".`);
 	return language.command === null
-		? prepareCodeCached(sourceCode, debug, autoImport, validate)
-		: prepareCommandCode(language.command, sourceCode, debug);
-}
+		? prepareCode(sourceCode, debug, autoImport, validate, signal)
+		: prepareCommandCode(language.command, sourceCode, debug, signal);
+};
+
+const preparations = new PreparationQueue(prepareInQueue, PREPARE_CACHE_MAX);
 
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
@@ -149,19 +156,17 @@ async function transformCode(sourceCode: string, debug: boolean, autoImport = tr
 	};
 }
 
-function prepareCacheKey(sourceCode: string, debug: boolean, autoImport: boolean, validate: boolean) {
-	const digest = crypto.createHash("md5").update(sourceCode).digest("hex");
-	return `${debug ? 1 : 0}:${autoImport ? 1 : 0}:${validate ? 1 : 0}:${digest}`;
-}
-
+/** Java の変換とコンパイル。常駐 JVM の中の処理は止められないので、中断は区切りごとに確かめる。 */
 async function prepareCode(
 	sourceCode: string,
 	debug: boolean,
-	autoImport = true,
-	validate = false,
+	autoImport: boolean,
+	validate: boolean,
+	signal: AbortSignal,
 ): Promise<LocalRunnerPrepareResponse> {
 	const transformed = await transformCode(sourceCode, debug, autoImport, validate);
 	if (transformed.status !== "success") return transformed;
+	if (signal.aborted) throw new CanceledError();
 
 	const entry = await compiler.getCompiledEntry(transformed.sourceCode);
 	if (entry.status === "error") {
@@ -172,24 +177,6 @@ async function prepareCode(
 		};
 	}
 	return {...transformed, programId: compiler.getProgramId(transformed.sourceCode)};
-}
-
-function prepareCodeCached(sourceCode: string, debug: boolean, autoImport = true, validate = false) {
-	const key = prepareCacheKey(sourceCode, debug, autoImport, validate);
-	const cached = prepareCache.get(key);
-	if (cached) return cached;
-
-	const promise = prepareCode(sourceCode, debug, autoImport, validate);
-	prepareCache.set(key, promise);
-	void promise.finally(() => {
-		if (prepareCache.get(key) === promise) prepareCache.delete(key);
-	}).catch(() => null);
-	while (prepareCache.size > PREPARE_CACHE_MAX) {
-		const oldest = prepareCache.keys().next().value;
-		if (!oldest) break;
-		prepareCache.delete(oldest);
-	}
-	return promise;
 }
 
 function missingProgramResponse(programId: string): LocalRunnerRunResponse {
@@ -205,45 +192,53 @@ function missingProgramResponse(programId: string): LocalRunnerRunResponse {
 	};
 }
 
-async function runCode({language, sourceCode, programId, stdin, prepared}: {
-	language: RunnerLanguage;
-	sourceCode?: string;
-	programId?: string;
-	stdin?: string;
-	prepared?: boolean;
-}): Promise<LocalRunnerRunResponse> {
+function compileErrorResponse(diagnostics: string): LocalRunnerRunResponse {
+	return {
+		status: "compileError",
+		exitCode: 1,
+		stdout: "",
+		stderr: diagnostics,
+		time: 0,
+		stdoutTruncated: false,
+		stderrTruncated: false,
+		memory: 0,
+	};
+}
+
+/**
+ * ソースを実行する。そのソースのコンパイルが終わるのを待ち、コンパイルエラーなら実行の応答として返す。
+ * 事前コンパイルの結果があれば、それを使う。
+ */
+async function runSource(language: RunnerLanguage, sourceCode: string, stdin: string, debug: boolean): Promise<LocalRunnerRunResponse> {
 	const overallStart = Date.now();
-	let entry;
-	if (programId) {
-		const commandResponse = await runCommandProgram(programId, stdin || "");
-		if (commandResponse) return commandResponse;
-		entry = await compiler.getCompiledEntryByProgramId(programId);
-		if (!entry) return missingProgramResponse(programId);
-	} else if (language.command !== null && typeof sourceCode === "string") {
-		const preparedProgram = await prepareCommandCode(language.command, sourceCode, true);
-		if (preparedProgram.status !== "success" || !preparedProgram.programId) {
-			return {
-				status: "compileError", exitCode: 1, stdout: "", stderr: preparedProgram.diagnostics,
-				time: Date.now() - overallStart, stdoutTruncated: false, stderrTruncated: false, memory: 0,
-			};
+	const options = {...RUN_PREPARE_OPTIONS, debug};
+	// コンパイルの結果が追い出されていたら、作り直して1回だけやり直す
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const prepared = await preparations.wait(language.name, sourceCode, options);
+		if (prepared.status !== "success" || !prepared.programId) {
+			const response = compileErrorResponse(prepared.diagnostics);
+			const waitTime = Date.now() - overallStart;
+			logging.logWarn(formatter.formatRunSummary(response, waitTime, waitTime, "compile", language.name));
+			return response;
 		}
-		return await runCommandProgram(preparedProgram.programId, stdin || "") ?? missingProgramResponse(preparedProgram.programId);
-	} else if (typeof sourceCode === "string" && !prepared) {
-		const transformed = await transformCode(sourceCode, true, true);
-		if (transformed.status !== "success") {
-			return {
-				status: "compileError", exitCode: 1, stdout: "", stderr: transformed.diagnostics,
-				time: Date.now() - overallStart, stdoutTruncated: false, stderrTruncated: false, memory: 0,
-			};
-		}
-		sourceCode = transformed.sourceCode;
-		entry = await compiler.getCompiledEntry(sourceCode);
-	} else if (typeof sourceCode === "string") {
-		entry = await compiler.getCompiledEntry(sourceCode);
-	} else {
-		return missingProgramResponse("(missing)");
+		const response = await runProgram(prepared.programId, stdin);
+		if (response) return response;
+		preparations.forget(language.name, sourceCode, options);
 	}
-	const waitTime = Date.now() - overallStart;
+	return missingProgramResponse("(recompiled program)");
+}
+
+/** コンパイル済みのプログラムを実行する。プログラムが見つからなければ null を返す。 */
+async function runProgram(programId: string, stdin: string): Promise<LocalRunnerRunResponse | null> {
+	const commandResponse = await runCommandProgram(programId, stdin);
+	if (commandResponse) return commandResponse;
+	const entry = await compiler.getCompiledEntryByProgramId(programId);
+	return entry === null ? null : runJavaEntry(entry, stdin);
+}
+
+async function runJavaEntry(entry: CompileEntry, stdin: string): Promise<LocalRunnerRunResponse> {
+	const overallStart = Date.now();
+	const waitTime = 0;
 
 	if (entry.status === "error") {
 		const response: LocalRunnerRunResponse = {
@@ -262,14 +257,14 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 
 	if (entry.requiresIsolatedProcess) {
 		logging.logInfo("[Run] Falling back to isolated JVM mode due to FileDescriptor/System.exit/Runtime.halt usage.");
-		const result = await compiler.runCodeInIsolatedJvm(entry, stdin || "");
+		const result = await compiler.runCodeInIsolatedJvm(entry, stdin);
 		const totalTime = Date.now() - overallStart;
 		logging.logInfo(formatter.formatRunSummary(result, waitTime, totalTime, "isolated", "java"));
 		return result;
 	}
 
 	try {
-		const result = await dispatcher.queueDispatcherRun(entry, stdin || "");
+		const result = await dispatcher.queueDispatcherRun(entry, stdin);
 		if (result.timedOut) {
 			const response: LocalRunnerRunResponse = {
 				status: "timeLimitExceeded",
@@ -322,31 +317,14 @@ async function runCode({language, sourceCode, programId, stdin, prepared}: {
 	}
 }
 
-function schedulePrecompile(sourceCode: string, language: RunnerLanguage): void {
-	if (precompileTimer) clearTimeout(precompileTimer);
-	scheduledPrecompileSource = sourceCode;
-	scheduledPrecompileLanguage = language;
-	precompileTimer = setTimeout(() => {
-		precompileTimer = null;
-		const scheduledSource = scheduledPrecompileSource;
-		const scheduledLanguage = scheduledPrecompileLanguage ?? language;
-		scheduledPrecompileSource = "";
-		scheduledPrecompileLanguage = null;
-		void (async () => {
-			try {
-				await prepareForLanguage(scheduledLanguage, scheduledSource, true, true, false);
-			} catch (error) {
-				logging.logWarn(`[Precompile] ${error instanceof Error ? error.message : String(error)}`);
-			}
-		})();
-	}, PRECOMPILE_IDLE_DELAY_MS);
-}
-
-function cancelMatchingPrecompile(sourceCode: string): void {
-	if (!precompileTimer || scheduledPrecompileSource !== sourceCode) return;
-	clearTimeout(precompileTimer);
-	precompileTimer = null;
-	scheduledPrecompileSource = "";
+/**
+ * 応答のヘッダーだけを先に返す。本文の JSON は、あとから続けて送る(JSON は先頭の空白を読み飛ばす)。
+ * Tampermonkey は応答のヘッダーが届くまで次の要求を送らないので、実行がコンパイルを待つ間に、
+ * CP Toolkit のほかの要求(実行の候補の取得など)が止まらないようにする。
+ */
+function sendHeadersEarly(res: http.ServerResponse): void {
+	res.writeHead(200, {"Content-Type": "application/json"});
+	res.write("\n");
 }
 
 const server = http.createServer(async (req, res) => {
@@ -397,7 +375,7 @@ const server = http.createServer(async (req, res) => {
 	}
 
 	let request: {
-		mode?: string; sourceCode?: string; programId?: string; stdin?: string; prepared?: boolean; debug?: boolean;
+		mode?: string; sourceCode?: string; programId?: string; stdin?: string; debug?: boolean;
 		autoImport?: boolean; validate?: boolean; header?: LocalRunnerHeaderOption; compilerName?: unknown
 	};
 	try {
@@ -422,7 +400,9 @@ const server = http.createServer(async (req, res) => {
 				return {language: displayName, compilerName: name, label, family, match: [...match]};
 			}) satisfies LocalRunnerCompilerInfo[];
 		} else if (request.mode === "precompile" && typeof request.sourceCode === "string") {
-			schedulePrecompile(request.sourceCode, requireLanguage(request.compilerName));
+			// 結果は待たずに受け付けだけを返す。コンパイルは順番待ちにし、実行の要求が来たら結果を使う。
+			const language = requireLanguage(request.compilerName);
+			preparations.schedule(language.name, request.sourceCode, {...RUN_PREPARE_OPTIONS, debug: request.debug !== false});
 			response = {status: "accepted"};
 		} else if (request.mode === "transform" && typeof request.sourceCode === "string") {
 			const language = requireLanguage(request.compilerName);
@@ -435,24 +415,21 @@ const server = http.createServer(async (req, res) => {
 			);
 		} else if (request.mode === "prepare" && typeof request.sourceCode === "string") {
 			const language = requireLanguage(request.compilerName);
-			cancelMatchingPrecompile(request.sourceCode);
+			const options = {debug: !!request.debug, autoImport: request.autoImport !== false, validate: request.validate === true};
 			// コンパイルはヘッダーなしで行い、ローカル実行の行番号を元ソースと揃える。
 			response = applySubmissionHeader(
-				await prepareForLanguage(language, request.sourceCode, !!request.debug, request.autoImport !== false, request.validate === true),
+				await preparations.wait(language.name, request.sourceCode, options),
 				request.header ?? false,
 				headerKeys(language),
 			);
-		} else if (request.mode === "run" &&
-			(typeof request.sourceCode === "string" || typeof request.programId === "string")) {
-			if (typeof request.sourceCode === "string") cancelMatchingPrecompile(request.sourceCode);
-			response = await runCode({
-				// programId だけの実行は、プログラムから言語が決まる。
-				language: typeof request.programId === "string" ? runnerLanguages[0]! : requireLanguage(request.compilerName),
-				sourceCode: request.sourceCode,
-				programId: request.programId,
-				stdin: request.stdin,
-				prepared: request.prepared,
-			});
+		} else if (request.mode === "run" && typeof request.sourceCode === "string") {
+			const language = requireLanguage(request.compilerName);
+			sendHeadersEarly(res);
+			response = await runSource(language, request.sourceCode, request.stdin ?? "", request.debug !== false);
+		} else if (request.mode === "run" && typeof request.programId === "string") {
+			// programId だけの実行は、プログラムから言語が決まる。
+			sendHeadersEarly(res);
+			response = await runProgram(request.programId, request.stdin ?? "") ?? missingProgramResponse(request.programId);
 		} else if (request.mode === "status") {
 			response = {
 				status: "running",
@@ -483,10 +460,14 @@ const server = http.createServer(async (req, res) => {
 			return;
 		}
 
-		res.writeHead(200, {"Content-Type": "application/json"});
+		if (!res.headersSent) res.writeHead(200, {"Content-Type": "application/json"});
 		res.end(JSON.stringify(response));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
+		if (res.headersSent) {
+			res.end(JSON.stringify({status: "internalError", stderr: message}));
+			return;
+		}
 		const badRequest = error instanceof BadRequestError;
 		res.writeHead(badRequest ? 400 : 500, {"Content-Type": "application/json"});
 		res.end(JSON.stringify({status: badRequest ? "badRequest" : "internalError", stderr: message}));
@@ -577,7 +558,6 @@ async function bootstrap() {
 
 function shutdown(signal: string) {
 	logging.logInfo(`Shutting down Local Runner server (${signal})...`);
-	if (precompileTimer) clearTimeout(precompileTimer);
 	dispatcher.stopDispatcher();
 	server.close(() => {
 		process.exit(0);

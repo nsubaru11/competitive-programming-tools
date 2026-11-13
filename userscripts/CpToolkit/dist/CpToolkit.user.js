@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        1.2.0
+// @version        2.0.0
 // @description    競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
 // @description:en A toolkit of competitive programming helpers that can be switched on and off individually.
 // @description:ja 競技プログラミングの補助機能をまとめ、機能ごとに ON/OFF できるようにします。
@@ -778,12 +778,6 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	}
 
 	// ../shared/src/local-runner.ts
-	var STALE_PROGRAM_MESSAGE = "Prepared program is unavailable:";
-
-	function isStaleProgramResponse(response) {
-		return response.status === "badRequest" && response.stderr?.startsWith(STALE_PROGRAM_MESSAGE) === true;
-	}
-
 	function isHttpUrl(value) {
 		return /^https?:\/\//.test(value);
 	}
@@ -3276,7 +3270,6 @@ a:focus > .cp-settings-entry {
 	}
 
 	class LocalRunnerClient {
-		prepared = null;
 		http;
 		endpoint;
 
@@ -3305,46 +3298,23 @@ a:focus > .cp-settings-entry {
 			return this.post(request, TRANSFORM_TIMEOUT_MS);
 		}
 
-		prepare(sourceCode, compilerName) {
-			const endpoint = this.endpoint() ?? "";
-			const previous = this.prepared;
-			if (
-				previous?.endpoint === endpoint &&
-				previous.compilerName === compilerName &&
-				previous.sourceCode === sourceCode
-			) {
-				return previous.response;
-			}
-			const request = {
-				mode: "prepare",
+		async precompile(sourceCode, compilerName) {
+			await this.post({
+				mode: "precompile",
 				sourceCode,
 				...(compilerName !== undefined && {compilerName}),
 				debug: true,
-				autoImport: true,
-				validate: false,
-				header: false,
-			};
-			const response = this.post(request);
-			this.prepared = {endpoint, compilerName, sourceCode, response};
-			response.catch(() => {
-				if (this.prepared?.response === response) this.prepared = null;
 			});
-			return response;
 		}
 
-		async run(sourceCode, input, compilerName) {
-			let prepared = await this.prepare(sourceCode, compilerName);
-			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			const response = await this.runProgram(prepared.programId, input, compilerName);
-			if (!isStaleProgramResponse(response)) return response;
-			this.prepared = null;
-			prepared = await this.prepare(sourceCode, compilerName);
-			if (prepared.status !== "success" || !prepared.programId) return prepared;
-			return this.runProgram(prepared.programId, input, compilerName);
-		}
-
-		runProgram(programId, input, compilerName) {
-			return this.post({mode: "run", ...(compilerName !== undefined && {compilerName}), programId, stdin: input});
+		run(sourceCode, input, compilerName) {
+			return this.post({
+				mode: "run",
+				sourceCode,
+				...(compilerName !== undefined && {compilerName}),
+				stdin: input,
+				debug: true,
+			});
 		}
 
 		async post(request, timeoutMs) {
@@ -4976,13 +4946,13 @@ ${body}
 		}
 
 		prepare(sourceCode) {
-			return this.client.prepare(sourceCode, this.compilerName);
+			return this.client.precompile(sourceCode, this.compilerName);
 		}
 
 		async run(sourceCode, input) {
 			const response = await this.client.run(sourceCode, input, this.compilerName);
-			if ("diagnostics" in response) {
-				return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
+			if (response.status === "compileError") {
+				return {status: "CE", input, error: response.stderr || "Local Runner could not compile the code."};
 			}
 			return {
 				status: toEasyTestStatus(response.status, response.exitCode),

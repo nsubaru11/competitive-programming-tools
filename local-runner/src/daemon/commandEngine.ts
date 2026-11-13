@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {formatCompileSummary} from "../utils/formatter";
 import {ensureHeaderUnit} from "./headerUnit";
-import {type ProcessOutcome, runCommand, runMeasured} from "./processRunner";
+import {CanceledError, type ProcessOutcome, runCommand, runMeasured} from "./processRunner";
 
 /** コンパイルと実行をコマンドで行う言語。設定の languages から作る。 */
 export type CommandLanguage = {
@@ -113,7 +113,12 @@ export class CommandEngine {
 	}
 
 	/** bundle と DEBUG の書き換えを行う。実行の前と、提出物を作るときの両方で通す。 */
-	async transformSource(language: CommandLanguage, sourceCode: string, debug: boolean): Promise<TransformResult> {
+	async transformSource(
+		language: CommandLanguage,
+		sourceCode: string,
+		debug: boolean,
+		signal?: AbortSignal,
+	): Promise<TransformResult> {
 		let transformed = sourceCode;
 		if (language.bundle !== null) {
 			const dir = fs.mkdtempSync(path.join(this.ensureRootDir(), "bundle-"));
@@ -124,6 +129,7 @@ export class CommandEngine {
 					stdin: sourceCode,
 					timeoutMs: this.options.compileTimeoutMs,
 					outputLimitBytes: this.options.outputLimitBytes,
+					...(signal && {signal}),
 				});
 				if (outcome.exitCode !== 0 || outcome.timedOut || outcome.stdoutTruncated) {
 					return {ok: false, diagnostics: describeFailure(outcome, "The bundle command", this.options.compileTimeoutMs)};
@@ -136,9 +142,9 @@ export class CommandEngine {
 		return {ok: true, sourceCode: language.debugRewrite ? rewriteDebugFlag(transformed, debug) : transformed};
 	}
 
-	/** ソースを変換してコンパイルし、実行に使う programId を返す。 */
-	async prepare(language: CommandLanguage, sourceCode: string, debug: boolean): Promise<PrepareResult> {
-		const transformed = await this.transformSource(language, sourceCode, debug);
+	/** ソースを変換してコンパイルし、実行に使う programId を返す。中断されたら CanceledError を投げる。 */
+	async prepare(language: CommandLanguage, sourceCode: string, debug: boolean, signal?: AbortSignal): Promise<PrepareResult> {
+		const transformed = await this.transformSource(language, sourceCode, debug, signal);
 		if (!transformed.ok) return {status: "compileError", diagnostics: transformed.diagnostics, sourceCode};
 
 		const compileTemplate = this.compileTemplate(language, debug);
@@ -147,9 +153,9 @@ export class CommandEngine {
 		if (program) {
 			this.options.log(formatCompileSummary(language.name, "CACHED", programId));
 		} else {
-			program = this.compile(language, compileTemplate, programId, transformed.sourceCode);
+			program = this.compile(language, compileTemplate, programId, transformed.sourceCode, signal);
 			this.programs.set(programId, program);
-			// 作業フォルダを作れないなどで失敗した結果は残さず、次の要求でやり直す。
+			// 中断したときや、作業フォルダを作れないなどで失敗した結果は残さず、次の要求でやり直す。
 			const pending = program;
 			pending.catch(() => {
 				if (this.programs.get(programId) === pending) this.programs.delete(programId);
@@ -209,6 +215,7 @@ export class CommandEngine {
 		compileTemplate: readonly string[] | null,
 		programId: string,
 		sourceCode: string,
+		signal?: AbortSignal,
 	): Promise<Program> {
 		const dir = path.join(this.ensureRootDir(), programId);
 		const sourceFile = path.join(dir, language.sourceFile);
@@ -234,11 +241,21 @@ export class CommandEngine {
 			}
 		}
 		const started = Date.now();
-		const outcome = await runCommand(compileArguments, {
-			cwd: dir,
-			timeoutMs: this.options.compileTimeoutMs,
-			outputLimitBytes: this.options.outputLimitBytes,
-		});
+		let outcome: ProcessOutcome;
+		try {
+			outcome = await runCommand(compileArguments, {
+				cwd: dir,
+				timeoutMs: this.options.compileTimeoutMs,
+				outputLimitBytes: this.options.outputLimitBytes,
+				...(signal && {signal}),
+			});
+		} catch (error) {
+			if (error instanceof CanceledError) {
+				this.options.log(formatCompileSummary(language.name, "CANCELED", programId, Date.now() - started));
+				fs.rmSync(dir, {recursive: true, force: true});
+			}
+			throw error;
+		}
 		const elapsed = Date.now() - started;
 		if (outcome.exitCode === 0 && !outcome.timedOut) {
 			fs.writeFileSync(path.join(dir, COMPILED_MARKER), "");

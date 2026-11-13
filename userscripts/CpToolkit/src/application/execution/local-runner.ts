@@ -1,8 +1,6 @@
 import {
-	isStaleProgramResponse,
 	type LocalRunnerCompilerInfo,
 	type LocalRunnerHeaderOption,
-	type LocalRunnerPrepareResponse,
 	type LocalRunnerRequest,
 	type LocalRunnerRunResponse,
 	type LocalRunnerTransformResponse,
@@ -22,12 +20,6 @@ export class LocalRunnerError extends Error {
 
 /** Local Runner との通信。URL は設定から毎回取得し、未設定なら通信しない。 */
 export class LocalRunnerClient {
-	private prepared: {
-		endpoint: string;
-		compilerName: string | undefined;
-		sourceCode: string;
-		response: Promise<LocalRunnerPrepareResponse>
-	} | null = null;
 	private readonly http: HttpClient;
 	private readonly endpoint: () => string | null;
 
@@ -56,49 +48,17 @@ export class LocalRunnerClient {
 		return this.post(request, TRANSFORM_TIMEOUT_MS);
 	}
 
-	/** 同じソースはコンパイルし直さない。compilerName は list で返された識別子で、サーバーが言語を選ぶのに使う。 */
-	prepare(sourceCode: string, compilerName?: string): Promise<LocalRunnerPrepareResponse> {
-		const endpoint = this.endpoint() ?? "";
-		const previous = this.prepared;
-		if (previous?.endpoint === endpoint && previous.compilerName === compilerName && previous.sourceCode === sourceCode) {
-			return previous.response;
-		}
-		const request = {
-			mode: "prepare",
-			sourceCode,
-			...(compilerName !== undefined && {compilerName}),
-			debug: true,
-			autoImport: true,
-			validate: false,
-			header: false,
-		} as const;
-		const response = this.post<LocalRunnerPrepareResponse>(request);
-		this.prepared = {endpoint, compilerName, sourceCode, response};
-		response.catch(() => {
-			if (this.prepared?.response === response) this.prepared = null;
-		});
-		return response;
+	/**
+	 * 編集中のソースを、先にコンパイルしておく。サーバーは受け付けだけをすぐに返す。
+	 * compilerName は list で返された識別子で、サーバーが言語を選ぶのに使う。
+	 */
+	async precompile(sourceCode: string, compilerName?: string): Promise<void> {
+		await this.post({mode: "precompile", sourceCode, ...(compilerName !== undefined && {compilerName}), debug: true});
 	}
 
-	/** コンパイル済みのプログラムを実行する。サーバーから消えていれば、コンパイルし直して1回だけ実行し直す。 */
-	async run(
-		sourceCode: string,
-		input: string,
-		compilerName?: string,
-	): Promise<LocalRunnerRunResponse | LocalRunnerPrepareResponse> {
-		let prepared = await this.prepare(sourceCode, compilerName);
-		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		const response = await this.runProgram(prepared.programId, input, compilerName);
-		if (!isStaleProgramResponse(response)) return response;
-
-		this.prepared = null;
-		prepared = await this.prepare(sourceCode, compilerName);
-		if (prepared.status !== "success" || !prepared.programId) return prepared;
-		return this.runProgram(prepared.programId, input, compilerName);
-	}
-
-	private runProgram(programId: string, input: string, compilerName?: string): Promise<LocalRunnerRunResponse> {
-		return this.post({mode: "run", ...(compilerName !== undefined && {compilerName}), programId, stdin: input});
+	/** ソースを実行する。サーバーはコンパイルが終わるのを待ってから実行し、コンパイルエラーも実行の結果として返す。 */
+	run(sourceCode: string, input: string, compilerName?: string): Promise<LocalRunnerRunResponse> {
+		return this.post({mode: "run", sourceCode, ...(compilerName !== undefined && {compilerName}), stdin: input, debug: true});
 	}
 
 	/** 実行はサンプルの数だけ順番に待つことがあるので、既定では時間を制限しない。 */

@@ -592,9 +592,7 @@ describe("実行環境", () => {
 			if (body?.includes('"list"')) {
 				return {status: 200, text: JSON.stringify([{language: "C++", compilerName: "cpp", label: "C++", family: "cpp"}])};
 			}
-			const response = body?.includes('"run"')
-				? {status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory: 0, peakMemory: 3616}
-				: {status: "success", programId: "p1", sourceCode: "", diagnostics: ""};
+			const response = {status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory: 0, peakMemory: 3616};
 			return {status: 200, text: JSON.stringify(response)};
 		}), () => "http://localhost:8080");
 		const [runner] = await new LocalRunnerProvider(client).runnersFor({id: "1", label: "C++23 (GCC 15.2.0)", family: "cpp"});
@@ -612,10 +610,7 @@ describe("実行環境", () => {
 						text: JSON.stringify([{language: "Java", compilerName: "java24", label: "Java 24"}]),
 					};
 				}
-				const response = body?.includes('"run"')
-					? {status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory}
-					: {status: "success", programId: "p1", sourceCode: "", diagnostics: ""};
-				return {status: 200, text: JSON.stringify(response)};
+				return {status: 200, text: JSON.stringify({status: "success", exitCode: 0, stdout: "", stderr: "", time: 1, memory})};
 			}), () => "http://localhost:8080");
 			const [runner] = await new LocalRunnerProvider(client).runnersFor(java);
 			return runner!.run("code", "", {});
@@ -625,6 +620,18 @@ describe("実行環境", () => {
 		expect(measured.allocatedMemory).toBe(2048);
 		expect(measured.memory).toBeUndefined();
 		expect((await runWith(0)).allocatedMemory).toBeUndefined();
+	});
+
+	test("Local Runner のコンパイルエラーは、実行の応答の stderr を CE として返す", async () => {
+		const client = new LocalRunnerClient(new FakeHttpClient(({body}) => {
+			if (body?.includes('"list"')) {
+				return {status: 200, text: JSON.stringify([{language: "C++", compilerName: "cpp", label: "C++", family: "cpp"}])};
+			}
+			const failed = {status: "compileError", exitCode: 1, stdout: "", stderr: "Main.cpp:4: error", time: 0, memory: 0};
+			return {status: 200, text: JSON.stringify(failed)};
+		}), () => "http://localhost:8080");
+		const [runner] = await new LocalRunnerProvider(client).runnersFor({id: "1", label: "C++23 (GCC 15.2.0)", family: "cpp"});
+		expect(await runner!.run("code", "in", {})).toEqual({status: "CE", input: "in", error: "Main.cpp:4: error"});
 	});
 
 	test("Local Runner を使わない設定なら候補にしない", async () => {

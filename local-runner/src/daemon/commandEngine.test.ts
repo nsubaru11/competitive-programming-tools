@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {CommandEngine, type CommandLanguage, expandArguments, rewriteDebugFlag} from "./commandEngine";
-import {ensureLauncher, findOnPath} from "./processRunner";
+import {CanceledError, ensureLauncher, findOnPath} from "./processRunner";
 
 describe("expandArguments", () => {
 	const values = {command: "/usr/bin/g++", source: "Main.cpp", output: "/work/program", dir: "/work"};
@@ -227,6 +227,40 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		const language = {...pythonLanguage, name: "broken", bundle: [python ?? "", "-c", "import sys; sys.exit('bundle failed')"]};
 		const prepared = await createEngine().prepare(language, "print(1)\n", true);
 		expect(prepared).toMatchObject({status: "compileError", diagnostics: "bundle failed"});
+	});
+
+	test("中断したコンパイルは、子プロセスも止め、作業フォルダと結果を残さない", async () => {
+		const marker = path.join(dir, "late-marker");
+		// 子プロセスが生き残っていれば、少しあとに印のファイルを作る
+		const slow = {
+			...cLanguage,
+			name: "slow",
+			compile: ["/bin/sh", "-c", `(sleep 1; touch '${marker}') & wait`],
+		};
+		const engine = createEngine();
+		const controller = new AbortController();
+		const programsDir = path.join(dir, "programs");
+		fs.mkdirSync(programsDir, {recursive: true});
+		const before = fs.readdirSync(programsDir);
+		logs.length = 0;
+		const prepared = engine.prepare(slow, "int main(void) { return 0; }\n", true, controller.signal);
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		controller.abort();
+		await expect(prepared).rejects.toBeInstanceOf(CanceledError);
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+		expect(fs.existsSync(marker)).toBe(false);
+		expect(logs).toEqual([expect.stringMatching(/^\[Compile\] Lang=slow Status=CANCELED Time=\d+ms Id=/)]);
+		expect(fs.readdirSync(programsDir)).toEqual(before);
+		expect(engine.size).toBe(0);
+	});
+
+	test("中断した直後に同じソースを頼むと、コンパイルし直す", async () => {
+		const engine = createEngine();
+		const controller = new AbortController();
+		controller.abort();
+		await expect(engine.prepare(pythonLanguage, "print('again')\n", true, controller.signal)).rejects.toBeInstanceOf(CanceledError);
+		const prepared = await engine.prepare(pythonLanguage, "print('again')\n", true);
+		expect(prepared.status).toBe("success");
 	});
 
 	test("知らない programId は null を返す", async () => {

@@ -23,7 +23,16 @@ export type ProcessOptions = {
 	timeoutMs: number;
 	/** 標準出力と標準エラー出力のそれぞれについて、取り込む量の上限。 */
 	outputLimitBytes: number;
+	/** 中断されたら、プロセスを止めて CanceledError を投げる。 */
+	signal?: AbortSignal;
 };
+
+/** 処理が中断されたことを表す。新しいソースのコンパイルに切り替えたときに起きる。 */
+export class CanceledError extends Error {
+	constructor() {
+		super("Canceled because a newer source arrived.");
+	}
+}
 
 export type MeasuredOptions = ProcessOptions & {
 	stackBytes: number;
@@ -62,7 +71,10 @@ async function collectOutput(stream: ReadableStream<Uint8Array>, limit: number):
 	return {text: Buffer.concat(chunks).toString("utf8"), truncated};
 }
 
-type SpawnResult = Omit<ProcessOutcome, "timedOut"> & {killed: boolean};
+type SpawnResult = Omit<ProcessOutcome, "timedOut"> & {killed: boolean; canceled: boolean};
+
+/** Linux では別のプロセスグループで起動し、g++ が起動した cc1plus なども一緒に止める。 */
+const USE_PROCESS_GROUP = process.platform !== "win32";
 
 async function spawnAndCollect(cmd: string[], options: ProcessOptions, killAfterMs: number): Promise<SpawnResult> {
 	const started = performance.now();
@@ -72,12 +84,28 @@ async function spawnAndCollect(cmd: string[], options: ProcessOptions, killAfter
 		stdin: options.stdin === undefined ? "ignore" : Buffer.from(options.stdin, "utf8"),
 		stdout: "pipe",
 		stderr: "pipe",
+		detached: USE_PROCESS_GROUP,
 	});
+	const stop = (): void => {
+		try {
+			if (USE_PROCESS_GROUP) process.kill(-proc.pid, "SIGKILL");
+			else proc.kill("SIGKILL");
+		} catch {
+			// もう終わっている
+		}
+	};
 	let killed = false;
+	let canceled = false;
 	const timer = setTimeout(() => {
 		killed = true;
-		proc.kill("SIGKILL");
+		stop();
 	}, killAfterMs);
+	const cancel = (): void => {
+		canceled = true;
+		stop();
+	};
+	if (options.signal?.aborted) cancel();
+	options.signal?.addEventListener("abort", cancel, {once: true});
 	try {
 		const [stdout, stderr] = await Promise.all([
 			collectOutput(proc.stdout, options.outputLimitBytes),
@@ -88,6 +116,7 @@ async function spawnAndCollect(cmd: string[], options: ProcessOptions, killAfter
 			exitCode: proc.exitCode ?? -1,
 			signal: proc.signalCode,
 			killed,
+			canceled,
 			stdout: stdout.text,
 			stderr: stderr.text,
 			stdoutTruncated: stdout.truncated,
@@ -97,12 +126,14 @@ async function spawnAndCollect(cmd: string[], options: ProcessOptions, killAfter
 		};
 	} finally {
 		clearTimeout(timer);
+		options.signal?.removeEventListener("abort", cancel);
 	}
 }
 
-/** コンパイルなどのコマンドを実行する。制限時間を過ぎたら止める。 */
+/** コンパイルなどのコマンドを実行する。制限時間を過ぎたら止め、中断されたら CanceledError を投げる。 */
 export async function runCommand(cmd: string[], options: ProcessOptions): Promise<ProcessOutcome> {
-	const {killed, ...result} = await spawnAndCollect(cmd, options, options.timeoutMs);
+	const {killed, canceled, ...result} = await spawnAndCollect(cmd, options, options.timeoutMs);
+	if (canceled) throw new CanceledError();
 	return {...result, timedOut: killed};
 }
 
@@ -135,10 +166,10 @@ export async function runMeasured(cmd: string[], options: MeasuredOptions): Prom
 		return runCommand(wrapped, options);
 	}
 	const launcherCommand = [options.launcher, options.reportFile, String(options.stackBytes), String(options.timeoutMs), ...cmd];
-	const result = await spawnAndCollect(launcherCommand, options, options.timeoutMs + LAUNCHER_GRACE_MS);
+	const {killed, canceled: _canceled, ...result} = await spawnAndCollect(launcherCommand, options, options.timeoutMs + LAUNCHER_GRACE_MS);
 	const report = readReport(options.reportFile);
 	if (report === null) {
-		if (result.killed) return {...result, exitCode: -1, signal: "SIGKILL", timedOut: true, timeMs: options.timeoutMs};
+		if (killed) return {...result, exitCode: -1, signal: "SIGKILL", timedOut: true, timeMs: options.timeoutMs};
 		throw new Error(`The launcher did not report a result (exit code ${result.exitCode}). ${result.stderr.trim()}`);
 	}
 	const signalNumber = report.get("signal") ?? 0;

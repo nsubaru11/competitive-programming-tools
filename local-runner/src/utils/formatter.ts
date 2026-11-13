@@ -16,9 +16,14 @@ export function formatExecTime(timeMs: number, thresholds: ExecTimeThresholds = 
 
 /**
  * コンパイルの記録を1行にする。言語によらず同じ形にして、ログを並べて読めるようにする。
- * CACHED は、同じソースのコンパイル結果を使い回したことを表す。
+ * CACHED は同じソースのコンパイル結果を使い回したこと、CANCELED は新しいソースが届いて中断したことを表す。
  */
-export function formatCompileSummary(language: string, result: "OK" | "NG" | "CACHED", programId: string, timeMs?: number) {
+export function formatCompileSummary(
+	language: string,
+	result: "OK" | "NG" | "CACHED" | "CANCELED",
+	programId: string,
+	timeMs?: number,
+) {
 	const shortId = programId.length <= 16 ? programId : `${programId.slice(0, 16)}...`;
 	return `[Compile] Lang=${language} Status=${result}${timeMs === undefined ? "" : ` Time=${timeMs}ms`} Id=${shortId}`;
 }

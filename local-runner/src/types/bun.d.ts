@@ -19,5 +19,7 @@ declare const Bun: {
 		stdin: Uint8Array | "ignore";
 		stdout: "pipe";
 		stderr: "pipe";
+		/** 新しいプロセスグループで起動する。子プロセスもまとめて止められるようにする。 */
+		detached?: boolean;
 	}): BunSubprocess;
 };

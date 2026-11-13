@@ -22,11 +22,17 @@ export type LocalRunnerListRequest = {
 	mode: "list";
 };
 
+/**
+ * 編集中のソースを、先にコンパイルしておく。サーバーは結果を待たずに {status: "accepted"} を返し、
+ * 同じ言語の新しいソースが届いたら、古いソースのコンパイルを中断する。
+ */
 export type LocalRunnerPrecompileRequest = {
 	mode: "precompile";
 	sourceCode: string;
 	/** list で返したコンパイラの識別子。省略時は Java。 */
 	compilerName?: string;
+	/** 省略時は有効。run の debug と同じ値にすると、事前コンパイルの結果を実行に使える。 */
+	debug?: boolean;
 };
 
 /** 提出物の先頭に付けるヘッダー。true は言語の設定、文字列は setheader で設定した名前、false は付けない。 */
@@ -56,14 +62,19 @@ export type LocalRunnerPrepareRequest = {
 	header?: LocalRunnerHeaderOption;
 };
 
+/**
+ * 実行する。sourceCode を渡すと、そのソースのコンパイルが終わるのを待ってから実行し、
+ * コンパイルエラーなら status を compileError、stderr を診断にして返す。programId は prepare の結果を渡す。
+ */
 export type LocalRunnerRunRequest = {
 	mode: "run";
-	/** list で返したコンパイラの識別子。 */
+	/** list で返したコンパイラの識別子。sourceCode を渡すときに使う。 */
 	compilerName?: string;
 	sourceCode?: string;
 	programId?: string;
 	stdin?: string;
-	prepared?: boolean;
+	/** sourceCode を渡すときのデバッグの有無。省略時は有効。 */
+	debug?: boolean;
 };
 
 export type LocalRunnerRequest =

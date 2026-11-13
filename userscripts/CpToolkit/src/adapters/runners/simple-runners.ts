@@ -110,13 +110,13 @@ class LocalCodeRunner implements CodeRunner {
 	}
 
 	prepare(sourceCode: string): Promise<unknown> {
-		return this.client.prepare(sourceCode, this.compilerName);
+		return this.client.precompile(sourceCode, this.compilerName);
 	}
 
 	async run(sourceCode: string, input: string): Promise<RunResult> {
 		const response = await this.client.run(sourceCode, input, this.compilerName);
-		if ("diagnostics" in response) {
-			return {status: "CE", input, error: response.diagnostics || "LocalRunner prepare failed."};
+		if (response.status === "compileError") {
+			return {status: "CE", input, error: response.stderr || "Local Runner could not compile the code."};
 		}
 		return {
 			status: toEasyTestStatus(response.status, response.exitCode),
