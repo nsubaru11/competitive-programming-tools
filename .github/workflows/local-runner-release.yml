@@ -1,6 +1,7 @@
 name: local-runner-release
 
-# local-runner-v<版> のタグを push すると、検査のあとで zip を作り、Release に載せる。
+# local-runner-v<版> のタグを push すると、検査のあとで zip を作り、Release の下書きに載せる。
+# 下書きは利用者に見えない。zip を確かめてから、Release の画面で公開する。
 on:
   push:
     tags: ["local-runner-v*"]
@@ -59,5 +60,6 @@ jobs:
         run: |
           gh release create "$TAG" "out/local-runner/local-runner-$VERSION.zip" \
             --repo "$GITHUB_REPOSITORY" \
+            --draft \
             --title "Local Runner $VERSION" \
             --notes "導入と更新の手順は [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/local-runner/README.md#導入) にあります。"
