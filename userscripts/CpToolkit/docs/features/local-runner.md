@@ -7,7 +7,7 @@
 ## 使い方
 
 - 手元の PC で動くサーバーへ接続します。[Easy Test+](easy-test.md) での実行と、[Java の提出補助](java-submit.md)での変換に使います
-- 専用の [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) は Java、C++、C、Python に対応していて、設定を足せばほかの言語も動かせます。別途導入が必要です
+- 専用の [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) は Java の解答を動かせます。C++、C、Python などは定義を用意してあり、処理系を自分で入れると使えます。別途導入が必要です
 - **専用の Local Runner でなくても、下の API を満たす自作のサーバーを接続できます**。たとえば C++ や Python を手元で実行するサーバーを用意すれば、Easy Test+ でその言語を手元で実行できます
 - 接続先の URL は詳細設定で変えられます。コードは手元の PC へ送るだけで、外部には送りません
 

@@ -1,18 +1,19 @@
 # Local Runner
 
-競技プログラミングの解答を手元で実行、判定、提出するツールです。Java、C++、C、Python に対応しています。[CP Toolkit](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/README.md) の Easy Test+ から、問題ページの解答を手元で実行することもできます。
+競技プログラミングの解答を手元で実行、判定、提出するツールです。Java の解答は、JDK があればそのまま動きます。C++、C、Python、Go、Rust、Kotlin、C# は定義を用意してあり、処理系を自分で入れると使えます。[CP Toolkit](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/README.md) の Easy Test+ から、問題ページの解答を手元で実行することもできます。
 
 動作確認は Windows(WSL)で行っています。
 
 ## 中身
 
-| ファイル                            | 内容                                                |
-|-------------------------------------|-----------------------------------------------------|
-| `local-runner/bin/local-runner.exe` | Windows で使う CLI                                  |
-| `local-runner/bin/local-runner`     | WSL の中で動くサーバー。Linux では CLI としても使う |
-| `local-runner/bin/*.cmd`            | `test`、`submit` などのコマンド。Windows で使う     |
-| `local-runner/bin/install-path.ps1` | `bin` を PATH に登録するスクリプト                  |
-| `local-runner/settings.schema.json` | 設定ファイルの項目の定義。エディターが補完に使う    |
+| ファイル                                 | 内容                                                |
+|------------------------------------------|-----------------------------------------------------|
+| `local-runner/bin/local-runner.exe`      | Windows で使う CLI                                  |
+| `local-runner/bin/local-runner`          | WSL の中で動くサーバー。Linux では CLI としても使う |
+| `local-runner/bin/*.cmd`                 | `test`、`submit` などのコマンド。Windows で使う     |
+| `local-runner/bin/install-path.cmd`      | `bin` を PATH に登録するスクリプト                  |
+| `local-runner/bin/start-local-runner.sh` | サーバーを起動するスクリプト。CLI が自動で使う      |
+| `local-runner/settings.schema.json`      | 設定ファイルの項目の定義。エディターが補完に使う    |
 
 設定ファイル(`local-runner.settings.json`)は、初めて設定したときにこのフォルダに作られます。
 
@@ -25,14 +26,14 @@
 
 ### 任意
 
-- C++、C、Python(CPython、PyPy、Codon)を使うなら、その処理系。入っていない言語は使えないだけで、ほかの言語は動く
-- `lib.*` を import する Java のライブラリを使うなら、その `src` フォルダ
-- `submit` で AtCoder に提出するなら、AtCoder のログイン情報。保存の仕方は [提出の準備](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md#提出の準備)を参照
+- Java 以外の言語を使うなら、その処理系。このフォルダには含まれないので、サーバーを動かす環境(Windows では WSL)に自分で入れる。入っていない言語は使えないだけで、ほかの言語は動く
+- Java の解答から自分のライブラリを import して使うなら、そのソースのフォルダ
+- `submit` で AtCoder に提出するなら、AtCoder のログイン情報。`setsession` で保存する。手順は [提出の準備](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md#提出の準備)を参照
 
 ## 使い始める
 
 1. このフォルダを好きな場所に置く
-2. Windows では、PowerShell で `powershell -File ".\local-runner\bin\install-path.ps1"` を実行し、`bin` を PATH に登録する
+2. Windows では、このフォルダで `.\local-runner\bin\install-path.cmd` を実行し、`bin` を PATH に登録する。登録のあと、新しいターミナルを開く
 3. 解答のあるフォルダで `test abc448_d D.java` のように実行する。サーバーは自動で起動する
 
 Linux では、`.cmd` の代わりに `local-runner/bin/local-runner test abc448_d D.java` のように実行します。
@@ -44,7 +45,7 @@ Linux では、`.cmd` の代わりに `local-runner/bin/local-runner test abc448
 ## 詳しい使い方
 
 - [README](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md): コマンド、言語、ライブラリ、提出用ヘッダー、CP Toolkit とのつなぎ方
-- [SETTINGS.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/SETTINGS.md): 設定ファイルの項目と、パスの書き方
+- [SETTINGS.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/docs/SETTINGS.md): 設定ファイルの項目と、パスの書き方
 
 ## ライセンス
 

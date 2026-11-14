@@ -7,7 +7,7 @@
 ## How it works
 
 - Connects to a server running on your PC. It is used to run code in [Easy Test+](easy-test.en.md) and to transform code in the [Java submission helper](java-submit.en.md)
-- The dedicated [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) supports Java, C++, C and Python, and other languages can be added in its settings. It needs a separate installation
+- The dedicated [Local Runner](https://github.com/nsubaru11/competitive-programming-tools/blob/main/local-runner/README.md) runs Java solutions. C++, C, Python and some other languages are predefined and work once you install their toolchains yourself. It needs a separate installation
 - **Any server of your own that meets the API below can be connected instead of the dedicated Local Runner.** For example, a server that runs C++ or Python locally lets Easy Test+ run those languages on your PC
 - The server URL can be changed in the detailed settings. Code is sent only to your own PC, not to any external service
 

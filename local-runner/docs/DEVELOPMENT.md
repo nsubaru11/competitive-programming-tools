@@ -1,6 +1,6 @@
 # Local Runner の開発
 
-Local Runner を変更する人向けの文書です。使い方は [README.md](./README.md) にあります。Java 側の構成は [java/README.md](./java/README.md)、通信の仕様は [java/src/PROTOCOL.md](./java/src/PROTOCOL.md) を参照してください。
+Local Runner を変更する人向けの文書です。使い方は [README.md](../README.md) にあります。Java 側の構成は [java/README.md](../java/README.md)、通信の仕様は [java/src/PROTOCOL.md](../java/src/PROTOCOL.md) を参照してください。
 
 ## 構成
 
@@ -22,6 +22,7 @@ local-runner/
 ├── bin/               # test.cmd、submit.cmd、起動スクリプト
 ├── scripts/           # package.ts(配布物を作る)
 ├── release/           # README.md(配布物の README)
+├── docs/              # SETTINGS.md(設定の説明)、DEVELOPMENT.md(この文書)
 ├── native/            # launcher.c(解答のプロセスを起動して計測するプログラム)
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
@@ -32,9 +33,11 @@ local-runner/
 
 提出前の処理は TypeScript の正規表現ではなく、常駐 JVM の Java Compiler API(`JavacTask`、`Trees`、`SourcePositions`)で行います。型の解決、`Main` の対象、コンストラクタと自己参照、`DEBUG` のフィールド、package と import の範囲を javac の構文木とシンボルから決め、生成した単一のソースも再び解析します。
 
-ライブラリの場所は推測せず、設定の `languages.java.library` から読みます。`setlib` はこの項目を書き込みます。
+ライブラリの場所は推測せず、設定の `languages.java.library` から読みます。`setlib` はこの項目を書き込みます。フォルダの名前や階層は決めておらず、指定されたフォルダの `.java` をすべて索引に入れます。型の名前はファイルの名前から、パッケージは各ファイルの `package` 宣言から決めます。import がライブラリを指すかどうかは、名前の書き出しではなく、この索引にあるかどうかで判定します。
 
-場所が設定されていないか見つからないときは、空の `lib` を渡して起動します。解答の変換は同じ経路を通り、`lib.*` の import はコンパイルエラーになります。このとき `server.ts` は診断の先頭に設定の案内を足し、応答の `libraryMissing` を立てます。CP Toolkit はこの値で案内を切り替えます。`WarmUp.java` は `lib.io` を使うので、ライブラリなしではウォームアップを行いません。
+場所が設定されていないか見つからないときは、空のフォルダを渡して起動します。解答の変換は同じ経路を通り、ライブラリの import はコンパイルエラーになります。このとき `server.ts` は、JDK 以外の import があれば診断の先頭に設定の案内を足し、応答の `libraryMissing` を立てます。CP Toolkit はこの値で案内を切り替えます。
+
+作者のライブラリの名前(`lib` や `lib.io`)を、Local Runner のコードに書きません。必要な違いは、設定の `languages.java.libraryLast` のように、設定で受け取ります。
 
 同名の候補があるときは、パッケージの階層が最短の標準 API を優先します。同順位が複数あれば、曖昧としてエラーで止めます。
 
@@ -104,10 +107,10 @@ C コンパイラが無くて起動プログラムをビルドできないとき
 
 ソースを扱うコマンド(`run`、`localtest`、`test`、`crosscheck`、`tomain`、`toclip`、`submit`)と `serve` は、サーバーが未起動なら自動で起動します。起動先は `server.backend` で決まり、`server.autoStart` が `false` なら起動しません。
 
-- 起動時にライブラリのソースを `/dev/shm` へ同期して一度だけ class にする。解答の解析はその classpath を使う
+- 起動時にライブラリの `.java` を作業フォルダ(Linux では `/dev/shm`)へ写して一度だけ class にする。解答の解析はその classpath を使う。class は写した先に作るので、利用者のフォルダには何も書かない
 - 提出用の本文だけを同期済みのソースから取得するので、コンパイルと実行の環境を WSL に統一したまま NTFS をまたぐ負荷を避けられる
 - CLI は実行の前にソースを一度だけ `prepare` して変換とコンパイルを行い、以降の各サンプルは `programId` と標準入力だけを送る
-- `lib.io.FastScanner` と `lib.io.FastPrinter` は最小構成の `WarmUp.java` から通常どおり import する。起動時にこのファイルを提出用に変換してからコンパイルし、メモリ入力と破棄出力で `nextInt`、`nextLong`、`println(long)` を実行して、class の解決、依存の解析、インライン、javac、I/O の JIT の経路を温める
+- 起動時に `WarmUp.java` を提出用に変換してからコンパイルし、メモリ入力と破棄出力で実行して、class の解決、依存の解析、インライン、javac、I/O の JIT の経路を温める。`WarmUp.java` は標準の入出力だけを使い、ライブラリが無くても動く
 
 Easy Test+ は最後のエディタの変更から 180ms 後に `precompile` を送り、テストではサンプルごとにソースを `run` に渡します。サーバーは事前コンパイルの結果を使い、まだ終わっていなければ待ってから実行します。
 
@@ -117,10 +120,10 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `precompile` を
 
 利用者向けの説明は [SETTINGS.md](./SETTINGS.md) にあります。
 
-設定は `local-runner.settings.json` の1ファイルで、Windows の CLI と WSL のサーバーの両方から読めるよう、配布物(リポジトリでは `tools`)の最上位のフォルダに置き、Git には入れません。利用者が書くのは変えたい項目だけで、`src/settings/settings.ts` が既定値(`src/settings/defaults.json`)に重ねます。
+設定は `local-runner.settings.json` の1ファイルで、Windows の CLI と WSL のサーバーの両方から読めるよう、`local-runner` フォルダの親のフォルダ(配布物では `competitive-programming-tools`、リポジトリではルート)に置き、Git には入れません。利用者が書くのは変えたい項目だけで、`src/settings/settings.ts` が既定値(`src/settings/defaults.json`)に重ねます。
 
 - 項目の名前、型、範囲は `settings.schema.json` だけに書く。`src/settings/schema.ts` がこのファイルで検査するので、エディターの補完と実行時の検査が食い違わない
-- 項目を足すときは、`settings.schema.json`、`defaults.json`、`settings.ts` の `Settings` 型、`SETTINGS.md` を直す
+- 項目を足すときは、`settings.schema.json`、`defaults.json`、`settings.ts` の `Settings` 型、`docs/SETTINGS.md` を直す
 - 利用者が足す言語に必要な項目は、既定値と重ねたあとで `settings.ts` が確かめる。既定の言語の上書きでは一部しか書かないので、スキーマでは必須にできない
 - `family` に書ける値は、CP Toolkit の `data/languages.yaml` の ID と同じにする。食い違うとテストが失敗する
 - パスは Windows と WSL のどちらの形でも書ける。使う側が `resolveConfiguredPath` で、自分の OS の形に直す
@@ -129,13 +132,13 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `precompile` を
 
 環境変数は設定に使いません。Local Runner の動作を変える変数は次の3つだけです。ほかに、処理系を探すときに `PATH` を、`~` を展開するときに `HOME` と `USERPROFILE` を読みます。以前の版の文書に載せていた変数(`ATCODER_SESSION` など)が残っていると、起動時に警告します。
 
-| 変数                         | 用途                                                                     |
-|------------------------------|--------------------------------------------------------------------------|
-| `LOCAL_RUNNER_SETTINGS_FILE` | 設定ファイルの場所。テストが、利用者の設定を読まないようにするために使う |
-| `LOCAL_RUNNER_PROJECT_ROOT`  | `tools` フォルダの場所。`bin/_runner.cmd` が、exe にした CLI へ渡す      |
-| `NO_COLOR`                   | 色付きの表示を止める                                                     |
+| 変数                         | 用途                                                                                     |
+|------------------------------|------------------------------------------------------------------------------------------|
+| `LOCAL_RUNNER_SETTINGS_FILE` | 設定ファイルの場所。テストが、利用者の設定を読まないようにするために使う                 |
+| `LOCAL_RUNNER_PROJECT_ROOT`  | `local-runner` フォルダの親のフォルダの場所。`bin/_runner.cmd` が、exe にした CLI へ渡す |
+| `NO_COLOR`                   | 色付きの表示を止める                                                                     |
 
-サーバーは、常駐 JVM へ設定の値を環境変数(`LOCAL_RUNNER_JAVAC_RELEASE`、`LOCAL_RUNNER_RUN_STACK_BYTES`、`LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`)で渡します。これらは起動のたびにサーバーが決めるので、利用者が設定しても使われません。
+サーバーは、常駐 JVM へ設定の値を環境変数(`LOCAL_RUNNER_JAVAC_RELEASE`、`LOCAL_RUNNER_RUN_STACK_BYTES`、`LOCAL_RUNNER_CAPTURE_LIMIT_BYTES`、`LOCAL_RUNNER_LIBRARY_LAST`)で渡します。これらは起動のたびにサーバーが決めるので、利用者が設定しても使われません。
 
 起動した JDK が `languages.java.release` より新しいときは、javac の `--release` で提出先の API と構文に揃えます。バージョンが違うと起動時に警告します。
 
@@ -157,7 +160,21 @@ Release の zip は、`scripts/package.ts` が作る配布用のフォルダを�
 - 常駐 JVM の jar(`javac --release 24`)、静的リンクした起動プログラム、`WarmUp.java` を実行ファイルに埋め込む。サーバーは起動時にこれらを作業フォルダへ書き出して使い、埋め込みが無ければ(ソースから動かすとき)ソースからコンパイルする(`daemon/embedded.ts`)
 - 配布物には、実行ファイル、`bin` のスクリプト、`settings.schema.json`、`release/README.md`、ライセンスを入れる。配布物とリポジトリは、どちらも `local-runner/settings.schema.json` を持つことで見分ける(`config.ts` の `resolveProjectRoot`)
 - `server.backend` が `native` のときは、Windows の実行ファイルが自分を `daemon` で起動する
-- `package.json` の `version` を上げてコミットし、`local-runner-v<版>` のタグを push すると、`.github/workflows/local-runner-release.yml` が検査のあとで zip を作り、Release に載せる。タグと `version` が違えば失敗する
+- `package.json` の `version` を上げてコミットし、`local-runner-v<版>` のタグを push すると、`.github/workflows/local-runner-release.yml` が検査のあとで zip を作り、Release の下書きに載せる。タグと `version` が違えば失敗する
+- 下書きは利用者に見えない。zip で[リリース前の確認](#リリース前の確認)を済ませてから、GitHub の Release の画面で公開する
+
+### リリース前の確認
+
+下書きの zip を、設定ファイルの無い新しいフォルダへ展開して確かめます。リポジトリの中で動かすと、手元の設定や開発用の道具に助けられて、配布物だけでは動かない箇所を見落とします。
+
+- `README.md` と `release/README.md` の手順を、書いてあるコマンドのとおりに上から実行する。Windows PowerShell(`powershell`)と PowerShell 7(`pwsh`)の両方で試す
+- 設定ファイルが無い状態で、Java の解答を `test` と `run` で動かす
+- `setlib` に `lib` 以外の名前のフォルダを指定し、import したクラスが展開されることを確かめる
+- `setsession` で値を保存し、`submit` がログインできることを確かめる
+- `status` に、処理系を入れた言語と、見つからなかった言語が正しく出ることを確かめる
+- 文書に書いた「対応」「使える」が、何も追加で入れていない環境でそのとおりかを読み直す。追加の導入が要るものは、要ると書く
+- 作者の環境に固有の名前やパスが残っていないかを検索する(`lib.`、submodule として置いたときのフォルダ名、ユーザー名、リポジトリのパスなど)
+- エラーの案内に出てくるコマンドやパスが、配布物に実在するかを確かめる
 
 ## 確認
 
@@ -176,6 +193,6 @@ bun run --cwd local-runner test:unit
 
 ## 関連する文書
 
-- [../README.md](../README.md)
-- [../shared/README.md](../shared/README.md)
-- [../userscripts/README.md](../userscripts/README.md)
+- [tools の開発の方針](../../docs/DEVELOPMENT.md)
+- [shared/README.md](../../shared/README.md)
+- [userscripts/README.md](../../userscripts/README.md)
