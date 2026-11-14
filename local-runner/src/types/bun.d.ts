@@ -12,6 +12,8 @@ type BunSubprocess = {
 };
 
 declare const Bun: {
+	/** 実行ファイルに埋め込んだファイル。ソースから動かすときは空。 */
+	readonly embeddedFiles: ReadonlyArray<Blob & {readonly name: string}>;
 	spawn(options: {
 		cmd: string[];
 		cwd?: string;

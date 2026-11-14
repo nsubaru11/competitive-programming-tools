@@ -5,6 +5,7 @@ import type {CompileEntry, DispatcherRunResult} from "../types";
 import {RUNNER_CONFIG} from "../config";
 import * as logging from "../utils/logging";
 import * as compiler from "./compiler";
+import {EMBEDDED_FILES, readEmbeddedText} from "./embedded";
 import fs from "node:fs";
 
 export interface DispatcherCompileResult {
@@ -61,10 +62,10 @@ function decodeField(value: string) {
 	return Buffer.from(value, "base64").toString("utf8");
 }
 
-function buildWarmUpSourceCode() {
+async function buildWarmUpSourceCode() {
 	let sourceCode: string;
 	try {
-		sourceCode = fs.readFileSync(RUNNER_CONFIG.warmUpSourceFile, "utf8");
+		sourceCode = await readEmbeddedText(EMBEDDED_FILES.warmUpSource) ?? fs.readFileSync(RUNNER_CONFIG.warmUpSourceFile, "utf8");
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`failed to load ${RUNNER_CONFIG.warmUpSourceFile}: ${message}`);
@@ -169,9 +170,9 @@ function handleDispatcherResponse(line: string) {
 }
 
 async function startDispatcher() {
-	await compiler.compileDispatcher();
+	const classpath = await compiler.prepareDispatcherClasspath();
 	await new Promise<void>((resolve, reject) => {
-		const proc = spawn(compiler.JAVA_PATH, ["-cp", RUNNER_CONFIG.dispatcherBuildDir, "Dispatcher"], {
+		const proc = spawn(compiler.JAVA_PATH, ["-cp", classpath, "Dispatcher"], {
 			cwd: RUNNER_CONFIG.dispatcherBuildDir,
 			// 常駐 JVM へは、設定から決めた値を環境変数で渡す。
 			env: {
@@ -284,7 +285,7 @@ export async function warmUpDispatcher(librarySourceRoot: string) {
 	logging.logInfo(
 		`Warm up dispatcher and common I/O... repeat=${RUNNER_CONFIG.warmUpRepeatCount} timeout=${RUNNER_CONFIG.warmUpRunTimeoutMs}ms`,
 	);
-	const warmupSourceCode = buildWarmUpSourceCode();
+	const warmupSourceCode = await buildWarmUpSourceCode();
 	const transformed = await queueDispatcherTransform(warmupSourceCode, librarySourceRoot, false, true, false);
 	if (transformed.exitCode !== 0) {
 		throw new Error(`[WarmUp] transform failed: ${firstLine(transformed.diagnostics) || "unknown error"}`);

@@ -60,4 +60,4 @@ jobs:
           gh release create "$TAG" "out/local-runner/local-runner-$VERSION.zip" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Local Runner $VERSION" \
-            --notes "導入と更新の手順は [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/local-runner/README.md#セットアップ) にあります。"
+            --notes "導入と更新の手順は [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/local-runner/README.md#導入) にあります。"

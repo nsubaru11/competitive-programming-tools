@@ -305,7 +305,7 @@ AtCoder Custom Default Submissions, AtCoder Easy Test for Java, AtCoder Highligh
 
 The distributed code is the TypeScript source bundled into one file, neither obfuscated nor minified. The source is on [GitHub](https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit).
 
-Claude Opus 5.5 was used in development. The design and specifications were decided by the author.
+Claude is used in development. The design and specifications were decided by the author.
 
 The bundle includes third-party code and turndown, so its license is `MIT AND Apache-2.0 AND 0BSD`. See [SOURCES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/SOURCES.md) for the origin of each feature and [THIRD_PARTY_NOTICES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/THIRD_PARTY_NOTICES.md) for third-party licenses.
 

@@ -11,14 +11,21 @@
 
 ## 必要なもの
 
-- [Bun](https://bun.sh/)
-- JDK 24 以降
-- Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側に Bun と JDK を入れる。Release の zip の CLI は exe なので、Windows 側の Bun は、[ソースから使う](#ソースから使う)ときと、`server.backend` を `native` にするときだけ要る
-- Java 以外の言語を使うなら、その処理系を WSL 側に入れる。無い言語は使えないだけで、ほかの言語は動く
+### 必須
 
-## セットアップ
+- Windows では WSL。サーバーは既定で WSL の中で動く
+- サーバーを動かす環境(Windows では WSL)の JDK 24 以降。Java 以外の言語だけを使うときも要る
 
-[Release](https://github.com/nsubaru11/competitive-programming-tools/releases) から `local-runner-<版>.zip` を入手し、好きな場所に展開します。展開してできる `competitive-programming-tools` フォルダに、すべてが入っています。
+### 任意
+
+- C++、C、Python(CPython、PyPy、Codon)を使うなら、その処理系。入っていない言語は使えないだけで、ほかの言語は動く。[言語](#言語)を参照
+- `lib.*` を import する Java のライブラリを使うなら、その `src` フォルダ。[ライブラリを使う](#ライブラリを使う)を参照
+- `submit` で AtCoder に提出するなら、AtCoder のログイン情報。[提出の準備](#提出の準備)を参照
+- WSL を使わずに Windows でサーバーを動かす(`server.backend` を `native` にする)なら、Windows の JDK 24 以降。この場合は Java だけが動く
+
+## 導入
+
+[Release](https://github.com/nsubaru11/competitive-programming-tools/releases) から `local-runner-<版>.zip` を入手し、好きな場所に展開します。展開してできる `competitive-programming-tools` フォルダに、すべてが入っています。中身は、フォルダの中の `README.md` にあります。
 
 これだけで、Java の解答の実行、判定、提出、提出用コードの作成が動きます。`lib.*` を使うときは、[ライブラリを使う](#ライブラリを使う)を参照してください。ほかの言語の準備は、[言語](#言語)を参照してください。
 
@@ -28,25 +35,15 @@ Windows では、次のコマンドで `bin` を PATH に登録すると、ど�
 powershell -File ".\local-runner\bin\install-path.ps1"
 ```
 
-Windows 以外では、`bin` の `.cmd` の代わりに CLI を直接実行します。解答のあるフォルダで実行できるよう、`bun run --cwd` は使わず、CLI のパスを指定します。
+Linux では、`bin` の `.cmd` の代わりに `bin/local-runner` を実行します。
 
 ```bash
-bun /path/to/competitive-programming-tools/local-runner/dist/cli.js test abc448_d D.java
+/path/to/competitive-programming-tools/local-runner/bin/local-runner test abc448_d D.java
 ```
 
-更新するときは、新しい版の zip を同じ場所へ上書きで展開します。設定ファイル(`local-runner.settings.json`)は zip に含まれないので、そのまま残ります。サーバーが動いていれば `stop` で止めておくと、次のコマンドで新しい版が起動します。
+### 更新
 
-### ソースから使う
-
-Release にまだ無い変更を使うときや、開発するときは、リポジトリを clone します。
-
-```bash
-git clone https://github.com/nsubaru11/competitive-programming-tools.git
-cd competitive-programming-tools
-bun install
-```
-
-更新は `git pull` です。`.cmd` と起動スクリプトは `src` のソースを直接動かします。Windows 以外で CLI を直接実行するときは、`dist/cli.js` の代わりに `local-runner/src/cli/index.ts` を指定します。
+新しい版の zip を、同じ場所へ上書きで展開します。設定ファイル(`local-runner.settings.json`)は zip に含まれないので、そのまま残ります。サーバーが動いていれば `stop` で止めておくと、次のコマンドで新しい版が起動します。
 
 ## CP Toolkit とつなぐ
 
@@ -247,14 +244,14 @@ Set-Content -Path "$HOME\.atcoder\session.txt" -Value "<REVEL_SESSIONの値>" -E
 
 ## 設定
 
-ポート、タイムアウト、JDK の場所などは、`tools` フォルダの `local-runner.settings.json` に書きます。変えたい項目だけを書けばよく、ファイルが無ければすべて既定値で動きます。Windows の CLI と WSL のサーバーが同じファイルを読みます。
+ポート、タイムアウト、JDK の場所などは、`competitive-programming-tools` フォルダの `local-runner.settings.json` に書きます。変えたい項目だけを書けばよく、ファイルが無ければすべて既定値で動きます。Windows の CLI と WSL のサーバーが同じファイルを読みます。
 
-項目の一覧、パスの書き方、以前のバージョンからの移行は [SETTINGS.md](./SETTINGS.md) を参照してください。今の値は `settings` で確かめられます。
+項目の一覧とパスの書き方は [SETTINGS.md](./SETTINGS.md) を参照してください。今の値は `settings` で確かめられます。
 
 環境変数 `NO_COLOR` を `1` にすると、色付きの表示を止めます。
 
 ## 開発
 
-開発には Claude Opus 5.5 を使用しました。設計と仕様は作者が決めています。
+開発には Claude を使用しています。設計と仕様は作者が決めています。
 
 内部の仕様と開発の手順は [DEVELOPMENT.md](./DEVELOPMENT.md) を参照してください。

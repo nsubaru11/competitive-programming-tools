@@ -1,6 +1,6 @@
 # Local Runner の設定
 
-Local Runner の設定は、`tools` フォルダの `local-runner.settings.json` の1つにまとめています。Windows の CLI と WSL のサーバーが同じファイルを読みます。
+Local Runner の設定は、`competitive-programming-tools` フォルダの `local-runner.settings.json` の1つにまとめています。Windows の CLI と WSL のサーバーが同じファイルを読みます。
 
 - 書くのは変えたい項目だけです。書かなかった項目は既定値で動きます
 - ファイルが無ければ、すべて既定値で動きます。`setlib` と `setheader` は、このファイルを作って書き込みます
@@ -36,13 +36,13 @@ Local Runner の設定は、`tools` フォルダの `local-runner.settings.json`
 
 ### server
 
-| 項目             | 既定値  | 反映   | 説明                                                                                               |
-|------------------|---------|--------|----------------------------------------------------------------------------------------------------|
-| `port`           | `8080`  | 再起動 | サーバーのポート。CLI の接続先もここから決まる                                                     |
-| `backend`        | `"wsl"` | すぐ   | Windows でサーバーを動かす場所。`"native"` にすると、WSL を使わずに Windows の Bun と JDK で動かす |
-| `autoStart`      | `true`  | すぐ   | サーバーが動いていないとき、`test` などのコマンドが自動で起動する                                  |
-| `startTimeoutMs` | `60000` | すぐ   | 自動で起動したサーバーの準備を待つ時間(ms)                                                         |
-| `extraOrigins`   | `[]`    | 再起動 | 対応するジャッジサイトのほかに、ブラウザからの要求を許すオリジン                                   |
+| 項目             | 既定値  | 反映   | 説明                                                                                        |
+|------------------|---------|--------|---------------------------------------------------------------------------------------------|
+| `port`           | `8080`  | 再起動 | サーバーのポート。CLI の接続先もここから決まる                                              |
+| `backend`        | `"wsl"` | すぐ   | Windows でサーバーを動かす場所。`"native"` にすると、WSL を使わずに Windows の JDK で動かす |
+| `autoStart`      | `true`  | すぐ   | サーバーが動いていないとき、`test` などのコマンドが自動で起動する                           |
+| `startTimeoutMs` | `60000` | すぐ   | 自動で起動したサーバーの準備を待つ時間(ms)                                                  |
+| `extraOrigins`   | `[]`    | 再起動 | 対応するジャッジサイトのほかに、ブラウザからの要求を許すオリジン                            |
 
 ポートを変えたら、CP Toolkit の設定にある Local Runner の URL も同じポートに変えてください。
 
@@ -204,12 +204,12 @@ Java 以外の言語は、サンプルごとにプロセスを起動して測り
 
 | 書き方                 | 読まれ方                                                                              |
 |------------------------|---------------------------------------------------------------------------------------|
-| 相対パス               | 設定ファイルのあるフォルダ(`tools`)から。どちらが読んでも同じ場所を指す               |
+| 相対パス               | 設定ファイルのあるフォルダから。どちらが読んでも同じ場所を指す                        |
 | `C:/...`、`/mnt/c/...` | 読む側の形に自動で読み替える                                                          |
 | `~/...`                | 読む側のホーム。WSL のサーバーなら WSL のホーム、Windows の CLI なら Windows のホーム |
 | `/home/...`            | WSL だけにある場所。サーバーが読む項目にだけ書ける                                    |
 
-- リポジトリの中のファイルは、相対パスで書くのを勧めます
+- `competitive-programming-tools` フォルダの中のファイルは、相対パスで書くのを勧めます
 - JSON では `\` を `\\` と書く必要があります。`C:/Users/...` のように `/` で書けます
 - `languages` の `command` と `library`、`headers` はサーバーが読みます。`atcoder.sessionFile` は CLI が読みます
 - `"server.backend": "native"` のときはサーバーも Windows で動くので、`languages.java.command` は Windows のパスで書きます
@@ -226,28 +226,3 @@ Java 以外の言語は、サンプルごとにプロセスを起動して測り
 - `unknown setting`: 項目の名前が違います
 - `must be an integer` など: 値の型や範囲が違います
 - `is not valid JSON`: かっこやカンマなど、JSON の書き方が違います
-
-## 以前のバージョンからの移行
-
-環境変数での設定はやめ、すべて設定ファイルに移しました。更新したら、次の順に行ってください。
-
-1. `stop` のあと `serve` でサーバーを起動し直す。CLI を exe にビルドしていた場合は、`bun run --cwd local-runner build` でビルドし直す
-2. 環境変数を設定していた場合は、下の表の項目へ書き写す。設定されたままの変数があると、コマンドの実行時に案内が出る
-
-`setlib` と `setheader` で設定していた内容は、初回の実行で新しい形式へ自動で書き換わります。元のファイルは `local-runner.settings.json.bak` に残ります。
-
-| 以前の環境変数                                       | 今の設定                                                                |
-|------------------------------------------------------|-------------------------------------------------------------------------|
-| `LOCAL_RUNNER_PORT`、`LOCAL_RUNNER_URL`              | `server.port`                                                           |
-| `LOCAL_RUNNER_BACKEND`                               | `server.backend`                                                        |
-| `ATCODER_RUNNER_AUTOSTART`                           | `server.autoStart`                                                      |
-| `LOCAL_RUNNER_START_TIMEOUT_MS`                      | `server.startTimeoutMs`                                                 |
-| `LOCAL_RUNNER_ALLOWED_ORIGINS`                       | `server.extraOrigins`。対応サイトに足す形になった                       |
-| `JAVA_HOME`、`JAVA_HOME_24` など                     | `languages.java.command`。PATH の `java` と違う JDK を使うときだけ書く  |
-| `ATCODER_JAVA_VER`                                   | `languages.java.release`                                                |
-| `ATCODER_LIB_SRC`                                    | `languages.java.library`                                                |
-| `LOCAL_RUNNER_RUN_STACK_BYTES`                       | `languages.java.stackMb`。単位が MB になった                            |
-| `ATCODER_SESSION_FILE`                               | `atcoder.sessionFile`                                                   |
-| `ATCODER_SESSION`、`ATCODER_COOKIE`                  | なし。`REVEL_SESSION` の値を `atcoder.sessionFile` のファイルに保存する |
-| `LOCAL_RUNNER_HOST`                                  | なし。`127.0.0.1` に固定した                                            |
-| `LOCAL_RUNNER_BUN`、`LOCAL_RUNNER_INPROCESS_COMPILE` | なし                                                                    |

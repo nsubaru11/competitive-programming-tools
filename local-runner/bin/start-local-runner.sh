@@ -37,24 +37,26 @@ fi
 source_optional "$HOME/.sdkman/bin/sdkman-init.sh"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-# Release の zip では、まとめた dist/server.js を使う。clone したリポジトリでは、ソースを直接動かす。
-SERVER_PATH="$SCRIPT_DIR/../dist/server.js"
-if [[ ! -f "$SERVER_PATH" ]]; then
-	SERVER_PATH="$SCRIPT_DIR/../src/daemon/main.ts"
+# 配布物では、bin の実行ファイルがサーバーを動かす。リポジトリでは、Bun でソースを動かす。
+SERVER_BINARY="$SCRIPT_DIR/local-runner"
+if [[ -f "$SERVER_BINARY" ]]; then
+	# Windows で展開すると実行の権限が付かないことがあるので、付けておく。
+	chmod +x "$SERVER_BINARY" 2>/dev/null || true
+	SERVER_COMMAND=("$SERVER_BINARY" daemon)
+else
+	require_command "bun" "Install Bun inside WSL first."
+	SERVER_COMMAND=(bun "$SCRIPT_DIR/../src/daemon/main.ts")
 fi
 
 # Java などの処理系は、サーバーが設定ファイル(local-runner.settings.json)から決めて確かめる。
-require_command "bun" "Install Bun inside WSL first."
-
 echo -e "========================================"
 echo -e "  Local Runner Server (WSL)"
 echo -e "========================================"
-echo -e "SERVER_PATH: $SERVER_PATH"
-echo -e "RUNNER     : $(command -v bun)"
+echo -e "SERVER: ${SERVER_COMMAND[*]}"
 echo -e "========================================"
 
 echo -e "${GREEN}Starting WSL local runner server...${NC}"
 
 # serve は新しいコンソール窓(ConPTY)に直結して起動するため stdout は tty。
 # ログはバッファされずリアルタイムに流れるので、特別なラッパーは不要。
-exec bun "$SERVER_PATH" "$@"
+exec "${SERVER_COMMAND[@]}" "$@"

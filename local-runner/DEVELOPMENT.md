@@ -9,7 +9,8 @@ local-runner/
 ├── package.json
 ├── src/
 │   ├── cli/           # test、submit、短縮表記、AtCoder との通信、サンプルの判定
-│   ├── daemon/        # server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、compiler.ts(javac のキャッシュ)、
+│   ├── daemon/        # main.ts(ソースから動かすときの入口)、server.ts(HTTP API)、dispatcher.ts(常駐 JVM との連携)、
+│   │                  # compiler.ts(javac のキャッシュ)、embedded.ts(実行ファイルに埋め込んだファイル)、
 │   │                  # languages.ts(使える言語)、preparationQueue.ts(コンパイルの順番待ち)、
 │   │                  # commandEngine.ts(コマンドで動かす言語)、processRunner.ts(プロセスの起動と計測)、
 │   │                  # headerUnit.ts(C++ の header unit)
@@ -19,6 +20,8 @@ local-runner/
 │   └── types/         # 型定義
 ├── settings.schema.json  # 設定ファイルの項目の定義
 ├── bin/               # test.cmd、submit.cmd、起動スクリプト
+├── scripts/           # package.ts(配布物を作る)
+├── release/           # README.md(配布物の README)
 ├── native/            # launcher.c(解答のプロセスを起動して計測するプログラム)
 └── java/              # Dispatcher など常駐 JVM のクラス、PROTOCOL.md、WarmUp.java
 ```
@@ -114,7 +117,7 @@ Easy Test+ は最後のエディタの変更から 180ms 後に `precompile` を
 
 利用者向けの説明は [SETTINGS.md](./SETTINGS.md) にあります。
 
-設定は `local-runner.settings.json` の1ファイルで、Windows の CLI と WSL のサーバーの両方から読めるようリポジトリの中に置き、Git には入れません。利用者が書くのは変えたい項目だけで、`src/settings/settings.ts` が既定値(`src/settings/defaults.json`)に重ねます。
+設定は `local-runner.settings.json` の1ファイルで、Windows の CLI と WSL のサーバーの両方から読めるよう、配布物(リポジトリでは `tools`)の最上位のフォルダに置き、Git には入れません。利用者が書くのは変えたい項目だけで、`src/settings/settings.ts` が既定値(`src/settings/defaults.json`)に重ねます。
 
 - 項目の名前、型、範囲は `settings.schema.json` だけに書く。`src/settings/schema.ts` がこのファイルで検査するので、エディターの補完と実行時の検査が食い違わない
 - 項目を足すときは、`settings.schema.json`、`defaults.json`、`settings.ts` の `Settings` 型、`SETTINGS.md` を直す
@@ -144,15 +147,16 @@ CLI のソースを変更したら `bun run build`(型チェックと CLI の ex
 bun run --cwd local-runner build
 ```
 
-サーバーは単一のバイナリにしません。`bin/start-local-runner.sh` が WSL の Bun でサーバーを動かします。リポジトリでは `src/daemon/main.ts` を、Release の zip では1ファイルにまとめた `dist/server.js` を使います。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
+サーバーは CLI に含まれ、使い方に載せない内部用の `daemon` コマンドで動きます。`bin/start-local-runner.sh` は `bin/local-runner` があればそれを、無ければ WSL の Bun で `src/daemon/main.ts` を動かします。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
 
 ## 配布
 
-Release の zip は、`bun run package`(`scripts/package.ts`)が作る配布用のフォルダをまとめたものです。サーバーと CLI を Bun で1ファイルずつ(`dist/server.js`、`dist/cli.js`)にまとめ、Windows の CLI の exe、常駐 JVM のソース、`launcher.c`、`bin`、文書と一緒に、リポジトリと同じ形で `out/local-runner/competitive-programming-tools` に置きます。
+Release の zip は、`scripts/package.ts` が作る配布用のフォルダをまとめたものです。WSL で `bun run --cwd local-runner package` を実行すると、`out/local-runner/competitive-programming-tools` にできます。起動プログラムを静的リンクするので Linux で実行し、`javac`、`jar`、`cc` が PATH に要ります。
 
-- 形をリポジトリと同じにするのは、設定ファイルとソースの場所を決める処理(`config.ts` の `resolveProjectRoot`)をそのまま使うため
-- `bin/_runner.cmd`、`bin/start-local-runner.sh`、`server.backend` が `native` のときの起動は、`dist` があればそれを使い、無ければ `src` を動かす。リポジトリの中には `dist` を作らない
-- 文書から配布物の外へのリンクは、その版のタグのリポジトリの URL に書き換える
+- CLI(サーバーを含む)を、Windows 用の `bin/local-runner.exe` と Linux 用の `bin/local-runner` の実行ファイルにする
+- 常駐 JVM の jar(`javac --release 24`)、静的リンクした起動プログラム、`WarmUp.java` を実行ファイルに埋め込む。サーバーは起動時にこれらを作業フォルダへ書き出して使い、埋め込みが無ければ(ソースから動かすとき)ソースからコンパイルする(`daemon/embedded.ts`)
+- 配布物には、実行ファイル、`bin` のスクリプト、`settings.schema.json`、`release/README.md`、ライセンスを入れる。配布物とリポジトリは、どちらも `local-runner/settings.schema.json` を持つことで見分ける(`config.ts` の `resolveProjectRoot`)
+- `server.backend` が `native` のときは、Windows の実行ファイルが自分を `daemon` で起動する
 - `package.json` の `version` を上げてコミットし、`local-runner-v<版>` のタグを push すると、`.github/workflows/local-runner-release.yml` が検査のあとで zip を作り、Release に載せる。タグと `version` が違えば失敗する
 
 ## 確認

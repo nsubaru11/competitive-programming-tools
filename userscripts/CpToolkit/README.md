@@ -305,7 +305,7 @@ AtCoder Custom Default Submissions、AtCoder Easy Test for Java、AtCoder Highli
 
 配布するコードは、TypeScript のソースを1ファイルにまとめたものです。難読化も最小化もしていません。ソースは [GitHub](https://github.com/nsubaru11/competitive-programming-tools/tree/main/userscripts/CpToolkit) で公開しています。
 
-開発には Claude Opus 5.5 を使用しました。設計と仕様は作者が決めています。
+開発には Claude を使用しています。設計と仕様は作者が決めています。
 
 配布物には第三者のコードと turndown を含むので、ライセンスは `MIT AND Apache-2.0 AND 0BSD` です。各機能の出典は [SOURCES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/SOURCES.md)、第三者のコードのライセンスは [THIRD_PARTY_NOTICES.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/THIRD_PARTY_NOTICES.md) にあります。
 

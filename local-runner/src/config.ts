@@ -27,7 +27,7 @@ function resolveProjectRoot() {
 		.flatMap((d) => [path.resolve(d, ".."), path.resolve(d, "../..")]);
 	const candidates = [envRoot, importMetaRoot, ...roots].filter(Boolean) as string[];
 	for (const candidate of candidates) {
-		if (fs.existsSync(path.join(candidate, "local-runner", "java", "src", "Dispatcher.java"))) {
+		if (fs.existsSync(path.join(candidate, "local-runner", "settings.schema.json"))) {
 			return candidate;
 		}
 	}
@@ -155,6 +155,7 @@ export const RUNNER_CONFIG = {
 	compileRootDir: path.join(runnerBaseDir, "compiled"),
 	dispatcherBuildDir: path.join(runnerBaseDir, "dispatcher"),
 	warmUpSourceFile: path.join(PROJECT_ROOT, "local-runner", "java", "src", "WarmUp.java"),
+	dispatcherJarFile: path.join(runnerBaseDir, "dispatcher", "dispatcher.jar"),
 	warmUpSourceClassName: "WarmUp",
 	warmUpStdin: "",
 	warmUpRepeatCount: 2,

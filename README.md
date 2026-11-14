@@ -5,7 +5,7 @@
 | ツール                                          | 内容                                                                      | 使い始める                                                                       |
 |-------------------------------------------------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | [CP Toolkit](./userscripts/CpToolkit/README.md) | AtCoder などのページに補助機能を足す UserScript。機能ごとに ON/OFF できる | [Greasy Fork からインストール](https://greasyfork.org/scripts/603262-cp-toolkit) |
-| [Local Runner](./local-runner/README.md)        | Java、C++、C、Python の解答を手元で実行、判定、提出する CLI とサーバー    | [セットアップ](./local-runner/README.md#セットアップ)                            |
+| [Local Runner](./local-runner/README.md)        | Java、C++、C、Python の解答を手元で実行、判定、提出する CLI とサーバー    | [導入方法](./local-runner/README.md#導入)                                        |
 
 CP Toolkit だけなら、インストールするだけで使えます。Local Runner は Java のライブラリの展開や、問題ページからの手元での実行に使います。
 
@@ -13,7 +13,7 @@ CP Toolkit だけなら、インストールするだけで使えます。Local 
 
 ## 開発
 
-開発には Claude Opus 5.5 を使用しました。設計と仕様は作者が決めています。
+開発には Claude を使用しています。設計と仕様は作者が決めています。
 
 Bun のワークスペースで管理しています。
 

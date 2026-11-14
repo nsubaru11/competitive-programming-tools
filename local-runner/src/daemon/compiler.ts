@@ -5,6 +5,7 @@ import path from "node:path";
 import type {LocalRunnerRunResponse} from "@atcoder-tools/shared";
 import type {CompileEntry} from "../types";
 import * as config from "../config";
+import {EMBEDDED_FILES, extractEmbeddedFile} from "./embedded";
 import * as formatter from "../utils/formatter";
 import * as logging from "../utils/logging";
 import * as filesystem from "../utils/filesystem";
@@ -21,8 +22,6 @@ export const JAVAC_PATH = JAVA_BIN_DIR === null ? "javac" : path.join(JAVA_BIN_D
 export const JAVA_ENV: NodeJS.ProcessEnv = JAVA_BIN_DIR === null
 	? process.env
 	: {...process.env, PATH: JAVA_BIN_DIR + path.delimiter + process.env.PATH};
-const DISPATCHER_SOURCE_FILE = config.resolveDispatcherSourceFile();
-const DISPATCHER_SOURCE_DIR = path.dirname(DISPATCHER_SOURCE_FILE);
 
 /**
  * Dispatcher ソースディレクトリ配下の *.java をすべて列挙する。
@@ -30,10 +29,11 @@ const DISPATCHER_SOURCE_DIR = path.dirname(DISPATCHER_SOURCE_FILE);
  * 単一ファイルではなくディレクトリ全体をコンパイル対象・鮮度判定対象とする。
  */
 function listDispatcherSources(): string[] {
+	const sourceDir = path.dirname(config.resolveDispatcherSourceFile());
 	return fs
-		.readdirSync(DISPATCHER_SOURCE_DIR)
+		.readdirSync(sourceDir)
 		.filter((name) => name.endsWith(".java") && name !== "WarmUp.java")
-		.map((name) => path.join(DISPATCHER_SOURCE_DIR, name));
+		.map((name) => path.join(sourceDir, name));
 }
 
 /** 与えたソース群の最新 mtime（ミリ秒）を返す。 */
@@ -107,7 +107,15 @@ function cleanupOldCache() {
 	});
 }
 
-export async function compileDispatcher() {
+/** 常駐 JVM のクラスパスを返す。配布用の実行ファイルでは埋め込んだ jar を、ソースから動かすときはコンパイルしたクラスを使う。 */
+export async function prepareDispatcherClasspath(): Promise<string> {
+	const jar = await extractEmbeddedFile(EMBEDDED_FILES.dispatcherJar, config.RUNNER_CONFIG.dispatcherJarFile);
+	if (jar !== null) return jar;
+	await compileDispatcher();
+	return config.RUNNER_CONFIG.dispatcherBuildDir;
+}
+
+async function compileDispatcher() {
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.dispatcherBuildDir);
 	const sources = listDispatcherSources();
 	// ソース未変更ならキャッシュ済み Dispatcher.class を再利用し、毎起動の javac を省く。

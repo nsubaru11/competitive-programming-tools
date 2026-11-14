@@ -24,6 +24,7 @@ import {pruneHeaderUnits} from "./headerUnit";
 import {resolveLanguages, type RunnerLanguage} from "./languages";
 import {PreparationQueue, type PrepareFunction} from "./preparationQueue";
 import {CanceledError, ensureLauncher, type ProcessOutcome} from "./processRunner";
+import {EMBEDDED_FILES, extractEmbeddedFile} from "./embedded";
 import {ALLOWED_ORIGIN_HOSTS, isAllowedOrigin} from "./origin";
 
 const serverStartedAt = Date.now();
@@ -461,9 +462,10 @@ async function prepareLanguages(): Promise<void> {
 	const commandLanguages = runnerLanguages.flatMap(({command}) => (command === null ? [] : [command]));
 	if (commandLanguages.length === 0) return;
 
-	// 起動プログラムは C で書いてあるので、C か C++ のコンパイラでビルドする。
+	// 配布用の実行ファイルには、ビルドした起動プログラムを埋め込んである。無ければ C か C++ のコンパイラでビルドする。
 	const compilerCandidates = ["cc", "gcc", ...commandLanguages.map(({command}) => command).filter((command) => /(?:cc|\+\+|clang)[^/]*$/.test(command))];
-	const launcher = await ensureLauncher(config.RUNNER_CONFIG.launcherSourceFile, config.RUNNER_CONFIG.launcherFile, compilerCandidates);
+	const launcher = await extractEmbeddedFile(EMBEDDED_FILES.launcher, config.RUNNER_CONFIG.launcherFile, 0o755)
+		?? await ensureLauncher(config.RUNNER_CONFIG.launcherSourceFile, config.RUNNER_CONFIG.launcherFile, compilerCandidates);
 	if (launcher === null) {
 		logging.logWarn("No C compiler was found, so memory is measured less precisely: values below about 20 MB are not reliable. Install gcc to fix this.");
 	}

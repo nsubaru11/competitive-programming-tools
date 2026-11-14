@@ -1,5 +1,4 @@
-import {spawn, spawnSync} from "node:child_process";
-import fs from "node:fs";
+import {spawn} from "node:child_process";
 import path from "node:path";
 import {PROJECT_ROOT, SETTINGS, SETTINGS_FILE} from "../config";
 import {postToRunner} from "./runnerClient";
@@ -21,13 +20,14 @@ function shq(s: string): string {
 	return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-function commandAvailable(command: string, args: string[]): boolean {
-	return spawnSync(command, args, {stdio: "ignore", windowsHide: true}).status === 0;
+/** 実行ファイルにした CLI ではなく、Bun でソースを動かしているか。 */
+function isBunRuntime(): boolean {
+	return /^bun(?:\.exe)?$/i.test(path.basename(process.execPath));
 }
 
 /**
  * Local Runner サーバーを起動する。
- * Windows: 既定は WSL で起動し、設定の server.backend が native のときだけ Windows の Bun/JDK を使う。
+ * Windows: 既定は WSL で起動し、設定の server.backend が native のときだけ Windows の JDK を使う。
  * WSL/Linux 内: setsid でバックグラウンド化し、ログは ~/.atcoder/runner-autostart.log へ。
  */
 function startServer(): void {
@@ -36,15 +36,9 @@ function startServer(): void {
 	if (process.platform === "win32") {
 		if (SETTINGS.server.backend === "native") {
 			// Java の有無は、サーバーが設定の languages.java.command で確かめる。
-			if (!commandAvailable("bun", ["--version"])) {
-				throw new Error('"server.backend": "native" requires bun on the Windows PATH.');
-			}
-			// Release の zip では、まとめた dist/server.js を使う。clone したリポジトリでは、ソースを直接動かす。
-			const bundledServerPath = path.join(PROJECT_ROOT, "local-runner", "dist", "server.js");
-			const serverPath = fs.existsSync(bundledServerPath)
-				? bundledServerPath
-				: path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "main.ts");
-			const child = spawn("bun", [serverPath], {
+			// 実行ファイルの CLI はサーバーも含むので、自分を daemon で起動する。Bun で動いているときは、その Bun でソースを動かす。
+			const args = isBunRuntime() ? [path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "main.ts")] : ["daemon"];
+			const child = spawn(process.execPath, args, {
 				cwd: PROJECT_ROOT,
 				detached: true,
 				windowsHide: true,
