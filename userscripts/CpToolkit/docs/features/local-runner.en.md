@@ -34,8 +34,8 @@ Change these under "Detailed settings" of each feature in the settings.
 
 - `compilerName` is the value returned by `list`. A server that handles several languages uses it to pick one
 - Each entry of `list` may also carry `family` and `match`
-	- `family` is the ID of the language family (`cpp`, `python3`, `java` and so on). When present, it is used instead of detecting the family from `language`
-	- `match` is an array of words. When several environments share a family, those whose words appear in the language name on the page come first, and the rest follow the order of `list`. For example, `["PyPy"]` on a PyPy environment makes it the first choice on PyPy pages
+    - `family` is the ID of the language family (`cpp`, `python3`, `java` and so on). When present, it is used instead of detecting the family from `language`
+    - `match` is an array of words. When several environments share a family, those whose words appear in the language name on the page come first, and the rest follow the order of `list`. For example, `["PyPy"]` on a PyPy environment makes it the first choice on PyPy pages
 - Memory is shown as usage when `peakMemory` is present, and as cumulative allocation when `memory` is present
 - The `status` of `run` is one of `success`, `compileError`, `timeLimitExceeded`, `runtimeError`, `internalError` and `badRequest`
 - `run` waits for the code to finish compiling before running it. On a compile error, respond with `status` `compileError` and the errors in `stderr`

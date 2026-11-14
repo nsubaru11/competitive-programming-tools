@@ -34,8 +34,8 @@
 
 - `compilerName` は `list` で返した値です。複数の言語を扱うサーバーは、これで言語を選びます
 - `list` の各要素には、任意で `family` と `match` を付けられます
-	- `family` は言語の種類の ID(`cpp`、`python3`、`java` など)です。あれば、`language` からの判定の代わりに使います
-	- `match` は語の配列です。同じ種類の実行環境が複数あるとき、ページの言語の表記にその語を含むものを先頭にし、残りは `list` の順に並べます。たとえば PyPy の実行環境に `["PyPy"]` を付けると、PyPy のページで先に選ばれます
+    - `family` は言語の種類の ID(`cpp`、`python3`、`java` など)です。あれば、`language` からの判定の代わりに使います
+    - `match` は語の配列です。同じ種類の実行環境が複数あるとき、ページの言語の表記にその語を含むものを先頭にし、残りは `list` の順に並べます。たとえば PyPy の実行環境に `["PyPy"]` を付けると、PyPy のページで先に選ばれます
 - メモリは、`peakMemory` があれば使用量として、`memory` があれば累積の割り当て量として表示します
 - `run` の `status` は `success`、`compileError`、`timeLimitExceeded`、`runtimeError`、`internalError`、`badRequest` のいずれかです
 - `run` は、そのソースのコンパイルが終わるのを待ってから実行します。コンパイルエラーなら、`status` を `compileError`、`stderr` をエラーの内容にして返してください
