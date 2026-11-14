@@ -97,7 +97,7 @@ describe("loadSettings", () => {
 });
 
 describe("languages", () => {
-	const rust = {family: "rust", name: "Rust", command: "rustc", sourceFile: "main.rs", run: ["{output}"]};
+	const zig = {family: "zig", name: "Zig", command: "zig", sourceFile: "main.zig", run: ["{output}"]};
 
 	test("既定の言語は、書いた項目だけを上書きする", () => {
 		writeRaw({languages: {cpp: {command: "~/gcc/bin/g++"}, pypy: {stackMb: 512}}});
@@ -107,47 +107,47 @@ describe("languages", () => {
 	});
 
 	test("新しい名前を書くと言語が増える", () => {
-		writeRaw({languages: {rust}});
+		writeRaw({languages: {zig}});
 		const names = commandLanguageSettings(loadSettings(file)).map(([name]) => name);
-		expect(names).toEqual(["cpp", "c", "cpython", "pypy", "codon", "rust"]);
+		expect(names).toEqual(["cpp", "c", "cpython", "pypy", "codon", "go", "rust", "kotlin", "csharp", "zig"]);
 	});
 
 	test("足す言語に必要な項目が無ければ、名前を示してエラーにする", () => {
-		writeRaw({languages: {rust: {family: "rust", name: "Rust", command: "rustc", run: []}}});
+		writeRaw({languages: {zig: {family: "zig", name: "Zig", command: "zig", run: []}}});
 		let message = "";
 		try {
 			loadSettings(file);
 		} catch (error) {
 			message = (error as Error).message;
 		}
-		expect(message).toContain("languages.rust.sourceFile: is required to add a language");
-		expect(message).toContain("languages.rust.run: is required to add a language");
-		expect(message).not.toContain("languages.rust.family");
+		expect(message).toContain("languages.zig.sourceFile: is required to add a language");
+		expect(message).toContain("languages.zig.run: is required to add a language");
+		expect(message).not.toContain("languages.zig.family");
 	});
 
 	test("enabled が false の言語は、一覧から外れる", () => {
-		writeRaw({languages: {codon: {enabled: false}, rust: {...rust, enabled: false}}});
+		writeRaw({languages: {codon: {enabled: false}, zig: {...zig, enabled: false}}});
 		const names = commandLanguageSettings(loadSettings(file)).map(([name]) => name);
-		expect(names).toEqual(["cpp", "c", "cpython", "pypy"]);
+		expect(names).toEqual(["cpp", "c", "cpython", "pypy", "go", "rust", "kotlin", "csharp"]);
 	});
 
 	test("言語の名前、種類、Java に書けない項目を検査する", () => {
-		writeRaw({languages: {Rust: rust, go: {...rust, family: "golang"}, java: {compile: ["javac"]}, c: {setup: "builtin:pch"}}});
+		writeRaw({languages: {Zig: zig, go: {...zig, family: "golang"}, java: {compile: ["javac"]}, c: {setup: "builtin:pch"}}});
 		let message = "";
 		try {
 			loadSettings(file);
 		} catch (error) {
 			message = (error as Error).message;
 		}
-		expect(message).toContain("languages.Rust: the name must match");
+		expect(message).toContain("languages.Zig: the name must match");
 		expect(message).toContain("languages.go.family: must be one of");
 		expect(message).toContain("languages.java.compile: unknown setting");
 		expect(message).toContain('languages.c.setup: must be one of "builtin:gcc-header-unit"');
 	});
 
 	test("setup には compile が要る", () => {
-		writeRaw({languages: {rust: {...rust, setup: "builtin:gcc-header-unit"}}});
-		expect(() => loadSettings(file)).toThrow('languages.rust.setup: needs "compile"');
+		writeRaw({languages: {zig: {...zig, setup: "builtin:gcc-header-unit"}}});
+		expect(() => loadSettings(file)).toThrow('languages.zig.setup: needs "compile"');
 	});
 
 	test("種類の一覧は、CP Toolkit の言語の表と一致する", () => {
@@ -281,15 +281,20 @@ describe("resolveSettingPath", () => {
 });
 
 describe("resolveLibrarySource", () => {
-	test("src を直接指定しても、ライブラリのルートを指定しても src を返す", () => {
-		const src = path.join(dir, "src");
-		fs.mkdirSync(path.join(src, "lib"), {recursive: true});
-		expect(resolveLibrarySource(src)).toBe(src);
-		expect(resolveLibrarySource(dir)).toBe(src);
+	test("フォルダの名前によらず、指定したフォルダをそのまま返す", () => {
+		const library = path.join(dir, "any-name");
+		fs.mkdirSync(path.join(library, "nested"), {recursive: true});
+		fs.writeFileSync(path.join(library, "nested", "Tool.java"), "package mylib; public final class Tool {}");
+		expect(resolveLibrarySource(library)).toBe(library);
+		expect(resolveLibrarySource(dir)).toBe(dir);
 	});
 
-	test("lib が無いフォルダはエラーにする", () => {
-		expect(() => resolveLibrarySource(dir)).toThrow("The lib folder was not found.");
+	test("無いフォルダと、.java が無いフォルダはエラーにする", () => {
+		expect(() => resolveLibrarySource(path.join(dir, "missing"))).toThrow("The folder was not found");
+		fs.mkdirSync(path.join(dir, ".git"));
+		fs.writeFileSync(path.join(dir, ".git", "Hidden.java"), "");
+		fs.writeFileSync(path.join(dir, "notes.txt"), "");
+		expect(() => resolveLibrarySource(dir)).toThrow("No .java files were found");
 	});
 });
 

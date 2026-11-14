@@ -20,21 +20,39 @@ final class JavaSourceTransformer {
 	private static final Charset UTF_8 = StandardCharsets.UTF_8;
 	private static final Pattern PUBLIC_TOKEN = Pattern.compile("\\bpublic\\s+");
 	private static final Pattern LEADING_BLANK_LINES = Pattern.compile("\\A(?:[\\t ]*\\n)+");
+	private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\p{L}_$][\\p{L}\\p{N}_$]*(?:\\s*\\.\\s*[\\p{L}_$][\\p{L}\\p{N}_$]*)*)\\s*;", Pattern.MULTILINE);
+	private static final String LAST_PACKAGES_ENV = "LOCAL_RUNNER_LIBRARY_LAST";
+	private static final String CLASS_PATH_DIRECTORY = ".compiled-library";
 	private final JavaCompiler compiler;
+	private final List<String> lastPackages;
 	private Path cachedRoot;
 	private long cachedStamp = Long.MIN_VALUE;
 	private LibraryIndex cachedIndex;
 
 	JavaSourceTransformer() {
+		this(lastPackagesFromEnvironment());
+	}
+
+	/**
+	 * @param lastPackages 展開するときに末尾へ回すパッケージ。入出力のように、大きくて毎回同じものを書く。
+	 */
+	JavaSourceTransformer(final List<String> lastPackages) {
 		compiler = ToolProvider.getSystemJavaCompiler();
 		if (compiler == null) throw new IllegalStateException("No system Java compiler is available (JDK required).");
+		this.lastPackages = List.copyOf(lastPackages);
+	}
+
+	private static List<String> lastPackagesFromEnvironment() {
+		final String raw = System.getenv(LAST_PACKAGES_ENV);
+		if (raw == null || raw.isBlank()) return List.of();
+		return Arrays.stream(raw.split(",")).map(String::strip).filter(name -> !name.isEmpty()).toList();
 	}
 
 	SourceTransformResult transform(final String rawSource, final Path librarySourceRoot, final boolean debug, final boolean autoImport, final boolean validate) {
 		try {
 			final Path root = librarySourceRoot.toAbsolutePath().normalize();
-			if (!Files.isDirectory(root.resolve("lib"))) {
-				return failure(rawSource, "library source root does not contain lib/: " + root);
+			if (!Files.isDirectory(root)) {
+				return failure(rawSource, "library folder was not found: " + root);
 			}
 			final LibraryIndex index = libraryIndex(root);
 			String source = normalize(rawSource);
@@ -52,8 +70,8 @@ final class JavaSourceTransformer {
 			}
 
 			if (analysis.hasErrors()) return failure(source, analysis);
-			final List<Path> dependencies = collectDependencies(analysis, index, root);
-			final BundleOutput bundled = bundle(source, analysis, dependencies, root, debug);
+			final List<Path> dependencies = collectDependencies(analysis, index);
+			final BundleOutput bundled = bundle(source, analysis, dependencies, index, debug);
 			if (validate) {
 				final Analysis validation = analyze(bundled.source(), null);
 				if (validation.hasErrors()) return failure(bundled.source(), validation);
@@ -72,38 +90,50 @@ final class JavaSourceTransformer {
 		return new SourceTransformResult(1, source, analysis.diagnostics(), List.of(), List.of(), analysis.diagnosticItems());
 	}
 
+	/**
+	 * ライブラリのフォルダにある型の索引を作ります。フォルダの名前や階層は問いません。
+	 * 型の名前はファイル名から、パッケージは各ファイルの package 宣言から決めます。
+	 */
 	private LibraryIndex libraryIndex(final Path root) throws IOException {
-		final long stamp;
-		try (Stream<Path> files = Files.walk(root.resolve("lib"))) {
-			long fingerprint = 1L;
-			for (final Path path : files.filter(file -> file.toString().endsWith(".java")).sorted().toList()) {
-				fingerprint = 31L * fingerprint + root.relativize(path).toString().hashCode();
-				fingerprint = 31L * fingerprint + Files.getLastModifiedTime(path).toMillis();
-				fingerprint = 31L * fingerprint + Files.size(path);
-			}
-			stamp = fingerprint;
+		final List<Path> sources = librarySources(root);
+		long stamp = 1L;
+		for (final Path path : sources) {
+			stamp = 31L * stamp + root.relativize(path).toString().hashCode();
+			stamp = 31L * stamp + Files.getLastModifiedTime(path).toMillis();
+			stamp = 31L * stamp + Files.size(path);
 		}
 		if (root.equals(cachedRoot) && stamp == cachedStamp && cachedIndex != null) return cachedIndex;
 		final Map<String, List<LibraryType>> bySimpleName = new HashMap<>();
 		final Map<String, LibraryType> byFqcn = new HashMap<>();
-		try (Stream<Path> files = Files.walk(root.resolve("lib"))) {
-			for (final Path file : files.filter(path -> path.toString().endsWith(".java")).sorted().toList()) {
-				// Public importable types follow src/lib/<package>/<ClassName>.java by project policy.
-				// Deriving the index from that canonical path avoids parsing every library file on first paste.
-				final String relative = root.relativize(file).toString().replace(File.separatorChar, '.');
-				final String fqcn = relative.substring(0, relative.length() - ".java".length());
-				final String simpleName = file.getFileName().toString().replaceFirst("\\.java$", "");
-				final LibraryType libraryType = new LibraryType(simpleName, fqcn, file.toAbsolutePath().normalize());
-				bySimpleName.computeIfAbsent(simpleName, ignored -> new ArrayList<>()).add(libraryType);
-				byFqcn.put(fqcn, libraryType);
-			}
+		final Map<Path, LibraryType> byPath = new HashMap<>();
+		final Set<String> packages = new HashSet<>();
+		for (final Path file : sources) {
+			final String simpleName = file.getFileName().toString().replaceFirst("\\.java$", "");
+			final Matcher declaration = PACKAGE_DECLARATION.matcher(Files.readString(file, UTF_8));
+			final String packageName = declaration.find() ? declaration.group(1).replaceAll("\\s+", "") : "";
+			final String fqcn = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
+			final LibraryType libraryType = new LibraryType(simpleName, packageName, fqcn, file);
+			bySimpleName.computeIfAbsent(simpleName, ignored -> new ArrayList<>()).add(libraryType);
+			byFqcn.put(fqcn, libraryType);
+			byPath.put(file, libraryType);
+			packages.add(packageName);
 		}
-		final Path classPath = root.resolve(".compiled-library");
-		compileLibrary(byFqcn.values().stream().map(LibraryType::path).distinct().toList(), classPath);
+		final Path classPath = root.resolve(CLASS_PATH_DIRECTORY);
+		compileLibrary(sources, classPath);
 		cachedRoot = root;
 		cachedStamp = stamp;
-		cachedIndex = new LibraryIndex(bySimpleName, byFqcn, classPath, new HashMap<>());
+		cachedIndex = new LibraryIndex(bySimpleName, byFqcn, byPath, packages, classPath, new HashMap<>());
 		return cachedIndex;
+	}
+
+	/** ライブラリのフォルダにある Java のソースを、名前の順で返します。package-info と module-info は型ではないので除きます。 */
+	private List<Path> librarySources(final Path root) throws IOException {
+		try (Stream<Path> files = Files.walk(root)) {
+			return files.filter(path -> {
+				final String name = path.getFileName().toString();
+				return name.endsWith(".java") && !name.equals("package-info.java") && !name.equals("module-info.java");
+			}).map(path -> path.toAbsolutePath().normalize()).sorted().toList();
+		}
 	}
 
 	private void compileLibrary(final List<Path> sources, final Path classPath) throws IOException {
@@ -153,7 +183,8 @@ final class JavaSourceTransformer {
 		for (final String name : unresolved) {
 			if (localTypes.contains(name)) continue;
 			final List<LibraryType> candidates = index.bySimpleName().getOrDefault(name, List.of());
-			final List<LibraryType> uncovered = candidates.stream().filter(candidate -> !existing.contains(candidate.fqcn()) && !existing.contains(candidate.fqcn().substring(0, candidate.fqcn().lastIndexOf('.')) + ".*")).toList();
+			// パッケージの無い型は import できないので、候補にしない
+			final List<LibraryType> uncovered = candidates.stream().filter(candidate -> !candidate.packageName().isEmpty() && !existing.contains(candidate.fqcn()) && !existing.contains(candidate.packageName() + ".*")).toList();
 			final int minimumDepth = uncovered.stream().mapToInt(candidate -> candidate.fqcn().split("\\.").length).min().orElse(Integer.MAX_VALUE);
 			final List<LibraryType> preferred = uncovered.stream().filter(candidate -> candidate.fqcn().split("\\.").length == minimumDepth).toList();
 			if (preferred.size() > 1) {
@@ -182,10 +213,10 @@ final class JavaSourceTransformer {
 	}
 
 	/**
-	 * 展開順を決めます。依存先は使う型の直後に置き、大きくて毎回同じ {@code lib.io} は末尾へ回します。
+	 * 展開順を決めます。依存先は使う型の直後に置き、末尾へ回すと決めたパッケージの型は最後に並べます。
 	 * ほかの型から使われない型を起点に名前順でたどるので、同じ型の組み合わせなら常に同じ順序になります。
 	 */
-	private List<Path> collectDependencies(final Analysis analysis, final LibraryIndex index, final Path root) throws IOException {
+	private List<Path> collectDependencies(final Analysis analysis, final LibraryIndex index) throws IOException {
 		final TreeSet<Path> required = new TreeSet<>();
 		final Set<Path> usedByLibrary = new HashSet<>();
 		final ArrayDeque<Path> queue = new ArrayDeque<>(referencedLibrarySources(analysis.solution(), analysis.trees(), index));
@@ -203,8 +234,11 @@ final class JavaSourceTransformer {
 		}
 		// 循環依存には起点がないので、残った型もたどる
 		for (final Path path : required) visitDependency(path, index, ordered);
-		final Path ioPackage = root.resolve("lib").resolve("io");
-		return ordered.stream().sorted(Comparator.comparing(path -> path.startsWith(ioPackage))).toList();
+		return ordered.stream().sorted(Comparator.comparing(path -> isLastPackage(index.byPath().get(path).packageName()))).toList();
+	}
+
+	private boolean isLastPackage(final String packageName) {
+		return lastPackages.stream().anyMatch(last -> packageName.equals(last) || packageName.startsWith(last + "."));
 	}
 
 	private void visitDependency(final Path path, final LibraryIndex index, final Set<Path> ordered) throws IOException {
@@ -263,7 +297,7 @@ final class JavaSourceTransformer {
 		return result;
 	}
 
-	private BundleOutput bundle(final String source, final Analysis analysis, final List<Path> dependencies, final Path root, final boolean debug) throws IOException {
+	private BundleOutput bundle(final String source, final Analysis analysis, final List<Path> dependencies, final LibraryIndex index, final boolean debug) throws IOException {
 		final LinkedHashSet<String> hoisted = new LinkedHashSet<>();
 		final List<String> parts = new ArrayList<>();
 		final List<String> inlined = new ArrayList<>();
@@ -274,7 +308,7 @@ final class JavaSourceTransformer {
 			final Parsed parsed = parse(code, dependency.toUri());
 			for (final ImportTree importTree : parsed.unit().getImports()) {
 				final String name = importTree.getQualifiedIdentifier().toString();
-				if (!name.startsWith("lib."))
+				if (!index.isLibraryImport(name))
 					hoisted.add("import " + (importTree.isStatic() ? "static " : "") + name + ";");
 			}
 			for (final Tree declaration : parsed.unit().getTypeDecls()) {
@@ -282,19 +316,19 @@ final class JavaSourceTransformer {
 				final String name = type.getSimpleName().toString();
 				if (!typeNames.add(name)) throw new IllegalStateException("top-level type name collision: " + name);
 			}
-			final String fqcn = root.relativize(dependency).toString().replace(File.separatorChar, '.').replaceAll("\\.java$", "");
+			final String fqcn = index.byPath().get(dependency).fqcn();
 			parts.add("// ===== inlined: " + fqcn + " =====\n" + transformLibraryUnit(code, parsed));
 			inlined.add(fqcn);
 		}
 		hoisted.removeIf(candidate -> isCoveredBySolutionImport(candidate, analysis.solution().getImports()));
 
-		String transformedSolution = transformSolution(source, analysis, debug, hoisted);
+		String transformedSolution = transformSolution(source, analysis, index, debug, hoisted);
 		if (!parts.isEmpty())
 			transformedSolution = transformedSolution.stripTrailing() + "\n\n" + String.join("\n\n", parts) + "\n";
 		return new BundleOutput(transformedSolution, List.copyOf(inlined));
 	}
 
-	private String transformSolution(final String source, final Analysis analysis, final boolean debug, final Set<String> hoisted) {
+	private String transformSolution(final String source, final Analysis analysis, final LibraryIndex index, final boolean debug, final Set<String> hoisted) {
 		final List<Edit> edits = new ArrayList<>();
 		if (analysis.solution().getPackageName() != null) {
 			final Span span = packageSpan(source, analysis);
@@ -303,7 +337,7 @@ final class JavaSourceTransformer {
 		boolean firstLibraryImport = true;
 		for (final ImportTree importTree : analysis.solution().getImports()) {
 			final String name = importTree.getQualifiedIdentifier().toString();
-			if (!name.startsWith("lib.")) continue;
+			if (!index.isLibraryImport(name)) continue;
 			final Span span = treeSpan(source, analysis.solution(), importTree, analysis.positions());
 			final String original = source.substring(span.start(), span.end()).stripTrailing();
 			String prefix = firstLibraryImport && !hoisted.isEmpty() ? String.join("\n", hoisted) + "\n\n" : "";
@@ -537,10 +571,23 @@ final class JavaSourceTransformer {
 		return source.replace("\r\n", "\n").replace('\r', '\n');
 	}
 
-	private record LibraryType(String simpleName, String fqcn, Path path) {}
+	private record LibraryType(String simpleName, String packageName, String fqcn, Path path) {}
 
 	private record LibraryIndex(Map<String, List<LibraryType>> bySimpleName, Map<String, LibraryType> byFqcn,
-								Path classPath, Map<Path, Set<Path>> dependencies) {}
+								Map<Path, LibraryType> byPath, Set<String> packages, Path classPath,
+								Map<Path, Set<Path>> dependencies) {
+		/**
+		 * import の名前がライブラリを指すかを返します。
+		 * 型そのもの、型の中の入れ子やメンバー(static import)、パッケージ全体({@code a.b.*})を受け付けます。
+		 */
+		boolean isLibraryImport(final String name) {
+			if (name.endsWith(".*") && packages.contains(name.substring(0, name.length() - 2))) return true;
+			for (String prefix = name; ; prefix = prefix.substring(0, prefix.lastIndexOf('.'))) {
+				if (byFqcn.containsKey(prefix)) return true;
+				if (prefix.indexOf('.') < 0) return false;
+			}
+		}
+	}
 
 	private record AutoImportResult(List<String> imports, String error) {}
 

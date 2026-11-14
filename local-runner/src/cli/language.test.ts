@@ -36,7 +36,7 @@ describe("languageForFile", () => {
 
 	test("対応が無い拡張子と、知らない言語はエラーにする", () => {
 		expect(() => languageForFile(settings, "notes.txt")).toThrow('No language is set for ".txt" files.');
-		expect(() => languageForFile(settings, "C.py", "ruby")).toThrow('Unknown language: "ruby". Available languages: java, cpp, c, cpython, pypy, codon.');
+		expect(() => languageForFile(settings, "C.py", "ruby")).toThrow('Unknown language: "ruby". Available languages: java, cpp, c, cpython, pypy, codon, go, rust, kotlin, csharp.');
 	});
 
 	test("enabled が false の言語は選べない", () => {

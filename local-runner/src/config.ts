@@ -5,6 +5,7 @@ import {fileURLToPath} from "node:url";
 import {
 	findLibrarySource,
 	isHeaderName,
+	isLibrarySourceEntry,
 	loadSettings,
 	readUserSettings,
 	resolveSettingPath,
@@ -80,7 +81,7 @@ export function configuredLibrarySourceRoot(): string | null {
 	return loadSettings(SETTINGS_FILE).languages.java.library ?? null;
 }
 
-/** ライブラリのルートと、lib の親の src のどちらが書かれていても受け付ける。 */
+/** 設定されたライブラリのフォルダ。設定が無いか、フォルダが見つからなければ null。 */
 function findLibrarySourceRoot(): string | null {
 	const configured = SETTINGS.languages.java.library;
 	if (!configured) return null;
@@ -168,21 +169,30 @@ export const RUNNER_CONFIG = {
 	headerUnitCacheDir: path.join(os.homedir(), ".cache", "competitive-programming", "local-runner", "header-units"),
 };
 
-/** ライブラリが無くても、空の lib を渡して解答の変換と実行を同じ経路で行う。 */
+/** ライブラリの .java だけを、フォルダの構成を保って写す。 */
+function copyLibrarySources(source: string, target: string): void {
+	fs.mkdirSync(target, {recursive: true});
+	for (const entry of fs.readdirSync(source, {withFileTypes: true})) {
+		if (!isLibrarySourceEntry(entry)) continue;
+		const from = path.join(source, entry.name);
+		const to = path.join(target, entry.name);
+		if (entry.isDirectory()) copyLibrarySources(from, to);
+		else fs.copyFileSync(from, to);
+	}
+}
+
+/**
+ * ライブラリを作業用のフォルダへ写し、変換にはその写しを使う。
+ * コンパイルした結果を利用者のフォルダに作らないためで、Linux ではメモリ上に置いて速くする意味もある。
+ * ライブラリが無くても空のフォルダを渡し、解答の変換と実行を同じ経路で行う。
+ */
 export function prepareLibrarySourceRoot(): {source: string | null; prepared: string} {
 	const source = findLibrarySourceRoot();
 	librarySource = source;
-	if (source !== null && process.platform !== "linux") {
-		preparedLibrarySourceRoot = source;
-		return {source, prepared: source};
-	}
 	const prepared = path.join(RUNNER_CONFIG.baseDir, "library-source");
 	fs.rmSync(prepared, {recursive: true, force: true});
-	fs.mkdirSync(path.join(prepared, "lib"), {recursive: true});
-	if (source !== null) fs.cpSync(path.join(source, "lib"), path.join(prepared, "lib"), {
-		recursive: true,
-		force: true
-	});
+	fs.mkdirSync(prepared, {recursive: true});
+	if (source !== null) copyLibrarySources(source, prepared);
 	preparedLibrarySourceRoot = prepared;
 	return {source, prepared};
 }

@@ -17,6 +17,7 @@
 			"name": "Java",
 			"command": "java",
 			"release": 24,
+			"libraryLast": [],
 			"stackMb": 256
 		},
 		"cpp": {
@@ -155,13 +156,100 @@
 			],
 			"debugRewrite": true,
 			"stackMb": 1024
+		},
+		"go": {
+			"family": "go",
+			"name": "Go",
+			"submit": "Go (go",
+			"command": "go",
+			"sourceFile": "main.go",
+			"compile": [
+				"{command}",
+				"build",
+				"-o",
+				"{output}",
+				"{source}"
+			],
+			"run": [
+				"{output}"
+			],
+			"stackMb": 1024
+		},
+		"rust": {
+			"family": "rust",
+			"name": "Rust",
+			"submit": "Rust (rustc",
+			"command": "rustc",
+			"sourceFile": "main.rs",
+			"compile": [
+				"{command}",
+				"--edition",
+				"2024",
+				"-O",
+				"{source}",
+				"-o",
+				"{output}"
+			],
+			"run": [
+				"{output}"
+			],
+			"stackMb": 1024
+		},
+		"kotlin": {
+			"family": "kotlin",
+			"name": "Kotlin",
+			"submit": "Kotlin (Kotlin/JVM",
+			"command": "kotlinc",
+			"sourceFile": "Main.kt",
+			"compile": [
+				"{command}",
+				"{source}",
+				"-include-runtime",
+				"-d",
+				"Main.jar"
+			],
+			"run": [
+				"java",
+				"-Xss256m",
+				"-jar",
+				"Main.jar"
+			],
+			"stackMb": 1024
+		},
+		"csharp": {
+			"family": "csharp",
+			"name": "C#",
+			"submit": "C# 13.0 (.NET 9",
+			"command": "dotnet",
+			"sourceFile": "Main.cs",
+			"compile": [
+				"{command}",
+				"build",
+				"{source}",
+				"-c",
+				"Release",
+				"-o",
+				"out",
+				"--nologo",
+				"-v",
+				"q"
+			],
+			"run": [
+				"{command}",
+				"out/Main.dll"
+			],
+			"stackMb": 1024
 		}
 	},
 	"extensions": {
 		".java": "java",
 		".cpp": "cpp",
 		".c": "c",
-		".py": "cpython"
+		".py": "cpython",
+		".go": "go",
+		".rs": "rust",
+		".kt": "kotlin",
+		".cs": "csharp"
 	},
 	"headers": {},
 	"atcoder": {

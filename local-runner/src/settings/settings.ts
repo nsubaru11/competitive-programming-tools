@@ -13,7 +13,10 @@ export type JavaLanguageSettings = {
 	match?: string[];
 	command: string;
 	release: number;
+	/** ライブラリのソースを置いたフォルダ。この中の .java をすべて展開の対象にする。 */
 	library?: string;
+	/** 展開するときに末尾へ回すパッケージ。 */
+	libraryLast: string[];
 	stackMb: number;
 };
 
@@ -266,21 +269,45 @@ export function resolveSettingPath(value: string, settingsFile: string, environm
 	return pathApi.resolve(pathApi.dirname(settingsFile), value);
 }
 
-function libraryCandidates(root: string): string[] {
-	return [root, path.join(root, "src")];
+function isDirectory(target: string): boolean {
+	try {
+		return fs.statSync(target).isDirectory();
+	} catch {
+		return false;
+	}
 }
 
-/** `lib` を直下に持つ `src` フォルダを探す。ライブラリのルートでも `src` でも受け付ける。見つからなければ null。 */
+/** 名前が `.` で始まるフォルダ(.git など)は、ライブラリの中身として扱わない。 */
+export function isLibrarySourceEntry(entry: fs.Dirent): boolean {
+	return entry.isDirectory() ? !entry.name.startsWith(".") : entry.name.endsWith(".java");
+}
+
+function containsJavaSource(dir: string): boolean {
+	let entries: fs.Dirent[];
+	try {
+		entries = fs.readdirSync(dir, {withFileTypes: true});
+	} catch {
+		return false;
+	}
+	const sources = entries.filter(isLibrarySourceEntry);
+	return sources.some((entry) => !entry.isDirectory())
+		|| sources.some((entry) => containsJavaSource(path.join(dir, entry.name)));
+}
+
+/** 設定されたライブラリのフォルダ。フォルダが無ければ null。 */
 export function findLibrarySource(root: string): string | null {
-	return libraryCandidates(root).find((candidate) => fs.existsSync(path.join(candidate, "lib"))) ?? null;
+	return isDirectory(root) ? root : null;
 }
 
-/** setlib が受け取った場所から、ライブラリの `src` フォルダを決める。見つからなければエラーにする。 */
+/**
+ * setlib が受け取った場所を、ライブラリのフォルダとして確かめる。
+ * フォルダの名前は問わず、指定されたフォルダをそのまま使う。.java が1つも無ければエラーにする。
+ */
 export function resolveLibrarySource(input: string): string {
 	const root = path.resolve(input);
-	const found = findLibrarySource(root);
-	if (!found) throw new Error(`The lib folder was not found. Tried: ${libraryCandidates(root).join(", ")}`);
-	return found;
+	if (!isDirectory(root)) throw new Error(`The folder was not found: ${root}`);
+	if (!containsJavaSource(root)) throw new Error(`No .java files were found in: ${root}`);
+	return root;
 }
 
 /**

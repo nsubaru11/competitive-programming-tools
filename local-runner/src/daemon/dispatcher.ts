@@ -2,7 +2,7 @@ import {type ChildProcessWithoutNullStreams, spawn} from "node:child_process";
 import readline from "node:readline";
 import type {CompilerDiagnostic} from "@atcoder-tools/shared";
 import type {CompileEntry, DispatcherRunResult} from "../types";
-import {RUNNER_CONFIG} from "../config";
+import {RUNNER_CONFIG, SETTINGS} from "../config";
 import * as logging from "../utils/logging";
 import * as compiler from "./compiler";
 import {EMBEDDED_FILES, readEmbeddedText} from "./embedded";
@@ -180,6 +180,7 @@ async function startDispatcher() {
 				LOCAL_RUNNER_JAVAC_RELEASE: compiler.JAVAC_RELEASE,
 				LOCAL_RUNNER_RUN_STACK_BYTES: String(RUNNER_CONFIG.runStackBytes),
 				LOCAL_RUNNER_CAPTURE_LIMIT_BYTES: String(RUNNER_CONFIG.outputLimitBytes),
+				LOCAL_RUNNER_LIBRARY_LAST: SETTINGS.languages.java.libraryLast.join(","),
 			},
 			stdio: ["pipe", "pipe", "pipe"],
 		});

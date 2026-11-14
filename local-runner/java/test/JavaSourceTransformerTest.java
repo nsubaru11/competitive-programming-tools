@@ -42,7 +42,7 @@ public final class JavaSourceTransformerTest {
 					}
 					""", StandardCharsets.UTF_8);
 
-			final JavaSourceTransformer transformer = new JavaSourceTransformer();
+			final JavaSourceTransformer transformer = new JavaSourceTransformer(java.util.List.of("lib.io"));
 			final String wildcardSource = """
 					import java.util.*;
 					import lib.ds.*;
@@ -93,6 +93,9 @@ public final class JavaSourceTransformerTest {
 			final SourceTransformResult reordered = transformer.transform(orderSource.replace("new UnionFind(1); Input.read(); Mint.one(); Kruskal.create();", "Kruskal.create(); Mint.one(); Input.read(); new UnionFind(1);"), root, false, true, true);
 			check(reordered.exitCode() == 0, reordered.diagnostics());
 			check(reordered.inlinedClasses().equals(expectedOrder), "inline order depends on reference order: " + reordered.inlinedClasses());
+			final SourceTransformResult withoutLast = new JavaSourceTransformer(java.util.List.of()).transform(orderSource, root, false, true, true);
+			check(withoutLast.exitCode() == 0, withoutLast.diagnostics());
+			check(withoutLast.inlinedClasses().equals(java.util.List.of("lib.graph.Kruskal", "lib.ds.UnionFind", "lib.io.Input", "lib.math.Mint")), "no package should be moved to the end unless it is listed: " + withoutLast.inlinedClasses());
 
 			final String implicitSource = wildcardSource.replace("import lib.ds.*;\n", "");
 			final SourceTransformResult implicit = transformer.transform(implicitSource, root, false, true, true);
@@ -171,8 +174,41 @@ public final class JavaSourceTransformerTest {
 			check(!broken.diagnosticItems().isEmpty(), "structured diagnostics are empty");
 			check(broken.diagnosticItems().getFirst().line() == 1, "diagnostic line is missing");
 
-			final Path emptyRoot = root.resolve("empty");
-			Files.createDirectories(emptyRoot.resolve("lib"));
+			// フォルダの名前と階層は自由で、パッケージは package 宣言から決める
+			final Path renamedRoot = Files.createDirectories(root.resolve("renamed/any-folder"));
+			Files.writeString(renamedRoot.resolve("Counter.java"), """
+					package mylib.util;
+					public final class Counter {
+						public static final int ZERO = 0;
+						public static int next(int value) { return value + 1; }
+					}
+					""", StandardCharsets.UTF_8);
+			final JavaSourceTransformer renamedLibrary = new JavaSourceTransformer(java.util.List.of());
+			final SourceTransformResult renamedImport = renamedLibrary.transform("""
+					import mylib.util.Counter;
+					public final class A {
+						public static void main(String[] args) { Counter.next(1); }
+					}
+					""", root.resolve("renamed"), false, true, true);
+			check(renamedImport.exitCode() == 0, renamedImport.diagnostics());
+			check(renamedImport.inlinedClasses().equals(java.util.List.of("mylib.util.Counter")), renamedImport.inlinedClasses().toString());
+			check(renamedImport.sourceCode().contains("// import mylib.util.Counter;"), "library import outside lib was not commented");
+			final SourceTransformResult renamedImplicit = renamedLibrary.transform("""
+					public final class A {
+						public static void main(String[] args) { Counter.next(1); }
+					}
+					""", root.resolve("renamed"), false, true, true);
+			check(renamedImplicit.exitCode() == 0, renamedImplicit.diagnostics());
+			check(renamedImplicit.addedImports().equals(java.util.List.of("mylib.util.Counter")), renamedImplicit.addedImports().toString());
+			final SourceTransformResult renamedStatic = renamedLibrary.transform("""
+					import static mylib.util.Counter.ZERO;
+					public final class A {
+						public static void main(String[] args) { int value = ZERO; }
+					}
+					""", root.resolve("renamed"), false, true, true);
+			check(renamedStatic.exitCode() != 0, "static import of a library member unexpectedly succeeded");
+
+			final Path emptyRoot = Files.createDirectories(root.resolve("empty"));
 			final JavaSourceTransformer withoutLibrary = new JavaSourceTransformer();
 			final SourceTransformResult plain = withoutLibrary.transform("public final class A { private static final boolean DEBUG = true; public static void main(String[] args) {} }", emptyRoot, false, true, true);
 			check(plain.exitCode() == 0, plain.diagnostics());

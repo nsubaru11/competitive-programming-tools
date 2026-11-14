@@ -1,13 +1,13 @@
 import http from "node:http";
 import os from "node:os";
 import {
+	createMaskedCode,
 	type LocalRunnerCompilerInfo,
 	type LocalRunnerHeaderOption,
 	type LocalRunnerPrepareResponse,
 	type LocalRunnerRunResponse,
 	type LocalRunnerTransformResponse,
 	STALE_PROGRAM_MESSAGE,
-	usesJavaLibrary,
 } from "@atcoder-tools/shared";
 import type {CompileEntry, RunnerStatusInfo} from "../types";
 import * as config from "../config";
@@ -152,10 +152,17 @@ const preparations = new PreparationQueue(prepareInQueue, PREPARE_CACHE_MAX);
 
 const LIBRARY_MISSING_HINT = "The Java library is not loaded. Set its folder with setlib <path>, then restart Local Runner with stop and serve.";
 
+const NON_JDK_IMPORT_PATTERN = /^\s*import\s+(?:static\s+)?(?!java\.|javax\.|jdk\.)[A-Za-z_$]/m;
+
+/** JDK 以外のものを import しているか。コメントや文字列の中は数えない。ライブラリの名前は決まっていないので、JDK かどうかで見分ける。 */
+function importsOutsideJdk(code: string): boolean {
+	return NON_JDK_IMPORT_PATTERN.test(createMaskedCode(code));
+}
+
 async function transformCode(sourceCode: string, debug: boolean, autoImport = true,
 	validate = true): Promise<LocalRunnerTransformResponse> {
 	const result = await dispatcher.queueDispatcherTransform(sourceCode, config.resolveLibrarySourceRoot(), debug, autoImport, validate);
-	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && usesJavaLibrary(sourceCode);
+	const libraryMissing = result.exitCode !== 0 && config.loadedLibrarySource() === null && importsOutsideJdk(sourceCode);
 	return {
 		status: result.exitCode === 0 ? "success" : "compileError",
 		sourceCode: result.sourceCode,
@@ -502,7 +509,7 @@ async function bootstrap() {
 		const configured = config.SETTINGS.languages.java.library;
 		logging.logWarn(configured
 			? `Java library not found: ${configured}. Starting without it.`
-			: "Java library is not set. Starting without it. To use lib.*, run setlib <path>.");
+			: "Java library is not set. Starting without it. To use one, run setlib <path>.");
 	} else {
 		logging.logInfo(`Library source: ${libraryRoots.source}`);
 		logging.logInfo(`Prepared library source: ${libraryRoots.prepared}`);
@@ -521,8 +528,7 @@ async function bootstrap() {
 	compiler.warmUpJavaTools();
 	filesystem.ensureDirectory(config.RUNNER_CONFIG.dispatcherBuildDir);
 	await dispatcher.ensureDispatcherReady();
-	// WarmUp.java は lib.io を使うので、ライブラリなしでは温めない。最初の実行が遅くなるだけで動作は変わらない。
-	if (libraryRoots.source !== null) await dispatcher.warmUpDispatcher(config.resolveLibrarySourceRoot());
+	await dispatcher.warmUpDispatcher(config.resolveLibrarySourceRoot());
 	const host = config.RUNNER_CONFIG.host;
 	server.listen(config.RUNNER_CONFIG.port, host, () => {
 		const message = "✓ Local Runner server is ready:";

@@ -157,7 +157,7 @@
 						}
 					},
 					"submit": {
-						"description": "AtCoder の提出フォームの言語名に含まれる文字列。たとえば「C++23 (GCC」と書く。submit がこの言語で提出する。大文字と小文字は区別しない。",
+						"description": "AtCoder の提出フォームの言語名に含まれる文字列。submit がこの言語で提出する。言語名の一部と一致すればよいので、バージョンの手前で切って「C++23 (GCC」のように書く。かっこを閉じていないのは、バージョンが上がっても一致させるため。大文字と小文字は区別しない。",
 						"type": "string",
 						"minLength": 1
 					},
@@ -304,9 +304,18 @@
 							"default": 24
 						},
 						"library": {
-							"description": "lib フォルダを持つ、Java のライブラリの src フォルダ。書かなければライブラリなしで動く。",
+							"description": "Java のライブラリのソースを置いたフォルダ。フォルダの名前は問わず、この中の .java をすべて展開の対象にする。パッケージは各ファイルの package 宣言から決める。書かなければライブラリなしで動く。",
 							"type": "string",
 							"minLength": 1
+						},
+						"libraryLast": {
+							"description": "ライブラリを展開するときに、末尾へ回すパッケージ(例: lib.io)。下位のパッケージも含む。入出力のように大きくて毎回同じものを書くと、提出物が読みやすくなる。",
+							"type": "array",
+							"items": {
+								"type": "string",
+								"pattern": "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$"
+							},
+							"default": []
 						},
 						"stackMb": {
 							"description": "解答を実行するスレッドのスタック(MB)。",
