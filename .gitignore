@@ -4,6 +4,9 @@ node_modules/
 # ビルド成果物（CLI 実行ファイル。bin/ 内の *.sh は追跡するので exe だけ個別指定）
 /local-runner/bin/atcoder-cli-runner.exe
 
+# 配布用のフォルダ(local-runner の package で作る)
+/out/
+
 # 利用者ごとの設定と、以前の形式から書き換えたときの控え
 /local-runner.settings.json
 /local-runner.settings.json.bak

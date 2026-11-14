@@ -13,16 +13,12 @@
 
 - [Bun](https://bun.sh/)
 - JDK 24 以降
-- Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側にも Bun と JDK を入れる
+- Windows では WSL。サーバーは既定で WSL の中で動くので、WSL 側に Bun と JDK を入れる。Release の zip の CLI は exe なので、Windows 側の Bun は、[ソースから使う](#ソースから使う)ときと、`server.backend` を `native` にするときだけ要る
 - Java 以外の言語を使うなら、その処理系を WSL 側に入れる。無い言語は使えないだけで、ほかの言語は動く
 
 ## セットアップ
 
-```bash
-git clone https://github.com/nsubaru11/competitive-programming-tools.git
-cd competitive-programming-tools
-bun install
-```
+[Release](https://github.com/nsubaru11/competitive-programming-tools/releases) から `local-runner-<版>.zip` を入手し、好きな場所に展開します。展開してできる `competitive-programming-tools` フォルダに、すべてが入っています。
 
 これだけで、Java の解答の実行、判定、提出、提出用コードの作成が動きます。`lib.*` を使うときは、[ライブラリを使う](#ライブラリを使う)を参照してください。ほかの言語の準備は、[言語](#言語)を参照してください。
 
@@ -35,8 +31,22 @@ powershell -File ".\local-runner\bin\install-path.ps1"
 Windows 以外では、`bin` の `.cmd` の代わりに CLI を直接実行します。解答のあるフォルダで実行できるよう、`bun run --cwd` は使わず、CLI のパスを指定します。
 
 ```bash
-bun /path/to/competitive-programming-tools/local-runner/src/cli/index.ts test abc448_d D.java
+bun /path/to/competitive-programming-tools/local-runner/dist/cli.js test abc448_d D.java
 ```
+
+更新するときは、新しい版の zip を同じ場所へ上書きで展開します。設定ファイル(`local-runner.settings.json`)は zip に含まれないので、そのまま残ります。サーバーが動いていれば `stop` で止めておくと、次のコマンドで新しい版が起動します。
+
+### ソースから使う
+
+Release にまだ無い変更を使うときや、開発するときは、リポジトリを clone します。
+
+```bash
+git clone https://github.com/nsubaru11/competitive-programming-tools.git
+cd competitive-programming-tools
+bun install
+```
+
+更新は `git pull` です。`.cmd` と起動スクリプトは `src` のソースを直接動かします。Windows 以外で CLI を直接実行するときは、`dist/cli.js` の代わりに `local-runner/src/cli/index.ts` を指定します。
 
 ## CP Toolkit とつなぐ
 

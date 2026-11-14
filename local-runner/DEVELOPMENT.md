@@ -144,7 +144,16 @@ CLI のソースを変更したら `bun run build`(型チェックと CLI の ex
 bun run --cwd local-runner build
 ```
 
-サーバーは単一のバイナリにしません。通常は `bin/start-local-runner.sh` から WSL の `bun ./src/daemon/server.ts` を実行します。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
+サーバーは単一のバイナリにしません。`bin/start-local-runner.sh` が WSL の Bun でサーバーを動かします。リポジトリでは `src/daemon/server.ts` を、Release の zip では1ファイルにまとめた `dist/server.js` を使います。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
+
+## 配布
+
+Release の zip は、`bun run package`(`scripts/package.ts`)が作る配布用のフォルダをまとめたものです。サーバーと CLI を Bun で1ファイルずつ(`dist/server.js`、`dist/cli.js`)にまとめ、Windows の CLI の exe、常駐 JVM のソース、`launcher.c`、`bin`、文書と一緒に、リポジトリと同じ形で `out/local-runner/competitive-programming-tools` に置きます。
+
+- 形をリポジトリと同じにするのは、設定ファイルとソースの場所を決める処理(`config.ts` の `resolveProjectRoot`)をそのまま使うため
+- `bin/_runner.cmd`、`bin/start-local-runner.sh`、`server.backend` が `native` のときの起動は、`dist` があればそれを使い、無ければ `src` を動かす。リポジトリの中には `dist` を作らない
+- 文書から配布物の外へのリンクは、その版のタグのリポジトリの URL に書き換える
+- `package.json` の `version` を上げてコミットし、`local-runner-v<版>` のタグを push すると、`.github/workflows/local-runner-release.yml` が検査のあとで zip を作り、Release に載せる。タグと `version` が違えば失敗する
 
 ## 確認
 

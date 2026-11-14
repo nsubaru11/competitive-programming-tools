@@ -1,4 +1,5 @@
 import {spawn, spawnSync} from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import {PROJECT_ROOT, SETTINGS, SETTINGS_FILE} from "../config";
 import {postToRunner} from "./runnerClient";
@@ -38,7 +39,11 @@ function startServer(): void {
 			if (!commandAvailable("bun", ["--version"])) {
 				throw new Error('"server.backend": "native" requires bun on the Windows PATH.');
 			}
-			const serverPath = path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "server.ts");
+			// Release の zip では、まとめた dist/server.js を使う。clone したリポジトリでは、ソースを直接動かす。
+			const bundledServerPath = path.join(PROJECT_ROOT, "local-runner", "dist", "server.js");
+			const serverPath = fs.existsSync(bundledServerPath)
+				? bundledServerPath
+				: path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "server.ts");
 			const child = spawn("bun", [serverPath], {
 				cwd: PROJECT_ROOT,
 				detached: true,

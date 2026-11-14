@@ -22,6 +22,7 @@
 		"setheader": "bun ./src/cli/index.ts setheader",
 		"build:cli:win": "bun build --compile --target=bun-windows-x64 ./src/cli/index.ts --outfile ./bin/atcoder-cli-runner.exe",
 		"build": "bun run typecheck && bun run build:cli:win",
+		"package": "bun ./scripts/package.ts",
 		"typecheck": "tsc --noEmit",
 		"test:java": "bun ./src/cli/java.smoke.ts",
 		"test:bundle": "bun run test:java",

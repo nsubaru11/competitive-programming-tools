@@ -1,0 +1,63 @@
+name: local-runner-release
+
+# local-runner-v<版> のタグを push すると、検査のあとで zip を作り、Release に載せる。
+on:
+  push:
+    tags: ["local-runner-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "24"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Check that the tag matches the version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(jq -r .version local-runner/package.json)"
+          if [ "$TAG" != "local-runner-v$version" ]; then
+            echo "The tag $TAG does not match local-runner/package.json ($version)." >&2
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - run: bun run typecheck:shared
+
+      - run: bun run typecheck:runner
+
+      - run: bun run test:runner
+
+      - run: bun run --cwd local-runner package
+
+      - name: Create the zip
+        working-directory: out/local-runner
+        run: zip -r -X "local-runner-$VERSION.zip" competitive-programming-tools
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" "out/local-runner/local-runner-$VERSION.zip" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Local Runner $VERSION" \
+            --notes "導入と更新の手順は [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/local-runner/README.md#セットアップ) にあります。"
