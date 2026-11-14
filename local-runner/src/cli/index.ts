@@ -17,7 +17,10 @@ export async function main(rawArgs = process.argv.slice(2)): Promise<number> {
 		return 1;
 	}
 
-	for (const warning of legacyEnvironmentWarnings(process.env, SETTINGS_FILE)) console.error(`Warning: ${warning}`);
+	// daemon はサーバーが記録に残すので、ここでは出さない。
+	if (command.name !== "daemon") {
+		for (const warning of legacyEnvironmentWarnings(process.env, SETTINGS_FILE)) console.error(`Warning: ${warning}`);
+	}
 
 	try {
 		return await command.execute(rest);

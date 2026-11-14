@@ -144,7 +144,7 @@ CLI のソースを変更したら `bun run build`(型チェックと CLI の ex
 bun run --cwd local-runner build
 ```
 
-サーバーは単一のバイナリにしません。`bin/start-local-runner.sh` が WSL の Bun でサーバーを動かします。リポジトリでは `src/daemon/server.ts` を、Release の zip では1ファイルにまとめた `dist/server.js` を使います。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
+サーバーは単一のバイナリにしません。`bin/start-local-runner.sh` が WSL の Bun でサーバーを動かします。リポジトリでは `src/daemon/main.ts` を、Release の zip では1ファイルにまとめた `dist/server.js` を使います。Java のコンパイルは外部の `javac` を都度起動せず、常駐する Dispatcher の中の javac で行います。`Dispatcher.class` はソースが変わらなければキャッシュを再利用します。
 
 ## 配布
 

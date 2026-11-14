@@ -51,7 +51,7 @@ function copyDocument(relativePath: string, packaged: ReadonlySet<string>) {
 
 fs.rmSync(OUT_DIR, {recursive: true, force: true});
 
-bunBuild(["./src/daemon/server.ts", "--target=bun", `--outfile=${path.join(PACKAGE_RUNNER_DIR, "dist", "server.js")}`]);
+bunBuild(["./src/daemon/main.ts", "--target=bun", `--outfile=${path.join(PACKAGE_RUNNER_DIR, "dist", "server.js")}`]);
 bunBuild(["./src/cli/index.ts", "--target=bun", `--outfile=${path.join(PACKAGE_RUNNER_DIR, "dist", "cli.js")}`]);
 bunBuild([
 	"./src/cli/index.ts",

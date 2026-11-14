@@ -13,6 +13,7 @@ import {SetLibCommand} from "./SetLibCommand";
 import {SetHeaderCommand} from "./SetHeaderCommand";
 import {SettingsCommand} from "./SettingsCommand";
 import {CrossCheck} from "./CrossCheck";
+import {DaemonCommand} from "./DaemonCommand";
 
 /**
  * 登録済みコマンド一覧。
@@ -34,6 +35,7 @@ const COMMAND_LIST: readonly Command[] = [
 	new SettingsCommand(),
 	new CacheClearCommand(),
 	new CrossCheck(),
+	new DaemonCommand(),
 ];
 
 /** 名前 → コマンドの索引。 */

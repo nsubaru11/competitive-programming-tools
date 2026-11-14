@@ -1,6 +1,5 @@
 import http from "node:http";
 import os from "node:os";
-import {pathToFileURL} from "node:url";
 import {
 	type LocalRunnerCompilerInfo,
 	type LocalRunnerHeaderOption,
@@ -542,18 +541,18 @@ function shutdown(signal: string) {
 	setTimeout(() => process.exit(0), 1500).unref();
 }
 
-server.on("error", (error) => {
-	logging.logError(`[Server] ${error.message}`);
-	process.exit(1);
-});
-
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("exit", () => dispatcher.stopDispatcher());
-
-const isDirectRun = process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false;
-
-if (isDirectRun) {
+/**
+ * サーバーを起動する。入口は、ソースから動かすときの daemon/main.ts と、CLI の daemon コマンド。
+ * 1つの実行ファイルにまとめると、どのモジュールでも import.meta.url が同じになるので、直接実行されたかでは決めない。
+ */
+export async function startServer(): Promise<void> {
+	server.on("error", (error) => {
+		logging.logError(`[Server] ${error.message}`);
+		process.exit(1);
+	});
+	process.on("SIGINT", () => shutdown("SIGINT"));
+	process.on("SIGTERM", () => shutdown("SIGTERM"));
+	process.on("exit", () => dispatcher.stopDispatcher());
 	try {
 		await bootstrap();
 	} catch (error) {

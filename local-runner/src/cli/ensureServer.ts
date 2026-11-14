@@ -43,7 +43,7 @@ function startServer(): void {
 			const bundledServerPath = path.join(PROJECT_ROOT, "local-runner", "dist", "server.js");
 			const serverPath = fs.existsSync(bundledServerPath)
 				? bundledServerPath
-				: path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "server.ts");
+				: path.join(PROJECT_ROOT, "local-runner", "src", "daemon", "main.ts");
 			const child = spawn("bun", [serverPath], {
 				cwd: PROJECT_ROOT,
 				detached: true,

@@ -11,7 +11,7 @@
 		"@atcoder-tools/shared": "workspace:*"
 	},
 	"scripts": {
-		"runner": "bun ./src/daemon/server.ts",
+		"runner": "bun ./src/daemon/main.ts",
 		"test": "bun ./src/cli/index.ts test",
 		"submit": "bun ./src/cli/index.ts submit",
 		"tomain": "bun ./src/cli/index.ts tomain",
