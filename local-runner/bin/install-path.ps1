@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User") ?? ""
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($null -eq $userPath) { $userPath = "" }
 $pathList = $userPath.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)
 
 if ($PSScriptRoot -in $pathList) {
@@ -10,9 +11,4 @@ if ($PSScriptRoot -in $pathList) {
 	Write-Host "Added to user PATH: $PSScriptRoot" -ForegroundColor Green
 }
 
-if ($PSScriptRoot -notin ($env:Path.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries))) {
-	$env:Path = "$PSScriptRoot;$env:Path"
-	Write-Host "Added to current session PATH: $PSScriptRoot" -ForegroundColor Yellow
-}
-
-Write-Host "You can now run: test <task> <file> and submit <task> <file>" -ForegroundColor Magenta
+Write-Host "Open a new terminal, then run: test <task> <file> or submit <task> <file>" -ForegroundColor Magenta
