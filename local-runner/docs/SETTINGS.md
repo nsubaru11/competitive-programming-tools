@@ -9,9 +9,9 @@ Local Runner の設定は、`competitive-programming-tools` フォルダの `loc
 
 ## 設定の移行
 
-1.x にしか無い項目(`librarySourceRoot`、`headerFiles`、言語ごとの `debugRewrite`)がある設定ファイルは、2.0.0 の初回起動時に今の形式へ書き換えます。`settingsVersion` を書いていなくても、これらが無ければ今の形式としてそのまま読みます。`librarySourceRoot` は `languages.java.library` に、`headerFiles` は `headers` に移します。両方に書いてあれば新しい方を使います。`debugRewrite: true` は `debugFlag: "DEBUG"` に移し、書いていなければ書き換えはオフになります。
+`settingsVersion` が `1` の設定は、起動時に形式 `2` に移行します。形式番号がない場合は、`librarySourceRoot`、`headerFiles`、言語ごとの `debugRewrite` のいずれかがあるときだけ移行します。`librarySourceRoot` は `languages.java.library` に、`headerFiles` の各項目は `headers` に移し、同じ項目に新しい設定があればそちらを使います。`debugFlag` が未設定なら、`debugRewrite: true` の言語にだけ `debugFlag: "DEBUG"` を設定します。
 
-書き換える前の内容は、同じフォルダの `.bak` に残します。書き換えた設定を読めなかったときは、元の設定のまま使います。
+移行後の設定を一時ファイルで検証し、元の内容を同じフォルダの `.bak` に保存してから設定ファイルを置き換えます。**検証に失敗すると起動はエラーで終了し、元の設定ファイルが残ります。**
 
 ## 書き方
 
@@ -100,7 +100,7 @@ Java のライブラリとヘッダーを設定し、ポートを変える例で
 | `debugFlag`   | なし     | デバッグの有無に合わせて値を書き換える変数の名前(例: `"DEBUG"`)。書かなければ書き換えません。                   |
 | `stackMb`     | `256`    | 解答を実行するスレッドのスタック(MB)                                                                            |
 
-- `library` に書いたフォルダの `.java` を、下の階層も含めてすべてライブラリとして扱います。フォルダの名前は自由で、パッケージは各ファイルの `package` 宣言から決めます。名前が `.` で始まるフォルダの中は読みません。
+- `library` 配下の `.java` を再帰的に読みます。名前が `.` で始まるフォルダと、`package-info.java`、`module-info.java` は展開の対象外です。フォルダ名は自由で、各ファイルの `package` 宣言からパッケージを決めます。
 - `debugFlag` で書き換えるのは、起動するクラスのフィールドのうち、その名前で初期値が `true` か `false` のものだけです。メソッドの中の変数や、ほかのクラスのフィールドは変えません。
 - `libraryLast` に書いたパッケージの型は、下位のパッケージのものも含めて、展開した提出物の末尾に並べます。入出力のように大きくて毎回同じクラスを書くと、解答に固有の部分が先にまとまります。書かなければ、依存の順に並べます。
 

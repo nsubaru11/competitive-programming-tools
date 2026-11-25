@@ -92,8 +92,8 @@ record SourceTransformResult(int exitCode, String sourceCode, String diagnostics
  * @param debugValue     DEBUG の変換後の値
  * @param debugLine      DEBUG の宣言の行(元のソース、1 から)
  * @param packageRemoved package 宣言を消したら true
- * @param addedImports   ライブラリのために足した import の名前(java.io.* など)
- * @param bundledFiles   展開したライブラリのファイル(ライブラリのフォルダからの相対パス)
+ * @param addedImports   生成したソースに追加した import の名前(java.io.* など)
+ * @param bundledFiles   展開したライブラリのファイル(パッケージ階層に沿ったパス。配置が異なる場合は登録フォルダからの相対パス)
  */
 record TransformSummary(String entryName, String debugFlag, boolean debugValue, long debugLine, boolean packageRemoved,
 						List<String> addedImports, List<String> bundledFiles) {}

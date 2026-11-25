@@ -45,7 +45,7 @@ function withHeaderLines<T extends LocalRunnerTransformResponse>(response: T, li
 	return {...response, lineOffset, ...(lines > 0 ? {header: {name, lines}} : {})};
 }
 
-/** 変換結果の提出用ソースにヘッダーを付ける(tomain、toclip)。ヘッダーを読めないときは変換の失敗として返す。 */
+/** 変換結果の提出用ソースにヘッダーを付ける(tomain、toclip)。読めなければ変換結果に警告を加える。 */
 export function applySubmissionHeader<T extends LocalRunnerTransformResponse>(
 	response: T,
 	header: LocalRunnerHeaderOption,

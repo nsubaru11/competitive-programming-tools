@@ -85,7 +85,7 @@ update
 
 サーバーは起動のたびに、新しいバージョンがあるかを GitHub へ1回だけ問い合わせます。あれば、起動のログと `status` に表示します。送るのは問い合わせだけで、コードや設定は送りません。設定の `update.check` を `false` にすると、問い合わせません。
 
-1.x から 2.0.0 に更新すると、初回起動時にライブラリとヘッダーの設定を引き継ぎ、元の設定ファイルを `.bak` として残します。1.x は `DEBUG` を自動で書き換えていましたが、2.0.0 からは書き換えません。続けて切り替えるには、言語ごとに `debugFlag` を設定してください([設定の移行](docs/SETTINGS.md#設定の移行))。
+1.x の設定を移行すると、ライブラリとヘッダーの設定を引き継ぎ、元の設定ファイルを `.bak` として残します。言語ごとに `debugRewrite: true` を指定していた場合は、`debugFlag` が未設定なら `"DEBUG"` を引き継ぎます。デバッグ用変数の書き換えを新たに有効にするには、言語ごとに `debugFlag` を指定してください（[設定の移行](docs/SETTINGS.md#設定の移行)）。
 
 手動で更新するときは、新しいバージョンの zip を同じ場所へ上書きで展開します。
 
@@ -237,7 +237,7 @@ setlib C:\path\to\library\src
 ### 解答とライブラリの書き方
 
 - **型には通常の `import` または完全修飾名を使ってください。** `import lib.graph.*;`、`import lib.graph.Connectivity.Result;` のどちらも使えます。展開後も `var` の型は Java が推論します。
-- **登録ライブラリのメンバーを取り込む `import static` はサポート対象外です。** `Connectivity.lowLink(graph)` のように型名を付けてください。JDK の `import static` は解答とライブラリの分を提出ファイルの先頭にまとめます。**同じ名前が衝突する場合は、`Math.max(a, b)` のように呼び、該当する static import を外してください。**
+- **登録ライブラリのメンバーを取り込む `import static` はサポート対象外です。** `Connectivity.lowLink(graph)` のように型名を付けてください。解答にある JDK の `import static` は元の位置に残し、展開するライブラリの分で不足するものだけを解答の import 欄に追加します。**同じ名前が衝突する場合は、`Math.max(a, b)` のように呼び、該当する static import を外してください。**
 - **`Main` は提出時の起動クラス名として予約しています。** `public static void main` を宣言したトップレベルの型を使います。引数には `String[]` と `String...` が使えます。候補が複数のときは `Main` を選び、それでも決まらなければ変換を止めます。改名後の起動クラスを参照する場所では、**`Main` を `record` の要素名や列挙定数名に使わないでください。**
 - **展開する型に型注釈を付ける場合は、トップレベルの型を import してください。** `pkg.Factory` を import すると、トップレベルの型は `@Mark Factory`、入れ子の型は `Factory.@Mark Inner` と書けます。
 - **空白や改行などの区切り文字は、Unicode エスケープを使わずに書いてください。**
@@ -252,7 +252,7 @@ setlib C:\path\to\library\src
 
 ## DEBUG の扱い
 
-手元の実行(`test`、`localtest`、`run`)では既定でデバッグを有効にし、`--debug=false` で無効にできます。提出物(`submit`、`tomain`、`toclip`)では常に無効にします。
+手元の実行(`test`、`localtest`、`run`)では既定でデバッグを有効にし、`--debug=false` で無効にできます。提出物(`submit`、`tomain`、`toclip`)と `crosscheck` で比較する両方の解答では、常に無効にします。
 
 | 言語   | デバッグが有効なとき                                      | 無効なとき、提出物            |
 |--------|-----------------------------------------------------------|-------------------------------|
@@ -260,7 +260,7 @@ setlib C:\path\to\library\src
 | C++、C | `-DLOCAL` を付けてコンパイルします。                      | `-DLOCAL` を付けません。      |
 | Python | 設定の `debugFlag` に書いた名前の変数を `True` にします。 | その変数を `False` にします。 |
 
-`debugFlag` を書かなければ、ソースは書き換えません。`languages.java` や `languages.cpython` などの `debugFlag` に変数の名前(例: `"DEBUG"`)を書くと、デバッグの有無に合わせて値を書き換えます。Go と Rust も同じです。Kotlin と C# はソースを書き換えられないので、`debugArgs` でコンパイル時に切り替えてください。対応する言語と書き換える宣言は[設定](docs/SETTINGS.md)にあります。
+`debugFlag` を書かなければ、デバッグ用変数の値は書き換えません。`languages.java` や `languages.cpython` などの `debugFlag` に変数の名前(例: `"DEBUG"`)を書くと、デバッグの有無に合わせて値を書き換えます。Go と Rust も同じです。Kotlin と C# はソースを書き換えられないので、`debugArgs` でコンパイル時に切り替えてください。対応する言語と書き換える宣言は[設定](docs/SETTINGS.md)にあります。
 
 デバッグ出力を標準エラー出力に出しておけば、判定に影響しません。
 

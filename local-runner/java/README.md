@@ -1,6 +1,6 @@
 # local-runner/java — 常駐 Dispatcher（Java 側）
 
-Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/src/daemon`）から標準入出力経由でコマンドを受け、 **インプロセス javac でのコンパイル**と **コンパイル済みクラスの実行**を代行します。 毎回 `javac`/`java` を起動するコストを無くすのが目的です。
+Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっぱなしにして、TS デーモン（`local-runner/src/daemon`）から標準入出力経由でコマンドを受け、 **提出用ソースへの変換**、**インプロセス javac でのコンパイル**、**コンパイル済みクラスの実行**を代行します。 毎回 `javac`/`java` を起動するコストを無くすのが目的です。
 
 通信プロトコルの正典は [`src/PROTOCOL.md`](./src/PROTOCOL.md) です（ワイヤ形式・各メッセージ・メモリ/隔離フラグの意味）。
 
@@ -33,10 +33,10 @@ Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっ
 
 ## ビルド
 
-このディレクトリの Java は **TS デーモンが起動時にまとめてコンパイル**します（`src/daemon/compiler.ts` の `compileDispatcher`、`src` 配下の `*.java` を対象に外部 `javac` で 1 回ビルドし、ソース未変更ならキャッシュ再利用）。手動で確認する場合:
+配布用の実行ファイルは同梱の Dispatcher JAR を使います。ソースから起動するときは `src/daemon/compiler.ts` が `WarmUp.java` を除く Dispatcher のソースを外部 `javac` でコンパイルし、ソースに更新がなければ既存のクラスを再利用します。手動でコンパイルするには次のコマンドを使います。
 
 ```bash
-javac -d /tmp/out "src/"*.java
+javac -encoding UTF-8 -d /tmp/out src/*.java
 ```
 
 Java 24 前提です（sealed interface・record パターン・`java.lang` の最新 API を使用）。
