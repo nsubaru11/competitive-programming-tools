@@ -10,7 +10,7 @@
 ## 守ること
 
 - 開発の方針（配布物は生成物で直接編集しない、`erasableSyntaxOnly`、`@ts-ignore` を使わない、Bun のバージョン）は [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) の「方針」に従う。
-- 配布物が変わる変更では、`userscripts/CpToolkit/meta.json` の `version` を上げる。上げる位置は [DEVELOPMENT.md](userscripts/CpToolkit/DEVELOPMENT.md) の「版の付け方」に従う。文書、テスト、画像だけの変更では上げない。
+- 配布物が変わる変更では、`userscripts/CpToolkit/meta.json` の `version` を上げる。版番号と同じコミットで変更履歴を更新する。[DEVELOPMENT.md](userscripts/CpToolkit/DEVELOPMENT.md) の「版の付け方」と「変更履歴の書き方」に従う。文書、テスト、画像だけの変更では上げない。
 - パッケージの導入・更新は、利用者と合意してから行う。
 - `SCRIPT_NAMESPACE`（`userscripts/build.ts`）は旧名の `atcoder-java-tools` のまま変えない。変えると、インストール済みの UserScript が別物として扱われる。
 
