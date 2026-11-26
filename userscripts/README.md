@@ -42,6 +42,26 @@ bun run --cwd userscripts watch
 bun run --cwd userscripts ./build.ts CpToolkit
 ```
 
+## ブラウザでの確認
+
+開発用のビルドを使うと、スクリプトを導入し直さずに、ページの再読み込みだけで変更を確かめられます。出力先の `<ScriptName>/dist-dev/` は Git に含めません。
+
+最初に1回だけ、次の準備をします。
+
+1. ブラウザの拡張機能の詳細画面で、Tampermonkey の「ファイルの URL へのアクセスを許可する」をオンにします。
+2. Tampermonkey の設定のモードを「上級者」にし、「外部」の更新間隔を「常に」、「スクリプトによるローカル ファイルへのアクセスを許可」を「外部 (@require と @resource)」にします。
+3. `bun run --cwd userscripts build:dev` を実行します。
+4. `<ScriptName>.dev.user.js` の内容を、Tampermonkey の新規スクリプトに貼り付けて保存します。
+5. 配布版の同じスクリプトを無効にします。
+
+以降はビルドしてページを再読み込みします。保存のたびにビルドするときは、次を実行します。
+
+```powershell
+bun run --cwd userscripts dev
+```
+
+読み込まれたビルドの時刻は、ページの `<html>` の `data-userscript-build` とコンソールで確認できます。開発版は配布版と別のスクリプトなので、設定は引き継ぎません。`@match`、`@grant`、`@connect` が変わったときは、4 をやり直します。
+
 ## 型定義
 
 - `types/userscript.d.ts`: `GM_*`、`unsafeWindow`、AtCoder のページ向けの Window の拡張

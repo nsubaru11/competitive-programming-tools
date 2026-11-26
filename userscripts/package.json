@@ -13,7 +13,9 @@
 		"typecheck": "bun run data:types && tsc --noEmit && tsc -b CpToolkit",
 		"test": "bun run data:types && bun test CpToolkit/tests",
 		"build": "bun build.ts",
-		"watch": "bun build.ts --watch"
+		"watch": "bun build.ts --watch",
+		"dev": "bun build.ts --dev --watch",
+		"build:dev": "bun build.ts --dev"
 	},
 	"devDependencies": {
 		"@happy-dom/global-registrator": "^21.0.4",

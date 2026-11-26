@@ -216,3 +216,5 @@ bun run --cwd userscripts test
 ```
 
 `test` は配布物も検査するので、先に `build` を実行します。
+
+ブラウザで動きを確かめる手順は [userscripts/README.md](../README.md#ブラウザでの確認) にあります。

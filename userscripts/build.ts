@@ -3,6 +3,7 @@
 
 import {access, mkdir, readdir, readFile, stat, watch as fsWatch, writeFile} from "node:fs/promises";
 import {basename, dirname, isAbsolute, join, resolve} from "node:path";
+import {pathToFileURL} from "node:url";
 import {formatOutput} from "./scripts/format-output";
 
 // region UserScript メタデータの型定義
@@ -207,13 +208,14 @@ function scriptPaths(name: string) {
 		meta: join(root, `meta.json`),
 		outdir: join(root, "dist"),
 		outfile: join(root, "dist", `${name}.user.js`),
+		devOutdir: join(root, "dist-dev"),
 	};
 }
 
 // endregion
 
 // region ビルドオプション
-type BuildOptions = {watch: boolean; names: string[]};
+type BuildOptions = {watch: boolean; dev: boolean; names: string[]};
 
 function assertBunRuntime(): void {
 	if (typeof Bun === "undefined") {
@@ -223,17 +225,21 @@ function assertBunRuntime(): void {
 
 function printUsage(): void {
 	console.log(`Usage:
-  bun ./build.ts [--watch] [ScriptName ...]
+  bun ./build.ts [--dev] [--watch] [ScriptName ...]
+
+  --dev  dist/ の代わりに dist-dev/ へ、本体とそれを読み込む開発用のスクリプトを出力する
 
 Examples:
   bun ./build.ts
   bun ./build.ts --watch
+  bun ./build.ts --dev --watch
   bun ./build.ts CpToolkit`);
 }
 
 function parseArgs(args: string[]): BuildOptions {
 	const names: string[] = [];
 	let watch = false;
+	let dev = false;
 	for (const arg of args) {
 		if (arg === "--help" || arg === "-h") {
 			printUsage();
@@ -243,10 +249,14 @@ function parseArgs(args: string[]): BuildOptions {
 			watch = true;
 			continue;
 		}
+		if (arg === "--dev") {
+			dev = true;
+			continue;
+		}
 		if (arg.startsWith("-")) throw new Error(`Unknown option: ${arg}`);
 		names.push(arg);
 	}
-	return {watch, names};
+	return {watch, dev, names};
 }
 
 function unique(values: string[]): string[] {
@@ -345,19 +355,15 @@ async function formatUserscriptOutput(outfile: string, banner: string, notices: 
 	await writeFile(outfile, `${banner}\n// @formatter:off\n${notices}${await formatOutput(body)}`, "utf8");
 }
 
-async function buildOne(name: string): Promise<void> {
-	const {entry, outdir, outfile} = scriptPaths(name);
-	const meta = await loadMeta(name);
-	const banner = buildBanner(meta, name);
+async function bundle(name: string, outdir: string, fileName: string, banner: string): Promise<void> {
 	await mkdir(outdir, {recursive: true});
-
 	const result = await Bun.build({
-		entrypoints: [entry],
+		entrypoints: [scriptPaths(name).entry],
 		outdir,
 		root: scriptDir,
 		format: "iife",
 		target: "browser",
-		naming: `${name}.user.js`,
+		naming: fileName,
 		minify: false,
 		banner,
 		alias: {"@shared": join(scriptDir, "../shared/src")},
@@ -367,22 +373,60 @@ async function buildOne(name: string): Promise<void> {
 		for (const log of result.logs) console.error(log.message);
 		throw new Error(`Build failed: ${name}`);
 	}
+}
 
+async function buildOne(name: string): Promise<void> {
+	const {outdir, outfile} = scriptPaths(name);
+	const banner = buildBanner(await loadMeta(name), name);
+	await bundle(name, outdir, `${name}.user.js`, banner);
 	await formatUserscriptOutput(outfile, banner, await loadNotices(name));
 
 	const output = await stat(outfile);
 	console.log(`  -> ${name}/dist/${name}.user.js (${output.size} bytes)`);
 }
 
+/**
+ * 開発用の出力。管理ツールには loader を1回だけ導入し、本体は loader の @require が手元のファイルから読む。
+ * ヘッダー(@match、@grant、@connect)が変わったときは、loader を導入し直す。
+ */
+async function buildDev(name: string): Promise<void> {
+	const {devOutdir} = scriptPaths(name);
+	const bodyName = `${name}.body.js`;
+	const bodyFile = join(devOutdir, bodyName);
+	await bundle(name, devOutdir, bodyName, "");
+
+	// どのビルドが動いているかを、ページ側から確かめられるようにする
+	const builtAt = new Date().toISOString();
+	const stamp = [
+		`document.documentElement.dataset.userscriptBuild = ${JSON.stringify(builtAt)};`,
+		`console.info(${JSON.stringify(`[${name}] dev build ${builtAt}`)});`,
+	].join("\n");
+	await writeFile(bodyFile, `${await readFile(bodyFile, "utf8")}\n${stamp}\n`, "utf8");
+
+	const meta = await loadMeta(name);
+	// 配布版と別のスクリプトにして、配布元からの更新で上書きされないようにする
+	const devMeta: ScriptMeta = {
+		...meta,
+		name: `${meta.name} (dev)`,
+		...(meta["name:en"] ? {"name:en": `${meta["name:en"]} (dev)`} : {}),
+		...(meta["name:ja"] ? {"name:ja": `${meta["name:ja"]} (dev)`} : {}),
+		require: [...(meta.require ?? []), pathToFileURL(bodyFile).href],
+		updateURL: undefined,
+		downloadURL: undefined,
+	};
+	await writeFile(join(devOutdir, `${name}.dev.user.js`), buildBanner(devMeta, name), "utf8");
+	console.log(`  -> ${name}/dist-dev/${bodyName} (${builtAt})`);
+}
+
 function errorMessage(e: unknown): string {
 	return e instanceof Error ? e.message : String(e);
 }
 
-async function buildAll(names: string[]): Promise<void> {
-	await Promise.all(names.map(buildOne));
+async function buildAll(names: string[], dev: boolean): Promise<void> {
+	await Promise.all(names.map(dev ? buildDev : buildOne));
 }
 
-function createQueuedBuild(names: string[]): () => Promise<void> {
+function createQueuedBuild(names: string[], dev: boolean): () => Promise<void> {
 	let running = false;
 	let pending = false;
 	return async function buildQueued(): Promise<void> {
@@ -394,7 +438,7 @@ function createQueuedBuild(names: string[]): () => Promise<void> {
 		try {
 			do {
 				pending = false;
-				await buildAll(names);
+				await buildAll(names, dev);
 			} while (pending);
 		} finally {
 			running = false;
@@ -409,7 +453,7 @@ async function watchAndBuild(buildQueued: () => Promise<void>): Promise<void> {
 	for await (const event of watcher) {
 		const fileName = event.filename ? String(event.filename) : "";
 		if (!watchedSourcePattern.test(fileName) || fileName.endsWith(".d.yaml.ts")) continue;
-		if (fileName.includes("dist\\") || fileName.includes("dist/")) continue;
+		if (/(^|[\\/])dist(-dev)?[\\/]/.test(fileName)) continue;
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => {
 			buildQueued().catch((e: unknown) => console.error(errorMessage(e)));
@@ -431,7 +475,7 @@ async function main(): Promise<void> {
 	console.log(`Building ${names.length} userscript(s)${options.watch ? " (watch)" : ""}:`);
 	for (const name of names) console.log(`  - ${name}`);
 
-	const buildQueued = createQueuedBuild(names);
+	const buildQueued = createQueuedBuild(names, options.dev);
 	await buildQueued();
 
 	if (options.watch) {
