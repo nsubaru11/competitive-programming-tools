@@ -113,7 +113,9 @@ final class ProtocolCodec {
 		return new StringJoiner(SEPARATOR).add("TRANSFORMED").add(response.requestId()).add(Integer.toString(result.exitCode())).add(b64(result.sourceCode())).add(b64(result.diagnostics())).add(b64(String.join("\n", result.inlinedClasses()))).add(b64(diagnosticsJson(result.diagnosticItems()))).add(b64(summaryJson(result.summary()))).toString();
 	}
 
-	/** 変換の要約を JSON にする。失敗したときは空の文字列。 */
+	/**
+	 * 変換の要約を JSON にする。失敗したときは空の文字列。
+	 */
 	private static String summaryJson(final TransformSummary summary) {
 		if (summary == null) return "";
 		final StringJoiner added = new StringJoiner(",", "[", "]");

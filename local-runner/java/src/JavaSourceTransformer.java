@@ -47,6 +47,27 @@ final class JavaSourceTransformer {
 		return Arrays.stream(raw.split(",")).map(String::strip).filter(name -> !name.isEmpty()).toList();
 	}
 
+	/**
+	 * ライブラリのファイルを、そのパッケージの階層から書いた相対パスで表す(lib/io/FastScanner.java など)。
+	 * ファイルがパッケージの階層と違う場所にあれば、ライブラリのフォルダからの相対パスにする。
+	 */
+	private static String libraryRelative(final LibraryIndex index, final Path path) {
+		final LibraryType type = index.byPath().get(path);
+		final String folder = type == null || type.packageName().isEmpty() ? "" : type.packageName().replace('.', '/') + "/";
+		final String byPackage = folder + path.getFileName();
+		return path.endsWith(byPackage) ? byPackage : index.root().relativize(path).toString().replace(java.io.File.separatorChar, '/');
+	}
+
+	private static VariableTree findDebugFlag(final MainClass main, final String name) {
+		if (name.isEmpty()) return null;
+		for (final Tree member : main.tree().getMembers()) {
+			if (member instanceof VariableTree variable && variable.getName().contentEquals(name)
+					&& variable.getInitializer() instanceof LiteralTree literal && literal.getValue() instanceof Boolean)
+				return variable;
+		}
+		return null;
+	}
+
 	SourceTransformResult transform(final String rawSource, final Path librarySourceRoot, final boolean debug, final String debugFlag, final boolean validate) {
 		try {
 			final Path root = librarySourceRoot.toAbsolutePath().normalize();
@@ -315,7 +336,9 @@ final class JavaSourceTransformer {
 		return LEADING_BLANK_LINES.matcher(applyEdits(source, edits)).replaceFirst("");
 	}
 
-	/** package を除く、最初の import か型の宣言の位置。どちらも無ければ 0。 */
+	/**
+	 * package を除く、最初の import か型の宣言の位置。どちらも無ければ 0。
+	 */
 	private int firstCodePosition(final Analysis analysis) {
 		final CompilationUnitTree unit = analysis.solution();
 		return Stream.concat(unit.getImports().stream(), unit.getTypeDecls().stream())
@@ -347,7 +370,9 @@ final class JavaSourceTransformer {
 		}
 	}
 
-	/** 変換で変えたことの要約。DEBUG は、起動クラスの直下にある boolean の宣言を探す。 */
+	/**
+	 * 変換で変えたことの要約。DEBUG は、起動クラスの直下にある boolean の宣言を探す。
+	 */
 	private TransformSummary summary(final Analysis analysis, final MainClass main, final boolean debug, final VariableTree flag,
 									 final Set<String> hoisted, final List<Path> dependencies, final LibraryIndex index) {
 		final long line = flag == null ? 0 : analysis.solution().getLineMap().getLineNumber(analysis.positions().getStartPosition(analysis.solution(), flag.getInitializer()));
@@ -355,27 +380,6 @@ final class JavaSourceTransformer {
 		final List<String> files = dependencies.stream().map(path -> libraryRelative(index, path)).toList();
 		return new TransformSummary(main.element().getSimpleName().toString(), flag == null ? null : flag.getName().toString(), debug, line,
 				analysis.solution().getPackageName() != null, added, files);
-	}
-
-	/**
-	 * ライブラリのファイルを、そのパッケージの階層から書いた相対パスで表す(lib/io/FastScanner.java など)。
-	 * ファイルがパッケージの階層と違う場所にあれば、ライブラリのフォルダからの相対パスにする。
-	 */
-	private static String libraryRelative(final LibraryIndex index, final Path path) {
-		final LibraryType type = index.byPath().get(path);
-		final String folder = type == null || type.packageName().isEmpty() ? "" : type.packageName().replace('.', '/') + "/";
-		final String byPackage = folder + path.getFileName();
-		return path.endsWith(byPackage) ? byPackage : index.root().relativize(path).toString().replace(java.io.File.separatorChar, '/');
-	}
-
-	private static VariableTree findDebugFlag(final MainClass main, final String name) {
-		if (name.isEmpty()) return null;
-		for (final Tree member : main.tree().getMembers()) {
-			if (member instanceof VariableTree variable && variable.getName().contentEquals(name)
-					&& variable.getInitializer() instanceof LiteralTree literal && literal.getValue() instanceof Boolean)
-				return variable;
-		}
-		return null;
 	}
 
 	/**
@@ -516,7 +520,8 @@ final class JavaSourceTransformer {
 
 	private record LibraryType(String packageName, String fqcn, Path path) {}
 
-	private record LibraryIndex(Path root, Map<String, LibraryType> byFqcn, Map<Path, LibraryType> byPath, Set<String> packages,
+	private record LibraryIndex(Path root, Map<String, LibraryType> byFqcn, Map<Path, LibraryType> byPath,
+	                            Set<String> packages,
 								Path classPath, Map<Path, Set<Path>> dependencies) {
 		/**
 		 * import の名前がライブラリを指すかを返します。

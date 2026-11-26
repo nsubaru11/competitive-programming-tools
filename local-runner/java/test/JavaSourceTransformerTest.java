@@ -440,7 +440,7 @@ public final class JavaSourceTransformerTest {
 				|| misplaced.summary().bundledFiles().equals(java.util.List.of("extra/State.java", "Mine.java")), String.valueOf(misplaced.summary()));
 		Files.delete(root.resolve("Mine.java"));
 
-		Files.writeString(pkg.resolve("Base.java"),"package extra; public class Base { void f() {} public void run() { f(); } }");
+		Files.writeString(pkg.resolve("Base.java"), "package extra; public class Base { void f() {} public void run() { f(); } }");
 		final SourceTransformResult overridden = transformer.transform("import extra.Base; class Solver extends Base { void f() {} public static void main(String[] a) { new Solver().run(); } }", root, false, "", false);
 		check(overridden.exitCode() != 0 && overridden.diagnostics().contains("overrides"), overridden.diagnostics());
 		final SourceTransformResult access = transformer.transform("import extra.Base;\nclass Solver extends Base { private void f() {} public static void main(String[] a) {} }", root, false, "", false);

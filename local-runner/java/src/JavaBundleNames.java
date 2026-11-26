@@ -19,7 +19,9 @@ final class JavaBundleNames {
 			+ "|\\s+|(?:" + ESCAPE + "|\\p{javaJavaIdentifierStart})(?:" + ESCAPE + "|\\p{javaJavaIdentifierPart})*|.", Pattern.DOTALL);
 	private final List<Unit> units;
 	private final Set<String> reserved = new HashSet<>();
-	/** パッケージを外すか入れ子の型を修飾したとき、その参照位置で名前を隠されるトップレベルの型。 */
+	/**
+	 * パッケージを外すか入れ子の型を修飾したとき、その参照位置で名前を隠されるトップレベルの型。
+	 */
 	private final Set<String> shadowedTypes = new HashSet<>();
 	private final Set<MainDeclaration> mainConflicts = new HashSet<>();
 	private final Set<String> topLevelNames = new HashSet<>();
@@ -31,8 +33,8 @@ final class JavaBundleNames {
 	private final Map<String, String> preferredImports = new TreeMap<>();
 	private final TypeElement entry;
 	private final String entryBinary;
-	private boolean shortenedTypeReference;
 	private final Map<String, Integer> nextSuffix = new HashMap<>();
+	private boolean shortenedTypeReference;
 
 	JavaBundleNames(final List<Unit> units, final TypeElement entry) {
 		this.units = units;
@@ -75,7 +77,8 @@ final class JavaBundleNames {
 			if (bundledTopLevels.containsKey(use.unit.binary(outer))) continue;
 			final String qualified = use.type.getQualifiedName().toString();
 			final int dot = qualified.indexOf('.');
-			if (dot > 0 && !use.hiding(qualified.substring(0, dot), null).isEmpty()) preferredImports.put(simple, qualified);
+			if (dot > 0 && !use.hiding(qualified.substring(0, dot), null).isEmpty())
+				preferredImports.put(simple, qualified);
 		}
 		topLevelNames.add("Main");
 		for (final Unit unit : units) allocateNames(unit);
@@ -87,7 +90,9 @@ final class JavaBundleNames {
 				&& !token.group().startsWith("//") && !token.group().startsWith("/*"));
 	}
 
-	/** トークンの文字列。Unicode エスケープは、javac と同じく文字として読む。 */
+	/**
+	 * トークンの文字列。Unicode エスケープは、javac と同じく文字として読む。
+	 */
 	private static String text(final MatchResult token) {
 		return UNICODE_ESCAPE.matcher(token.group())
 				.replaceAll(escape -> Matcher.quoteReplacement(String.valueOf((char) Integer.parseInt(escape.group(1), 16))));
@@ -107,6 +112,22 @@ final class JavaBundleNames {
 			return edit(token, replacement);
 		}
 		throw new IllegalStateException("Could not identify the declaration of " + name + " at offset " + start);
+	}
+
+	/**
+	 * outer.new Inner<T>() の Inner は outer のメンバーとして解決される。型引数や注釈内の名前は通常のスコープで解決する。
+	 */
+	private static boolean hasEnclosingInstance(TreePath path) {
+		while (path.getParentPath() != null) {
+			final Tree parent = path.getParentPath().getLeaf();
+			if (parent instanceof NewClassTree call)
+				return call.getIdentifier() == path.getLeaf() && call.getEnclosingExpression() != null;
+			if (!(parent instanceof ParameterizedTypeTree params && params.getType() == path.getLeaf())
+					&& !(parent instanceof AnnotatedTypeTree annotated && annotated.getUnderlyingType() == path.getLeaf()))
+				return false;
+			path = path.getParentPath();
+		}
+		return false;
 	}
 
 	boolean requiresVerification() {
@@ -147,11 +168,14 @@ final class JavaBundleNames {
 				if (path.getLeaf() instanceof IdentifierTree) {
 					simpleUses.add(new TypeUse(unit, type, path));
 					candidates.computeIfAbsent(type.getSimpleName().toString(), key -> new HashSet<>()).add(unit.binary(type));
-					if (unit.needsImportOwner(type, path)) type = unit.analysis.elements().getOutermostTypeElement(type);
-					else if (type.getSimpleName().contentEquals("Main") || !unit.binary(type).equals(entryBinary)) return;
+					if (unit.needsImportOwner(type, path))
+						type = unit.analysis.elements().getOutermostTypeElement(type);
+					else if (type.getSimpleName().contentEquals("Main") || !unit.binary(type).equals(entryBinary))
+						return;
 				} else if (type.getNestingKind() != NestingKind.TOP_LEVEL) return;
 				final String binary = unit.binary(type);
-				if (bundledTopLevels.contains(binary) && !shadowedTypes.contains(binary)) collectConflicts(unit, type, binary, path);
+				if (bundledTopLevels.contains(binary) && !shadowedTypes.contains(binary))
+					collectConflicts(unit, type, binary, path);
 			}
 
 			@Override
@@ -168,45 +192,12 @@ final class JavaBundleNames {
 		}.scan(unit.analysis.solution(), null);
 	}
 
-	/** getScope は宣言とその所属先を複製する。クラスのバイナリ名とメソッドの署名は複製前後で共通。 */
-	private record MainDeclaration(ElementKind kind, String ownerClass, String ownerMember) {
-		static MainDeclaration of(final Unit unit, final Element member) {
-			Element owner = member.getEnclosingElement();
-			final String signature = owner instanceof TypeElement ? "" : owner.toString();
-			while (owner != null && !(owner instanceof TypeElement)) owner = owner.getEnclosingElement();
-			return new MainDeclaration(member.getKind(), owner instanceof TypeElement type ? unit.binary(type) : "", signature);
-		}
-	}
-
 	private void collectConflicts(final Unit unit, final TypeElement type, final String binary, final TreePath path) {
 		final boolean isEntry = binary.equals(entryBinary);
 		final var hiding = new TypeUse(unit, type, path).hiding(isEntry ? "Main" : type.getSimpleName().toString(), binary);
 		if (isEntry) {
 			for (final Element member : hiding) mainConflicts.add(MainDeclaration.of(unit, member));
 		} else if (!hiding.isEmpty()) shadowedTypes.add(binary);
-	}
-
-	private record TypeUse(Unit unit, TypeElement type, TreePath path) {
-		/** 型名を修飾・短縮した後、その先頭の識別子を隠す宣言。T.class、T.this、T.super の T は常に型。 */
-		List<Element> hiding(final String name, final String target) {
-			TreePath use = path;
-			while (use.getParentPath().getLeaf() instanceof MemberSelectTree select && select.getExpression() == use.getLeaf()
-					&& unit.analysis.trees().getElement(use.getParentPath()) instanceof TypeElement) use = use.getParentPath();
-			final Tree parent = use.getParentPath().getLeaf();
-			final boolean expression = parent instanceof MemberSelectTree select && select.getExpression() == use.getLeaf()
-					&& !Set.of("class", "this", "super").contains(select.getIdentifier().toString())
-					|| parent instanceof MemberReferenceTree ref && ref.getMode() == MemberReferenceTree.ReferenceMode.INVOKE;
-			final List<Element> found = new ArrayList<>();
-			for (Scope scope = unit.analysis.trees().getScope(path); scope != null && scope.getEnclosingClass() != null; scope = scope.getEnclosingScope()) {
-				for (final var members : List.of(scope.getLocalElements(), unit.analysis.elements().getAllMembers(scope.getEnclosingClass()))) {
-					for (final Element member : members) {
-						if (member.getSimpleName().contentEquals(name) && (member instanceof TypeElement other && !unit.binary(other).equals(target)
-								|| member instanceof TypeParameterElement || expression && member instanceof VariableElement)) found.add(member);
-					}
-				}
-			}
-			return found;
-		}
 	}
 
 	private String nextName(final String base) {
@@ -233,10 +224,11 @@ final class JavaBundleNames {
 				final String binary = unit.binary(type);
 				final boolean topLevel = type.getNestingKind() == NestingKind.TOP_LEVEL;
 				String name = old;
-				if (type == entry) name = "Main";
 				// パッケージを外した型が、別のトップレベル型やスコープ内の宣言に隠れない名前を選ぶ。
+				if (type == entry) name = "Main";
 				else if (topLevel && (topLevelNames.contains(old) || preferredImports.containsKey(old) || shadowedTypes.contains(binary))
-						|| old.equals("Main") && (unit.analysis.elements().getOutermostTypeElement(type) == entry || conflictsWithMain(type))) name = nextName(old);
+						|| old.equals("Main") && (unit.analysis.elements().getOutermostTypeElement(type) == entry || conflictsWithMain(type)))
+					name = nextName(old);
 				typeNames.put(binary, name);
 				if (topLevel) {
 					topLevelNames.add(name);
@@ -279,7 +271,9 @@ final class JavaBundleNames {
 				? fieldNames.getOrDefault(unit.binary(owner) + "." + name, name) : unit.localNames.getOrDefault(variable, name);
 	}
 
-	/** 入れ子も含め、展開後にトップレベルの型からたどる名前。 */
+	/**
+	 * 入れ子も含め、展開後にトップレベルの型からたどる名前。
+	 */
 	private String bundledName(final Unit unit, final TypeElement type) {
 		final String name = typeNames.get(unit.binary(type));
 		return type.getEnclosingElement() instanceof TypeElement owner ? bundledName(unit, owner) + "." + name : name;
@@ -494,7 +488,8 @@ final class JavaBundleNames {
 				String replacement = nameOf(symbol);
 				final String name = tree.getName().toString();
 				if (symbol instanceof TypeElement type) {
-					if (replacement != null && unit.needsImportOwner(type, getCurrentPath())) replacement = bundledName(unit, type);
+					if (replacement != null && unit.needsImportOwner(type, getCurrentPath()))
+						replacement = bundledName(unit, type);
 					else if (replacement == null && needsQualification(name, type.getQualifiedName().toString()) && !hasEnclosingInstance(getCurrentPath()))
 						replacement = type.getQualifiedName().toString();
 				}
@@ -524,16 +519,43 @@ final class JavaBundleNames {
 		return edits;
 	}
 
-	/** outer.new Inner<T>() の Inner は outer のメンバーとして解決される。型引数や注釈内の名前は通常のスコープで解決する。 */
-	private static boolean hasEnclosingInstance(TreePath path) {
-		while (path.getParentPath() != null) {
-			final Tree parent = path.getParentPath().getLeaf();
-			if (parent instanceof NewClassTree call) return call.getIdentifier() == path.getLeaf() && call.getEnclosingExpression() != null;
-			if (!(parent instanceof ParameterizedTypeTree params && params.getType() == path.getLeaf())
-					&& !(parent instanceof AnnotatedTypeTree annotated && annotated.getUnderlyingType() == path.getLeaf())) return false;
-			path = path.getParentPath();
+	/**
+	 * getScope は宣言とその所属先を複製する。クラスのバイナリ名とメソッドの署名は複製前後で共通。
+	 */
+	private record MainDeclaration(ElementKind kind, String ownerClass, String ownerMember) {
+		static MainDeclaration of(final Unit unit, final Element member) {
+			Element owner = member.getEnclosingElement();
+			final String signature = owner instanceof TypeElement ? "" : owner.toString();
+			while (owner != null && !(owner instanceof TypeElement)) owner = owner.getEnclosingElement();
+			return new MainDeclaration(member.getKind(), owner instanceof TypeElement type ? unit.binary(type) : "", signature);
 		}
-		return false;
+	}
+
+	private record TypeUse(Unit unit, TypeElement type, TreePath path) {
+		/**
+		 * 型名を修飾・短縮した後、その先頭の識別子を隠す宣言。T.class、T.this、T.super の T は常に型。
+		 */
+		List<Element> hiding(final String name, final String target) {
+			TreePath use = path;
+			while (use.getParentPath().getLeaf() instanceof MemberSelectTree select && select.getExpression() == use.getLeaf()
+					&& unit.analysis.trees().getElement(use.getParentPath()) instanceof TypeElement)
+				use = use.getParentPath();
+			final Tree parent = use.getParentPath().getLeaf();
+			final boolean expression = parent instanceof MemberSelectTree select && select.getExpression() == use.getLeaf()
+					&& !Set.of("class", "this", "super").contains(select.getIdentifier().toString())
+					|| parent instanceof MemberReferenceTree ref && ref.getMode() == MemberReferenceTree.ReferenceMode.INVOKE;
+			final List<Element> found = new ArrayList<>();
+			for (Scope scope = unit.analysis.trees().getScope(path); scope != null && scope.getEnclosingClass() != null; scope = scope.getEnclosingScope()) {
+				for (final var members : List.of(scope.getLocalElements(), unit.analysis.elements().getAllMembers(scope.getEnclosingClass()))) {
+					for (final Element member : members) {
+						if (member.getSimpleName().contentEquals(name) && (member instanceof TypeElement other && !unit.binary(other).equals(target)
+								|| member instanceof TypeParameterElement || expression && member instanceof VariableElement))
+							found.add(member);
+					}
+				}
+			}
+			return found;
+		}
 	}
 
 	static final class Unit {
@@ -547,7 +569,9 @@ final class JavaBundleNames {
 			this.analysis = analysis;
 		}
 
-		/** 所属する型やそのサブクラスの中なら、import を外しても元から単純名で見える。 */
+		/**
+		 * 所属する型やそのサブクラスの中なら、import を外しても元から単純名で見える。
+		 */
 		boolean needsImportOwner(final TypeElement type, final TreePath path) {
 			if (!importedMembers.contains(type) || hasEnclosingInstance(path)) return false;
 			final var types = analysis.types();
