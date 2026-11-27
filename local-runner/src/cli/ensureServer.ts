@@ -1,6 +1,7 @@
 import {spawn} from "node:child_process";
 import path from "node:path";
 import {PROJECT_ROOT, SETTINGS, SETTINGS_FILE} from "../config";
+import type {RunnerStatusInfo} from "../types";
 import {getRunnerStatus} from "../runnerClient";
 
 const READY_TIMEOUT_MS = SETTINGS.server.startTimeoutMs;
@@ -63,9 +64,9 @@ function startServer(): void {
 }
 
 /** CLI が server を叩く前に呼ぶ。未起動なら自動起動して ready まで待つ。 */
-export async function ensureLocalRunnerReady(startIfStopped = SETTINGS.server.autoStart): Promise<void> {
+export async function ensureLocalRunnerReady(startIfStopped = SETTINGS.server.autoStart): Promise<RunnerStatusInfo> {
 	const status = await getRunnerStatus(1500);
-	if (status?.status === "running") return;
+	if (status?.status === "running") return status;
 	if (!status && !startIfStopped) throw new Error("Local Runner is unavailable. Run serve to start it.");
 
 	try {
@@ -77,9 +78,10 @@ export async function ensureLocalRunnerReady(startIfStopped = SETTINGS.server.au
 	const deadline = Date.now() + READY_TIMEOUT_MS;
 	while (Date.now() < deadline) {
 		await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-		if ((await getRunnerStatus(1500))?.status === "running") {
+		const ready = await getRunnerStatus(1500);
+		if (ready?.status === "running") {
 			console.error("Local Runner is ready.");
-			return;
+			return ready;
 		}
 	}
 	throw new Error(

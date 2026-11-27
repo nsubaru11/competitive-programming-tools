@@ -72,6 +72,12 @@
 					"minimum": 1000,
 					"default": 30000
 				},
+				"maxParallelRuns": {
+					"description": "コマンド言語の同時実行件数の上限。サーバーで利用可能な論理CPU数まで使います。",
+					"type": "integer",
+					"minimum": 1,
+					"default": 8
+				},
 				"outputLimitMb": {
 					"description": "標準出力と標準エラー出力のそれぞれについて、取り込む量の上限(MB)。",
 					"type": "integer",
@@ -183,6 +189,15 @@
 							"type": "string"
 						}
 					},
+					"warmup": {
+						"description": "起動時に一度だけ実行する準備コマンド。{command} は処理系の場所に置き換わる。",
+						"type": "array",
+						"items": {"type": "string"}
+					},
+					"compilePath": {
+						"description": "auto は WSL の Linux 版 GCC で Windows ドライブの PATH を省く。inherit は元の PATH を使う。",
+						"enum": ["auto", "inherit"]
+					},
 					"run": {
 						"description": "実行の引数の並び。{command}、{source}、{output}、{dir} が置き換わる。",
 						"type": "array",
@@ -210,9 +225,12 @@
 						"default": 1024
 					},
 					"setup": {
-						"description": "組み込みの準備。builtin:gcc-header-unit は、bits/stdc++.h を読んだ結果を保存してコンパイルを速くする。g++ と -fmodules が要る。",
+						"description": "GCC のヘッダーユニット、Kotlin の共有ランタイム、または .NET 9 の復元済みプロジェクトを使う。",
 						"enum": [
-							"builtin:gcc-header-unit"
+							"builtin:gcc-header-unit",
+							"builtin:kotlin-runtime",
+							"builtin:dotnet-project",
+							"none"
 						]
 					},
 					"bundle": {

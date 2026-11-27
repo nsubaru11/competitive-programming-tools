@@ -129,6 +129,7 @@ export const RUNNER_CONFIG = {
 	maxCacheSize: 10,
 	compileTimeoutMs: SETTINGS.run.compileTimeoutMs,
 	runTimeoutMs: SETTINGS.run.timeoutMs,
+	maxParallelRuns: Math.min(SETTINGS.run.maxParallelRuns, os.availableParallelism()),
 	runStackBytes: SETTINGS.languages.java.stackMb * MEBIBYTE,
 	dispatcherStartupTimeoutMs: 10000,
 	outputLimitBytes: SETTINGS.run.outputLimitMb * MEBIBYTE,

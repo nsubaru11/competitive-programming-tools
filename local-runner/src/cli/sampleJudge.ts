@@ -1,3 +1,5 @@
+import {reportCases} from "./reportCases";
+import type {LocalSample} from "./localSamples";
 import * as shared from "@atcoder-tools/shared";
 import type {SamplePair, SampleResult} from "../types";
 import * as color from "../utils/color";
@@ -30,15 +32,15 @@ export function judgeByLines(expected: string, actual: string): boolean {
 }
 
 export async function postLocalRunner(program: PreparedProgram, stdinText: string): Promise<shared.LocalRunnerRunResponse> {
-	const run = () => requestRunner<shared.LocalRunnerRunResponse>(
-		{mode: "run", programId: program.programId, stdin: stdinText},
+	const sent = program.current;
+	const run = (programId: string) => requestRunner<shared.LocalRunnerRunResponse>(
+		{mode: "run", programId, stdin: stdinText},
 		"Local Runner request failed",
 	);
-	const result = await run();
+	const result = await run(sent.id);
 	if (!shared.isStaleProgramResponse(result)) return result;
 	// daemon の再起動やキャッシュの追い出しでプログラムが消えたときだけ、コンパイルし直して実行する
-	program.programId = await program.refresh();
-	return await run();
+	return run(await program.refresh(sent));
 }
 
 /**
@@ -131,8 +133,8 @@ function formatWaDiff(expected: string, actual: string, options: SampleDisplayOp
 	const limit = full ? indices.length : Math.min(indices.length, cap);
 	const shownIdx = indices.slice(0, limit);
 
-	const numW = String(total).length;
-	const w = Math.min(30, Math.max(8, ...shownIdx.map(i => (i < exp.length ? exp[i].length : 0))));
+	const numW = String((shownIdx.at(-1) ?? 0) + 1).length;
+	const w = shownIdx.reduce((width, i) => Math.min(30, Math.max(width, exp[i]?.length ?? 0)), 8);
 	const fit = (s: string) => (s.length > w ? s.slice(0, w - 1) + "~" : s.padEnd(w));
 	const NONE = "(none)";
 
@@ -209,41 +211,15 @@ export function printSampleResult(
 	}
 }
 
-/** 全サンプルの集計（AC 数・内訳・実行時間）を1行で表示し、全 AC/OK かどうかを返す。crosscheck からも直接呼ばれる。 */
-export function printSampleSummary(results: SampleResult[]): boolean {
-	const acCount = results.filter(r => r.status === "AC").length;
-	const totalExecTime = results.reduce((sum, r) => sum + Number(r.execTime || 0), 0);
-	const statusCounts = new Map<string, number>();
-	for (const r of results) statusCounts.set(r.status, (statusCounts.get(r.status) || 0) + 1);
-	const breakdown = Array.from(statusCounts.entries())
-		.sort((a, b) => {
-			if (a[0] === "AC") return -1;
-			if (b[0] === "AC") return 1;
-			return a[0].localeCompare(b[0]);
-		})
-		.map(([status, count]) => `${status}:${count}`)
-		.join(" ");
-	const avgExecTime = results.length ? (totalExecTime / results.length).toFixed(1) : "0.0";
-	console.log(`Summary: ${acCount}/${results.length} AC | ${breakdown} | total=${totalExecTime}ms avg=${avgExecTime}ms`);
-	return results.every(r => r.status === "AC" || r.status === "OK");
-}
-
-/**
- * サンプルを1件ずつ「実行 → 即表示」しながら進め、最後に集計を表示する。
- * 全件まとめてからではなく逐次表示するので、ケースが多い/遅いときも経過が分かる。
- * 戻り値は全件 AC/OK かどうか。
- */
-export async function runAndReportSamples(
+/** 1回の準備結果で全ケースを実行する。ローカル入力は空き枠ができてから読む。 */
+export function runAndReportSamples(
 	program: PreparedProgram,
-	samplePairs: SamplePair[],
+	samples: readonly (SamplePair | LocalSample)[],
 	restoreNames: (text: string) => string,
 	display: SampleDisplayOptions = {},
 ): Promise<boolean> {
-	const results: SampleResult[] = [];
-	for (const sample of samplePairs) {
-		const result = await evaluateSample(program, sample);
-		printSampleResult(result, restoreNames, display);
-		results.push(result);
-	}
-	return printSampleSummary(results);
+	return reportCases(samples, program.maxParallelRuns, async sample => ({
+		result: await evaluateSample(program, "read" in sample ? sample.read() : sample),
+		restoreNames,
+	}), ({result, restoreNames}) => printSampleResult(result, restoreNames, display));
 }

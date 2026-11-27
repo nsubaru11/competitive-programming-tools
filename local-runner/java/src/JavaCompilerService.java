@@ -22,6 +22,7 @@ final class JavaCompilerService {
 	static final List<String> RELEASE_OPTIONS = resolveReleaseOptions();
 	private static final Charset UTF_8 = StandardCharsets.UTF_8;
 	private final JavaCompiler compiler;
+	private JavaAnalysisTask verified;
 
 	public JavaCompilerService() {
 		compiler = ToolProvider.getSystemJavaCompiler();
@@ -35,6 +36,26 @@ final class JavaCompilerService {
 		return raw == null || raw.isBlank() ? List.of() : List.of("--release", raw.trim());
 	}
 
+	static CompileResult result(final boolean ok, final Path outputDirectory, final DiagnosticCollector<JavaFileObject> diagnostics,
+								final StringWriter additionalOutput) throws IOException {
+		final List<CompilerDiagnostic> diagnosticItems = new ArrayList<>();
+		final StringBuilder message = new StringBuilder();
+		for (final Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+			diagnosticItems.add(new CompilerDiagnostic(diagnostic.getKind().name(), diagnostic.getLineNumber(), diagnostic.getColumnNumber(), diagnostic.getCode(), diagnostic.getMessage(Locale.ROOT)));
+			message.append(diagnostic.getKind()).append(' ').append(diagnostic.getLineNumber()).append(':').append(diagnostic.getColumnNumber()).append(' ').append(diagnostic.getCode()).append(' ').append(diagnostic.getMessage(Locale.ROOT)).append('\n');
+		}
+		final String extra = additionalOutput.toString();
+		if (!extra.isBlank()) message.append(extra);
+		// 成功時のみ、危険 API を参照していて隔離実行が要るかをバイトコードから判定する（改善1）。
+		final boolean requiresIsolation = ok && IsolationAnalyzer.requiresIsolation(outputDirectory);
+		return new CompileResult(ok ? 0 : 1, message.toString(), requiresIsolation, List.copyOf(diagnosticItems));
+	}
+
+	void remember(final JavaAnalysisTask parsed) throws IOException {
+		if (verified != null) verified.close();
+		verified = parsed;
+	}
+
 	/**
 	 * 指定ソースをコンパイルします。
 	 *
@@ -44,7 +65,13 @@ final class JavaCompilerService {
 	 */
 	CompileResult compile(final Path sourceFile, final Path outputDirectory) {
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-		final List<CompilerDiagnostic> diagnosticItems = new ArrayList<>();
+		try (var previous = verified) {
+			verified = null;
+			if (previous != null && sourceFile.getFileName().toString().equals("Main.java")
+					&& previous.source.equals(Files.readString(sourceFile))) return previous.generate(outputDirectory);
+		} catch (final IOException exception) {
+			return new CompileResult(1, exception.toString(), false, List.of());
+		}
 		final StringWriter additionalOutput = new StringWriter();
 		try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, UTF_8)) {
 			Files.createDirectories(outputDirectory);
@@ -52,16 +79,7 @@ final class JavaCompilerService {
 			final List<String> options = new ArrayList<>(List.of("-encoding", "UTF-8", "-g:lines,source", "-proc:none", "-implicit:none", "-d", outputDirectory.toString()));
 			options.addAll(RELEASE_OPTIONS);
 			final boolean ok = compiler.getTask(additionalOutput, fileManager, diagnostics, options, null, units).call();
-			final StringBuilder message = new StringBuilder();
-			for (final Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-				diagnosticItems.add(new CompilerDiagnostic(diagnostic.getKind().name(), diagnostic.getLineNumber(), diagnostic.getColumnNumber(), diagnostic.getCode(), diagnostic.getMessage(Locale.ROOT)));
-				message.append(diagnostic.getKind()).append(' ').append(diagnostic.getLineNumber()).append(':').append(diagnostic.getColumnNumber()).append(' ').append(diagnostic.getCode()).append(' ').append(diagnostic.getMessage(Locale.ROOT)).append('\n');
-			}
-			final String extra = additionalOutput.toString();
-			if (!extra.isBlank()) message.append(extra);
-			// 成功時のみ、危険 API を参照していて隔離実行が要るかをバイトコードから判定する（改善1）。
-			final boolean requiresIsolation = ok && IsolationAnalyzer.requiresIsolation(outputDirectory);
-			return new CompileResult(ok ? 0 : 1, message.toString(), requiresIsolation, List.copyOf(diagnosticItems));
+			return result(ok, outputDirectory, diagnostics, additionalOutput);
 		} catch (final Exception exception) {
 			return new CompileResult(1, exception.toString(), false, List.of());
 		}

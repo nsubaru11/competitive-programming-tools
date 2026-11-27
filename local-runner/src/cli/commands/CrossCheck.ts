@@ -1,14 +1,15 @@
+import {RunSlots} from "../../utils/runSlots";
 import {CliUsageError, Command} from "./Command";
 import * as options from "./options";
 import * as sampleJudge from "../sampleJudge";
 import * as source from "./source";
 import * as localSamples from "../localSamples";
-import type {SampleResult} from "../../types";
+import {reportCases} from "../reportCases";
 
 /**
  * テスト対象（actual）と参照実装（expected）を同じ入力（.in）で実行し、標準出力を比較します。
  * expected 側の出力を「正解」扱いにして、既存の test/localtest と同じ判定・表示ロジック
- * （evaluateRun / printSampleResult / printSampleSummary）をそのまま再利用します。
+ * （evaluateRun / printSampleResult）をそのまま再利用します。
  *
  * 引数順は sourceFile を先頭に置く他コマンド（test/localtest/run）に合わせ、
  * テスト対象である actualSourceFile を先頭にします。testDir の自動探索も actual 側の
@@ -43,24 +44,16 @@ export class CrossCheck implements Command {
 
 		console.log(`[crosscheck] actual=${actual.originalFileName}  expected=${expected.originalFileName}  cases=${samples.length}`);
 
-		const results: SampleResult[] = [];
-		for (const sample of samples) {
-			// まず expected 側を「判定なし」で実行し、その標準出力を今回の正解とする。
-			const expectedRun = await sampleJudge.evaluateRun(expected.program, sample.index, sample.input);
-			if (expectedRun.status !== "OK") {
-				// expected 側が正常終了しなかった場合は比較のしようがないので、
-				// そのケースはスキップし、expected 側の異常終了自体を結果として報告する。
-				sampleJudge.printSampleResult(expectedRun, expected.restoreNames, display);
-				results.push(expectedRun);
-				continue;
-			}
-			// actual 側を、expected の出力を expectedOutput として渡して実行・判定する。
-			// これにより AC = 出力一致 / WA = 出力不一致 として test/localtest と同じ表示が使える。
-			const compared = await sampleJudge.evaluateRun(actual.program, sample.index, sample.input, expectedRun.actualOutput);
-			sampleJudge.printSampleResult(compared, actual.restoreNames, display);
-			results.push(compared);
-		}
-		const allMatched = sampleJudge.printSampleSummary(results);
+		const expectedSlots = new RunSlots(expected.program.maxParallelRuns);
+		const actualSlots = new RunSlots(actual.program.maxParallelRuns);
+		const limit = Math.max(actual.program.maxParallelRuns, expected.program.maxParallelRuns);
+		const allMatched = await reportCases(samples, limit, async files => {
+			const sample = files.read(false);
+			const reference = await expectedSlots.run(() => sampleJudge.evaluateRun(expected.program, sample.index, sample.input));
+			if (reference.status !== "OK") return {result: reference, restoreNames: expected.restoreNames};
+			const result = await actualSlots.run(() => sampleJudge.evaluateRun(actual.program, sample.index, sample.input, reference.actualOutput));
+			return {result, restoreNames: actual.restoreNames};
+		}, ({result, restoreNames}) => sampleJudge.printSampleResult(result, restoreNames, display));
 		return allMatched ? 0 : 5;
 	}
 }

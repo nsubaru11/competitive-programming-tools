@@ -57,6 +57,18 @@ describe("loadSettings", () => {
 		expect("$schema" in settings).toBe(false);
 	});
 
+	test("実行枠の設定は正の整数を受け付け、既定は8にする", () => {
+		expect(loadSettings(file).run.maxParallelRuns).toBe(8);
+		for (const limit of [1, 16, 64]) {
+			writeRaw({run: {maxParallelRuns: limit}});
+			expect(loadSettings(file).run.maxParallelRuns).toBe(limit);
+		}
+		for (const limit of [0, -1, 1.5]) {
+			writeRaw({run: {maxParallelRuns: limit}});
+			expect(() => loadSettings(file)).toThrow("run.maxParallelRuns");
+		}
+	});
+
 	test("配列は丸ごと置き換える", () => {
 		writeRaw({server: {extraOrigins: ["http://localhost:4173"]}});
 		expect(loadSettings(file).server.extraOrigins).toEqual(["http://localhost:4173"]);

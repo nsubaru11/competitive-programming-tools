@@ -140,6 +140,12 @@ export async function runCommand(cmd: string[], options: ProcessOptions): Promis
 	return {...result, timedOut: killed};
 }
 
+/** コンパイラにだけ、言語を検出したときの検索パスを渡す。 */
+export function runCompiler(cmd: string[], options: ProcessOptions, searchPath?: string): Promise<ProcessOutcome> {
+	if (searchPath === undefined) return runCommand(cmd, options);
+	return runCommand(cmd, {...options, env: {...process.env, ...options.env, PATH: searchPath}});
+}
+
 function readReport(reportFile: string): Map<string, number> | null {
 	try {
 		const fields = new Map<string, number>();

@@ -10,6 +10,7 @@ public final class ProgramRunnerTest {
 	public static void main(final String[] args) throws Exception {
 		final Path root = Files.createTempDirectory("program-runner-test-");
 		try {
+			testVerifiedCompile(root);
 			final ExecutionResult unjoined = run(root, "unjoined", """
 					public class Main {
 						public static void main(String[] args) {
@@ -110,6 +111,24 @@ public final class ProgramRunnerTest {
 				for (final Path path : files.sorted(java.util.Comparator.reverseOrder()).toList())
 					Files.deleteIfExists(path);
 			}
+		}
+	}
+
+	private static void testVerifiedCompile(final Path root) throws IOException {
+		final Path library = Files.createDirectory(root.resolve("lib"));
+		final Path source = root.resolve("Main.java");
+		final var transformer = new JavaSourceTransformer();
+		final var compiler = new JavaCompilerService();
+		final String raw = "public class Entry { public static void main(String[] a) { System.out.print(1); } }";
+		for (final boolean changed : new boolean[]{false, true}) {
+			final var result = transformer.transform(raw, library, false, "", true, compiler);
+			check(result.exitCode() == 0, result.diagnostics());
+			Files.writeString(source, changed ? result.sourceCode().replace("print(1)", "print(2)") : result.sourceCode());
+			final Path classes = root.resolve(changed ? "changed" : "verified");
+			final var compiled = compiler.compile(source, classes);
+			check(compiled.exitCode() == 0, compiled.diagnostics());
+			final var executed = new ProgramRunner().run(classes, "Main", new byte[0]);
+			check(text(executed.stdout()).equals(changed ? "2" : "1"), "compiled a different source");
 		}
 	}
 

@@ -61,6 +61,7 @@ function statusResponse(): RunnerStatusInfo {
 		languages: availableLanguages().map(({name}) => name),
 		skippedLanguages: describeSkippedLanguages(),
 		compileCacheSize: compiler.getCompileCacheSize(),
+		maxParallelRuns: config.RUNNER_CONFIG.maxParallelRuns,
 		compileCacheMax: config.RUNNER_CONFIG.maxCacheSize,
 		settingsFile: config.SETTINGS_FILE,
 		settingsDigest: serverSettingsDigest(config.SETTINGS),

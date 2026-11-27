@@ -72,6 +72,7 @@ export class StatusCommand implements Command {
 		console.log(`  label:         ${info.runnerLabel}`);
 		console.log(`  dispatcher:    ${dispatcher}`);
 		console.log(`  languages:     ${info.languages.join(", ")}`);
+		if (info.maxParallelRuns) console.log(`  parallel runs: ${info.maxParallelRuns}`);
 		for (const skipped of info.skippedLanguages) {
 			console.log(`  not available: ${isSupportCliColor ? color.colorizeWarning(skipped, "cli") : skipped}`);
 		}

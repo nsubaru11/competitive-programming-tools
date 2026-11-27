@@ -31,11 +31,13 @@ export type CommandLanguageSettings = {
 	command: string;
 	sourceFile: string;
 	compile?: string[];
+	warmup?: string[];
+	compilePath?: "auto" | "inherit";
 	run: string[];
 	debugArgs?: string[];
 	debugFlag?: string;
 	stackMb?: number;
-	setup?: "builtin:gcc-header-unit";
+	setup?: "builtin:gcc-header-unit" | "builtin:kotlin-runtime" | "builtin:dotnet-project" | "none";
 	bundle?: string[];
 };
 
@@ -52,6 +54,7 @@ export type Settings = {
 		timeoutMs: number;
 		compileTimeoutMs: number;
 		outputLimitMb: number;
+		maxParallelRuns: number;
 	};
 	languages: {java: JavaLanguageSettings} & Record<string, JavaLanguageSettings | CommandLanguageSettings>;
 	/** ソースの拡張子から言語を選ぶ対応。 */
@@ -175,7 +178,7 @@ function assertCompleteLanguages(settings: Settings, file: string): void {
 			const value = language[key];
 			if (value === undefined || value.length === 0) errors.push(`languages.${name}.${key}: is required to add a language`);
 		}
-		if (language.setup !== undefined && (language.compile ?? []).length === 0) {
+		if (language.setup && language.setup !== "none" && (language.compile ?? []).length === 0) {
 			errors.push(`languages.${name}.setup: needs "compile"`);
 		}
 	}

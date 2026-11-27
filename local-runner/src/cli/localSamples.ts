@@ -7,8 +7,10 @@ const INPUT_EXTS = [".in", ".txt", ".input"];
 const OUTPUT_EXTS = [".out", ".output", ".ans", ".expected"];
 const TEST_DIR_NAMES = ["tests", "test", "testcases", "sample", "samples", "judgedata"];
 
-/** ソースの近傍から .in/.out ペアを探し、SamplePair[] を返す。 */
-export function loadLocalSamples(sourceFilePath: string, testDir?: string): SamplePair[] {
+export type LocalSample = {read: (withExpected?: boolean) => SamplePair};
+
+/** 入出力ファイルの組だけを列挙し、本文は実行するときに読む。 */
+export function loadLocalSamples(sourceFilePath: string, testDir?: string): LocalSample[] {
 	const resolved = path.resolve(sourceFilePath);
 	const stem = path.basename(resolved, path.extname(resolved));
 
@@ -38,7 +40,7 @@ function buildAutoDirs(sourceDir: string, stem: string): string[] {
 	return [...new Set(dirs)];
 }
 
-function collectPairs(dir: string): SamplePair[] {
+function collectPairs(dir: string): LocalSample[] {
 	const inputs = new Map<string, string>();
 	const outputs = new Map<string, string>();
 
@@ -55,23 +57,20 @@ function collectPairs(dir: string): SamplePair[] {
 	);
 
 	const read = (name: string) => shared.normalizeNewlines(fs.readFileSync(path.join(dir, name), "utf8"));
-	const pairs: SamplePair[] = [];
+	const pairs: LocalSample[] = [];
 	let outputOnlyCount = 0;
 	for (const key of keys) {
 		const inName = inputs.get(key);
 		const outName = outputs.get(key);
-		const input = inName ? read(inName) : "";                    // 入力なし → 空標準入力
-		const expectedOutput = outName ? read(outName) : undefined;  // 出力なし → 判定せず実行のみ
-
-		// 入力・出力どちらも空なら無効なサンプルとして除外
-		if (input === "" && (expectedOutput === undefined || expectedOutput === "")) continue;
-
+		if (!inName && outName && fs.statSync(path.join(dir, outName)).size === 0) continue;
 		if (!inName && outName) outputOnlyCount++;
-
+		const index = pairs.length + 1;
 		pairs.push({
-			index: pairs.length + 1,
-			input,
-			expectedOutput,
+			read: (withExpected = true) => ({
+				index,
+				input: inName ? read(inName) : "",
+				...(withExpected && outName ? {expectedOutput: read(outName)} : {}),
+			}),
 		});
 	}
 

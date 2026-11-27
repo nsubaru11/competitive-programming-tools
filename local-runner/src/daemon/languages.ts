@@ -1,5 +1,8 @@
+import {nativeGccSearchPath} from "./gccEnvironment";
+import os from "node:os";
 import {type CommandLanguageSettings, commandLanguageSettings, type Settings} from "../settings/settings";
 import {isPathLike} from "../settings/settingPath";
+import {kotlinCommands} from "./kotlinRuntime";
 import type {CommandLanguage} from "./commandEngine";
 import {findOnPath, isExecutableFile} from "./processRunner";
 
@@ -33,18 +36,26 @@ function locateCommand(command: string, resolvePath: (value: string) => string):
 }
 
 function toCommandLanguage(name: string, settings: CommandLanguageSettings, command: string): CommandLanguage {
-	const compile = settings.compile ?? [];
+	const {compile, run} = kotlinCommands(settings, command);
+	let searchPath: string | undefined;
+	if ((settings.family === "c" || settings.family === "cpp") && settings.compilePath !== "inherit"
+		&& compile[0] === "{command}" && process.platform === "linux" && /microsoft/i.test(os.release())) {
+		// cc や c++ のリンクをたどり、Clang や ccache を指定した場合は元の環境を使う。
+		searchPath = nativeGccSearchPath(command);
+	}
 	return {
 		name,
 		family: settings.family,
 		command,
 		sourceFile: settings.sourceFile,
 		compile: compile.length > 0 ? compile : null,
-		run: settings.run,
+		...(searchPath !== undefined && {compileSearchPath: searchPath}),
+		run,
 		debugArgs: settings.debugArgs ?? [],
 		debugFlag: settings.debugFlag ?? null,
 		stackBytes: (settings.stackMb ?? DEFAULT_STACK_MB) * MEBIBYTE,
-		headerUnit: settings.setup === "builtin:gcc-header-unit",
+		setup: settings.setup,
+		warmup: settings.warmup,
 		bundle: settings.bundle && settings.bundle.length > 0 ? settings.bundle : null,
 	};
 }

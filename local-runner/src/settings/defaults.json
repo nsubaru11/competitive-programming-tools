@@ -9,6 +9,7 @@
 	"run": {
 		"timeoutMs": 10000,
 		"compileTimeoutMs": 30000,
+		"maxParallelRuns": 8,
 		"outputLimitMb": 2
 	},
 	"languages": {
@@ -25,11 +26,13 @@
 			"name": "C++",
 			"submit": "C++23 (GCC",
 			"command": "g++",
+			"compilePath": "auto",
 			"sourceFile": "Main.cpp",
 			"compile": [
 				"{command}",
 				"-std=gnu++23",
-				"-O2",
+				"-Og",
+				"-pipe",
 				"-march=native",
 				"-DATCODER",
 				"-DNOMINMAX",
@@ -63,11 +66,13 @@
 			"name": "C",
 			"submit": "C23 (GCC",
 			"command": "gcc",
+			"compilePath": "auto",
 			"sourceFile": "Main.c",
 			"compile": [
 				"{command}",
 				"-std=c23",
 				"-O2",
+				"-pipe",
 				"-march=native",
 				"-DATCODER",
 				"-DONLINE_JUDGE",
@@ -97,8 +102,8 @@
 			"sourceFile": "Main.py",
 			"compile": [
 				"{command}",
-				"-m",
-				"py_compile",
+				"-c",
+				"import sys; sys.tracebacklimit=0; p=sys.argv[1]; compile(open(p,'rb').read(),p,'exec')",
 				"{source}"
 			],
 			"run": [
@@ -120,8 +125,8 @@
 			"sourceFile": "Main.py",
 			"compile": [
 				"{command}",
-				"-m",
-				"py_compile",
+				"-c",
+				"import sys; sys.tracebacklimit=0; p=sys.argv[1]; compile(open(p,'rb').read(),p,'exec')",
 				"{source}"
 			],
 			"run": [
@@ -170,7 +175,17 @@
 			"run": [
 				"{output}"
 			],
-			"stackMb": 1024
+			"stackMb": 1024,
+			"warmup": [
+				"{command}",
+				"build",
+				"bufio",
+				"fmt",
+				"sort",
+				"strconv",
+				"strings",
+				"container/heap"
+			]
 		},
 		"rust": {
 			"family": "rust",
@@ -211,7 +226,8 @@
 				"-jar",
 				"Main.jar"
 			],
-			"stackMb": 1024
+			"stackMb": 1024,
+			"setup": "builtin:kotlin-runtime"
 		},
 		"csharp": {
 			"family": "csharp",
@@ -222,11 +238,14 @@
 			"compile": [
 				"{command}",
 				"build",
-				"{source}",
+				"{project}",
+				"--no-restore",
 				"-c",
 				"Release",
+				"-p:SolutionSource={dir}/{source}",
+				"-p:IntermediateOutputPath={dir}/obj/",
 				"-o",
-				"out",
+				"{dir}/out",
 				"--nologo",
 				"-v",
 				"q"
@@ -235,7 +254,8 @@
 				"{command}",
 				"out/Main.dll"
 			],
-			"stackMb": 1024
+			"stackMb": 1024,
+			"setup": "builtin:dotnet-project"
 		}
 	},
 	"extensions": {

@@ -27,7 +27,7 @@ final class Executor {
 
 	private Response onTransform(final Transform request) {
 		try {
-			return new Transformed(request.requestId(), sourceTransformer.transform(request.sourceCode(), request.librarySourceRoot(), request.debug(), request.debugFlag(), request.validate()));
+			return new Transformed(request.requestId(), sourceTransformer.transform(request.sourceCode(), request.librarySourceRoot(), request.debug(), request.debugFlag(), request.validate(), compilerService));
 		} catch (final Throwable throwable) {
 			return new ErrorResponse(request.requestId(), throwable.toString());
 		}

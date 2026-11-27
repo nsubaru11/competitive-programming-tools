@@ -9,9 +9,10 @@ import * as color from "../../utils/color";
 
 /** コンパイル済みのプログラム。サーバーから消えていたら、refresh で作り直す。 */
 export type PreparedProgram = {
-	programId: string;
+	readonly current: {readonly id: string};
+	readonly maxParallelRuns: number;
 	/** 同じソースをコンパイルし直し、新しい programId を返す。 */
-	readonly refresh: () => Promise<string>;
+	readonly refresh: (stale?: PreparedProgram["current"]) => Promise<string>;
 };
 
 /** サーバーで変換したソースと、元のファイルの情報。 */
@@ -119,11 +120,11 @@ async function requestSource(
 	mode: "transform" | "prepare",
 	debug: boolean,
 	{header, lang, validate}: {header: shared.LocalRunnerHeaderOption; lang?: string; validate: boolean},
-): Promise<{source: PreparedSource; result: ServerResult; request: () => Promise<ServerResult>}> {
+): Promise<{source: PreparedSource; maxParallelRuns: number; result: ServerResult; request: () => Promise<ServerResult>}> {
 	const resolvedSourcePath = resolveSourceFile(SETTINGS, sourceFilePath, process.cwd(), lang);
 	const language = languageForFile(SETTINGS, resolvedSourcePath, lang);
 	const sourceText = shared.normalizeNewlines(fs.readFileSync(resolvedSourcePath, "utf8"));
-	await ensureServer.ensureLocalRunnerReady();
+	const server = await ensureServer.ensureLocalRunnerReady();
 	const fields = {sourceCode: sourceText, compilerName: language.name, debug, validate, header};
 	const request = () => requestRunner<ServerResult>({mode, ...fields}, "Local Runner transform failed");
 
@@ -151,7 +152,7 @@ async function requestSource(
 		inlinedClasses: result.inlinedClasses,
 		restoreNames,
 	};
-	return {source, result, request};
+	return {source, result, request, maxParallelRuns: language.isJava ? 1 : server.maxParallelRuns ?? 1};
 }
 
 /** 提出物を作る(tomain、toclip)。DEBUG は無効にし、ヘッダーは既定で付ける。 */
@@ -169,12 +170,12 @@ export async function transformSource(sourceFilePath: string, options: SourceOpt
  * どのコマンドも、ライブラリの展開、ヘッダーの付与、コンパイルの順に行い、提出するソースそのもので実行する。ヘッダーは既定で付ける。
  */
 export async function compileSource(sourceFilePath: string, debug: boolean, options: SourceOptions = {}): Promise<CompiledSource> {
-	const {source, result, request} = await requestSource(sourceFilePath, "prepare", debug, {
+	const {source, result, request, maxParallelRuns} = await requestSource(sourceFilePath, "prepare", debug, {
 		header: options.header ?? true,
 		...(options.lang !== undefined && {lang: options.lang}),
 		validate: false,
 	});
-	return {...source, program: preparedProgram(result, request)};
+	return {...source, program: preparedProgram(result, request, maxParallelRuns)};
 }
 
 function programIdOf(response: ServerResult): string {
@@ -187,15 +188,23 @@ function programIdOf(response: ServerResult): string {
  * コンパイルしたプログラム。消えていたら request で作り直す。
  * 作り直したソースが最初と違えば(ヘッダーやライブラリのファイルが変わったなど)、試したプログラムと提出物が食い違うので止める。
  */
-export function preparedProgram(first: ServerResult, request: () => Promise<ServerResult>): PreparedProgram {
+export function preparedProgram(first: ServerResult, request: () => Promise<ServerResult>, maxParallelRuns = 1): PreparedProgram {
+	let current = {id: programIdOf(first)};
+	let pending: Promise<string> | undefined;
 	return {
-		programId: programIdOf(first),
-		refresh: async () => {
-			const next = await request();
-			if (next.status === "success" && next.sourceCode !== first.sourceCode) {
-				throw new Error("The source changed while running the samples (a header or library file was edited). Run the command again.");
-			}
-			return programIdOf(next);
+		get current() {return current;},
+		maxParallelRuns,
+		refresh(stale = current) {
+			// 同じソースの再準備は同じ ID を返す。送信時のオブジェクトで世代を見分ける。
+			if (stale !== current) return Promise.resolve(current.id);
+			pending ??= request().then(next => {
+				if (next.status === "success" && next.sourceCode !== first.sourceCode) {
+					throw new Error("The source changed while running the samples (a header or library file was edited). Run the command again.");
+				}
+				current = {id: programIdOf(next)};
+				return current.id;
+			}).finally(() => {pending = undefined;});
+			return pending;
 		},
 	};
 }

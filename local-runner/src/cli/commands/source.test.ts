@@ -50,6 +50,28 @@ describe("preparedProgram", () => {
 		expect(await program.refresh()).toBe("2");
 	});
 
+	test("同一世代の失効は再準備を共有し、同じ ID でも遅れて届いた失効を区別する", async () => {
+		let calls = 0;
+		const first = response("A", "same");
+		const program = preparedProgram(first, async () => {calls++; return first;});
+		const stale = program.current;
+		await Promise.all([program.refresh(stale), program.refresh(stale)]);
+		expect(program.current).not.toBe(stale);
+		expect(await program.refresh(stale)).toBe("same");
+		expect(calls).toBe(1);
+	});
+
+	test("再準備に失敗しても次の要求でやり直せる", async () => {
+		const first = response("A", "1");
+		let calls = 0;
+		const program = preparedProgram(first, async () => {
+			if (++calls === 1) throw new Error("offline");
+			return response("A", "2");
+		});
+		await expect(program.refresh()).rejects.toThrow("offline");
+		expect(await program.refresh()).toBe("2");
+	});
+
 	test("作り直したソースが最初と違えば、試したものと提出物が食い違うので止める", async () => {
 		const program = preparedProgram(response("return 1", "1"), async () => response("return 2", "2"));
 		await expect(program.refresh()).rejects.toThrow("The source changed while running the samples");

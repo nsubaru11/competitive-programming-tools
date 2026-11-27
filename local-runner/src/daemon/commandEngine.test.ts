@@ -109,7 +109,7 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		debugArgs: [],
 		debugFlag: "DEBUG",
 		stackBytes: 256 * 1024 * 1024,
-		headerUnit: false,
+		setup: undefined,
 		bundle: null,
 	};
 	const cLanguage: CommandLanguage = {
@@ -122,11 +122,11 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		debugArgs: ["-DLOCAL"],
 		debugFlag: null,
 		stackBytes: 512 * 1024 * 1024,
-		headerUnit: false,
+		setup: undefined,
 		bundle: null,
 	};
 
-	function createEngine(overrides: {runTimeoutMs?: number; outputLimitBytes?: number; launcher?: string | null; maxPrograms?: number} = {}) {
+	function createEngine(overrides: {runTimeoutMs?: number; outputLimitBytes?: number; launcher?: string | null; maxPrograms?: number; maxParallelRuns?: number} = {}) {
 		return new CommandEngine({
 			rootDir: path.join(dir, "programs"),
 			headerUnitCacheDir: path.join(dir, "header-units"),
@@ -134,6 +134,7 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 			runTimeoutMs: overrides.runTimeoutMs ?? 10_000,
 			outputLimitBytes: overrides.outputLimitBytes ?? 1024 * 1024,
 			maxPrograms: overrides.maxPrograms ?? 10,
+			maxParallelRuns: overrides.maxParallelRuns ?? 2,
 			launcher: overrides.launcher === undefined ? launcher : overrides.launcher,
 			log: (message) => logs.push(stripAnsi(message)),
 		});
@@ -158,7 +159,7 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 
 	test("header unit が失敗しても、その結果を記録してから起動時の準備を終える", async () => {
 		const compile = ["{command}", "-fmodules-ts", "{source}", "-o", "{output}"];
-		await createEngine().warmUp({...cLanguage, name: "cpp", command: "/bin/false", compile, headerUnit: true});
+		await createEngine().warmUp({...cLanguage, name: "cpp", command: "/bin/false", compile, setup: "builtin:gcc-header-unit"});
 		expect(logs.at(-1)).toContain("[Setup] Lang=cpp Status=NG header unit");
 	});
 
@@ -166,10 +167,65 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		expect(launcher).not.toBeNull();
 	});
 
+	test(".NET の restore を共有し、異なる解答のビルド先を分ける", async () => {
+		const compiler = path.join(dir, "fake-dotnet");
+		fs.writeFileSync(compiler, `#!/bin/sh
+set -eu
+case "$1" in
+	restore) echo restore >> "$0.log" ;;
+	build) test -f "$2" && test "$3" = "--no-restore" && cp "$4" "$5" ;;
+	*) exit 1 ;;
+esac
+`, {mode: 0o755});
+		const language: CommandLanguage = {...cLanguage, name: "cs", command: compiler, sourceFile: "Main.cs",
+			setup: "builtin:dotnet-project", compile: ["{command}", "build", "{project}", "--no-restore", "{source}", "{output}"],
+			debugArgs: [], run: ["cat", "{output}"]};
+		const engine = createEngine();
+		await engine.warmUp(language);
+		const first = await engine.prepare(language, "first", false);
+		const second = await engine.prepare(language, "second", false);
+		if (first.status !== "success" || second.status !== "success") throw new Error("build failed");
+		expect((await engine.run(second.programId, ""))?.stdout).toBe("second");
+		expect((await engine.run(first.programId, ""))?.stdout).toBe("first");
+		expect(fs.readFileSync(compiler + ".log", "utf8")).toBe("restore\n");
+	});
+
 	test("コンパイルして実行し、出力、時間、メモリを返す", async () => {
 		const outcome = await runSource(createEngine(), pythonLanguage, "a, b = map(int, input().split())\nprint(a + b)\n", "1 2\n");
 		expect(outcome).toMatchObject({exitCode: 0, signal: null, timedOut: false, stdout: "3\n", stderr: ""});
 		expect(outcome.peakMemoryKb).toBeGreaterThan(1000);
+	});
+
+	test("2ケースが同時に動き、同じ名前の作業ファイルと計測結果が混ざらない", async () => {
+		const engine = createEngine({maxParallelRuns: 2});
+		const markers = fs.mkdtempSync(path.join(dir, "markers-"));
+		const code = [
+			"from pathlib import Path",
+			"import time",
+			"value = input()",
+			"start = time.monotonic_ns()",
+			"Path('scratch.txt').write_text(value)",
+			"markers = Path(" + JSON.stringify(markers) + ")",
+			"(markers / value).touch()",
+			"while len(list(markers.iterdir())) < 2: time.sleep(.01)",
+			"time.sleep(.04)",
+			"print(Path('scratch.txt').read_text(), start, time.monotonic_ns())",
+		].join("\n");
+		const prepared = await engine.prepare(pythonLanguage, code, false);
+		if (prepared.status !== "success") throw new Error(prepared.diagnostics);
+		const jobs = await Promise.all(["a", "b", "c", "d"].map(input => engine.run(prepared.programId, input)));
+		const events: {time: bigint; delta: number}[] = [];
+		for (const [i, run] of jobs.entries()) {
+			expect(run?.exitCode).toBe(0);
+			const [value, start, end] = run!.stdout.trim().split(" ");
+			expect(value).toBe("abcd"[i]);
+			events.push({time: BigInt(start!), delta: 1}, {time: BigInt(end!), delta: -1});
+		}
+		events.sort((a, b) => a.time < b.time ? -1 : a.time > b.time ? 1 : a.delta - b.delta);
+		let active = 0, peak = 0;
+		for (const {delta} of events) peak = Math.max(peak, active += delta);
+		expect(peak).toBe(2);
+		expect(fs.readdirSync(path.join(dir, "programs")).filter(name => name.startsWith("run-"))).toEqual([]);
 	});
 
 	test("同じソースと引数なら、コンパイルの結果を使い回す", async () => {
@@ -192,6 +248,19 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 		if (prepared.status !== "success") throw new Error(prepared.diagnostics);
 		expect(prepared.sourceCode).toBe("# header\n\nDEBUG = False\nprint(DEBUG)\n");
 		expect((await engine.run(prepared.programId, ""))?.stdout).toBe("False\n");
+	});
+
+	test("コンパイル専用の PATH を子に渡し、検索先が違う成果物を分け、実行は通常の PATH に戻す", async () => {
+		const engine = createEngine();
+		const language = {
+			...pythonLanguage,
+			compile: ["{command}", "-c", "import os; open('build-path', 'w').write(os.environ['PATH'])"],
+		};
+		const source = "import os\nprint(open('build-path').read())\nprint(os.environ['PATH'])\n";
+		for (const compileSearchPath of ["/opt/first/bin", "/opt/second/bin"]) {
+			const outcome = await runSource(engine, {...language, compileSearchPath}, source);
+			expect(outcome.stdout.split("\n")).toEqual([compileSearchPath, process.env.PATH!, ""]);
+		}
 	});
 
 	test("使い回したプログラムは、追い出す順番の最後に回す", async () => {
@@ -361,7 +430,7 @@ describe.skipIf(python === null || cc === null)("CommandEngine", () => {
 	});
 
 	test("実行を始めた時刻を返す。前の実行を待った時間は含まない", async () => {
-		const engine = createEngine();
+		const engine = createEngine({maxParallelRuns: 1});
 		const prepared = await engine.prepare(pythonLanguage, "import time\ntime.sleep(0.3)\n", true);
 		if (prepared.status !== "success") throw new Error(prepared.diagnostics);
 		const requested = Date.now();

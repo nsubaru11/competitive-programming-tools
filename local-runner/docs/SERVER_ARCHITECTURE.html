@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta content="width=device-width,initial-scale=1" name="viewport">
+	<title>Local Runner の処理経路と実測</title>
+	<style>
+		:root {
+			color-scheme:light;
+			--ink:#172f39;
+			--muted:#4a626c;
+			--line:#cedcdd;
+			--teal:#006b62;
+			--paper:#fff;
+		}
+		* {
+			box-sizing:border-box;
+		}
+		body {
+			margin:0;
+			color:var(--ink);
+			font:16px/1.75 system-ui,"Yu Gothic",sans-serif;
+			background:#f5f8f7;
+		}
+		main {
+			max-width:1040px;
+			margin:auto;
+			padding:32px 5% 72px;
+			background:var(--paper);
+		}
+		header {
+			border-bottom:3px solid var(--teal);
+			padding:16px 0;
+		}
+		h1 {
+			font-size:clamp(28px,5vw,44px);
+			letter-spacing:-.035em;
+			line-height:1.25;
+			margin:.15em 0;
+		}
+		h2 {
+			margin:2em 0 .4em;
+			color:var(--teal);
+			font-size:1.55em;
+		}
+		h3 {
+			margin:1.4em 0 .3em;
+			font-size:1.12em;
+		}
+		p {
+			margin:.6em 0;
+		}
+		nav {
+			display:flex;
+			gap:8px 20px;
+			flex-wrap:wrap;
+			margin:15px 0;
+		}
+		a {
+			color:#075f68;
+			text-underline-offset:3px;
+		}
+		code,pre {
+			font: .9em/1.55 ui-monospace,Consolas,monospace;
+		}
+		code {
+			background:#eff5f4;
+			padding:.1em .25em;
+			border-radius:3px;
+		}
+		pre {
+			white-space:pre-wrap;
+			overflow-wrap:anywhere;
+			background:#edf4f3;
+			border-left:4px solid var(--teal);
+			padding:12px;
+			color:#17353b;
+		}
+		table {
+			border-collapse:collapse;
+			width:100%;
+			font-size:.93em;
+		}
+		caption {
+			text-align:left;
+			font-weight:650;
+			padding:.35em 0;
+		}
+		thead {
+			background:#e7f1ef;
+		}
+		td,th {
+			text-align:left;
+			vertical-align:top;
+			border-bottom:1px solid var(--line);
+			padding:8px 10px;
+		}
+		.numbers td:not(:first-child),.numbers th:not(:first-child) {
+			text-align:right;
+			font-variant-numeric:tabular-nums;
+		}
+		.scroll {
+			overflow-x:auto;
+		}
+		.flow {
+			border:1px solid var(--line);
+			padding:16px;
+			background:#f7faf9;
+			text-align:center;
+		}
+		.node,.branch {
+			padding:8px 14px;
+			border:1px solid #9bb6b3;
+			border-radius:6px;
+			background:white;
+		}
+		.down {
+			font-weight:bold;
+			color:var(--teal);
+		}
+		.fork {
+			display:grid;
+			grid-template-columns:1fr 1fr;
+			gap:12px;
+		}
+		.branch {
+			text-align:left;
+		}
+		.branch b {
+			display:block;
+		}
+		.small {
+			font-size:.9em;
+			color:var(--muted);
+		}
+		details {
+			margin:12px 0;
+		}
+		summary {
+			cursor:pointer;
+			font-weight:bold;
+		}
+		li {
+			margin:.25em 0;
+		}
+		@media(max-width:600px) {
+			main {
+				padding:15px;
+			}
+			.fork {
+				grid-template-columns:1fr;
+			}
+			.numbers {
+				min-width:690px;
+			}
+		}
+		@media print {
+			main {
+				padding:0;
+				max-width:none;
+			}
+			nav {
+				display:none;
+			}
+			body {
+				font-size:10pt;
+			}
+			h2,h3 {
+				break-after:avoid;
+			}
+			.flow,tr {
+				break-inside:avoid;
+			}
+		}
+	</style>
+</head>
+<body>
+<main>
+	<header><h1>Local Runner の処理経路と実測</h1>
+		<p>エディタの「実行」から標準出力が返るまで。2026年11月27日、WSL 2 上のサーバーで確認しました。</p></header>
+	<nav aria-label="目次"><a href="#flow">全体図</a><a href="#startup">起動</a><a href="#java">Java の解析と実行</a><a
+		href="#commands">各処理系と PATH</a><a href="#http">HTTP の応答</a><a href="#timing">計測結果</a><a
+		href="#parallel">サンプルの並列実行</a><a href="#files">実装の対応表</a></nav>
+	<h2 id="flow">要求はどこへ届くか</h2>
+	<div aria-label="実行要求のフローチャート" class="flow" role="group">
+		<div class="node">CLI・CP Toolkit → ローカルの Bun サーバーへ HTTP POST</div>
+		<div class="down">↓</div>
+		<div class="node">Origin・本文・mode を確認。ソース付きなら言語を選び、同じ準備を待つか、キューに登録します。</div>
+		<div class="down">↓</div>
+		<div class="fork">
+			<div class="branch"><b>Java → 常駐 Dispatcher JVM</b>標準入力・標準出力の専用プロトコルで TRANSFORM → 必要時
+				COMPILE → 各入力で RUN を送ります。隔離が必要な解答は別の JVM で実行します。
+			</div>
+			<div class="branch"><b>ほかの言語 → Bun が子プロセスを管理</b>設定の bundle とデバッグ変換 → ヘッダー →
+				compile。共有の実行枠が空いた順に、各入力専用の作業フォルダで run のプロセスを起動します。Kotlin のコンパイラや解答が使う JVM もこの経路です。
+			</div>
+		</div>
+		<div class="down">↓</div>
+		<div class="node">prepare は programId と完成ソース、run は終了状態・標準出力・標準エラー・計測値を JSON
+			で返します。
+		</div>
+	</div>
+	<p>CLI は通常、解答を一度 <code>prepare</code> し、各サンプルでは <code>programId</code> と標準入力だけを送ります。Easy
+		Test+ は編集が止まって約180 ms後に <code>precompile</code> を送り、実行ボタンではソース付きの <code>run</code>
+		を送ります。どちらも解答を編集していなければ既に終わった準備を使えます。サンプルの期待出力との照合はクライアント側が担当します。
+	</p>
+	<h2 id="startup">サーバー起動中に済ませる処理</h2>
+	<ol>
+		<li>Bun がポートを確保し、設定を読みます。起動の途中は通常の要求に HTTP 503 と <code>starting</code> を返します。既定ポートは
+			8080 です。
+		</li>
+		<li>設定された Java
+			ライブラリを作業用フォルダに写します。元のソースは利用者のフォルダに残ります。原本の変更を反映するにはサーバーを再起動します。
+		</li>
+		<li>Java とコマンド言語の準備を並行して行います。Java は配布版の Dispatcher JAR またはソースから作った Dispatcher
+			を使い、ライブラリ索引を作り、ウォームアップ用解答をコンパイルして実行します。
+		</li>
+		<li>コマンド言語は処理系の場所を確定し、実行時間・メモリ計測用のランチャーを準備します。C++
+			はデバッグ有効・無効それぞれのヘッダーユニットを用意します。Go の標準パッケージや C# の restore
+			は該当するコマンドがある環境で行います。
+		</li>
+		<li>準備が済むと受付状態が <code>ready</code> になります。<code>list</code> は使用可能な言語、<code>status</code>
+			は見つからなかった言語と理由も返します。
+		</li>
+	</ol>
+	<h2 id="java">Java で「解析を再利用する」とは</h2>
+	<p>たとえば解答に <code>UnionFind uf</code> と書くと、構文解析はこれを変数宣言として木にします。名前解決・型解析は
+		<code>UnionFind</code> がどのパッケージのどの型を指すかを決めます。コンパイラはソース上の開始・終了位置も知っています。Local
+		Runner はこの情報を使って必要なライブラリだけを選び、競プロサイトへ提出できる単一の <code>Main.java</code> を作ります。
+	</p>
+	<table>
+		<thead>
+		<tr>
+			<th>時点</th>
+			<th>実際の処理と再利用の単位</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>起動時に全ファイルを準備</td>
+			<td>ライブラリ全体を一括コンパイルし、解答の型解決用の .class を作ります。別の一括 javac
+				タスクでソース、構文木、宣言、位置、型とファイルの対応、ファイル間の依存関係を保存します。バイトコード生成時に
+				javac が構文木を書き換えるため、保持する木を別に用意します。
+			</td>
+		</tr>
+		<tr>
+			<td>編集後の初回 prepare</td>
+			<td>作業用ライブラリのファイル一覧・更新時刻・サイズを確認します。新しい解答の型宣言を調べて仮のファイル名を決め、ライブラリの
+				.class を参照して解答を解析します。解答が使った型から保存済みの依存関係をたどります。
+			</td>
+		</tr>
+		<tr>
+			<td>提出ソースの組み立て</td>
+			<td>選んだ木と元の本文を使い、メインクラス・コンストラクター・衝突する型名・デバッグ変数・import
+				を編集します。改名表は解答ごとに作ります。ライブラリのワイルドカード import
+				の型名集合は索引から引き、解答が宣言を加えたパッケージや型からの import は現在の解答の javac に問い合わせます。
+			</td>
+		</tr>
+		<tr>
+			<td>検証と .class 生成</td>
+			<td>検証指定、改名、複数ファイルの結合などがあれば、展開した Main.java を読み直して参照先・入口を照合します。直近1件の検証済み
+				javac タスクを保持します。完成ソースと検証した全文が一致すれば、次の COMPILE はそのタスクの generate()
+				から進めます。ヘッダー追加などで本文が違えば完成ソースを改めてコンパイルするので、実行結果やスタックトレースの行番号も提出用本文に対応します。
+			</td>
+		</tr>
+		<tr>
+			<td>サンプル実行</td>
+			<td>生成したクラスを確認して隔離の要否を決めます。通常は常駐 JVM 内で解答用のクラスローダーを新しく作り、標準入出力をその要求に接続して
+				main を呼びます。System.exit や Runtime.halt などを参照する解答は専用 JVM を起動します。
+			</td>
+		</tr>
+		</tbody>
+	</table>
+	<p>JVM の受付は Bun が開く子プロセスのパイプです。追加の HTTP ポートは使いません。タブ区切りの1行に要求種別・ID・フィールドを載せ、ソースや入出力は
+		Base64 にして送ります。JVM の <code>TRANSFORMED</code>・<code>COMPILED</code>・<code>RESULT</code> を Bun
+		が照合し、クライアント向け JSON に変換します。</p>
+	<h2 id="commands">コマンド言語、設定と PATH</h2>
+	<p><code>command</code> は主処理系を選ぶ設定です。たとえば <code>g++</code> なら Bun は起動時に PATH
+		のディレクトリを順に調べて実行ファイルを特定します。絶対パスを指定することもできます。要求時には
+		<code>compile</code> や <code>run</code> の引数配列の <code>{command}</code>・<code>{source}</code>・<code>{output}</code>
+		などを置き換え、そのコマンドを起動します。</p>
+	<p>「PATH を渡す」とは、子プロセスの環境変数に検索先の一覧を設定することです。主処理系の絶対パスを確定しても、その先で
+		GCC が起動するアセンブラやリンカーの探し方は GCC が決めます。WSL で Linux 版 GCC を直接使う場合に限り、コンパイル用
+		PATH から Windows ドライブ上の項目を省きます。実際のマウント表で判定するので、ドライブを独自の場所にマウントしても利用できます。実行時の
+		PATH やシステム全体の設定には影響しません。</p>
+	<p>補助ツールを指定したい場合は GCC の <code>-B/ディレクトリ/</code> をコンパイル引数に渡せます。この指定はコンパイラ内部の複数の検索にも効きます。独自のラッパーを
+		<code>command</code> に指定する方法もあります。Windows 側の補助ツールを PATH で探す構成では、その言語に <code>"compilePath":
+			"inherit"</code> を設定します。</p>
+	<table>
+		<thead>
+		<tr>
+			<th>処理系</th>
+			<th>既定動作と、時間に影響する理由</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>C++ / C</td>
+			<td>C++ は -Og にしてコード生成時の最適化作業を減らし、C は -O2 を維持します。両方とも -pipe
+				を使い、中間結果をプロセス間のパイプで渡します。C++ の bits/stdc++.h はコンパイラ・フラグ・コンパイル用
+				PATH に対応するヘッダーユニットを共有します。高負荷コードで実行性能を優先する場合は compile 配列で -O2
+				を選べます。
+			</td>
+		</tr>
+		<tr>
+			<td>CPython / PyPy</td>
+			<td>準備ではソースをバイト列として読み、組み込みの compile() で構文とエンコーディングを検査します。py_compile
+				モジュールの起動と .pyc の書き込みを省きます。各入力は従来どおり独立したインタープリターでソースを実行します。
+			</td>
+		</tr>
+		<tr>
+			<td>Codon</td>
+			<td>codon build --release の実行ファイルを複数入力で共有します。今回、この既定フラグは変更していません。</td>
+		</tr>
+		<tr>
+			<td>Go / Rust</td>
+			<td>Go は起動時に fmt、bufio など標準6パッケージを go build し、以後のビルドで Go 自身のキャッシュを共有します。warmup
+				に [] を設定すると省略できます。Rust は rustc の edition 2024 と -O を使います。-C opt-level=1
+				も比較しましたが、この測定では合計時間が伸びたため既定値を維持しました。標準ライブラリだけの単一ファイルが対象です。独自の
+				Cargo プロジェクトは compile と run の設定で選べます。
+			</td>
+		</tr>
+		<tr>
+			<td>Kotlin</td>
+			<td>標準の kotlinc 配置ではランタイムの JAR を共有し、解答ごとの JAR へのコピーを省きます。最初の run
+				でマニフェストから main のクラス名を取り、以後は実行引数を再利用します。@file:JvmName
+				でコンパイラが記録したクラスが存在しない場合は javap でエントリーポイントを確認します。共有用 JAR
+				が見つからない配置では設定どおりランタイム同梱で動きます。
+			</td>
+		</tr>
+		<tr>
+			<td>C#</td>
+			<td>.NET 9 のプロジェクトを起動中に restore し、各解答は build --no-restore
+				でビルドします。依存解決に使うファイルは共有します。ビルドの中間出力・実行する Main.dll は programId
+				ごとに分け、別の解答のバイナリを使ってしまうことを防ぎます。
+			</td>
+		</tr>
+		</tbody>
+	</table>
+	<h2 id="http">HTTP で受け取るもの、返すもの</h2>
+	<p>受け口は同じ URL です。JSON 本文の <code>mode</code> で振り分けます。言語を選ぶ要求で <code>compilerName</code>
+		を省略すると Java を使います。</p>
+	<table>
+		<thead>
+		<tr>
+			<th>mode</th>
+			<th>主な入力</th>
+			<th>応答とタイミング</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>list / status</td>
+			<td>mode</td>
+			<td>list は compilerName・family・表示名などの配列、status はサーバーの版、稼働時間、JVM
+				の状態、言語、キャッシュ数などを返します。
+			</td>
+		</tr>
+		<tr>
+			<td>header</td>
+			<td>言語、header</td>
+			<td>適用する提出用ヘッダーを解決して返します。</td>
+		</tr>
+		<tr>
+			<td>precompile</td>
+			<td>ソース、言語、debug</td>
+			<td>準備キューに登録して accepted を直ちに返します。同じ言語の古い先読みは待ち手がいなければ中断できます。
+			</td>
+		</tr>
+		<tr>
+			<td>transform</td>
+			<td>ソース、言語、header、validate など</td>
+			<td>変換後の sourceCode、diagnostics、inlinedClasses、構造化診断、行のずれなどを返します。実行 ID
+				は発行しません。
+			</td>
+		</tr>
+		<tr>
+			<td>prepare</td>
+			<td>ソース、言語、ヘッダー、デバッグ設定など</td>
+			<td>変換→ヘッダー付与→コンパイルを待ち、成功なら変換情報と programId、失敗なら compileError
+				と診断を返します。同じソース・設定の要求は進行中の準備も共有できます。
+			</td>
+		</tr>
+		<tr>
+			<td>run</td>
+			<td>programId またはソース、stdin</td>
+			<td>ID ならコンパイル済みプログラムを起動します。ソースなら準備の完了を待ちます。stdout・stderr・exitCode・time・メモリ・出力切り詰めフラグを返します。結果は
+				success、runtimeError、timeLimitExceeded、compileError などです。期限切れ ID は badRequest です。
+			</td>
+		</tr>
+		<tr>
+			<td>shutdown</td>
+			<td>mode</td>
+			<td>accepted を返し、常駐 JVM と HTTP サーバーを停止します。</td>
+		</tr>
+		</tbody>
+	</table>
+	<h3>CLI と同じ2要求の例</h3>
+	<pre>{"mode":"prepare","compilerName":"cpython","sourceCode":"print(int(input()) + 1)","header":false}
+→ {"status":"success","programId":"…","sourceCode":"print(int(input()) + 1)", …}
+{"mode":"run","programId":"…","stdin":"41\n"}
+→ {"status":"success","exitCode":0,"stdout":"42\n","stderr":"","time":…,"peakMemory":…, …}</pre>
+	<p>例の応答は主要フィールドだけを示しています。コンパイルや解答のエラーは通常 HTTP 200 の JSON 内の status
+		で判別します。不正な要求は 400、許可されないブラウザ Origin は 403、サイズ上限超過は 413 です。run は HTTP
+		ヘッダーを先に送り、完了後に結果の JSON を送ります。</p>
+	<h2 id="timing">編集から結果が返るまでの実測</h2>
+	<p>評価値は、変更を加えた解答の <strong>prepare の HTTP 往復時間 ＋ programId で3回 run した HTTP 往復時間</strong>
+		です。各編集について合計してから中央値を取りました。起動と、キャッシュ確認のために別途行った同一 prepare は合計から除きます。
+	</p>
+	<div class="scroll">
+		<table class="numbers">
+			<caption>WSL のサーバーでの測定（ms、中央値）</caption>
+			<thead>
+			<tr>
+				<th>処理系</th>
+				<th>変更前<br>合計</th>
+				<th>変更後<br>合計</th>
+				<th>増減</th>
+				<th>変更後<br>prepare</th>
+				<th>同じ prepare<br>再要求</th>
+				<th>run 3回<br>HTTP 合計</th>
+				<th>1回の run<br>応答の time</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<th>Java</th>
+				<td>992.7</td>
+				<td><b>421.1</b></td>
+				<td>-57.6%</td>
+				<td>403.2</td>
+				<td>2.00</td>
+				<td>18.9</td>
+				<td>4</td>
+			</tr>
+			<tr>
+				<th>C++</th>
+				<td>1810.5</td>
+				<td><b>1058.0</b></td>
+				<td>-41.6%</td>
+				<td>1046.1</td>
+				<td>1.37</td>
+				<td>11.8</td>
+				<td>2</td>
+			</tr>
+			<tr>
+				<th>C</th>
+				<td>590.9</td>
+				<td><b>53.9</b></td>
+				<td>-90.9%</td>
+				<td>45.9</td>
+				<td>1.69</td>
+				<td>7.9</td>
+				<td>1</td>
+			</tr>
+			<tr>
+				<th>CPython</th>
+				<td>111.6</td>
+				<td><b>116.3</b></td>
+				<td>4.2%</td>
+				<td>31.9</td>
+				<td>1.49</td>
+				<td>76.6</td>
+				<td>24</td>
+			</tr>
+			<tr>
+				<th>PyPy</th>
+				<td>235.0</td>
+				<td><b>121.8</b></td>
+				<td>-48.2%</td>
+				<td>31.6</td>
+				<td>1.16</td>
+				<td>94.1</td>
+				<td>27</td>
+			</tr>
+			<tr>
+				<th>Codon</th>
+				<td>3578.3</td>
+				<td><b>3499.9</b></td>
+				<td>-2.2%</td>
+				<td>3360.9</td>
+				<td>2.32</td>
+				<td>135.4</td>
+				<td>39</td>
+			</tr>
+			<tr>
+				<th>Kotlin</th>
+				<td>4652.1</td>
+				<td><b>4596.8</b></td>
+				<td>-1.2%</td>
+				<td>4368.7</td>
+				<td>1.26</td>
+				<td>228.1</td>
+				<td>69</td>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+	<p>起動から最初の list 応答まで、空の作業・ヘッダーキャッシュで <b>7.68 秒 → 12.06 秒</b> でした。Java では編集後の準備が
+		969 → 403 ms、C++ は 1,795 → 1,046 ms になりました。どちらも同じ入力・編集番号で提出用ソースのハッシュと標準出力が一致しました。CPython
+		は準備が 51 → 32 ms に短縮しましたが、実行側のばらつきを含む合計は 112 → 116 ms でした。Kotlin の短縮は小さく、変更後も
+		prepare に約4.37秒かかります。Codon は同じコマンドなので差は測定の変動として扱います。</p>
+	<p>追加の実行負荷として ABC062 D に N=20,000、続く60,000個の値をすべて 1 とした入力を渡し、Java と C++ の各版が 0
+		を出すことを確認しました。この入力1回の変更前→後の HTTP 往復中央値は Java 21.66 → 23.27 ms、C++ 8.89 → 7.23
+		ms、応答内の実行時間は Java 15 → 17 ms、C++ 5 → 4 ms
+		でした。優先度付きキューの動きは入力分布に依存するので、別の問題や多数回の実行にこの速度比を当てはめることはできません。</p>
+	<h3>Python の準備方式だけを交互に切り替えた比較</h3>
+	<p>全言語の比較で CPython の合計が揺れたため、同じサーバーに旧・新の構文検査を設定し、同じ編集について測定順を交互に変えて12組ずつ再計測しました。CPython
+		の準備中央値は 47.79 → 21.19 ms、準備＋3実行は 98.45 → 90.48 ms で、12組中8組で短縮しました。PyPy の準備中央値は
+		92.65 → 39.81 ms、準備＋3実行は 199.95 → 144.25 ms で、12組とも短縮しました。実行コマンドは各組で同じです。</p>
+	<h3>Java の内部処理を追った別計測</h3>
+	<p>ABC062 D では自作ライブラリの5ファイルが展開されました。別の5編集で、prepare の HTTP 往復は中央値 354 ms、その要求内の
+		COMPILE（Bun のコンパイルログ）は 36 ms でした。各要求でその差を取った中央値は 318 ms
+		で、ソースの展開・検証、キュー、ファイル操作、通信などを含みます。同じソースを独立した transform 要求で検証まで行うと中央値
+		251 ms でした。この値は別要求なので 36 ms には加算できません。</p>
+	<p>「OK」と出力するだけのクラスを準備済み ID で5回実行すると、常駐 JVM 経由の HTTP 往復中央値は 3.66 ms（応答内の time は
+		1 ms）でした。同じ出力の後に System.exit(0) を呼ぶクラスでは、専用 JVM の起動を含めて 48.08 ms（time は 47
+		ms）でした。</p>
+	<h3>測定条件と読み方</h3>
+	<ul>
+		<li>Ubuntu 24.04.5 LTS / WSL 2、Bun 1.4.4、OpenJDK 24.0.2、GCC 15.2.0、CPython 3.13.7、PyPy 7.3.20、Codon
+			0.19.3、Kotlin コンパイラ 2.4.10 を使いました。Python は WSL 側の実行環境です。
+		</li>
+		<li>変更前は tools のコミット <code>aaa94fd</code>、変更後は作業ツリーです。各版を別の一時ディレクトリ、ホーム、ポートで起動し、HTTP
+			クライアントも WSL 内で動かしました。ベンチマーク用のパスは計測環境だけに設定しました。
+		</li>
+		<li>Java と C++ は ABC062 D の実ファイルを使い、標準入力は <code>1\n1 2 3\n</code>、期待値は −1 です。Java
+			のライブラリ原本は 224 個の .java を含みます。ほかは整数 1 を読んで 2 を引くプログラムです。Kotlin は package
+			宣言付きで、別途 @file:JvmName 指定の起動も確認しました。
+		</li>
+		<li>debug を有効にし、提出用ヘッダーを無効にしました。Java は5通り、他言語は3通りの編集コメントを加えて、新しい解答、同じ解答、同じ
+			ID の再実行を区別しました。表の各列に独立して中央値を取るので、内訳の中央値の足し算は合計欄と一致しないことがあります。
+		</li>
+		<li>返却する time は ms で、コンパイル・キュー待ち・HTTP 転送を含みません。ログの Wait は実行開始までの待ち、Exec
+			は実行、Total はサーバーが受け付けてから結果を出すまでです。常駐 Java の memory は割り当て量を KiB
+			に換算した値です。Linux の計測ランチャーを使う外部プロセスの peakMemory は最大常駐メモリ（KiB）です。
+		</li>
+	</ul>
+	<h3>Windows の既存処理系での補足検証</h3>
+	<p>この WSL には Go・Rust・.NET SDK がありません。Windows の Go 1.26.2 と rustc 1.96.0 で直接コンパイルして実行した参考値を示します。HTTP
+		サーバー経由の値とは別の測定です。200万回の32ビット整数演算を行い、すべての実行で同じ出力 4054221959
+		を確認しました。各条件は3編集・各3実行です。</p>
+	<div class="scroll">
+		<table class="numbers">
+			<thead>
+			<tr>
+				<th>Windows での条件</th>
+				<th>事前準備</th>
+				<th>初回ビルド</th>
+				<th>ビルド中央値</th>
+				<th>3実行中央値</th>
+				<th>合計中央値</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<th>Go・事前準備なし</th>
+				<td>0</td>
+				<td>17,973</td>
+				<td>5,544</td>
+				<td>230</td>
+				<td>5,780</td>
+			</tr>
+			<tr>
+				<th>Go・標準パッケージ事前準備</th>
+				<td>8,901</td>
+				<td>2,143</td>
+				<td>2,062</td>
+				<td>347</td>
+				<td>2,388</td>
+			</tr>
+			<tr>
+				<th>Rust・従来の -O</th>
+				<td>0</td>
+				<td>5,351</td>
+				<td>1,590</td>
+				<td>156</td>
+				<td>1,784</td>
+			</tr>
+			<tr>
+				<th>Rust・候補 opt-level=1</th>
+				<td>0</td>
+				<td>1,601</td>
+				<td>1,642</td>
+				<td>208</td>
+				<td>1,857</td>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+	<p>Go は各条件で空の GOCACHE から始めました。Rust は軽い最適化を選ぶ根拠がこの合計値では得られず、既定の -O
+		を維持しました。Windows のプロセス起動や OS キャッシュの影響も含みます。C# は .NET 9 SDK
+		が見つからず、実コンパイルと所要時間は未確認です。テスト用コマンドで restore
+		の呼び出し回数と複数解答の出力分離を検証しました。処理系のインストールは行っていません。</p>
+	<h2 id="parallel">サンプルの並列実行</h2>
+	<p>サーバーが同時に動かすコマンド言語の解答は、<code>run.maxParallelRuns</code>（既定8）と利用可能な論理 CPU 数の小さい方までです。実行枠は CLI と Easy Test+、すべてのコマンド言語で共有します。枠に空きがあれば直ちに解答を起動し、満杯なら先着順に待ちます。待機用のプロセスは起動しません。</p>
+	<h3>実問題を使った CLI の所要時間</h3>
+	<div class="scroll"><table class="numbers">
+		<caption>ABC062 D「3N Numbers」の既存 C++ 解答。localtest の起動から終了まで（ms）</caption>
+		<thead><tr><th>入力</th><th>1枠</th><th>8枠</th><th>16枠</th></tr></thead>
+		<tbody><tr><th>公式サンプル3件</th><td>214.3</td><td>170.8</td><td>171.0</td></tr>
+		<tr><th>大きな整数列16件</th><td>598.9</td><td>290.5</td><td>272.2</td></tr></tbody>
+	</table></div>
+	<p>WSL の利用可能な論理 CPU は16個です。GCC 15.2.0 と既定の C++ コンパイル引数を使い、デバッグを無効にしました。サーバー起動・初回準備を済ませた後、各条件で同じ CLI を5回起動した中央値です。CLI 起動、キャッシュ済みの準備要求、入力読み取り、HTTP、照合、表示を含みます。初めてコンパイルした1枠の公式サンプルは1,306 msでした。測定順は1・8・16枠で固定し、CPU 周波数とホスト負荷は固定していません。</p>
+	<p>大入力は N=50,000～50,015 とし、1～3N の昇順・降順を交互に使いました。期待出力は昇順が −N²、降順が 2N² です。どの設定でも全件 AC でした。別に、公式サンプルで Java 参照解との crosscheck が3件 AC、期待出力を1件書き換えた localtest が1件 WA・2件 AC になることを確認しました。<a href="https://atcoder.jp/contests/abc062/tasks/arc074_b">問題文と公式サンプル</a></p>
+	<h3>ケースを処理する順番</h3>
+	<ol>
+		<li>CLI はソースを一度準備し、サーバーが返した実行枠数に合わせて要求します。Java 解答への CLI の要求は解答ごとに1件です。crosscheck は入力ごとに参照解を先に動かし、成功した場合だけ対象解を動かします。異なる入力の処理は重ねられます。</li>
+		<li>サーバーは待機中もコンパイル結果を保持し、取得した枠でビルド結果をケース専用ディレクトリに複製します。子プロセスの標準入出力、固定名の作業ファイル、計測結果がケースごとに分かれます。実行が終了したら作業フォルダを片付けて枠を返します。コンパイル済み ID の失効が重なった場合、CLI は同じ世代の再準備を共有します。</li>
+		<li>CLI はケース番号順に詳細を表示し、表示済みの本文を破棄します。先頭が遅いときは表示待ちを含めて枠数の2倍まで先読みします。端末には完了数と判定内訳も表示します。Summary の total は表示したケースの実行時間の合計、wall は全ケースの判定と表示の経過時間です。</li>
+		<li>時間制限は各プロセスの実時間にかかります。制限ぎりぎりの解答は1枠で再計測できます。配列やヒープなどを大量に確保する解答では、並列に走るケースの分だけ同時に必要なメモリが増えます。</li>
+	</ol>
+	<h3>実装前の比較実験</h3>
+	<p>従来版はコマンド言語の実行と CLI のサンプル判定を直列に処理していました。次の表は試作サーバーに4個の実行枠を設け、同じコンパイル済み解答に8入力を与えたときの HTTP 計測です。</p>
+	<div class="scroll">
+		<table class="numbers">
+			<caption>8ケース完了までの HTTP 経過時間と、応答内の各ケースの time（ms、中央値）</caption>
+			<thead><tr><th>WSL 2・16論理CPU</th><th>1並列・全件</th><th>2並列・全件</th><th>4並列・全件</th><th>1並列・各ケース</th><th>4並列・各ケース</th></tr></thead>
+			<tbody>
+			<tr><th>C++・整数入出力</th><td>23.0</td><td>15.0</td><td>14.3</td><td>1</td><td>1</td></tr>
+			<tr><th>C++・整数演算</th><td>797.6</td><td>328.7</td><td>163.0</td><td>92.5</td><td>75</td></tr>
+			<tr><th>CPython・整数入出力</th><td>143.8</td><td>59.7</td><td>36.4</td><td>14</td><td>12</td></tr>
+			<tr><th>CPython・整数演算</th><td>658.3</td><td>280.9</td><td>143.6</td><td>79.5</td><td>67</td></tr>
+			<tr><th>Kotlin・整数入出力</th><td>375.9</td><td>196.3</td><td>122.2</td><td>44</td><td>55</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<p>各条件で最初に1ケースを実行し、クライアントの同時 HTTP 要求数を1・2・4と切り替え、測定順をずらして各5組を測りました。
+		全件欄は組ごとの実時間、各ケース欄は40応答の中央値です。入力は標準入力、出力は全件照合しました。
+		短い解答は入力に1を加算します。計算主体の解答は入力ごとに異なる初期値から32ビットの線形合同法を C++ で6,000万回、CPython で60万回反復します。
+		C++ は GCC の -Og -pipe、CPython は WSL の 3.13.7 です。タイムアウトやメモリ上限付近はこの表の計測対象外です。</p>
+	<p>直列処理の従来版に4件ずつ送る対照実験では、C++ の整数演算が802 ms、CPython の整数入出力が139 msでした（各3組の中央値）。
+		編集直後はコンパイル時間もかかります。Kotlin の今回の prepare は3,777 msで、準備と8ケースを合わせた目安は4.15秒から3.90秒です。
+		同じ ID で再テストするときは、表の全件時間の差がそのまま効きます。CPU 周波数やホスト負荷は固定していません。</p>
+	<p>CPU 競合を確かめるため、サーバーと子プロセスを taskset で同じ1論理CPUに固定し、試験的に4枠を許可しました。
+		C++ の整数演算は1・2・4並列で全件が768・733・733 ms、各ケースが92・181・352 msでした（各3組）。
+		Bun の os.availableParallelism() は通常16、同じ固定条件で1を返しました。現在の設定でも、この固定条件では1枠になります。
+		CPU 使用時間の割当や空きメモリが異なる環境でも4プロセスを支えられるかは別途確認が必要です。</p>
+	<h2 id="files">責務と変更ファイル</h2>
+	<p>Bun の Local Runner 用テストは WSL で235件すべて成功しました。JDK 24 のソース変換・実行テストと TypeScript
+		の型検査も成功しています。</p>
+	<table>
+		<thead>
+		<tr>
+			<th>場所</th>
+			<th>責務と今回の変更</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>src/settings/defaults.json、settings.ts、settings.schema.json</td>
+			<td>言語の引数・準備処理・設定値の検証を定義します。利用者の設定で配列を上書きできます。</td>
+		</tr>
+		<tr>
+			<td>src/daemon/languages.ts、gccEnvironment.ts、processRunner.ts</td>
+			<td>使える言語の選択、WSL マウントと GCC 実体の判定、子プロセスへの環境の引き渡しを分担します。</td>
+		</tr>
+		<tr>
+			<td>src/daemon/lifecycle.ts、compilerSetup.ts、headerUnit.ts、dotnetProject.ts</td>
+			<td>起動の進行、共有資材の準備、GCC のヘッダーユニット、.NET のプロジェクト生成・復元を分けています。</td>
+		</tr>
+		<tr>
+			<td>src/daemon/commandEngine.ts、kotlinRuntime.ts</td>
+			<td>共通エンジンがコンパイル、キャッシュ、実行を扱います。Kotlin の配置と JAR
+				を読む処理は専用ファイルに分けました。
+			</td>
+		</tr>
+		<tr>
+			<td>java/src/JavaLibraryIndex.java、JavaBundleNames.java、JavaSourceTransformer.java</td>
+			<td>
+				共有するライブラリ情報、解答ごとの改名、提出用ソースの組み立てを分けています。利用者のライブラリの名前・パスをコードに固定しません。
+			</td>
+		</tr>
+		<tr>
+			<td>java/src/Executor.java、JavaAnalysisTask.java、JavaCompilerService.java</td>
+			<td>要求の振り分け、解析タスクとファイルの寿命、検証済みタスクの再利用と出力の検査を分担します。</td>
+		</tr>
+		<tr>
+			<td>java/test/ProgramRunnerTest.java、src/daemon/commandEngine.test.ts、languages.test.ts</td>
+			<td>検証後の本文の一致・不一致、復元の共有と出力の分離、GCC の環境・設定の境界を確認します。</td>
+		</tr>
+		<tr>
+			<td>src/utils/runSlots.ts、daemon/commandEngine.ts、kotlinRuntime.ts</td><td>全クライアント共通の先着順の枠管理、ケース別の作業場所、Kotlin の起動引数の再利用を分担します。</td></tr>
+		<tr><td>src/settings/defaults.json、settings.ts、settings.schema.json、src/config.ts、daemon/lifecycle.ts</td><td>上限の既定値と入力検証を定義し、OS の利用可能 CPU 数で制限した値を実行エンジンに渡します。</td></tr>
+		<tr><td>daemon/server.ts、types/index.ts、cli/ensureServer.ts、commands/StatusCommand.ts</td><td>サーバーの有効枠数を CLI に伝え、status に表示します。</td></tr>
+		<tr><td>cli/commands/source.ts、CrossCheck.ts、cli/sampleJudge.ts、localSamples.ts、reportCases.ts</td><td>再準備の共有、参照解の成功判定、実行時の入力読み込み、番号順の出力と集計を担当します。</td></tr>
+		<tr><td>settings.test.ts、commandEngine.test.ts、source.test.ts、reportCases.test.ts</td><td>設定値、実プロセスの同時実行数とファイル分離、失効時の再準備、表示順・先読み・通信失敗時の回収を検証しました。</td></tr>
+		<tr><td>README.md、docs/SETTINGS.md、docs/DEVELOPMENT.md、本資料</td>
+			<td>利用できる言語、設定、起動と実行経路、検証条件を更新しました。</td>
+		</tr>
+		</tbody>
+	</table>
+	<p>実装の入口は <a href="../src/daemon/server.ts">HTTP の受付</a>、<a
+		href="../src/daemon/execution.ts">言語への振り分け</a>、<a href="../java/src/PROTOCOL.md">Dispatcher
+		プロトコル</a> です。設定例は <a href="SETTINGS.md">Local Runner の設定</a> にあります。</p>
+	<p class="small">処理系の仕様は <a
+		href="https://docs.oracle.com/en/java/javase/24/docs/api/jdk.compiler/com/sun/source/util/JavacTask.html">JDK 24
+		JavacTask</a>、<a href="https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html">GCC の検索ディレクトリ</a>、<a
+		href="https://kotlinlang.org/docs/command-line.html">Kotlin CLI</a>、<a
+		href="https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-build">.NET build</a> を参照してください。</p>
+</main>
+</body>
+</html>

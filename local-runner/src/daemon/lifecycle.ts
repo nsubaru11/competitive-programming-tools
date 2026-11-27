@@ -13,7 +13,7 @@ import * as compiler from "./compiler";
 import * as dispatcher from "./dispatcher";
 import {EMBEDDED_FILES, extractEmbeddedFile} from "./embedded";
 import {setCommandEngine, setLanguages} from "./execution";
-import {pruneHeaderUnits} from "./headerUnit";
+import {headerUnitArguments, headerUnitKey, pruneHeaderUnits} from "./headerUnit";
 import {resolveLanguages} from "./languages";
 import {ALLOWED_ORIGIN_HOSTS} from "./origin";
 import {ensureLauncher} from "./processRunner";
@@ -49,16 +49,21 @@ async function prepareLanguages(): Promise<void> {
 		runTimeoutMs: config.RUNNER_CONFIG.runTimeoutMs,
 		outputLimitBytes: config.RUNNER_CONFIG.outputLimitBytes,
 		maxPrograms: config.RUNNER_CONFIG.maxCacheSize,
+		maxParallelRuns: config.RUNNER_CONFIG.maxParallelRuns,
 		launcher,
 		log: logging.logInfo,
 	});
 	setCommandEngine(engine);
-	const headerUnitLanguages = commandLanguages.filter(({headerUnit}) => headerUnit);
-	pruneHeaderUnits(
-		config.RUNNER_CONFIG.headerUnitCacheDir,
-		headerUnitLanguages.flatMap((language) => [true, false].map((debug) => engine.compileTemplate(language, debug) ?? [])),
-	);
-	await Promise.all(headerUnitLanguages.map((language) => engine.warmUp(language)));
+	const headerUnitLanguages = commandLanguages.filter(({setup}) => setup === "builtin:gcc-header-unit");
+	const activeUnits = new Set<string>();
+	for (const language of headerUnitLanguages) {
+		for (const debug of [true, false]) {
+			const args = headerUnitArguments(engine.compileTemplate(language, debug) ?? []);
+			activeUnits.add(headerUnitKey(args, language.compileSearchPath));
+		}
+	}
+	pruneHeaderUnits(config.RUNNER_CONFIG.headerUnitCacheDir, activeUnits);
+	await Promise.all(commandLanguages.map((language) => engine.warmUp(language)));
 }
 
 async function prepareJava(): Promise<void> {

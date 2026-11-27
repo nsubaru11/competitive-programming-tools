@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {DEFAULT_SETTINGS, type Settings} from "../settings/settings";
 import {headerUnitArguments, headerUnitKey, pruneHeaderUnits} from "./headerUnit";
+import {gccSearchPath, windowsMounts} from "./gccEnvironment";
 import {resolveLanguages} from "./languages";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-languages-"));
@@ -36,7 +37,7 @@ describe("resolveLanguages", () => {
 			debugArgs: [],
 			debugFlag: null,
 			stackBytes: 1024 * 1024 * 1024,
-			headerUnit: false,
+			setup: undefined,
 			bundle: null,
 		});
 		expect(skipped).toEqual([]);
@@ -79,10 +80,21 @@ describe("resolveLanguages", () => {
 			debugArgs: ["-g"],
 			debugFlag: "DEBUG",
 			stackBytes: 64 * 1024 * 1024,
-			headerUnit: true,
+			setup: "builtin:gcc-header-unit",
 			bundle: ["cat"],
 		});
 	});
+});
+
+test("WSL の GCC だけで Windows ドライブを PATH から除き、他の検索順とマウントを保つ", () => {
+	const mounts = windowsMounts("1 0 0:1 / /mnt/c rw - 9p C: rw,aname=drvfs;path=C:\n2 0 0:2 / /drives/d rw - drvfs D: rw\n3 0 0:3 / /mnt/data rw - ext4 /dev/root rw");
+	expect(mounts).toEqual(["/mnt/c", "/drives/d"]);
+	const searchPath = "/opt/gcc/bin:/mnt/c/Windows:/mnt/data/bin::/usr/bin:/drives/d";
+	expect(gccSearchPath("/opt/gcc/bin/x86_64-linux-gnu-g++-15", searchPath, mounts)).toBe("/opt/gcc/bin:/mnt/data/bin::/usr/bin");
+	expect(gccSearchPath("/mnt/c/toolchain/gcc", searchPath, mounts)).toBeUndefined();
+	expect(gccSearchPath("/usr/bin/ccache", searchPath, mounts)).toBeUndefined();
+	expect(gccSearchPath("/usr/bin/gcc", "/usr/bin", mounts)).toBeUndefined();
+	expect(gccSearchPath("/usr/bin/gcc", "/mnt/c/bin", mounts)).toBeUndefined();
 });
 
 describe("header unit", () => {
@@ -95,6 +107,7 @@ describe("header unit", () => {
 	test("引数の組が変われば別のものにする", () => {
 		const base = headerUnitKey(headerUnitArguments(template));
 		expect(headerUnitKey(headerUnitArguments(template))).toBe(base);
+		expect(headerUnitKey(headerUnitArguments(template), "/opt/gcc/bin:/usr/bin")).not.toBe(base);
 		expect(headerUnitKey(headerUnitArguments([...template, "-D_GLIBCXX_ASSERTIONS"]))).not.toBe(base);
 		expect(headerUnitKey(headerUnitArguments(template.filter((argument) => argument !== "-DLOCAL")))).not.toBe(base);
 		// リンクの指定は、ヘッダーを読んだ結果に影響しない。
@@ -107,9 +120,10 @@ describe("header unit", () => {
 		const stale = path.join(cacheDir, "0123456789abcdef0123456789abcdef");
 		fs.mkdirSync(kept, {recursive: true});
 		fs.mkdirSync(stale, {recursive: true});
-		pruneHeaderUnits(cacheDir, [template]);
+		const active = new Set([path.basename(kept)]);
+		pruneHeaderUnits(cacheDir, active);
 		expect(fs.existsSync(kept)).toBe(true);
 		expect(fs.existsSync(stale)).toBe(false);
-		pruneHeaderUnits(path.join(dir, "missing"), [template]);
+		pruneHeaderUnits(path.join(dir, "missing"), active);
 	});
 });

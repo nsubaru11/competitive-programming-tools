@@ -68,6 +68,7 @@ export type RunnerStatusInfo = {
 	languages: string[];
 	/** 処理系が見つからない言語と、その理由。 */
 	skippedLanguages: string[];
+	maxParallelRuns?: number;
 	compileCacheSize: number;
 	compileCacheMax: number;
 	settingsFile: string;

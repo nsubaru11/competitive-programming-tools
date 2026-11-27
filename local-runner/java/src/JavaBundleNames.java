@@ -36,7 +36,7 @@ final class JavaBundleNames {
 	private final Map<String, Integer> nextSuffix = new HashMap<>();
 	private boolean shortenedTypeReference;
 
-	JavaBundleNames(final List<Unit> units, final TypeElement entry) {
+	JavaBundleNames(final List<Unit> units, final TypeElement entry, final JavaLibraryIndex library) {
 		this.units = units;
 		this.entry = entry;
 		entryBinary = units.getFirst().binary(entry);
@@ -58,8 +58,12 @@ final class JavaBundleNames {
 				}
 			}
 			final var symbols = units.getFirst().analysis.elements();
-			for (final var group : candidates.entrySet()) {
-				for (final String scope : scopes) {
+			final String solutionPackage = symbols.getPackageOf(entry).getQualifiedName().toString();
+			for (final String scope : scopes) {
+				// 解答が加える型のあるパッケージと、型からの on-demand import は、この解答の javac で解決する。
+				final Set<String> members = scope.equals(solutionPackage) || symbols.getTypeElement(scope) != null ? null : library.packageTypes(scope);
+				for (final var group : candidates.entrySet()) {
+					if (group.getValue().size() > 1 || members != null && !members.contains(group.getKey())) continue;
 					final TypeElement visible = symbols.getTypeElement(scope + "." + group.getKey());
 					if (visible != null) group.getValue().add(symbols.getBinaryName(visible).toString());
 				}

@@ -2,12 +2,15 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {RunSlots} from "../utils/runSlots";
 import {stripAnsi} from "../utils/color";
 import {formatCompileSummary} from "../utils/formatter";
-import {ensureHeaderUnit} from "./headerUnit";
+import type {CommandLanguageSettings} from "../settings/settings";
+import {CompilerSetup, setupCacheKey} from "./compilerSetup";
+import {kotlinRunArguments} from "./kotlinRuntime";
 import {isProgramId, ProgramCache} from "./programCache";
 import {canRewriteDebugFlag, DEBUG_FLAG_FAMILIES, rewriteDebugFlag} from "@atcoder-tools/shared";
-import {CanceledError, type ProcessOutcome, runCommand, runMeasured} from "./processRunner";
+import {CanceledError, type ProcessOutcome, runCommand, runCompiler, runMeasured} from "./processRunner";
 
 /** コンパイルと実行をコマンドで行う言語。設定の languages から作る。 */
 export type CommandLanguage = {
@@ -19,12 +22,14 @@ export type CommandLanguage = {
 	readonly sourceFile: string;
 	/** null ならコンパイルしない。 */
 	readonly compile: readonly string[] | null;
+	readonly compileSearchPath?: string;
+	readonly warmup?: readonly string[] | undefined;
 	readonly run: readonly string[];
 	readonly debugArgs: readonly string[];
 	/** デバッグの有無に合わせて値を書き換える変数の名前。null なら書き換えない。 */
 	readonly debugFlag: string | null;
 	readonly stackBytes: number;
-	readonly headerUnit: boolean;
+	readonly setup?: CommandLanguageSettings["setup"];
 	/** ソースを標準入力で受け、変換したソースを標準出力へ返すコマンド。 */
 	readonly bundle: readonly string[] | null;
 };
@@ -37,6 +42,7 @@ export type EngineOptions = {
 	readonly runTimeoutMs: number;
 	readonly outputLimitBytes: number;
 	readonly maxPrograms: number;
+	readonly maxParallelRuns: number;
 	readonly launcher: string | null;
 	readonly log: (message: string) => void;
 };
@@ -50,6 +56,7 @@ export type PrepareResult =
 	| {readonly status: "compileError"; readonly diagnostics: string; readonly sourceCode: string};
 
 type Program = {
+	runTemplate?: Promise<readonly string[]>;
 	readonly language: CommandLanguage;
 	readonly dir: string;
 	readonly result: PrepareResult;
@@ -91,11 +98,13 @@ function describeFailure(outcome: ProcessOutcome, what: string, timeoutMs: numbe
 export class CommandEngine {
 	private readonly options: EngineOptions;
 	private readonly programs: ProgramCache<Program>;
-	private runQueue: Promise<unknown> = Promise.resolve();
-	private nextRunId = 0;
+	private readonly slots: RunSlots;
+	private readonly setup: CompilerSetup;
 
 	constructor(options: EngineOptions) {
 		this.options = options;
+		this.slots = new RunSlots(options.maxParallelRuns);
+		this.setup = new CompilerSetup(options);
 		this.programs = new ProgramCache<Program>({
 			limit: () => options.maxPrograms,
 			// 作業フォルダが消えていれば、覚えていてもコンパイルし直す
@@ -180,23 +189,14 @@ export class CommandEngine {
 	async run(programId: string, stdin: string): Promise<RunOutcome | null> {
 		return this.programs.use(programId, async (program) => {
 			if (program.result.status !== "success") return null;
-			// 同時に動かすと時間の測定がぶれるので、1つずつ実行する。
-			const outcome = this.runQueue.catch(() => null).then(() => this.execute(program, stdin));
-			this.runQueue = outcome;
-			return {...await outcome, language: program.language.name};
+			const outcome = await this.slots.run(() => this.execute(program, stdin));
+			return {...outcome, language: program.language.name};
 		});
 	}
 
-	/** デバッグ有効時の header unit を準備する。失敗は記録し、解答のコンパイル時に再試行する。 */
+	/** 解答の内容によらない準備を、サーバーの起動中に済ませる。 */
 	async warmUp(language: CommandLanguage): Promise<void> {
-		if (!language.headerUnit) return;
-		const started = Date.now();
-		try {
-			await ensureHeaderUnit(this.compileTemplate(language, true) ?? [], this.options.headerUnitCacheDir);
-			this.options.log(`[Setup] Lang=${language.name} Status=OK Time=${Date.now() - started}ms header unit`);
-		} catch (error) {
-			this.options.log(`[Setup] Lang=${language.name} Status=NG header unit: ${(error as Error).message}`);
-		}
+		await this.setup.warmUp(language, [this.compileTemplate(language, true) ?? [], this.compileTemplate(language, false) ?? []]);
 	}
 
 	/** デバッグの有無を反映した、コンパイルの引数のひな形。{command} だけを先に置き換える。 */
@@ -214,6 +214,8 @@ export class CommandEngine {
 	private programId(language: CommandLanguage, compileTemplate: readonly string[] | null, sourceCode: string): string {
 		const digest = crypto.createHash("md5")
 			.update(JSON.stringify([language.name, language.command, language.sourceFile, compileTemplate, language.run]))
+			.update(setupCacheKey(language))
+			.update(language.compileSearchPath === undefined ? "" : JSON.stringify(["PATH", language.compileSearchPath]))
 			.update(sourceCode)
 			.digest("hex");
 		return `${sourceCode.length.toString(16)}-${digest}`;
@@ -246,22 +248,16 @@ export class CommandEngine {
 		}
 
 		const compileArguments = expandArguments(compileTemplate, this.placeholders(language, dir));
-		if (language.headerUnit) {
-			try {
-				compileArguments.splice(1, 0, ...await ensureHeaderUnit(compileTemplate, this.options.headerUnitCacheDir));
-			} catch (error) {
-				this.options.log(`[Setup] Lang=${language.name} Status=NG compiling without a header unit: ${(error as Error).message}`);
-			}
-		}
+		await this.setup.configure(language, compileTemplate, compileArguments);
 		const started = Date.now();
 		let outcome: ProcessOutcome;
 		try {
-			outcome = await runCommand(compileArguments, {
+			outcome = await runCompiler(compileArguments, {
 				cwd: dir,
 				timeoutMs: this.options.compileTimeoutMs,
 				outputLimitBytes: this.options.outputLimitBytes,
 				...(signal && {signal}),
-			});
+			}, language.compileSearchPath);
 		} catch (error) {
 			if (error instanceof CanceledError) {
 				this.options.log(formatCompileSummary(language.name, "CANCELED", programId, Date.now() - started));
@@ -290,18 +286,35 @@ export class CommandEngine {
 		}
 	}
 
-	private async execute({language, dir}: Program, stdin: string): Promise<ProcessOutcome & {startedAt: number}> {
-		const startedAt = Date.now();
-		const outcome = await runMeasured(expandArguments(language.run, this.placeholders(language, dir)), {
-			cwd: dir,
-			stdin,
-			timeoutMs: this.options.runTimeoutMs,
-			outputLimitBytes: this.options.outputLimitBytes,
-			stackBytes: language.stackBytes,
-			launcher: this.options.launcher,
-			reportFile: path.join(dir, `report-${++this.nextRunId}.txt`),
-		});
-		return {...outcome, stderr: hideDirectory(outcome.stderr, dir), startedAt};
+	private async execute(program: Program, stdin: string): Promise<ProcessOutcome & {startedAt: number}> {
+		const {language, dir} = program;
+		// run の相対パスはケース専用の作業場所を起点にする。ビルド時に生成した補助ファイルも引き継ぐ。
+		const work = await fs.promises.mkdtemp(path.join(this.options.rootDir, "run-"));
+		try {
+			await fs.promises.cp(dir, work, {recursive: true, mode: fs.constants.COPYFILE_FICLONE, verbatimSymlinks: true});
+			let template = language.run;
+			if (language.setup === "builtin:kotlin-runtime") {
+				program.runTemplate ??= kotlinRunArguments(template, dir, this.options.compileTimeoutMs,
+					arg => expandArguments([arg], this.placeholders(language, dir))[0]!).catch(error => {
+					delete program.runTemplate;
+					throw error;
+				});
+				template = await program.runTemplate;
+			}
+			const args = expandArguments(template, this.placeholders(language, work));
+			const startedAt = Date.now();
+			const outcome = await runMeasured(args, {
+				cwd: work,
+				stdin,
+				timeoutMs: this.options.runTimeoutMs,
+				outputLimitBytes: this.options.outputLimitBytes,
+				stackBytes: language.stackBytes,
+				launcher: this.options.launcher,
+				reportFile: work + ".report",
+			});
+			return {...outcome, stderr: hideDirectory(outcome.stderr, work), startedAt};
+		} finally {
+			await fs.promises.rm(work, {recursive: true, force: true});
+		}
 	}
-
 }

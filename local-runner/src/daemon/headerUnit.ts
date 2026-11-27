@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import {runCommand} from "./processRunner";
+import {runCompiler} from "./processRunner";
 
 /**
  * builtin:gcc-header-unit の実装。
@@ -33,7 +33,7 @@ export function headerUnitArguments(compileTemplate: readonly string[]): string[
 }
 
 /** 引数の組とコンパイラの実体から決まる名前。コンパイラを入れ替えたときも作り直す。 */
-export function headerUnitKey(headerArguments: readonly string[]): string {
+export function headerUnitKey(headerArguments: readonly string[], searchPath?: string): string {
 	let compiler = "";
 	try {
 		const stat = fs.statSync(headerArguments[0] ?? "");
@@ -41,7 +41,9 @@ export function headerUnitKey(headerArguments: readonly string[]): string {
 	} catch {
 		// 見つからないコンパイラは、ビルドの段階でエラーになる
 	}
-	return crypto.createHash("md5").update(JSON.stringify([compiler, ...headerArguments])).digest("hex");
+	const digest = crypto.createHash("md5").update(JSON.stringify([compiler, ...headerArguments]));
+	if (searchPath !== undefined) digest.update(JSON.stringify(["PATH", searchPath]));
+	return digest.digest("hex");
 }
 
 function findFile(dir: string, suffix: string): string | null {
@@ -57,12 +59,13 @@ function findFile(dir: string, suffix: string): string | null {
 	return null;
 }
 
-async function build(headerArguments: readonly string[], unitDir: string): Promise<void> {
+async function build(headerArguments: readonly string[], unitDir: string, searchPath?: string): Promise<void> {
 	const options = {timeoutMs: BUILD_TIMEOUT_MS, outputLimitBytes: 16 * 1024 * 1024};
 	// コンパイラが実際に読むヘッダーの場所を、前処理の行番号の情報から得る。
-	const preprocessed = await runCommand(
+	const preprocessed = await runCompiler(
 		[...headerArguments, "-x", "c++", "-E", "-"],
 		{...options, stdin: `#include <${HEADER_NAME}>\n`},
+		searchPath,
 	);
 	const headerFile = /^# \d+ "([^"]*\/bits\/stdc\+\+\.h)"/m.exec(preprocessed.stdout)?.[1];
 	if (!headerFile) throw new Error(`Could not locate <${HEADER_NAME}>. ${preprocessed.stderr.trim()}`);
@@ -71,9 +74,10 @@ async function build(headerArguments: readonly string[], unitDir: string): Promi
 	fs.rmSync(workDir, {recursive: true, force: true});
 	fs.mkdirSync(workDir, {recursive: true});
 	try {
-		const compiled = await runCommand(
+		const compiled = await runCompiler(
 			[...headerArguments, "-x", "c++-header", headerFile],
 			{...options, outputLimitBytes: OUTPUT_LIMIT_BYTES, cwd: workDir},
+			searchPath,
 		);
 		const unitFile = compiled.exitCode === 0 ? findFile(workDir, ".gcm") : null;
 		if (unitFile === null) throw new Error(`Could not build the header unit. ${compiled.stderr.trim()}`);
@@ -91,25 +95,24 @@ async function build(headerArguments: readonly string[], unitDir: string): Promi
  * header unit を用意し、解答のコンパイルに足す引数を返す。保存済みならすぐ返す。
  * 作れなかったときは理由を投げる。呼び出し側は header unit なしでコンパイルを続ける。
  */
-export function ensureHeaderUnit(compileTemplate: readonly string[], cacheDir: string): Promise<string[]> {
+export function ensureHeaderUnit(compileTemplate: readonly string[], cacheDir: string, searchPath?: string): Promise<string[]> {
 	const headerArguments = headerUnitArguments(compileTemplate);
 	if (!headerArguments.some((argument) => argument === "-fmodules" || argument === "-fmodules-ts")) {
 		return Promise.reject(new Error('"setup": "builtin:gcc-header-unit" needs -fmodules in "compile".'));
 	}
-	const unitDir = path.join(cacheDir, headerUnitKey(headerArguments));
+	const unitDir = path.join(cacheDir, headerUnitKey(headerArguments, searchPath));
 	const mapperArguments = [`-fmodule-mapper=${path.join(unitDir, "mapper.txt")}`];
 	if (fs.existsSync(path.join(unitDir, "mapper.txt"))) return Promise.resolve(mapperArguments);
 
 	const pending = building.get(unitDir);
 	if (pending) return pending;
-	const promise = build(headerArguments, unitDir).then(() => mapperArguments).finally(() => building.delete(unitDir));
+	const promise = build(headerArguments, unitDir, searchPath).then(() => mapperArguments).finally(() => building.delete(unitDir));
 	building.set(unitDir, promise);
 	return promise;
 }
 
 /** 今の設定では使わなくなった header unit を消す。1つが約 30MB あるので、溜めない。 */
-export function pruneHeaderUnits(cacheDir: string, compileTemplates: ReadonlyArray<readonly string[]>): void {
-	const keep = new Set(compileTemplates.map((template) => headerUnitKey(headerUnitArguments(template))));
+export function pruneHeaderUnits(cacheDir: string, keep: ReadonlySet<string>): void {
 	let entries: string[];
 	try {
 		entries = fs.readdirSync(cacheDir);
