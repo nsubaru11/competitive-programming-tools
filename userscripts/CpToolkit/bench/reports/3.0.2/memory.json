@@ -1,0 +1,425 @@
+[
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 5.22,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 5.22,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.95,
+		"overhead_mb": 0.74,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 5.32,
+		"overhead_mb": 0.1,
+		"runs": 5
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.96,
+		"overhead_mb": 0.75,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "contests",
+		"page_name": "コンテスト一覧",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 4.38,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "contests",
+		"page_name": "コンテスト一覧",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 4.72,
+		"overhead_mb": 0.35,
+		"runs": 5
+	},
+	{
+		"page": "contests",
+		"page_name": "コンテスト一覧",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.12,
+		"overhead_mb": 0.75,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "contests",
+		"page_name": "コンテスト一覧",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 4.88,
+		"overhead_mb": 0.51,
+		"runs": 5
+	},
+	{
+		"page": "contests",
+		"page_name": "コンテスト一覧",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.13,
+		"overhead_mb": 0.76,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 4.23,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 4.71,
+		"overhead_mb": 0.48,
+		"runs": 5
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.01,
+		"overhead_mb": 0.78,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 4.95,
+		"overhead_mb": 0.72,
+		"runs": 5
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.04,
+		"overhead_mb": 0.81,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "tasks",
+		"page_name": "問題一覧",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 4.18,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "tasks",
+		"page_name": "問題一覧",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 4.7,
+		"overhead_mb": 0.52,
+		"runs": 5
+	},
+	{
+		"page": "tasks",
+		"page_name": "問題一覧",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 4.96,
+		"overhead_mb": 0.77,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "tasks",
+		"page_name": "問題一覧",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 4.93,
+		"overhead_mb": 0.75,
+		"runs": 5
+	},
+	{
+		"page": "tasks",
+		"page_name": "問題一覧",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 4.99,
+		"overhead_mb": 0.81,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 5.95,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 6.77,
+		"overhead_mb": 0.82,
+		"runs": 5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 6.85,
+		"overhead_mb": 0.9,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 7.61,
+		"overhead_mb": 1.66,
+		"runs": 5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 6.87,
+		"overhead_mb": 0.92,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "editorial",
+		"page_name": "解説一覧",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 4.32,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "editorial",
+		"page_name": "解説一覧",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 4.8,
+		"overhead_mb": 0.48,
+		"runs": 5
+	},
+	{
+		"page": "editorial",
+		"page_name": "解説一覧",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.09,
+		"overhead_mb": 0.77,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "editorial",
+		"page_name": "解説一覧",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 6.55,
+		"overhead_mb": 2.23,
+		"runs": 5
+	},
+	{
+		"page": "editorial",
+		"page_name": "解説一覧",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 6.42,
+		"overhead_mb": 2.1,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 5,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 5.22,
+		"overhead_mb": 0.23,
+		"runs": 5
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.84,
+		"overhead_mb": 0.84,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 5.31,
+		"overhead_mb": 0.32,
+		"runs": 5
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.87,
+		"overhead_mb": 0.87,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "history",
+		"page_name": "コンテスト成績表",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 5.25,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "history",
+		"page_name": "コンテスト成績表",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 5.43,
+		"overhead_mb": 0.18,
+		"runs": 5
+	},
+	{
+		"page": "history",
+		"page_name": "コンテスト成績表",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.98,
+		"overhead_mb": 0.73,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "history",
+		"page_name": "コンテスト成績表",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 5.52,
+		"overhead_mb": 0.28,
+		"runs": 5
+	},
+	{
+		"page": "history",
+		"page_name": "コンテスト成績表",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.99,
+		"overhead_mb": 0.74,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "tessoku",
+		"page_name": "鉄則本の問題一覧",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"heap_mb": 4.29,
+		"overhead_mb": 0,
+		"runs": 5
+	},
+	{
+		"page": "tessoku",
+		"page_name": "鉄則本の問題一覧",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"heap_mb": 4.89,
+		"overhead_mb": 0.6,
+		"runs": 5
+	},
+	{
+		"page": "tessoku",
+		"page_name": "鉄則本の問題一覧",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"heap_mb": 5.11,
+		"overhead_mb": 0.82,
+		"runs": 5,
+		"p_vs_old": 0.01
+	},
+	{
+		"page": "tessoku",
+		"page_name": "鉄則本の問題一覧",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"heap_mb": 5.12,
+		"overhead_mb": 0.83,
+		"runs": 5
+	},
+	{
+		"page": "tessoku",
+		"page_name": "鉄則本の問題一覧",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"heap_mb": 5.14,
+		"overhead_mb": 0.85,
+		"runs": 5,
+		"p_vs_old": 0.05
+	}
+]

@@ -1,0 +1,182 @@
+[
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"task_ms_per_s": 0.13,
+		"script_ms_per_s": 0,
+		"runs": 3
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"task_ms_per_s": 0.11,
+		"script_ms_per_s": 0,
+		"runs": 3
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"task_ms_per_s": 0.12,
+		"script_ms_per_s": 0,
+		"runs": 3
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"task_ms_per_s": 0.16,
+		"script_ms_per_s": 0.03,
+		"runs": 3
+	},
+	{
+		"page": "top",
+		"page_name": "トップ",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"task_ms_per_s": 0.13,
+		"script_ms_per_s": 0,
+		"runs": 3
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"task_ms_per_s": 6.35,
+		"script_ms_per_s": 3.04,
+		"runs": 3
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"task_ms_per_s": 6.28,
+		"script_ms_per_s": 3.01,
+		"runs": 3
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"task_ms_per_s": 6.2,
+		"script_ms_per_s": 3.07,
+		"runs": 3
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"task_ms_per_s": 6.14,
+		"script_ms_per_s": 2.93,
+		"runs": 3
+	},
+	{
+		"page": "contest",
+		"page_name": "コンテストのトップ",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"task_ms_per_s": 6.72,
+		"script_ms_per_s": 3.35,
+		"runs": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"task_ms_per_s": 6.02,
+		"script_ms_per_s": 2.81,
+		"runs": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"task_ms_per_s": 6.85,
+		"script_ms_per_s": 3.39,
+		"runs": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"task_ms_per_s": 6.77,
+		"script_ms_per_s": 3.11,
+		"runs": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"task_ms_per_s": 7.01,
+		"script_ms_per_s": 3.32,
+		"runs": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"task_ms_per_s": 6.47,
+		"script_ms_per_s": 3.11,
+		"runs": 3
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "A",
+		"cond_name": "スクリプトなし",
+		"task_ms_per_s": 49.27,
+		"script_ms_per_s": 16.62,
+		"runs": 3
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "B_own",
+		"cond_name": "旧 nsubaru 版 8本",
+		"task_ms_per_s": 54.22,
+		"script_ms_per_s": 18.62,
+		"runs": 3
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "C_own",
+		"cond_name": "CP Toolkit(旧8本と同じ機能)",
+		"task_ms_per_s": 51.22,
+		"script_ms_per_s": 18.46,
+		"runs": 3
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"task_ms_per_s": 45.51,
+		"script_ms_per_s": 15.28,
+		"runs": 3
+	},
+	{
+		"page": "user",
+		"page_name": "ユーザー",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"task_ms_per_s": 51.61,
+		"script_ms_per_s": 16.76,
+		"runs": 3
+	}
+]

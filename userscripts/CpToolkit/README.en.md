@@ -315,6 +315,8 @@ The bundle includes third-party code and turndown, so its license is `MIT AND Ap
 
 For development information, see the [development guide (Japanese)](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/DEVELOPMENT.md).
 
+For performance measurements compared with the former UserScripts, see the [performance report (Japanese)](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/PERFORMANCE.md).
+
 ## 9. Bugs and requests
 
 Please use [GitHub Issues](https://github.com/nsubaru11/competitive-programming-tools/issues) or the Greasy Fork feedback page.

@@ -1,0 +1,212 @@
+{
+	"legacy": [
+		{
+			"id": "AtCoderCustomDefaultSubmissions",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderCustomDefaultSubmissions/dist/AtCoderCustomDefaultSubmissions.user.js",
+			"sha256": "e672f84a3c99496ff253d61ac39eb51f2eb6036625e5d5effb3df27a1728aa74"
+		},
+		{
+			"id": "AtCoderEasyTestForJava",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderEasyTestForJava/dist/AtCoderEasyTestForJava.user.js",
+			"sha256": "8505b880c2362bd6f121682cc88f9ad61416e45735fca07b7e3ea3a98873a481"
+		},
+		{
+			"id": "AtCoderHighlighter",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderHighlighter/dist/AtCoderHighlighter.user.js",
+			"sha256": "602636c97890a34fe346381a45d14690615c3307176b19bae3d7e01526e3c00b"
+		},
+		{
+			"id": "AtCoderListingTasks",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderListingTasks/dist/AtCoderListingTasks.user.js",
+			"sha256": "f5ce1f2ac1c387d667895e2410fb5aaea1feef93766f3f86d776ed92de3aa342"
+		},
+		{
+			"id": "AtCoderMarkdownCopier",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderMarkdownCopier/dist/AtCoderMarkdownCopier.user.js",
+			"sha256": "eb940be7b8a97972507e688d552110d81fc694094b0e7ce59bbee221986de0ed"
+		},
+		{
+			"id": "AtCoderPerformanceOverlay",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderPerformanceOverlay/dist/AtCoderPerformanceOverlay.user.js",
+			"sha256": "f8e763764273a3967d86574a1b33476bf1d5b9d94b364239276488d37094c992"
+		},
+		{
+			"id": "AtCoderWidenContainer",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/AtCoderWidenContainer/dist/AtCoderWidenContainer.user.js",
+			"sha256": "432c86716127e2fd92399d26f77f3bf00c2e79b6841ba57e600c27a050d0f66b"
+		},
+		{
+			"id": "JavaCodeSubmitter",
+			"group": "nsubaru",
+			"url": "https://raw.githubusercontent.com/nsubaru11/competitive-programming-tools/adf66980ac5c133af68949a9b9fb5a7d8dc5641b/userscripts/JavaCodeSubmitter/dist/JavaCodeSubmitter.user.js",
+			"sha256": "70cdd1aed2b0d5ede72bcb7918678af4a095a15ab6f08a1e3b4a7ee71c937ef3"
+		},
+		{
+			"id": "AverageResult",
+			"group": "public",
+			"version": "1.0",
+			"url": "https://greasyfork.org/scripts/429155-atcoderaverageresult/code/AtCoderAverageResult.user.js?version=948949",
+			"sha256": "0c0c93fed9bc01f87b75e909118aee7e739dd64846e15e271852c6cb6ef74ede"
+		},
+		{
+			"id": "AwcTab",
+			"group": "public",
+			"version": "1.0.2",
+			"url": "https://greasyfork.org/scripts/566748-atcoder-awc-tab/code/AtCoder%20AWC%20Tab.user.js?version=1856703",
+			"sha256": "257d7132552bacd30fd12228c01ea07f06a0368fc46e419546449751cd41ea27"
+		},
+		{
+			"id": "ContestDescriptionLink",
+			"group": "public",
+			"version": "1.0.3",
+			"url": "https://greasyfork.org/scripts/579801-add-a-link-to-the-atcoder-contest-description/code/Add%20a%20link%20to%20the%20AtCoder%20contest%20description.user.js?version=1876796",
+			"sha256": "c5922d14e8bd2f0f9df4a59c47274f306e06e83dd185acb8e53ef0dfd78bdeb7"
+		},
+		{
+			"id": "EasyAccordion",
+			"group": "public",
+			"version": "1.3",
+			"url": "https://greasyfork.org/scripts/532617-atcoder-easy-accordion/code/Atcoder%20Easy%20Accordion.user.js?version=1574496",
+			"sha256": "f008b0858ac14f0d4bf795b1e4465ca6ca1dfbf655e405c41fb40538f252db92"
+		},
+		{
+			"id": "EfficientLayout",
+			"group": "public",
+			"version": "0.3",
+			"url": "https://greasyfork.org/scripts/453117-atcoder-efficient-layout/code/AtCoder%20Efficient%20Layout.user.js?version=1105324",
+			"sha256": "352e0f9fb08603ffdfe1bef0fcd63ed744eff186e46d05b4f2841a7595a2f082"
+		},
+		{
+			"id": "GoogleCalender",
+			"group": "public",
+			"version": "0.1.5",
+			"url": "https://greasyfork.org/scripts/390758-atcoder-google-calender/code/AtCoder-Google-Calender.user.js?version=893216",
+			"sha256": "dc860a361e17edd31e71304c3915983030cfa0c7134918d8b22d668e19e6b3d9"
+		},
+		{
+			"id": "LanguageButtons",
+			"group": "public",
+			"version": "0.3.0",
+			"url": "https://greasyfork.org/scripts/421663-atcoderlanguagebuttons/code/AtCoderLanguageButtons.user.js?version=1611538",
+			"sha256": "da172d09e8c616322a3e846a77ca3da7791fdb36207918313b795752f55e6578"
+		},
+		{
+			"id": "PerformanceColorizer",
+			"group": "public",
+			"version": "1.0.4",
+			"url": "https://greasyfork.org/scripts/371693-atcoderperformancecolorizer/code/AtCoderPerformanceColorizer.user.js?version=1016458",
+			"sha256": "788893eb5b4eb85748d71699024c5c06bfa47bcfdeb6529b703a157bcf85afe8"
+		},
+		{
+			"id": "ProblemCopier",
+			"group": "public",
+			"version": "0.0.4",
+			"url": "https://greasyfork.org/scripts/565854-atcoderproblemcopier/code/AtCoderProblemCopier.user.js?version=1792237",
+			"sha256": "55a506b1f87df4966c0ed778a1473a4192e69ef52f859063698ce1335a94f993"
+		},
+		{
+			"id": "QuestionCopier",
+			"group": "public",
+			"version": "2.0",
+			"url": "https://greasyfork.org/scripts/597743-atcoder-question-copier/code/AtCoder%20Question%20Copier.user.js?version=1944782",
+			"sha256": "71ee898c982aff18a94741f2afc9d7d49e2def777d012c80cc03f503fb674f39"
+		},
+		{
+			"id": "RedirectRecentABC",
+			"group": "public",
+			"version": "v0.0.1",
+			"url": "https://greasyfork.org/scripts/508772-atcoder-redirectrecentabc/code/AtCoder-RedirectRecentABC.user.js?version=1448982",
+			"sha256": "96c26c7b8dac9bad08049cc483b6934695670555f1f94141d2e5a5341d40bd1c"
+		},
+		{
+			"id": "ResultNotifier",
+			"group": "public",
+			"version": "1.0.6",
+			"url": "https://greasyfork.org/scripts/371225-atcoderresultnotifier/code/AtCoderResultNotifier.user.js?version=1212317",
+			"sha256": "7c877b7cfecde708317e3506b734cc607b1339cbad763fc5a1e74b211197f0c8"
+		},
+		{
+			"id": "SearchQueryHolder",
+			"group": "public",
+			"version": "1.0",
+			"url": "https://greasyfork.org/scripts/460696-atcoder-search-query-holder/code/AtCoder%20Search%20Query%20Holder.user.js?version=1154025",
+			"sha256": "566bc72749e7587a0da7bab9209b26e22eab98452fcfad05ad1d273893451e6d"
+		},
+		{
+			"id": "SubmissionTimer",
+			"group": "public",
+			"version": "1.0.2",
+			"url": "https://greasyfork.org/scripts/451696-atcoder-submission-timer/code/AtCoder%20Submission%20Timer.user.js?version=1096398",
+			"sha256": "bd17439fbe05107cfa05c23c8213742d5ea6e3e9d03d057f885e9a5c74e43508"
+		},
+		{
+			"id": "TasksColorizeDuringContest",
+			"group": "public",
+			"version": "2021.8.0",
+			"url": "https://greasyfork.org/scripts/426049-atcoder-tasks-page-colorize-during-contests/code/atcoder-tasks-page-colorize-during-contests.user.js?version=958518",
+			"sha256": "2cefb10cb6b5f50e287ccd9851b485a30d25b553845445ba12c783ed4d66df42"
+		},
+		{
+			"id": "TessokuDifficulty",
+			"group": "public",
+			"version": "0.2",
+			"url": "https://greasyfork.org/scripts/453352-tessoku-display-difficulty/code/tessoku_display_difficulty.user.js?version=1106725",
+			"sha256": "f81b62804da6b8a0acfde3c7b474f2dc121d533807c058ddaf23b30a228ac443"
+		},
+		{
+			"id": "ViewAllEditorials",
+			"group": "public",
+			"version": "1.5.0",
+			"url": "https://greasyfork.org/scripts/416554-view-all-editorials/code/View%20All%20Editorials.user.js?version=1234650",
+			"sha256": "c67857e6bdc82162c66c0ed3735ba1aa98193acbffaafd333572f8698b244935"
+		},
+		{
+			"id": "VirtualTimer",
+			"group": "public",
+			"version": "0.2",
+			"url": "https://raw.githubusercontent.com/ocha98/AtCoderVirtualTimer/1288cbac736e90c0a8a0fd3dc50acf791657f572/src/index.js",
+			"sha256": "16a6e833cdb7c6ca5ef11258e495a34ba243b63d2861b34174af8503d7534e8a"
+		}
+	],
+	"requires": [
+		{
+			"url": "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js",
+			"file": "ajax.googleapis.com_ajax_libs_jquery_3.3.1_jquery.min.js",
+			"sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef"
+		},
+		{
+			"url": "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js",
+			"file": "cdn.jsdelivr.net_npm_katex@0.16.2_dist_contrib_auto-render.min.js",
+			"sha256": "9cb8dacfc086c2966c9ec4ba54f4a2dc43b7cbe2b33cec1a2743d886c7fb47a7"
+		},
+		{
+			"url": "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js",
+			"file": "cdn.jsdelivr.net_npm_katex@0.16.2_dist_katex.min.js",
+			"sha256": "13870312562afc8fad155a133018c3f2a4ef1cb2e6765b73f40151ab664ff8d6"
+		},
+		{
+			"url": "https://cdn.jsdelivr.net/npm/timeago@1.6.7/jquery.timeago.min.js",
+			"file": "cdn.jsdelivr.net_npm_timeago@1.6.7_jquery.timeago.min.js",
+			"sha256": "9a8fe5b4f89ba18802c7bcac6b23aa767a8ed002cfc36c5928edea39d433e117"
+		},
+		{
+			"url": "https://unpkg.com/turndown-plugin-gfm/dist/turndown-plugin-gfm.js",
+			"pinned": "https://unpkg.com/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.js",
+			"file": "unpkg.com_turndown-plugin-gfm_dist_turndown-plugin-gfm.js",
+			"sha256": "cf744cc1b7580f06d64ce236a4ff2630a53d389eccf2133a09d71ca443511912"
+		},
+		{
+			"url": "https://unpkg.com/turndown/dist/turndown.js",
+			"pinned": "https://unpkg.com/turndown@7.2.4/dist/turndown.js",
+			"file": "unpkg.com_turndown_dist_turndown.js",
+			"sha256": "c97187f436d41638bf7acf346a39d9d42f2f2c02af18245a297c09e796f8e46f"
+		}
+	]
+}

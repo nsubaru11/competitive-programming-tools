@@ -1,0 +1,12 @@
+{
+	"name": "cptoolkit-bench",
+	"private": true,
+	"type": "module",
+	"description": "CP Toolkit の性能の計測。リポジトリの Bun ワークスペースには含めず、npm で bench の中だけに入れる",
+	"engines": {
+		"node": ">=20"
+	},
+	"dependencies": {
+		"playwright": "1.63.0"
+	}
+}

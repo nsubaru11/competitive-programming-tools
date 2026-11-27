@@ -315,6 +315,8 @@ AtCoder Custom Default Submissions、AtCoder Easy Test for Java、AtCoder Highli
 
 開発の情報は [DEVELOPMENT.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/DEVELOPMENT.md) にまとめています。
 
+統合前の UserScript と比べた性能の計測結果は [PERFORMANCE.md](https://github.com/nsubaru11/competitive-programming-tools/blob/main/userscripts/CpToolkit/PERFORMANCE.md) にまとめています。
+
 ## 9. 不具合と要望
 
 [GitHub の Issue](https://github.com/nsubaru11/competitive-programming-tools/issues) か、Greasy Fork のフィードバックへお寄せください。

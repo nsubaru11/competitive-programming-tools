@@ -1,0 +1,306 @@
+[
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "Tampermonkey 自身(増えた分)",
+		"kb": 548.5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderEasyTestForJava",
+		"kb": 102.7
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "JavaCodeSubmitter",
+		"kb": 22.8
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "ProblemCopier",
+		"kb": 22.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderCustomDefaultSubmissions",
+		"kb": 16.7
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderHighlighter",
+		"kb": 52.5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderListingTasks",
+		"kb": 46.5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderMarkdownCopier",
+		"kb": 34.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "EfficientLayout",
+		"kb": 3.8
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "GoogleCalender",
+		"kb": 2.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "LanguageButtons",
+		"kb": 11
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "QuestionCopier",
+		"kb": 1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "RedirectRecentABC",
+		"kb": 1.2
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "SubmissionTimer",
+		"kb": 2.5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "VirtualTimer",
+		"kb": 14.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "AtCoderWidenContainer",
+		"kb": 116.7
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "B_all",
+		"cond_name": "旧スクリプト 25本",
+		"part": "EasyAccordion",
+		"kb": 2.2
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "Tampermonkey 自身(増えた分)",
+		"kb": 171.8
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "statement-highlight",
+		"kb": 27.2
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "トップレベル",
+		"kb": 416
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "共通部分(domain)",
+		"kb": 19.7
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "共通部分(application)",
+		"kb": 44.7
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "共通部分(app)",
+		"kb": 16.2
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "共通部分(shared)",
+		"kb": 2.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "easy-test",
+		"kb": 38.2
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "共通部分(adapters)",
+		"kb": 10.4
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "settings-panel",
+		"kb": 1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "efficient-layout",
+		"kb": 2.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "hover-menu",
+		"kb": 1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "keyboard-shortcuts",
+		"kb": 26.6
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "language-buttons",
+		"kb": 1.1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "latest-contests",
+		"kb": 1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "result-notifier",
+		"kb": 3
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "statement-copy",
+		"kb": 13.4
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "submission-shortcuts",
+		"kb": 7.5
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "task-dropdown",
+		"kb": 18.4
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "virtual-timer",
+		"kb": 1
+	},
+	{
+		"page": "task",
+		"page_name": "問題文",
+		"cond": "C_eq",
+		"cond_name": "CP Toolkit(旧25本と同じ機能)",
+		"part": "submission-helper",
+		"kb": 1
+	}
+]
