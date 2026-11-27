@@ -69,7 +69,7 @@ final class JavaCompilerService {
 			verified = null;
 			if (previous != null && sourceFile.getFileName().toString().equals("Main.java")
 					&& previous.source.equals(Files.readString(sourceFile))) return previous.generate(outputDirectory);
-		} catch (final IOException exception) {
+		} catch (final Exception exception) {
 			return new CompileResult(1, exception.toString(), false, List.of());
 		}
 		final StringWriter additionalOutput = new StringWriter();
