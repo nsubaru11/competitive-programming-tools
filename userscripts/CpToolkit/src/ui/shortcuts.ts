@@ -16,6 +16,7 @@ const IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
 
 const shortcuts = new Map<string, Shortcut>();
 let listening = false;
+let suspensions = 0;
 
 /**
  * 文字と数字のキーは、Shift や Alt で変わる文字ではなく、押したキーの位置(event.code)で読む。
@@ -30,9 +31,19 @@ function keyOf(event: KeyboardEvent): string {
 	return event.key.length === 1 ? event.key.toUpperCase() : event.key;
 }
 
-function comboOf(event: KeyboardEvent): string {
-	const key = keyOf(event);
-	return [event.ctrlKey && "Ctrl", event.shiftKey && "Shift", event.altKey && "Alt", event.metaKey && "Cmd", key].filter(Boolean).join("+");
+/** 押している修飾キー。 */
+export function modifiersOf(event: KeyboardEvent): string[] {
+	return [event.ctrlKey && "Ctrl", event.shiftKey && "Shift", event.altKey && "Alt", event.metaKey && "Cmd"].filter((name) => name !== false);
+}
+
+/** 押したキーの組み合わせ。照合と、キーを入力して設定する欄で同じ読み方をする。 */
+export function comboOf(event: KeyboardEvent): string {
+	return [...modifiersOf(event), keyOf(event)].join("+");
+}
+
+/** Windows では AltGr が Ctrl+Alt として届くので、AltGr で入力する文字(@ や { など)はキー操作として扱わない。 */
+export function isAltGraphInput(event: KeyboardEvent): boolean {
+	return !IS_MAC && event.ctrlKey && event.altKey && event.getModifierState("AltGraph");
 }
 
 function isTextField(target: EventTarget | null): boolean {
@@ -42,8 +53,7 @@ function isTextField(target: EventTarget | null): boolean {
 }
 
 function onKeyDown(event: KeyboardEvent): void {
-	// Windows では AltGr が Ctrl+Alt として届くので、AltGr で入力する文字(@ や { など)を妨げない
-	if (!IS_MAC && event.ctrlKey && event.altKey && event.getModifierState("AltGraph")) return;
+	if (suspensions > 0 || isAltGraphInput(event)) return;
 	const shortcut = shortcuts.get(comboOf(event));
 	if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
 	if (!shortcut.handler()) return;
@@ -68,7 +78,19 @@ export function registerShortcut(combo: string, handler: ShortcutHandler, {inTex
 	};
 }
 
+/** 返す関数を呼ぶまで、登録したキー操作を実行しない。キーを入力して設定する間に使う。 */
+export function suspendShortcuts(): () => void {
+	suspensions++;
+	let resumed = false;
+	return () => {
+		if (resumed) return;
+		resumed = true;
+		suspensions = Math.max(0, suspensions - 1);
+	};
+}
+
 /** 登録をすべて外す。テストで、前のテストの登録を持ち越さないために使う。 */
 export function clearShortcuts(): void {
 	shortcuts.clear();
+	suspensions = 0;
 }

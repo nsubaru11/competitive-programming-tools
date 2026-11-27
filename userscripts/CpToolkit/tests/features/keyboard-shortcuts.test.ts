@@ -172,7 +172,7 @@ describe("keyboardShortcuts の提出", () => {
 		expect(tooltipText()).toBe("Ctrl+Shift+Enter");
 	});
 
-	test("ショートカットキーは自分で選べ、none で使わない", async () => {
+	test("ショートカットキーは自分で選べ、空欄(以前の none も)で使わない", async () => {
 		document.body.innerHTML = '<button id="submit"></button>';
 		const click = mock(() => undefined);
 		const openSettings = mock(() => undefined);

@@ -1,7 +1,7 @@
 import type {MessageKey} from "@catalog/messages";
 import {type ContestPages, contestPagesOf, type ContestTaskLink, neighborTask} from "@domain/contest/pages";
-import {onSites, option} from "@domain/settings/option";
-import {isModifierSetting, isShortcutSetting, NO_SHORTCUT, normalizeModifiers, normalizeShortcut} from "@domain/settings/shortcut";
+import {onSites, option, type ShortcutGroup} from "@domain/settings/option";
+import {normalizeModifiers, normalizeShortcut} from "@domain/settings/shortcut";
 import {defineFeature} from "@application/feature/definition";
 import {type CodeEditor, EDITOR_SETUP_DELAY_MS} from "@application/ports/code-editor";
 import type {SubmissionForm} from "@application/ports/submission-form";
@@ -17,21 +17,23 @@ const TASK_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 /** 入出力例のある問題のページ。提出ページは、Easy Test+ と同じく問題のページから読む。 */
 const SAMPLE_ROUTES = ["atcoder:task", "atcoder:submit", "codeforces:problem", "yukicoder:problem"] as const;
 
-/** 空欄と none なら使わない。 */
-function resolveKey(value: string): string | null {
-	if (value.toLowerCase() === NO_SHORTCUT) return null;
-	return normalizeShortcut(value);
-}
+/** 設定画面の見出し。並び順は、それぞれの見出しの最初の項目の順になる。 */
+const GLOBAL: ShortcutGroup<MessageKey> = {title: "keyboardShortcuts.groupGlobal"};
+const EDITOR: ShortcutGroup<MessageKey> = {title: "keyboardShortcuts.groupEditor"};
+const PROBLEM: ShortcutGroup<MessageKey> = {
+	title: "keyboardShortcuts.groupProblem",
+	note: {message: "keyboardShortcuts.groupProblemNote", sites: ["atcoder"]},
+};
+const CONTEST: ShortcutGroup<MessageKey> = {title: "keyboardShortcuts.groupContest"};
 
-const shortcutOption = (defaultValue: string, label: MessageKey) => option.text(defaultValue, label, {
-	validate: isShortcutSetting,
-	invalidMessage: "keyboardShortcuts.invalidKey",
-});
+const shortcutOption = (defaultValue: string, label: MessageKey, group: ShortcutGroup<MessageKey>) => {
+	return option.shortcut(defaultValue, label, {group});
+};
 
-const modifierOption = (defaultValue: string, label: MessageKey) => option.text(defaultValue, label, {
-	validate: isModifierSetting,
-	invalidMessage: "keyboardShortcuts.invalidModifiers",
-});
+/** 修飾キーの後ろに、番号や記号を続ける項目。 */
+const modifierOption = (defaultValue: string, label: MessageKey, group: ShortcutGroup<MessageKey>, suffixes: readonly string[]) => {
+	return option.shortcut(defaultValue, label, {group, suffixes});
+};
 
 /** ページを開くキーと、開くページ。 */
 const PAGE_KEYS = {
@@ -52,29 +54,29 @@ const CONTEST_SITES = ["atcoder", "codeforces"];
 
 /** 設定画面に並べる順番。キーが重なれば、後の項目から試す。 */
 const featureOptions = {
-	openSettings: shortcutOption("Ctrl+I", "keyboardShortcuts.openSettings"),
-	submit: shortcutOption("Ctrl+Shift+Enter", "keyboardShortcuts.submit"),
-	fold: onSites(shortcutOption("Ctrl+Shift+[", "keyboardShortcuts.fold"), NOT_YUKICODER),
-	unfold: onSites(shortcutOption("Ctrl+Shift+]", "keyboardShortcuts.unfold"), NOT_YUKICODER),
-	testAndSubmit: onSites(shortcutOption("Ctrl+Enter", "keyboardShortcuts.testAndSubmit"), EASY_TEST_SITES),
-	testAll: onSites(shortcutOption("Alt+Enter", "keyboardShortcuts.testAll"), EASY_TEST_SITES),
-	toggleEasyTest: onSites(shortcutOption("Ctrl+Shift+Alt+D", "keyboardShortcuts.toggleEasyTest"), EASY_TEST_SITES),
-	copyInput: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.copyInput"), EASY_TEST_SITES),
-	copyOutput: onSites(modifierOption("Ctrl+Shift+Alt", "keyboardShortcuts.copyOutput"), EASY_TEST_SITES),
-	copyStatement: onSites(shortcutOption("Ctrl+Shift+Alt+P", "keyboardShortcuts.copyStatement"), ATCODER),
-	previousTask: onSites(shortcutOption("Ctrl+Shift+Alt+Left", "keyboardShortcuts.previousTask"), CONTEST_SITES),
-	nextTask: onSites(shortcutOption("Ctrl+Shift+Alt+Right", "keyboardShortcuts.nextTask"), CONTEST_SITES),
-	openTask: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.openTask"), CONTEST_SITES),
-	openTasks: onSites(shortcutOption("Ctrl+Shift+Alt+T", "keyboardShortcuts.openTasks"), CONTEST_SITES),
-	openMySubmissions: onSites(shortcutOption("Ctrl+Shift+Alt+S", "keyboardShortcuts.openMySubmissions"), CONTEST_SITES),
-	openStandings: onSites(shortcutOption("Ctrl+Shift+Alt+R", "keyboardShortcuts.openStandings"), CONTEST_SITES),
-	openEditorial: onSites(shortcutOption("Ctrl+Shift+Alt+E", "keyboardShortcuts.openEditorial"), ATCODER),
-	openCustomTest: onSites(shortcutOption("Ctrl+Shift+Alt+C", "keyboardShortcuts.openCustomTest"), CONTEST_SITES),
-	acByTime: onSites(shortcutOption("Ctrl+Shift+Alt+F", "keyboardShortcuts.acByTime"), ATCODER),
-	acByLength: onSites(shortcutOption("Ctrl+Shift+Alt+L", "keyboardShortcuts.acByLength"), ATCODER),
-	acByCreated: onSites(shortcutOption("Ctrl+Shift+Alt+N", "keyboardShortcuts.acByCreated"), ATCODER),
-	acByMemory: onSites(shortcutOption("Ctrl+Shift+Alt+M", "keyboardShortcuts.acByMemory"), ATCODER),
-	share: shortcutOption("Ctrl+Shift+Alt+X", "keyboardShortcuts.share"),
+	openSettings: shortcutOption("Ctrl+I", "keyboardShortcuts.openSettings", GLOBAL),
+	submit: shortcutOption("Ctrl+Shift+Enter", "keyboardShortcuts.submit", EDITOR),
+	fold: onSites(shortcutOption("Ctrl+Shift+[", "keyboardShortcuts.fold", EDITOR), NOT_YUKICODER),
+	unfold: onSites(shortcutOption("Ctrl+Shift+]", "keyboardShortcuts.unfold", EDITOR), NOT_YUKICODER),
+	testAndSubmit: onSites(shortcutOption("Ctrl+Enter", "keyboardShortcuts.testAndSubmit", PROBLEM), EASY_TEST_SITES),
+	testAll: onSites(shortcutOption("Alt+Enter", "keyboardShortcuts.testAll", PROBLEM), EASY_TEST_SITES),
+	toggleEasyTest: onSites(shortcutOption("Ctrl+Shift+Alt+D", "keyboardShortcuts.toggleEasyTest", PROBLEM), EASY_TEST_SITES),
+	copyInput: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.copyInput", PROBLEM, SAMPLE_NUMBERS), EASY_TEST_SITES),
+	copyOutput: onSites(modifierOption("Ctrl+Shift+Alt", "keyboardShortcuts.copyOutput", PROBLEM, SAMPLE_NUMBERS), EASY_TEST_SITES),
+	copyStatement: onSites(shortcutOption("Ctrl+Shift+Alt+P", "keyboardShortcuts.copyStatement", PROBLEM), ATCODER),
+	previousTask: onSites(shortcutOption("Ctrl+Shift+Alt+Left", "keyboardShortcuts.previousTask", PROBLEM), CONTEST_SITES),
+	nextTask: onSites(shortcutOption("Ctrl+Shift+Alt+Right", "keyboardShortcuts.nextTask", PROBLEM), CONTEST_SITES),
+	openTask: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.openTask", CONTEST, TASK_LETTERS), CONTEST_SITES),
+	openTasks: onSites(shortcutOption("Ctrl+Shift+Alt+T", "keyboardShortcuts.openTasks", CONTEST), CONTEST_SITES),
+	openMySubmissions: onSites(shortcutOption("Ctrl+Shift+Alt+S", "keyboardShortcuts.openMySubmissions", CONTEST), CONTEST_SITES),
+	openStandings: onSites(shortcutOption("Ctrl+Shift+Alt+R", "keyboardShortcuts.openStandings", CONTEST), CONTEST_SITES),
+	openEditorial: onSites(shortcutOption("Ctrl+Shift+Alt+E", "keyboardShortcuts.openEditorial", CONTEST), ATCODER),
+	openCustomTest: onSites(shortcutOption("Ctrl+Shift+Alt+C", "keyboardShortcuts.openCustomTest", CONTEST), CONTEST_SITES),
+	acByTime: onSites(shortcutOption("Ctrl+Shift+Alt+F", "keyboardShortcuts.acByTime", PROBLEM), ATCODER),
+	acByLength: onSites(shortcutOption("Ctrl+Shift+Alt+L", "keyboardShortcuts.acByLength", PROBLEM), ATCODER),
+	acByCreated: onSites(shortcutOption("Ctrl+Shift+Alt+N", "keyboardShortcuts.acByCreated", PROBLEM), ATCODER),
+	acByMemory: onSites(shortcutOption("Ctrl+Shift+Alt+M", "keyboardShortcuts.acByMemory", PROBLEM), ATCODER),
+	share: shortcutOption("Ctrl+Shift+Alt+X", "keyboardShortcuts.share", GLOBAL),
 };
 
 type OptionName = keyof typeof featureOptions;
@@ -143,7 +145,7 @@ export const keyboardShortcuts = defineFeature({
 
 		// ほかの機能の操作は、その機能が動いているページでだけ反応する
 		for (const [name, id] of Object.entries(SHORTCUT_ACTIONS) as Array<[keyof typeof SHORTCUT_ACTIONS, string]>) {
-			shortcuts.assign(id, resolveKey(options[name]));
+			shortcuts.assign(id, normalizeShortcut(options[name]));
 			handlers[name] = () => shortcuts.run(id);
 		}
 
@@ -165,14 +167,14 @@ export const keyboardShortcuts = defineFeature({
 			void services.submissionForm(target).then((ready) => {
 				form = ready;
 			});
-			const submitKey = resolveKey(options.submit);
+			const submitKey = normalizeShortcut(options.submit);
 			if (submitKey) addTooltip(() => form?.submitButton() as HTMLElement | null ?? null, () => submitKey);
 			handlers.submit = () => {
 				const button = form?.submitButton() as HTMLElement | null ?? null;
 				button?.click();
 				return button !== null;
 			};
-			if (resolveKey(options.fold) || resolveKey(options.unfold)) {
+			if (normalizeShortcut(options.fold) || normalizeShortcut(options.unfold)) {
 				void services.editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((located) => {
 					editor = located;
 				});
@@ -189,13 +191,12 @@ export const keyboardShortcuts = defineFeature({
 		};
 		for (const name of Object.keys(featureOptions) as OptionName[]) {
 			if (name === "copyInput" || name === "copyOutput" || name === "openTask") {
-				const value = options[name];
-				const modifiers = value.toLowerCase() === NO_SHORTCUT ? null : normalizeModifiers(value);
+				const modifiers = normalizeModifiers(options[name]);
 				const prefix = prefixHandlers[name];
 				if (modifiers && prefix) for (const key of prefix.keys) bind(`${modifiers}+${key}`, () => prefix.handler(key));
 				continue;
 			}
-			const key = resolveKey(options[name]);
+			const key = normalizeShortcut(options[name]);
 			const handler = handlers[name];
 			if (key && handler) bind(key, handler);
 		}

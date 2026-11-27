@@ -1,0 +1,27 @@
+dialog {
+	width: min(360px, calc(100vw - 32px));
+}
+
+.shortcut-action {
+	margin: 0 0 8px;
+}
+
+.shortcut-input {
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.shortcut-prompt {
+	margin: 8px 0 0;
+	color: var(--cp-text-muted);
+	font-size: 12px;
+}
+
+.modal-footer {
+	justify-content: flex-end;
+}

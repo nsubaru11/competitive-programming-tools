@@ -7,7 +7,8 @@ const TITLE_ID = "modal-title";
 
 export type ModalOptions = {
 	readonly title: string;
-	readonly closeLabel: string;
+	/** 見出しの閉じるボタンの名前。省略するとボタンを置かない。 */
+	readonly closeLabel?: string;
 	/** Shadow DOM の内側に追加する CSS。 */
 	readonly css: string;
 };
@@ -23,16 +24,16 @@ export type Modal = {
 export function createModal({title, closeLabel, css}: ModalOptions): Modal {
 	const body = h("div", {className: "modal-body"});
 	const footer = h("footer", {className: "modal-footer"});
-	const closeButton = h("button", {type: "button", textContent: closeLabel});
+	const closeButton = closeLabel === undefined ? null : h("button", {type: "button", textContent: closeLabel});
 	const dialog = h(
 		"dialog",
 		{},
-		h("header", {className: "modal-header"}, h("h2", {id: TITLE_ID, textContent: title}), closeButton),
+		h("header", {className: "modal-header"}, h("h2", {id: TITLE_ID, textContent: title}), ...closeButton ? [closeButton] : []),
 		body,
 		footer,
 	);
 	dialog.setAttribute("aria-labelledby", TITLE_ID);
-	closeButton.addEventListener("click", () => dialog.close());
+	closeButton?.addEventListener("click", () => dialog.close());
 	if ("closedBy" in HTMLDialogElement.prototype) {
 		// 枠の外を押すと閉じる動きを、ブラウザに任せる
 		dialog.setAttribute("closedby", "any");

@@ -2,7 +2,7 @@
 // @name           CP Toolkit
 // @name:en        CP Toolkit
 // @namespace      https://github.com/nsubaru11/atcoder-java-tools/tree/main/userscripts
-// @version        3.0.2
+// @version        3.1.0
 // @description    入出力例の横並び、提出結果の通知、問題のドロップダウンなど、AtCoder を中心に使える全27機能をまとめた UserScript です。機能ごとに ON/OFF できます。
 // @description:en 27 individually configurable features for competitive programming, primarily on AtCoder, including side-by-side samples, verdict notifications and a Tasks dropdown.
 // @description:ja 入出力例の横並び、提出結果の通知、問題のドロップダウンなど、AtCoder を中心に使える全27機能をまとめた UserScript です。機能ごとに ON/OFF できます。
@@ -1280,7 +1280,7 @@ The Apache License 2.0 below applies to the parts derived from AtCoder Listing T
 	}
 
 	// CpToolkit/src/domain/settings/migrations.ts
-	var EASY_TEST_KEYS_OFF = {testAndSubmit: "none", testAll: "none", toggleEasyTest: "none"};
+	var EASY_TEST_KEYS_OFF = {testAndSubmit: "", testAll: "", toggleEasyTest: ""};
 
 	function migrateToVersion2(settings) {
 		const easyTest = settings.features["easy-test"];
@@ -3021,16 +3021,21 @@ dialog::backdrop {
 	function createModal({title, closeLabel, css}) {
 		const body = h("div", {className: "modal-body"});
 		const footer = h("footer", {className: "modal-footer"});
-		const closeButton = h("button", {type: "button", textContent: closeLabel});
+		const closeButton = closeLabel === undefined ? null : h("button", {type: "button", textContent: closeLabel});
 		const dialog = h(
 			"dialog",
 			{},
-			h("header", {className: "modal-header"}, h("h2", {id: TITLE_ID, textContent: title}), closeButton),
+			h(
+				"header",
+				{className: "modal-header"},
+				h("h2", {id: TITLE_ID, textContent: title}),
+				...(closeButton ? [closeButton] : []),
+			),
 			body,
 			footer,
 		);
 		dialog.setAttribute("aria-labelledby", TITLE_ID);
-		closeButton.addEventListener("click", () => dialog.close());
+		closeButton?.addEventListener("click", () => dialog.close());
 		if ("closedBy" in HTMLDialogElement.prototype) {
 			dialog.setAttribute("closedby", "any");
 		} else {
@@ -3150,6 +3155,96 @@ ${css}`,
 }
 `;
 
+	// CpToolkit/src/domain/settings/shortcut.ts
+	var MODIFIERS2 = ["Ctrl", "Shift", "Alt", "Cmd"];
+	var MODIFIER_ALIASES = {
+		ctrl: "Ctrl",
+		shift: "Shift",
+		alt: "Alt",
+		option: "Alt",
+		cmd: "Cmd",
+		command: "Cmd",
+	};
+	var NAMED_KEYS = {
+		enter: "Enter",
+		escape: "Escape",
+		esc: "Escape",
+		space: " ",
+		tab: "Tab",
+		backspace: "Backspace",
+		delete: "Delete",
+		arrowleft: "ArrowLeft",
+		left: "ArrowLeft",
+		arrowright: "ArrowRight",
+		right: "ArrowRight",
+		arrowup: "ArrowUp",
+		up: "ArrowUp",
+		arrowdown: "ArrowDown",
+		down: "ArrowDown",
+	};
+	var LEGACY_NO_SHORTCUT = "none";
+	var SETTING_KEY_NAMES = {
+		" ": "Space",
+		ArrowLeft: "Left",
+		ArrowRight: "Right",
+		ArrowUp: "Up",
+		ArrowDown: "Down",
+	};
+
+	function normalizeShortcut(text) {
+		const parts = text.split("+").map((part) => part.trim());
+		const key = parts.pop() ?? "";
+		const modifiers = readModifiers(parts);
+		if (!modifiers) return null;
+		const named = NAMED_KEYS[key.toLowerCase()];
+		const normalizedKey =
+			named ??
+			(/^\S$/u.test(key) ? key.toUpperCase() : /^F([1-9]|1[0-2])$/i.test(key) ? key.toUpperCase() : null);
+		if (!normalizedKey) return null;
+		return [...modifiers, normalizedKey].join("+");
+	}
+
+	function readModifiers(parts) {
+		const modifiers = new Set();
+		for (const part of parts) {
+			const modifier = MODIFIER_ALIASES[part.toLowerCase()];
+			if (!modifier) return null;
+			modifiers.add(modifier);
+		}
+		return MODIFIERS2.filter((name) => modifiers.has(name));
+	}
+
+	function normalizeModifiers(text) {
+		const modifiers = readModifiers(text.split("+").map((part) => part.trim()));
+		return modifiers && modifiers.length > 0 ? modifiers.join("+") : null;
+	}
+
+	function readShortcutSetting(text) {
+		if (isUnused(text)) return "";
+		const combo = normalizeShortcut(text);
+		if (combo === null) return;
+		const parts = combo.split("+");
+		const key = parts.pop() ?? "";
+		return [...parts, SETTING_KEY_NAMES[key] ?? key].join("+");
+	}
+
+	function readModifierSetting(text) {
+		return isUnused(text) ? "" : (normalizeModifiers(text) ?? undefined);
+	}
+
+	function isUnused(text) {
+		return text === "" || text.toLowerCase() === LEGACY_NO_SHORTCUT;
+	}
+
+	function matchesShortcut(value, pressed, suffixes) {
+		if (!suffixes) return value !== "" && normalizeShortcut(value) === pressed;
+		const modifiers = normalizeModifiers(value);
+		return (
+			modifiers !== null &&
+			(pressed === modifiers || suffixes.some((suffix) => pressed === `${modifiers}+${suffix}`))
+		);
+	}
+
 	// CpToolkit/src/domain/settings/option.ts
 	var SHORT_HEX_COLOR_PATTERN = /^#[0-9a-f]{3}$/;
 	var HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/;
@@ -3182,6 +3277,17 @@ ${css}`,
 					const text = value.trim();
 					return !validate || validate(text) ? text : undefined;
 				},
+			};
+		},
+		shortcut(defaultValue, label, {group, suffixes}) {
+			const read = suffixes ? readModifierSetting : readShortcutSetting;
+			return {
+				kind: "shortcut",
+				defaultValue,
+				label,
+				group,
+				...(suffixes !== undefined && {suffixes}),
+				normalize: (value) => (typeof value === "string" ? read(value.trim()) : undefined),
 			};
 		},
 		color(defaultValue, label) {
@@ -3322,6 +3428,102 @@ ${css}`,
 		return field.element;
 	}
 
+	// CpToolkit/src/features/settings-panel/shortcut-list.ts
+	function createKeyCaps(value) {
+		const keys = value === "" ? [] : value.split("+");
+		return h("span", {className: "shortcut-keys"}, ...keys.map((key) => h("kbd", {textContent: key})));
+	}
+
+	function createRow({definition, value, onChange}, {translate, dialog}) {
+		let current = value;
+		let keys = createKeyCaps(current);
+		const label = translate(definition.label);
+		const element = h("button", {type: "button", className: "shortcut-row"}, h("span", {textContent: label}), keys);
+		const edit = (event) => {
+			event.preventDefault();
+			dialog.edit({
+				action: label,
+				value: current,
+				modifiersOnly: definition.suffixes !== undefined,
+				onCommit(next) {
+					current = next;
+					const updated = createKeyCaps(current);
+					keys.replaceWith(updated);
+					keys = updated;
+					onChange(next);
+				},
+			});
+		};
+		element.addEventListener("dblclick", edit);
+		element.addEventListener("contextmenu", edit);
+		element.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" && !event.repeat) edit(event);
+		});
+		return {element, matches: (combo) => matchesShortcut(current, combo, definition.suffixes)};
+	}
+
+	function createShortcutList(params) {
+		const {entries, site, translate, dialog} = params;
+		const groups = [...Map.groupBy(entries, ({definition}) => definition.group)].map(([group, members]) => {
+			const rows = members.map((entry) => createRow(entry, params));
+			return {element: createGroup(group, rows, site, translate), rows};
+		});
+		let pressed = null;
+		const searching = h("span", {className: "shortcut-searching", hidden: true});
+		const noMatch = h("p", {className: "empty", textContent: translate("settings.shortcutNoMatch"), hidden: true});
+		const filter = (next) => {
+			pressed = next;
+			let found = false;
+			for (const {element, rows} of groups) {
+				let visible = false;
+				for (const row of rows) {
+					row.element.hidden = next !== null && !row.matches(next.combo);
+					visible ||= !row.element.hidden;
+				}
+				element.hidden = !visible;
+				if (next !== null && visible) element.open = true;
+				found ||= visible;
+			}
+			noMatch.hidden = found;
+			searching.hidden = next === null;
+			searching.replaceChildren(
+				h("span", {textContent: translate("settings.shortcutSearching")}),
+				createKeyCaps(next?.value ?? ""),
+				h("button", {
+					type: "button",
+					textContent: translate("settings.shortcutRemove"),
+					onclick: () => filter(null),
+				}),
+			);
+		};
+		const search = h("button", {
+			type: "button",
+			className: "shortcut-search",
+			textContent: translate("settings.shortcutSearch"),
+			onclick: () => dialog.search({pressed, onSearch: filter}),
+		});
+		return h(
+			"div",
+			{className: "shortcut-list"},
+			h("div", {className: "shortcut-toolbar"}, searching, search),
+			...groups.map(({element}) => element),
+			noMatch,
+		);
+	}
+
+	function createGroup(group, rows, site, translate) {
+		const showNote = group.note && (site === null || group.note.sites.includes(site));
+		return h(
+			"details",
+			{className: "shortcut-group", open: true},
+			h("summary", {textContent: translate(group.title)}),
+			...(showNote && group.note
+				? [h("p", {className: "shortcut-note", textContent: translate(group.note.message)})]
+				: []),
+			...rows.map((row) => row.element),
+		);
+	}
+
 	// CpToolkit/src/features/settings-panel/feature-row.ts
 	var STATUS_MESSAGES = {
 		disabled: "status.disabled",
@@ -3332,23 +3534,27 @@ ${css}`,
 		failed: "status.failed",
 	};
 
-	function createOptionsSection({feature, settings, translate}) {
+	function createOptionsSection({feature, settings, translate, shortcutDialog}) {
 		const definitions = Object.entries(feature.options).filter(([, definition]) =>
 			isOptionOnSite(definition, settings.site),
 		);
 		if (definitions.length === 0) return null;
 		const values = normalizeOptions(feature.options, settings.storedOptions(feature.id));
-		const fields = definitions.map(([key, definition]) =>
-			createOptionField({
-				definition,
-				value: values[key],
-				translate,
-				onChange: (value) => {
-					if (definition.shared) settings.setSharedOption(feature.id, key, value);
-					else settings.setOption(feature.id, key, value);
-				},
-			}),
-		);
+		const fields = [];
+		const shortcuts = [];
+		for (const [key, definition] of definitions) {
+			const onChange = (value) => {
+				if (definition.shared) settings.setSharedOption(feature.id, key, value);
+				else settings.setOption(feature.id, key, value);
+			};
+			if (definition.kind === "shortcut") shortcuts.push({definition, value: String(values[key]), onChange});
+			else fields.push(createOptionField({definition, value: values[key], translate, onChange}));
+		}
+		if (shortcuts.length > 0) {
+			fields.push(
+				createShortcutList({entries: shortcuts, site: settings.site, translate, dialog: shortcutDialog}),
+			);
+		}
 		return h(
 			"details",
 			{className: "feature-options"},
@@ -3540,6 +3746,285 @@ ${css}`,
 }
 `;
 
+	// CpToolkit/src/ui/shortcuts.ts
+	var EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
+	var POSITIONAL_SYMBOLS = {Comma: ",", Period: "."};
+	var SHIFTED_SYMBOLS = {"{": "[", "}": "]"};
+	var IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
+	var shortcuts = new Map();
+	var listening = false;
+	var suspensions = 0;
+
+	function keyOf(event) {
+		if (/^Key[A-Z]$/.test(event.code)) return event.code.slice(3);
+		if (/^Digit[0-9]$/.test(event.code)) return event.code.slice(5);
+		const symbol = POSITIONAL_SYMBOLS[event.code] ?? (event.shiftKey ? SHIFTED_SYMBOLS[event.key] : undefined);
+		if (symbol) return symbol;
+		return event.key.length === 1 ? event.key.toUpperCase() : event.key;
+	}
+
+	function modifiersOf(event) {
+		return [
+			event.ctrlKey && "Ctrl",
+			event.shiftKey && "Shift",
+			event.altKey && "Alt",
+			event.metaKey && "Cmd",
+		].filter((name) => name !== false);
+	}
+
+	function comboOf(event) {
+		return [...modifiersOf(event), keyOf(event)].join("+");
+	}
+
+	function isAltGraphInput(event) {
+		return !IS_MAC && event.ctrlKey && event.altKey && event.getModifierState("AltGraph");
+	}
+
+	function isTextField(target) {
+		if (!(target instanceof HTMLElement)) return false;
+		const isEditable = target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+		return isEditable && target.closest(EDITOR_ELEMENTS) === null;
+	}
+
+	function onKeyDown(event) {
+		if (suspensions > 0 || isAltGraphInput(event)) return;
+		const shortcut = shortcuts.get(comboOf(event));
+		if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
+		if (!shortcut.handler()) return;
+		event.preventDefault();
+		event.stopPropagation();
+	}
+
+	function registerShortcut(combo, handler, {inTextFields = false} = {}) {
+		if (!listening) {
+			document.addEventListener("keydown", onKeyDown, true);
+			listening = true;
+		}
+		const shortcut = {handler, inTextFields};
+		shortcuts.set(combo, shortcut);
+		return () => {
+			if (shortcuts.get(combo) === shortcut) shortcuts.delete(combo);
+		};
+	}
+
+	function suspendShortcuts() {
+		suspensions++;
+		let resumed = false;
+		return () => {
+			if (resumed) return;
+			resumed = true;
+			suspensions = Math.max(0, suspensions - 1);
+		};
+	}
+
+	// CpToolkit/src/features/settings-panel/shortcut-dialog.css
+	var shortcut_dialog_default = `dialog {
+	width: min(360px, calc(100vw - 32px));
+}
+
+.shortcut-action {
+	margin: 0 0 8px;
+}
+
+.shortcut-input {
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--cp-border);
+	border-radius: 6px;
+	background: var(--cp-surface);
+	color: var(--cp-text);
+	font: inherit;
+}
+
+.shortcut-prompt {
+	margin: 8px 0 0;
+	color: var(--cp-text-muted);
+	font-size: 12px;
+}
+
+.modal-footer {
+	justify-content: flex-end;
+}
+`;
+
+	// CpToolkit/src/features/settings-panel/shortcut-dialog.ts
+	function readModifiers2(event) {
+		const value = readModifierSetting(modifiersOf(event).join("+"));
+		return value ? {value, combo: value} : null;
+	}
+
+	function readCombo(event) {
+		const combo = comboOf(event);
+		const value = readShortcutSetting(combo);
+		return value ? {value, combo} : null;
+	}
+
+	function createShortcutDialog(translate) {
+		let modal = null;
+		let session = null;
+		let resume = null;
+		const action = h("p", {className: "shortcut-action"});
+		const field = h("input", {type: "text", readOnly: true, className: "shortcut-input"});
+		const prompt = h("p", {className: "shortcut-prompt"});
+		field.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				event.stopPropagation();
+				modal?.close();
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			if (!session || event.repeat || event.isComposing || isAltGraphInput(event)) return;
+			const pressed = session.read(event);
+			if (!pressed) return;
+			field.value = pressed.value;
+			session.onPress(pressed);
+		});
+		const create = () => {
+			const created = createModal({title: translate("settings.shortcutTitle"), css: shortcut_dialog_default});
+			field.setAttribute("aria-label", translate("settings.shortcutTitle"));
+			created.body.append(action, field, prompt);
+			const dialog = created.body.closest("dialog");
+			dialog?.addEventListener("close", () => {
+				if (dialog.open) return;
+				resume?.();
+				resume = null;
+			});
+			return created;
+		};
+		const open = (next) => {
+			modal ??= create();
+			session = next;
+			action.textContent = next.action;
+			action.hidden = next.action === "";
+			prompt.textContent = translate(next.prompt);
+			field.value = next.value;
+			modal.footer.replaceChildren(
+				...next.buttons.map(([label, run]) =>
+					h("button", {
+						type: "button",
+						textContent: translate(label),
+						onclick: () => {
+							run();
+							modal?.close();
+						},
+					}),
+				),
+			);
+			resume?.();
+			resume = suspendShortcuts();
+			modal.open();
+			field.focus();
+		};
+		return {
+			edit({action: name, value, modifiersOnly, onCommit}) {
+				open({
+					prompt: modifiersOnly ? "settings.shortcutModifierPrompt" : "settings.shortcutPrompt",
+					action: name,
+					value,
+					read: modifiersOnly ? readModifiers2 : readCombo,
+					onPress: () => {
+					},
+					buttons: [
+						["settings.shortcutRemove", () => onCommit("")],
+						["settings.shortcutCancel", () => {
+						}],
+						["settings.shortcutOk", () => onCommit(field.value)],
+					],
+				});
+			},
+			search({pressed, onSearch}) {
+				open({
+					prompt: "settings.shortcutSearchPrompt",
+					action: translate("settings.shortcutSearch"),
+					value: pressed?.value ?? "",
+					read: (event) => readCombo(event) ?? readModifiers2(event),
+					onPress: onSearch,
+					buttons: [
+						["settings.shortcutRemove", () => onSearch(null)],
+						["settings.shortcutOk", () => {
+						}],
+					],
+				});
+			},
+		};
+	}
+
+	// CpToolkit/src/features/settings-panel/shortcut-list.css
+	var shortcut_list_default = `.shortcut-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.shortcut-searching {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-right: auto;
+	color: var(--cp-text-muted);
+	font-size: 13px;
+}
+
+.shortcut-group {
+	margin-top: 8px;
+}
+
+.shortcut-group summary {
+	font-weight: 600;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.shortcut-note {
+	margin: 4px 0;
+	color: var(--cp-text-muted);
+	font-size: 12px;
+}
+
+.shortcut-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px 12px;
+	width: 100%;
+	min-height: 30px;
+	padding: 3px 8px 3px 16px;
+	border: 1px solid transparent;
+	background: none;
+	text-align: left;
+	/* ダブルクリックで文字が選択されないようにする */
+	user-select: none;
+	cursor: default;
+}
+
+.shortcut-row:hover {
+	border-color: transparent;
+	background: var(--cp-surface-muted);
+}
+
+.shortcut-keys {
+	display: inline-flex;
+	gap: 3px;
+	margin-left: auto;
+}
+
+.shortcut-keys kbd {
+	min-width: 24px;
+	padding: 0 6px;
+	border: 1px solid var(--cp-border);
+	border-radius: 5px;
+	color: var(--cp-text-muted);
+	font: 12px/20px system-ui, -apple-system, "Segoe UI", sans-serif;
+	text-align: center;
+}
+`;
+
 	// CpToolkit/src/features/settings-panel/version-status.ts
 	function createVersionStatus(updates, translate) {
 		const element = h("span", {className: "footer-version"});
@@ -3607,6 +4092,7 @@ ${css}`,
 		const content = h("div");
 		let rows = [];
 		let modal = null;
+		const shortcutDialog = createShortcutDialog(translate);
 		const refresh = () => {
 			for (const row of rows) row.refresh();
 			notice.hidden =
@@ -3641,7 +4127,7 @@ ${css}`,
 			const showStatus = selectedSite === currentSite;
 			const sections = [...Map.groupBy(visible, ({category}) => category)].map(([category, members]) => {
 				const memberRows = members.map((feature) =>
-					createFeatureRow({feature, settings: store, runtime, translate, showStatus}),
+					createFeatureRow({feature, settings: store, runtime, translate, showStatus, shortcutDialog}),
 				);
 				rows.push(...memberRows);
 				return h(
@@ -3703,7 +4189,8 @@ ${css}`,
 				title: translate("settings.title"),
 				closeLabel: translate("settings.close"),
 				css: `${form_default}
-${settings_panel_default}`,
+${settings_panel_default}
+${shortcut_list_default}`,
 			});
 			created.body.append(tabs, notice, content);
 			created.footer.append(...createFooter());
@@ -4030,6 +4517,16 @@ a:focus > .cp-settings-entry {
 		"settings.importFailed": "The settings file could not be read.",
 		"settings.reset": "Reset to defaults",
 		"settings.resetConfirm": "The settings of all sites will be reset to their defaults. Continue?",
+		"settings.shortcutTitle": "Keyboard shortcut",
+		"settings.shortcutPrompt": "Press the keys to assign. Esc closes this.",
+		"settings.shortcutModifierPrompt": "Press modifier keys. Esc closes this.",
+		"settings.shortcutSearch": "Find by shortcut",
+		"settings.shortcutSearchPrompt": "Press the keys to look for. Esc closes this.",
+		"settings.shortcutSearching": "Searching",
+		"settings.shortcutNoMatch": "No action uses this shortcut.",
+		"settings.shortcutRemove": "Remove",
+		"settings.shortcutCancel": "Cancel",
+		"settings.shortcutOk": "OK",
 		"update.check": "Check for updates",
 		"update.install": "Update to",
 		"update.upToDate": "Up to date",
@@ -4204,7 +4701,7 @@ a:focus > .cp-settings-entry {
 		"submissionHelper.fallbackFailed": "The browser could not safely transform this source.",
 		"keyboardShortcuts.title": "Keyboard shortcuts",
 		"keyboardShortcuts.description":
-			"Submit, copy samples, switch tasks, open pages and more with keys you choose. Write keys like Ctrl+Shift+Enter, or none to turn one off.",
+			"Submit, copy samples, switch tasks, open pages and more with keys you choose. Double-click or right-click an action in the options to change its key.",
 		"keyboardShortcuts.openSettings": "Open the CP Toolkit settings",
 		"keyboardShortcuts.submit": "Submit",
 		"keyboardShortcuts.fold": "Fold the block at the cursor",
@@ -4229,8 +4726,11 @@ a:focus > .cp-settings-entry {
 		"keyboardShortcuts.acByCreated": "Open AC submissions by submission time",
 		"keyboardShortcuts.acByMemory": "Open AC submissions by memory",
 		"keyboardShortcuts.share": "Open a post to X for the current page",
-		"keyboardShortcuts.invalidKey": "This key combination is not valid (e.g. Ctrl+Shift+Enter, Alt+S).",
-		"keyboardShortcuts.invalidModifiers": "Write only modifier keys joined with + (e.g. Ctrl+Alt).",
+		"keyboardShortcuts.groupGlobal": "Global",
+		"keyboardShortcuts.groupEditor": "Submission & Editor",
+		"keyboardShortcuts.groupProblem": "Problem Page",
+		"keyboardShortcuts.groupProblemNote": "Easy Test+ and sample copying also work on the AtCoder submit page.",
+		"keyboardShortcuts.groupContest": "Contest Pages",
 		"keyboardShortcuts.sampleInput": "Sample input {number}",
 		"keyboardShortcuts.sampleOutput": "Sample output {number}",
 		"keyboardShortcuts.sampleCopied": "Copied {sample}",
@@ -4306,6 +4806,16 @@ a:focus > .cp-settings-entry {
 		"settings.importFailed": "設定ファイルを読み込めませんでした。",
 		"settings.reset": "初期設定に戻す",
 		"settings.resetConfirm": "すべてのサイトの設定を初期設定に戻します。よろしいですか?",
+		"settings.shortcutTitle": "ショートカットキー",
+		"settings.shortcutPrompt": "割り当てるキーを押してください。Esc で閉じます。",
+		"settings.shortcutModifierPrompt": "修飾キーを押してください。Esc で閉じます。",
+		"settings.shortcutSearch": "キーで検索",
+		"settings.shortcutSearchPrompt": "探すキーを押してください。Esc で閉じます。",
+		"settings.shortcutSearching": "検索中",
+		"settings.shortcutNoMatch": "このキーを割り当てた操作はありません。",
+		"settings.shortcutRemove": "削除",
+		"settings.shortcutCancel": "キャンセル",
+		"settings.shortcutOk": "OK",
 		"update.check": "更新を確認",
 		"update.install": "更新する",
 		"update.upToDate": "最新です",
@@ -4474,7 +4984,7 @@ a:focus > .cp-settings-entry {
 		"submissionHelper.fallbackFailed": "ブラウザで安全に変換できませんでした。",
 		"keyboardShortcuts.title": "ショートカットキー",
 		"keyboardShortcuts.description":
-			"提出、入出力例のコピー、問題の切り替え、ページを開く操作などを、好きなキーで行えます。キーは Ctrl+Shift+Enter のように書き、none で使わなくなります。",
+			"提出、入出力例のコピー、問題の切り替え、ページを開く操作などを、好きなキーで行えます。キーは詳細設定の操作をダブルクリックか右クリックして変更します。",
 		"keyboardShortcuts.openSettings": "CP Toolkit の設定を開く",
 		"keyboardShortcuts.submit": "提出する",
 		"keyboardShortcuts.fold": "カーソルのあるブロックを折りたたむ",
@@ -4498,8 +5008,11 @@ a:focus > .cp-settings-entry {
 		"keyboardShortcuts.acByCreated": "AC の提出を提出日時順に開く",
 		"keyboardShortcuts.acByMemory": "AC の提出をメモリ順に開く",
 		"keyboardShortcuts.share": "表示中のページを X に投稿する画面を開く",
-		"keyboardShortcuts.invalidKey": "キーの書き方が正しくありません（例：Ctrl+Shift+Enter、Alt+S）。",
-		"keyboardShortcuts.invalidModifiers": "修飾キーだけを + でつないで書いてください（例：Ctrl+Alt）。",
+		"keyboardShortcuts.groupGlobal": "全ページ共通",
+		"keyboardShortcuts.groupEditor": "提出欄とエディタ",
+		"keyboardShortcuts.groupProblem": "問題ページ",
+		"keyboardShortcuts.groupProblemNote": "Easy Test+ と入出力例のコピーは、AtCoder の提出ページでも動きます。",
+		"keyboardShortcuts.groupContest": "コンテストのページ",
 		"keyboardShortcuts.sampleInput": "入力例 {number}",
 		"keyboardShortcuts.sampleOutput": "出力例 {number}",
 		"keyboardShortcuts.sampleCopied": "{sample} をコピーしました",
@@ -9216,7 +9729,7 @@ ${css}`,
 	var GAP_PX = 6;
 	var tooltips = [];
 	var bubble = null;
-	var listening = false;
+	var listening2 = false;
 	var hovered = null;
 
 	function ensureBubble() {
@@ -9262,10 +9775,10 @@ ${tooltip_default}`,
 	}
 
 	function addTooltip(anchor, text) {
-		if (!listening) {
+		if (!listening2) {
 			document.addEventListener("mouseover", onPointerMove);
 			document.addEventListener("click", refresh);
-			listening = true;
+			listening2 = true;
 		}
 		tooltips.push({anchor, text});
 	}
@@ -10429,123 +10942,8 @@ ${efficient_layout_default}`);
 		},
 	});
 
-	// CpToolkit/src/domain/settings/shortcut.ts
-	var MODIFIERS2 = ["Ctrl", "Shift", "Alt", "Cmd"];
-	var MODIFIER_ALIASES = {
-		ctrl: "Ctrl",
-		shift: "Shift",
-		alt: "Alt",
-		option: "Alt",
-		cmd: "Cmd",
-		command: "Cmd",
-	};
-	var NAMED_KEYS = {
-		enter: "Enter",
-		escape: "Escape",
-		esc: "Escape",
-		space: " ",
-		tab: "Tab",
-		backspace: "Backspace",
-		delete: "Delete",
-		arrowleft: "ArrowLeft",
-		left: "ArrowLeft",
-		arrowright: "ArrowRight",
-		right: "ArrowRight",
-		arrowup: "ArrowUp",
-		up: "ArrowUp",
-		arrowdown: "ArrowDown",
-		down: "ArrowDown",
-	};
-	var NO_SHORTCUT = "none";
-
-	function normalizeShortcut(text) {
-		const parts = text.split("+").map((part) => part.trim());
-		const key = parts.pop() ?? "";
-		const modifiers = readModifiers(parts);
-		if (!modifiers) return null;
-		const named = NAMED_KEYS[key.toLowerCase()];
-		const normalizedKey =
-			named ??
-			(/^\S$/u.test(key) ? key.toUpperCase() : /^F([1-9]|1[0-2])$/i.test(key) ? key.toUpperCase() : null);
-		if (!normalizedKey) return null;
-		return [...modifiers, normalizedKey].join("+");
-	}
-
-	function readModifiers(parts) {
-		const modifiers = new Set();
-		for (const part of parts) {
-			const modifier = MODIFIER_ALIASES[part.toLowerCase()];
-			if (!modifier) return null;
-			modifiers.add(modifier);
-		}
-		return MODIFIERS2.filter((name) => modifiers.has(name));
-	}
-
-	function isShortcutSetting(text) {
-		return text === "" || text.toLowerCase() === NO_SHORTCUT || normalizeShortcut(text) !== null;
-	}
-
-	function normalizeModifiers(text) {
-		const modifiers = readModifiers(text.split("+").map((part) => part.trim()));
-		return modifiers && modifiers.length > 0 ? modifiers.join("+") : null;
-	}
-
-	function isModifierSetting(text) {
-		return text.toLowerCase() === NO_SHORTCUT || normalizeModifiers(text) !== null;
-	}
-
 	// CpToolkit/src/application/ports/code-editor.ts
 	var EDITOR_SETUP_DELAY_MS = 500;
-
-	// CpToolkit/src/ui/shortcuts.ts
-	var EDITOR_ELEMENTS = ".ace_editor, .monaco-editor, #editor, #editor-div";
-	var POSITIONAL_SYMBOLS = {Comma: ",", Period: "."};
-	var SHIFTED_SYMBOLS = {"{": "[", "}": "]"};
-	var IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
-	var shortcuts = new Map();
-	var listening2 = false;
-
-	function keyOf(event) {
-		if (/^Key[A-Z]$/.test(event.code)) return event.code.slice(3);
-		if (/^Digit[0-9]$/.test(event.code)) return event.code.slice(5);
-		const symbol = POSITIONAL_SYMBOLS[event.code] ?? (event.shiftKey ? SHIFTED_SYMBOLS[event.key] : undefined);
-		if (symbol) return symbol;
-		return event.key.length === 1 ? event.key.toUpperCase() : event.key;
-	}
-
-	function comboOf(event) {
-		const key = keyOf(event);
-		return [event.ctrlKey && "Ctrl", event.shiftKey && "Shift", event.altKey && "Alt", event.metaKey && "Cmd", key]
-			.filter(Boolean)
-			.join("+");
-	}
-
-	function isTextField(target) {
-		if (!(target instanceof HTMLElement)) return false;
-		const isEditable = target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
-		return isEditable && target.closest(EDITOR_ELEMENTS) === null;
-	}
-
-	function onKeyDown(event) {
-		if (!IS_MAC && event.ctrlKey && event.altKey && event.getModifierState("AltGraph")) return;
-		const shortcut = shortcuts.get(comboOf(event));
-		if (!shortcut || (!shortcut.inTextFields && isTextField(event.target))) return;
-		if (!shortcut.handler()) return;
-		event.preventDefault();
-		event.stopPropagation();
-	}
-
-	function registerShortcut(combo, handler, {inTextFields = false} = {}) {
-		if (!listening2) {
-			document.addEventListener("keydown", onKeyDown, true);
-			listening2 = true;
-		}
-		const shortcut = {handler, inTextFields};
-		shortcuts.set(combo, shortcut);
-		return () => {
-			if (shortcuts.get(combo) === shortcut) shortcuts.delete(combo);
-		};
-	}
 
 	// CpToolkit/src/features/keyboard-shortcuts/index.ts
 	var SHARE_URL = "https://x.com/intent/post";
@@ -10553,22 +10951,19 @@ ${efficient_layout_default}`);
 	var SAMPLE_NUMBERS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 	var TASK_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 	var SAMPLE_ROUTES = ["atcoder:task", "atcoder:submit", "codeforces:problem", "yukicoder:problem"];
-
-	function resolveKey(value) {
-		if (value.toLowerCase() === NO_SHORTCUT) return null;
-		return normalizeShortcut(value);
-	}
-
-	var shortcutOption = (defaultValue, label) =>
-		option.text(defaultValue, label, {
-			validate: isShortcutSetting,
-			invalidMessage: "keyboardShortcuts.invalidKey",
-		});
-	var modifierOption = (defaultValue, label) =>
-		option.text(defaultValue, label, {
-			validate: isModifierSetting,
-			invalidMessage: "keyboardShortcuts.invalidModifiers",
-		});
+	var GLOBAL = {title: "keyboardShortcuts.groupGlobal"};
+	var EDITOR = {title: "keyboardShortcuts.groupEditor"};
+	var PROBLEM = {
+		title: "keyboardShortcuts.groupProblem",
+		note: {message: "keyboardShortcuts.groupProblemNote", sites: ["atcoder"]},
+	};
+	var CONTEST = {title: "keyboardShortcuts.groupContest"};
+	var shortcutOption = (defaultValue, label, group) => {
+		return option.shortcut(defaultValue, label, {group});
+	};
+	var modifierOption = (defaultValue, label, group, suffixes) => {
+		return option.shortcut(defaultValue, label, {group, suffixes});
+	};
 	var PAGE_KEYS = {
 		openTasks: "tasks",
 		openMySubmissions: "mySubmissions",
@@ -10581,35 +10976,56 @@ ${efficient_layout_default}`);
 	var ATCODER = ["atcoder"];
 	var CONTEST_SITES = ["atcoder", "codeforces"];
 	var featureOptions3 = {
-		openSettings: shortcutOption("Ctrl+I", "keyboardShortcuts.openSettings"),
-		submit: shortcutOption("Ctrl+Shift+Enter", "keyboardShortcuts.submit"),
-		fold: onSites(shortcutOption("Ctrl+Shift+[", "keyboardShortcuts.fold"), NOT_YUKICODER),
-		unfold: onSites(shortcutOption("Ctrl+Shift+]", "keyboardShortcuts.unfold"), NOT_YUKICODER),
-		testAndSubmit: onSites(shortcutOption("Ctrl+Enter", "keyboardShortcuts.testAndSubmit"), EASY_TEST_SITES),
-		testAll: onSites(shortcutOption("Alt+Enter", "keyboardShortcuts.testAll"), EASY_TEST_SITES),
-		toggleEasyTest: onSites(
-			shortcutOption("Ctrl+Shift+Alt+D", "keyboardShortcuts.toggleEasyTest"),
+		openSettings: shortcutOption("Ctrl+I", "keyboardShortcuts.openSettings", GLOBAL),
+		submit: shortcutOption("Ctrl+Shift+Enter", "keyboardShortcuts.submit", EDITOR),
+		fold: onSites(shortcutOption("Ctrl+Shift+[", "keyboardShortcuts.fold", EDITOR), NOT_YUKICODER),
+		unfold: onSites(shortcutOption("Ctrl+Shift+]", "keyboardShortcuts.unfold", EDITOR), NOT_YUKICODER),
+		testAndSubmit: onSites(
+			shortcutOption("Ctrl+Enter", "keyboardShortcuts.testAndSubmit", PROBLEM),
 			EASY_TEST_SITES,
 		),
-		copyInput: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.copyInput"), EASY_TEST_SITES),
-		copyOutput: onSites(modifierOption("Ctrl+Shift+Alt", "keyboardShortcuts.copyOutput"), EASY_TEST_SITES),
-		copyStatement: onSites(shortcutOption("Ctrl+Shift+Alt+P", "keyboardShortcuts.copyStatement"), ATCODER),
-		previousTask: onSites(shortcutOption("Ctrl+Shift+Alt+Left", "keyboardShortcuts.previousTask"), CONTEST_SITES),
-		nextTask: onSites(shortcutOption("Ctrl+Shift+Alt+Right", "keyboardShortcuts.nextTask"), CONTEST_SITES),
-		openTask: onSites(modifierOption("Ctrl+Alt", "keyboardShortcuts.openTask"), CONTEST_SITES),
-		openTasks: onSites(shortcutOption("Ctrl+Shift+Alt+T", "keyboardShortcuts.openTasks"), CONTEST_SITES),
-		openMySubmissions: onSites(
-			shortcutOption("Ctrl+Shift+Alt+S", "keyboardShortcuts.openMySubmissions"),
+		testAll: onSites(shortcutOption("Alt+Enter", "keyboardShortcuts.testAll", PROBLEM), EASY_TEST_SITES),
+		toggleEasyTest: onSites(
+			shortcutOption("Ctrl+Shift+Alt+D", "keyboardShortcuts.toggleEasyTest", PROBLEM),
+			EASY_TEST_SITES,
+		),
+		copyInput: onSites(
+			modifierOption("Ctrl+Alt", "keyboardShortcuts.copyInput", PROBLEM, SAMPLE_NUMBERS),
+			EASY_TEST_SITES,
+		),
+		copyOutput: onSites(
+			modifierOption("Ctrl+Shift+Alt", "keyboardShortcuts.copyOutput", PROBLEM, SAMPLE_NUMBERS),
+			EASY_TEST_SITES,
+		),
+		copyStatement: onSites(shortcutOption("Ctrl+Shift+Alt+P", "keyboardShortcuts.copyStatement", PROBLEM), ATCODER),
+		previousTask: onSites(
+			shortcutOption("Ctrl+Shift+Alt+Left", "keyboardShortcuts.previousTask", PROBLEM),
 			CONTEST_SITES,
 		),
-		openStandings: onSites(shortcutOption("Ctrl+Shift+Alt+R", "keyboardShortcuts.openStandings"), CONTEST_SITES),
-		openEditorial: onSites(shortcutOption("Ctrl+Shift+Alt+E", "keyboardShortcuts.openEditorial"), ATCODER),
-		openCustomTest: onSites(shortcutOption("Ctrl+Shift+Alt+C", "keyboardShortcuts.openCustomTest"), CONTEST_SITES),
-		acByTime: onSites(shortcutOption("Ctrl+Shift+Alt+F", "keyboardShortcuts.acByTime"), ATCODER),
-		acByLength: onSites(shortcutOption("Ctrl+Shift+Alt+L", "keyboardShortcuts.acByLength"), ATCODER),
-		acByCreated: onSites(shortcutOption("Ctrl+Shift+Alt+N", "keyboardShortcuts.acByCreated"), ATCODER),
-		acByMemory: onSites(shortcutOption("Ctrl+Shift+Alt+M", "keyboardShortcuts.acByMemory"), ATCODER),
-		share: shortcutOption("Ctrl+Shift+Alt+X", "keyboardShortcuts.share"),
+		nextTask: onSites(shortcutOption("Ctrl+Shift+Alt+Right", "keyboardShortcuts.nextTask", PROBLEM), CONTEST_SITES),
+		openTask: onSites(
+			modifierOption("Ctrl+Alt", "keyboardShortcuts.openTask", CONTEST, TASK_LETTERS),
+			CONTEST_SITES,
+		),
+		openTasks: onSites(shortcutOption("Ctrl+Shift+Alt+T", "keyboardShortcuts.openTasks", CONTEST), CONTEST_SITES),
+		openMySubmissions: onSites(
+			shortcutOption("Ctrl+Shift+Alt+S", "keyboardShortcuts.openMySubmissions", CONTEST),
+			CONTEST_SITES,
+		),
+		openStandings: onSites(
+			shortcutOption("Ctrl+Shift+Alt+R", "keyboardShortcuts.openStandings", CONTEST),
+			CONTEST_SITES,
+		),
+		openEditorial: onSites(shortcutOption("Ctrl+Shift+Alt+E", "keyboardShortcuts.openEditorial", CONTEST), ATCODER),
+		openCustomTest: onSites(
+			shortcutOption("Ctrl+Shift+Alt+C", "keyboardShortcuts.openCustomTest", CONTEST),
+			CONTEST_SITES,
+		),
+		acByTime: onSites(shortcutOption("Ctrl+Shift+Alt+F", "keyboardShortcuts.acByTime", PROBLEM), ATCODER),
+		acByLength: onSites(shortcutOption("Ctrl+Shift+Alt+L", "keyboardShortcuts.acByLength", PROBLEM), ATCODER),
+		acByCreated: onSites(shortcutOption("Ctrl+Shift+Alt+N", "keyboardShortcuts.acByCreated", PROBLEM), ATCODER),
+		acByMemory: onSites(shortcutOption("Ctrl+Shift+Alt+M", "keyboardShortcuts.acByMemory", PROBLEM), ATCODER),
+		share: shortcutOption("Ctrl+Shift+Alt+X", "keyboardShortcuts.share", GLOBAL),
 	};
 	var keyboardShortcuts = defineFeature({
 		id: "keyboard-shortcuts",
@@ -10679,7 +11095,7 @@ ${efficient_layout_default}`);
 				};
 			}
 			for (const [name, id] of Object.entries(SHORTCUT_ACTIONS)) {
-				shortcuts.assign(id, resolveKey(options[name]));
+				shortcuts.assign(id, normalizeShortcut(options[name]));
 				handlers[name] = () => shortcuts.run(id);
 			}
 			handlers.openSettings = () => {
@@ -10698,7 +11114,7 @@ ${efficient_layout_default}`);
 				services.submissionForm(target).then((ready) => {
 					form = ready;
 				});
-				const submitKey = resolveKey(options.submit);
+				const submitKey = normalizeShortcut(options.submit);
 				if (submitKey)
 					addTooltip(
 						() => form?.submitButton() ?? null,
@@ -10709,7 +11125,7 @@ ${efficient_layout_default}`);
 					button?.click();
 					return button !== null;
 				};
-				if (resolveKey(options.fold) || resolveKey(options.unfold)) {
+				if (normalizeShortcut(options.fold) || normalizeShortcut(options.unfold)) {
 					services.editors.locate(target, {delayMs: EDITOR_SETUP_DELAY_MS}).then((located) => {
 						editor = located;
 					});
@@ -10723,14 +11139,13 @@ ${efficient_layout_default}`);
 			};
 			for (const name of Object.keys(featureOptions3)) {
 				if (name === "copyInput" || name === "copyOutput" || name === "openTask") {
-					const value = options[name];
-					const modifiers = value.toLowerCase() === NO_SHORTCUT ? null : normalizeModifiers(value);
+					const modifiers = normalizeModifiers(options[name]);
 					const prefix = prefixHandlers[name];
 					if (modifiers && prefix)
 						for (const key of prefix.keys) bind(`${modifiers}+${key}`, () => prefix.handler(key));
 					continue;
 				}
-				const key = resolveKey(options[name]);
+				const key = normalizeShortcut(options[name]);
 				const handler = handlers[name];
 				if (key && handler) bind(key, handler);
 			}

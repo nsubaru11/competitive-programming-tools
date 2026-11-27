@@ -27,7 +27,7 @@ describe("旧スクリプトの設定の引き継ぎ", () => {
 		expect(settings.storedOptions("paiza-language")).toEqual({language: "java"});
 		expect(settings.storedOptions("local-runner")).toEqual({url: "http://localhost:9000"});
 		expect(settings.storedOptions("easy-test")).toEqual({});
-		expect(settings.storedOptions("keyboard-shortcuts")).toEqual({testAndSubmit: "none", testAll: "none", toggleEasyTest: "none"});
+		expect(settings.storedOptions("keyboard-shortcuts")).toEqual({testAndSubmit: "", testAll: "", toggleEasyTest: ""});
 		expect(localStorage.getItem("cp-toolkit:legacy:AtCoderHighlighter")).toBeNull();
 	});
 
@@ -88,7 +88,7 @@ describe("SettingsService", () => {
 		store.set("settings", JSON.stringify({version: 1, features: {"easy-test": {options: {keyboardShortcuts: false}}}}));
 		new SettingsService(store);
 		const migrated = store.get("settings");
-		expect(migrated).toMatchObject({version: 2, features: {"keyboard-shortcuts": {options: {testAll: "none"}}}});
+		expect(migrated).toMatchObject({version: 2, features: {"keyboard-shortcuts": {options: {testAll: ""}}}});
 		new SettingsService(store);
 		expect(store.get("settings")).toBe(migrated);
 	});

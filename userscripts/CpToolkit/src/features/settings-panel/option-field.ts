@@ -1,5 +1,5 @@
 import type {MessageKey, Translate} from "@catalog/messages";
-import type {OptionDefinition} from "@domain/settings/option";
+import type {OptionDefinition, ShortcutOption} from "@domain/settings/option";
 import {createField} from "@ui/form/controls";
 import {h} from "@ui/element";
 
@@ -10,8 +10,11 @@ type FieldHandlers = {
 	readonly commit: (rawValue: unknown) => void;
 };
 
+/** ショートカットキーは一覧(shortcut-list)に並べる。 */
+type FieldDefinition = Exclude<OptionDefinition<MessageKey>, ShortcutOption<MessageKey>>;
+
 function createControl(
-	definition: OptionDefinition<MessageKey>,
+	definition: FieldDefinition,
 	value: unknown,
 	translate: Translate,
 	{validate, commit}: FieldHandlers,
@@ -50,7 +53,7 @@ function createControl(
 }
 
 export type OptionFieldParams = {
-	readonly definition: OptionDefinition<MessageKey>;
+	readonly definition: FieldDefinition;
 	readonly value: unknown;
 	readonly translate: Translate;
 	readonly onChange: (value: unknown) => void;

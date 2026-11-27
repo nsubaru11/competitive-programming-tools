@@ -1,7 +1,7 @@
 import type {FeatureSettings, Settings} from "./settings";
 
 /** Easy Test+ のキーを使わない設定。旧版の設定の取り込みでも使う。 */
-export const EASY_TEST_KEYS_OFF = {testAndSubmit: "none", testAll: "none", toggleEasyTest: "none"} as const;
+export const EASY_TEST_KEYS_OFF = {testAndSubmit: "", testAll: "", toggleEasyTest: ""} as const;
 
 /**
  * Toolkit 3.0 への移行。

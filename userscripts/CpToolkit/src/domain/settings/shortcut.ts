@@ -24,8 +24,16 @@ const NAMED_KEYS: Readonly<Record<string, string>> = {
 	down: "ArrowDown",
 };
 
-/** キーを使わないことを表す値。 */
-export const NO_SHORTCUT = "none";
+/** 3.0 まで、キーを使わないことを表していた値。保存済みの設定は空欄として読む。 */
+const LEGACY_NO_SHORTCUT = "none";
+/** 照合に使う名前のうち、設定や画面では短く書くもの。 */
+const SETTING_KEY_NAMES: Readonly<Record<string, string>> = {
+	" ": "Space",
+	ArrowLeft: "Left",
+	ArrowRight: "Right",
+	ArrowUp: "Up",
+	ArrowDown: "Down",
+};
 
 /**
  * 利用者が書いたキーの組み合わせ(例: ctrl+i、Ctrl+Shift+Enter)を、キー操作の照合に使う形にそろえる。
@@ -53,11 +61,6 @@ function readModifiers(parts: readonly string[]): string[] | null {
 	return MODIFIERS.filter((name) => modifiers.has(name));
 }
 
-/** 設定の値として受け付けるか。空欄と none も受け付ける。 */
-export function isShortcutSetting(text: string): boolean {
-	return text === "" || text.toLowerCase() === NO_SHORTCUT || normalizeShortcut(text) !== null;
-}
-
 /**
  * 修飾キーだけの組み合わせ(例: ctrl+alt)をそろえる。後ろに数字や文字を足して使う設定に使う。
  * 修飾キーが1つも無いか、読めなければ null。
@@ -67,7 +70,31 @@ export function normalizeModifiers(text: string): string | null {
 	return modifiers && modifiers.length > 0 ? modifiers.join("+") : null;
 }
 
-/** 修飾キーだけの設定の値として受け付けるか。none も受け付ける。 */
-export function isModifierSetting(text: string): boolean {
-	return text.toLowerCase() === NO_SHORTCUT || normalizeModifiers(text) !== null;
+/** 保存する値。空欄はキーを使わない。キーとして読めなければ undefined。 */
+export function readShortcutSetting(text: string): string | undefined {
+	if (isUnused(text)) return "";
+	const combo = normalizeShortcut(text);
+	if (combo === null) return undefined;
+	const parts = combo.split("+");
+	const key = parts.pop() ?? "";
+	return [...parts, SETTING_KEY_NAMES[key] ?? key].join("+");
+}
+
+/** 修飾キーだけの設定の、保存する値。空欄はキーを使わない。読めなければ undefined。 */
+export function readModifierSetting(text: string): string | undefined {
+	return isUnused(text) ? "" : normalizeModifiers(text) ?? undefined;
+}
+
+function isUnused(text: string): boolean {
+	return text === "" || text.toLowerCase() === LEGACY_NO_SHORTCUT;
+}
+
+/**
+ * 設定の値が、押したキー(照合の形。修飾キーだけのこともある)に当たるか。
+ * suffixes のある設定は修飾キーだけを保存するので、後ろに続けるキーまで押した組み合わせにも当たる。
+ */
+export function matchesShortcut(value: string, pressed: string, suffixes?: readonly string[]): boolean {
+	if (!suffixes) return value !== "" && normalizeShortcut(value) === pressed;
+	const modifiers = normalizeModifiers(value);
+	return modifiers !== null && (pressed === modifiers || suffixes.some((suffix) => pressed === `${modifiers}+${suffix}`));
 }

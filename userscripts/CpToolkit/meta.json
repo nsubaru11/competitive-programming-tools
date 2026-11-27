@@ -1,7 +1,7 @@
 {
 	"name": "CP Toolkit",
 	"name:en": "CP Toolkit",
-	"version": "3.0.2",
+	"version": "3.1.0",
 	"description": "入出力例の横並び、提出結果の通知、問題のドロップダウンなど、AtCoder を中心に使える全27機能をまとめた UserScript です。機能ごとに ON/OFF できます。",
 	"description:ja": "入出力例の横並び、提出結果の通知、問題のドロップダウンなど、AtCoder を中心に使える全27機能をまとめた UserScript です。機能ごとに ON/OFF できます。",
 	"description:en": "27 individually configurable features for competitive programming, primarily on AtCoder, including side-by-side samples, verdict notifications and a Tasks dropdown.",

@@ -7,8 +7,10 @@ import {defineFeature, type Feature} from "@application/feature/definition";
 import {FeatureRuntime} from "@application/feature/runtime";
 import {SettingsService} from "@application/settings/settings-service";
 import {createSettingsPanel} from "@features/settings-panel/index";
+import {registerShortcut} from "@ui/shortcuts";
 import {addNavigationEntry} from "@features/settings-panel/navigation-entry";
 import {createFakeServices, createFakeUpdates, FakeHttpClient, immediateLifecycle, MemoryStore, RecordingLogger} from "../support/fakes";
+import {pressKey, wait} from "../support/dom";
 
 const translate = createTranslator(() => "ja");
 
@@ -347,6 +349,157 @@ describe("サイトごとの設定画面", () => {
 		expect(settings.forSite("codeforces").isEnabled("both", true)).toBe(false);
 		expect(settings.forSite("atcoder").storedOptions("both")).toEqual({url: "http://localhost:9000"});
 		expect(settings.forSite("atcoder").isEnabled("both", true)).toBe(true);
+	});
+});
+
+describe("ショートカットキーの設定", () => {
+	const global = {title: "keyboardShortcuts.groupGlobal"} as const;
+	const problem = {
+		title: "keyboardShortcuts.groupProblem",
+		note: {message: "keyboardShortcuts.groupProblemNote", sites: ["atcoder"]},
+	} as const;
+	const keys = defineFeature({
+		...metadata,
+		id: "keys",
+		title: "keyboardShortcuts.title",
+		options: {
+			open: option.shortcut("Ctrl+I", "keyboardShortcuts.openSettings", {group: global}),
+			testAll: option.shortcut("Alt+Enter", "keyboardShortcuts.testAll", {group: problem}),
+			copy: option.shortcut("Ctrl+Alt", "keyboardShortcuts.copyInput", {group: problem, suffixes: ["1", "2"]}),
+		},
+		live: true,
+		start: () => () => {
+		},
+	});
+
+	async function open() {
+		const settings = new SettingsService(new MemoryStore());
+		const features = [keys];
+		const runtime = new FeatureRuntime({
+			features,
+			page: matchPage(judges, "https://atcoder.jp/home"),
+			lifecycle: immediateLifecycle,
+			settings,
+			services: createFakeServices(),
+			logger: new RecordingLogger(),
+		});
+		createSettingsPanel({features, settings, runtime, translate, updates: createFakeUpdates()}).open();
+		const root = document.body.lastElementChild?.shadowRoot;
+		if (!root) throw new Error("設定画面が表示されていません");
+		const rows = [...root.querySelectorAll<HTMLButtonElement>(".shortcut-row")];
+		const caps = (row: Element | undefined) => [...row?.querySelectorAll("kbd") ?? []].map(({textContent}) => textContent);
+		/** 開いている入力画面。 */
+		const editor = () => {
+			const shadow = document.body.lastElementChild?.shadowRoot;
+			const dialog = shadow?.querySelector("dialog");
+			const input = shadow?.querySelector<HTMLInputElement>(".shortcut-input");
+			if (!dialog || !input) throw new Error("キーの入力画面が表示されていません");
+			const click = (label: "settings.shortcutOk" | "settings.shortcutCancel" | "settings.shortcutRemove") => {
+				[...dialog.querySelectorAll("button")].find(({textContent}) => textContent === translate(label))?.click();
+			};
+			return {dialog, input, click};
+		};
+		const doubleClick = (element: Element | undefined) => element?.dispatchEvent(new MouseEvent("dblclick", {bubbles: true}));
+		return {root, settings, rows, caps, editor, doubleClick};
+	}
+
+	test("見出しごとにまとめ、割り当てたキーを枠に分けて表示する", async () => {
+		const {root, rows, caps} = await open();
+		expect([...root.querySelectorAll(".shortcut-group summary")].map(({textContent}) => textContent))
+			.toEqual([translate("keyboardShortcuts.groupGlobal"), translate("keyboardShortcuts.groupProblem")]);
+		expect(root.querySelector(".shortcut-note")?.textContent).toBe(translate("keyboardShortcuts.groupProblemNote"));
+		expect(rows.map(caps)).toEqual([["Ctrl", "I"], ["Alt", "Enter"], ["Ctrl", "Alt"]]);
+	});
+
+	test("ダブルクリックで開き、押したキーを OK で保存する", async () => {
+		const {settings, rows, caps, editor, doubleClick} = await open();
+		doubleClick(rows[0]);
+		const {dialog, input, click} = editor();
+		expect(input.value).toBe("Ctrl+I");
+		pressKey("ArrowLeft", {ctrlKey: true, shiftKey: true}, input);
+		expect(input.value).toBe("Ctrl+Shift+Left");
+		expect(settings.storedOptions("keys")).toBeUndefined();
+		click("settings.shortcutOk");
+		expect(dialog.open).toBe(false);
+		expect(settings.storedOptions("keys")).toEqual({open: "Ctrl+Shift+Left"});
+		expect(caps(rows[0])).toEqual(["Ctrl", "Shift", "Left"]);
+	});
+
+	test("右クリックで開き、削除すると空欄にする。キャンセルと Esc では変えない", async () => {
+		const {settings, rows, caps, editor} = await open();
+		const rightClick = () => rows[1]?.dispatchEvent(new MouseEvent("contextmenu", {bubbles: true, cancelable: true}));
+		expect(rightClick()).toBe(false);
+		pressKey("s", {altKey: true, code: "KeyS"}, editor().input);
+		editor().click("settings.shortcutCancel");
+		rightClick();
+		expect(editor().input.value).toBe("Alt+Enter");
+		pressKey("s", {altKey: true, code: "KeyS"}, editor().input);
+		pressKey("Escape", {}, editor().input);
+		expect(editor().dialog.open).toBe(false);
+		expect(settings.storedOptions("keys")).toBeUndefined();
+
+		rightClick();
+		editor().click("settings.shortcutRemove");
+		expect(settings.storedOptions("keys")).toEqual({testAll: ""});
+		expect(caps(rows[1])).toEqual([]);
+	});
+
+	test("修飾キーだけの項目は、ほかのキーを押しても修飾キーだけを入れる", async () => {
+		const {rows, editor, doubleClick} = await open();
+		doubleClick(rows[2]);
+		const {input} = editor();
+		pressKey("Control", {ctrlKey: true}, input);
+		pressKey("Shift", {ctrlKey: true, shiftKey: true}, input);
+		expect(input.value).toBe("Ctrl+Shift");
+		pressKey("a", {altKey: true, code: "KeyA"}, input);
+		expect(input.value).toBe("Alt");
+		pressKey("a", {code: "KeyA"}, input);
+		expect(input.value).toBe("Alt");
+	});
+
+	test("Mac の option で文字が変わっても押したキーの位置で読み、command は Cmd にする", async () => {
+		const {rows, editor, doubleClick} = await open();
+		doubleClick(rows[0]);
+		const {input} = editor();
+		pressKey("å", {altKey: true, code: "KeyA"}, input);
+		expect(input.value).toBe("Alt+A");
+		pressKey("Dead", {altKey: true, code: "KeyE"}, input);
+		expect(input.value).toBe("Alt+E");
+		pressKey("i", {metaKey: true, code: "KeyI"}, input);
+		expect(input.value).toBe("Cmd+I");
+	});
+
+	test("入力している間は、登録済みのショートカットを実行しない", async () => {
+		const {rows, editor, doubleClick} = await open();
+		const run = mock(() => true);
+		registerShortcut("Ctrl+Enter", run, {inTextFields: true});
+		doubleClick(rows[0]);
+		const {input, click} = editor();
+		pressKey("Enter", {ctrlKey: true}, input);
+		expect(run).not.toHaveBeenCalled();
+		click("settings.shortcutCancel");
+		await wait();
+		pressKey("Enter", {ctrlKey: true});
+		expect(run).toHaveBeenCalledTimes(1);
+	});
+
+	test("押したキーを割り当てた操作に絞り込み、削除で戻す", async () => {
+		const {root, rows, editor} = await open();
+		const visible = () => rows.map((row) => !row.hidden);
+		const noMatch = () => root.querySelector<HTMLElement>(".shortcut-list .empty")?.hidden;
+		root.querySelector<HTMLButtonElement>(".shortcut-search")?.click();
+		const {input, click} = editor();
+		pressKey("1", {ctrlKey: true, altKey: true, code: "Digit1"}, input);
+		expect(visible()).toEqual([false, false, true]);
+		expect([...root.querySelectorAll<HTMLElement>(".shortcut-group")].map(({hidden}) => hidden)).toEqual([true, false]);
+		pressKey("z", {altKey: true, code: "KeyZ"}, input);
+		expect(visible()).toEqual([false, false, false]);
+		expect(noMatch()).toBe(false);
+		click("settings.shortcutOk");
+
+		root.querySelector<HTMLButtonElement>(".shortcut-searching button")?.click();
+		expect(visible()).toEqual([true, true, true]);
+		expect(noMatch()).toBe(true);
 	});
 });
 

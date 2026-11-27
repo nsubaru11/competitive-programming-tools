@@ -14,6 +14,16 @@ settings.import: ファイルから設定を復元
 settings.importFailed: 設定ファイルを読み込めませんでした。
 settings.reset: 初期設定に戻す
 settings.resetConfirm: すべてのサイトの設定を初期設定に戻します。よろしいですか?
+settings.shortcutTitle: ショートカットキー
+settings.shortcutPrompt: 割り当てるキーを押してください。Esc で閉じます。
+settings.shortcutModifierPrompt: 修飾キーを押してください。Esc で閉じます。
+settings.shortcutSearch: キーで検索
+settings.shortcutSearchPrompt: 探すキーを押してください。Esc で閉じます。
+settings.shortcutSearching: 検索中
+settings.shortcutNoMatch: このキーを割り当てた操作はありません。
+settings.shortcutRemove: 削除
+settings.shortcutCancel: キャンセル
+settings.shortcutOk: OK
 
 update.check: 更新を確認
 update.install: 更新する
@@ -199,7 +209,7 @@ localRunner.url: 接続先の URL
 submissionHelper.submitChanged: 提出準備が完了しなかったため、提出を取り消しました。
 submissionHelper.fallbackFailed: ブラウザで安全に変換できませんでした。
 keyboardShortcuts.title: ショートカットキー
-keyboardShortcuts.description: 提出、入出力例のコピー、問題の切り替え、ページを開く操作などを、好きなキーで行えます。キーは Ctrl+Shift+Enter のように書き、none で使わなくなります。
+keyboardShortcuts.description: 提出、入出力例のコピー、問題の切り替え、ページを開く操作などを、好きなキーで行えます。キーは詳細設定の操作をダブルクリックか右クリックして変更します。
 keyboardShortcuts.openSettings: CP Toolkit の設定を開く
 keyboardShortcuts.submit: 提出する
 keyboardShortcuts.fold: カーソルのあるブロックを折りたたむ
@@ -223,8 +233,11 @@ keyboardShortcuts.acByLength: AC の提出をコード長順に開く
 keyboardShortcuts.acByCreated: AC の提出を提出日時順に開く
 keyboardShortcuts.acByMemory: AC の提出をメモリ順に開く
 keyboardShortcuts.share: 表示中のページを X に投稿する画面を開く
-keyboardShortcuts.invalidKey: キーの書き方が正しくありません（例：Ctrl+Shift+Enter、Alt+S）。
-keyboardShortcuts.invalidModifiers: 修飾キーだけを + でつないで書いてください（例：Ctrl+Alt）。
+keyboardShortcuts.groupGlobal: 全ページ共通
+keyboardShortcuts.groupEditor: 提出欄とエディタ
+keyboardShortcuts.groupProblem: 問題ページ
+keyboardShortcuts.groupProblemNote: Easy Test+ と入出力例のコピーは、AtCoder の提出ページでも動きます。
+keyboardShortcuts.groupContest: コンテストのページ
 keyboardShortcuts.sampleInput: "入力例 {number}"
 keyboardShortcuts.sampleOutput: "出力例 {number}"
 keyboardShortcuts.sampleCopied: "{sample} をコピーしました"

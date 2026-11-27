@@ -13,6 +13,16 @@ settings.import: Restore settings from a file
 settings.importFailed: The settings file could not be read.
 settings.reset: Reset to defaults
 settings.resetConfirm: The settings of all sites will be reset to their defaults. Continue?
+settings.shortcutTitle: Keyboard shortcut
+settings.shortcutPrompt: Press the keys to assign. Esc closes this.
+settings.shortcutModifierPrompt: Press modifier keys. Esc closes this.
+settings.shortcutSearch: Find by shortcut
+settings.shortcutSearchPrompt: Press the keys to look for. Esc closes this.
+settings.shortcutSearching: Searching
+settings.shortcutNoMatch: No action uses this shortcut.
+settings.shortcutRemove: Remove
+settings.shortcutCancel: Cancel
+settings.shortcutOk: OK
 
 update.check: Check for updates
 update.install: Update to
@@ -198,7 +208,7 @@ localRunner.url: Server URL
 submissionHelper.submitChanged: Submission canceled because preparation could not finish.
 submissionHelper.fallbackFailed: The browser could not safely transform this source.
 keyboardShortcuts.title: Keyboard shortcuts
-keyboardShortcuts.description: "Submit, copy samples, switch tasks, open pages and more with keys you choose. Write keys like Ctrl+Shift+Enter, or none to turn one off."
+keyboardShortcuts.description: "Submit, copy samples, switch tasks, open pages and more with keys you choose. Double-click or right-click an action in the options to change its key."
 keyboardShortcuts.openSettings: Open the CP Toolkit settings
 keyboardShortcuts.submit: Submit
 keyboardShortcuts.fold: Fold the block at the cursor
@@ -222,8 +232,11 @@ keyboardShortcuts.acByLength: Open AC submissions by code length
 keyboardShortcuts.acByCreated: Open AC submissions by submission time
 keyboardShortcuts.acByMemory: Open AC submissions by memory
 keyboardShortcuts.share: Open a post to X for the current page
-keyboardShortcuts.invalidKey: "This key combination is not valid (e.g. Ctrl+Shift+Enter, Alt+S)."
-keyboardShortcuts.invalidModifiers: Write only modifier keys joined with + (e.g. Ctrl+Alt).
+keyboardShortcuts.groupGlobal: Global
+keyboardShortcuts.groupEditor: Submission & Editor
+keyboardShortcuts.groupProblem: Problem Page
+keyboardShortcuts.groupProblemNote: Easy Test+ and sample copying also work on the AtCoder submit page.
+keyboardShortcuts.groupContest: Contest Pages
 keyboardShortcuts.sampleInput: "Sample input {number}"
 keyboardShortcuts.sampleOutput: "Sample output {number}"
 keyboardShortcuts.sampleCopied: "Copied {sample}"

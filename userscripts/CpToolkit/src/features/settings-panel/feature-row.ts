@@ -6,6 +6,8 @@ import type {FeatureSettingsStore} from "@application/settings/settings-service"
 import {createSwitch} from "@ui/form/controls";
 import {h} from "@ui/element";
 import {createOptionField} from "./option-field";
+import type {ShortcutDialog} from "./shortcut-dialog";
+import {createShortcutList, type ShortcutEntry} from "./shortcut-list";
 
 export type FeatureRowParams = {
 	readonly feature: Feature;
@@ -15,6 +17,7 @@ export type FeatureRowParams = {
 	readonly translate: Translate;
 	/** 表示中のページのサイトなら、動作の状態を出す。ほかのサイトの状態は、このページからは分からない。 */
 	readonly showStatus: boolean;
+	readonly shortcutDialog: ShortcutDialog;
 };
 
 export type FeatureRow = {
@@ -32,20 +35,24 @@ const STATUS_MESSAGES: Readonly<Record<FeatureStatus["state"], MessageKey>> = {
 	failed: "status.failed",
 };
 
-function createOptionsSection({feature, settings, translate}: FeatureRowParams): HTMLElement | null {
+function createOptionsSection({feature, settings, translate, shortcutDialog}: FeatureRowParams): HTMLElement | null {
 	// ほかのサイトでは意味の無い項目は出さない
 	const definitions = Object.entries(feature.options).filter(([, definition]) => isOptionOnSite(definition, settings.site));
 	if (definitions.length === 0) return null;
 	const values = normalizeOptions(feature.options, settings.storedOptions(feature.id));
-	const fields = definitions.map(([key, definition]) => createOptionField({
-		definition,
-		value: values[key],
-		translate,
-		onChange: (value) => {
+	const fields: HTMLElement[] = [];
+	const shortcuts: ShortcutEntry[] = [];
+	for (const [key, definition] of definitions) {
+		const onChange = (value: unknown): void => {
 			if (definition.shared) settings.setSharedOption(feature.id, key, value);
 			else settings.setOption(feature.id, key, value);
-		},
-	}));
+		};
+		if (definition.kind === "shortcut") shortcuts.push({definition, value: String(values[key]), onChange});
+		else fields.push(createOptionField({definition, value: values[key], translate, onChange}));
+	}
+	if (shortcuts.length > 0) {
+		fields.push(createShortcutList({entries: shortcuts, site: settings.site, translate, dialog: shortcutDialog}));
+	}
 	return h(
 		"details",
 		{className: "feature-options"},

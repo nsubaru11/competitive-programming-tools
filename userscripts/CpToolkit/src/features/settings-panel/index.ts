@@ -8,6 +8,8 @@ import formCss from "@ui/form/form.css" with {type: "text"};
 import {h} from "@ui/element";
 import {createFeatureRow, type FeatureRow} from "./feature-row";
 import panelCss from "./settings-panel.css" with {type: "text"};
+import {createShortcutDialog} from "./shortcut-dialog";
+import shortcutListCss from "./shortcut-list.css" with {type: "text"};
 import {createVersionStatus} from "./version-status";
 
 /** 設定画面のタブに並べるサイト。 */
@@ -70,6 +72,7 @@ function createPanelView(dependencies: SettingsPanelDependencies): SettingsPanel
 	const content = h("div");
 	let rows: FeatureRow[] = [];
 	let modal: Modal | null = null;
+	const shortcutDialog = createShortcutDialog(translate);
 
 	const refresh = (): void => {
 		for (const row of rows) row.refresh();
@@ -96,7 +99,7 @@ function createPanelView(dependencies: SettingsPanelDependencies): SettingsPanel
 		const visible = selectedSite === null ? features : features.filter(({routes}) => routes.some((route) => siteOf(route) === selectedSite));
 		const showStatus = selectedSite === currentSite;
 		const sections = [...Map.groupBy(visible, ({category}) => category)].map(([category, members]) => {
-			const memberRows = members.map((feature) => createFeatureRow({feature, settings: store, runtime, translate, showStatus}));
+			const memberRows = members.map((feature) => createFeatureRow({feature, settings: store, runtime, translate, showStatus, shortcutDialog}));
 			rows.push(...memberRows);
 			return h(
 				"section",
@@ -163,7 +166,7 @@ function createPanelView(dependencies: SettingsPanelDependencies): SettingsPanel
 		const created = createModal({
 			title: translate("settings.title"),
 			closeLabel: translate("settings.close"),
-			css: `${formCss}\n${panelCss}`,
+			css: `${formCss}\n${panelCss}\n${shortcutListCss}`,
 		});
 		created.body.append(tabs, notice, content);
 		created.footer.append(...createFooter());

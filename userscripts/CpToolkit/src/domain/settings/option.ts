@@ -1,4 +1,5 @@
 import {parseStoredObject} from "@atcoder-tools/shared";
+import {readModifierSetting, readShortcutSetting} from "./shortcut";
 
 type OptionBase<T, L extends string> = {
 	readonly defaultValue: T;
@@ -23,6 +24,18 @@ export type NumberOption<L extends string = string> = OptionBase<number, L> & {
 	/** 整数だけを受け付けるか(件数など)。 */
 	readonly integer?: boolean;
 };
+/** 設定画面でショートカットキーをまとめる見出し。 */
+export type ShortcutGroup<L extends string = string> = {
+	readonly title: L;
+	/** 見出しの下に添える補足。指定したサイトの設定画面だけに出す。 */
+	readonly note?: {readonly message: L; readonly sites: readonly string[]};
+};
+export type ShortcutOption<L extends string = string> = OptionBase<string, L> & {
+	readonly kind: "shortcut";
+	readonly group: ShortcutGroup<L>;
+	/** 修飾キーだけを保存する項目の、後ろに続けて押すキー。 */
+	readonly suffixes?: readonly string[];
+};
 export type SelectChoice<T extends string = string, L extends string = string> = {
 	readonly value: T;
 	readonly label: L;
@@ -37,6 +50,7 @@ export type OptionDefinition<L extends string = string> =
 	| TextOption<L>
 	| ColorOption<L>
 	| NumberOption<L>
+	| ShortcutOption<L>
 	| SelectOption<string, L>;
 
 export type OptionSet<L extends string = string> = Readonly<Record<string, OptionDefinition<L>>>;
@@ -78,6 +92,21 @@ export const option = {
 				const text = value.trim();
 				return !validate || validate(text) ? text : undefined;
 			},
+		};
+	},
+	shortcut<L extends string>(
+		defaultValue: string,
+		label: L,
+		{group, suffixes}: {group: ShortcutGroup<L>; suffixes?: readonly string[]},
+	): ShortcutOption<L> {
+		const read = suffixes ? readModifierSetting : readShortcutSetting;
+		return {
+			kind: "shortcut",
+			defaultValue,
+			label,
+			group,
+			...(suffixes !== undefined && {suffixes}),
+			normalize: (value) => (typeof value === "string" ? read(value.trim()) : undefined),
 		};
 	},
 	color<L extends string>(defaultValue: string, label: L): ColorOption<L> {

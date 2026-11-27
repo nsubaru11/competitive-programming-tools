@@ -2,7 +2,7 @@ import {describe, expect, test} from "bun:test";
 import {SettingsService} from "@application/settings/settings-service";
 import {normalizeOptions, option} from "@domain/settings/option";
 import {createDefaultSettings, CURRENT_SETTINGS_VERSION, featureOptions, isFeatureEnabled, parseSettings, updateFeatureSettings, updateSiteFeatureSettings} from "@domain/settings/settings";
-import {isModifierSetting, isShortcutSetting, normalizeModifiers, normalizeShortcut} from "@domain/settings/shortcut";
+import {matchesShortcut, normalizeModifiers, normalizeShortcut, readModifierSetting, readShortcutSetting} from "@domain/settings/shortcut";
 import {easyTest} from "@features/easy-test/index";
 import {sourceComments} from "@features/source-comments/index";
 import {submissionHelper} from "@features/submission-helper/index";
@@ -131,7 +131,7 @@ describe("3.0 への移行", () => {
 	test("Easy Test+ のショートカットを OFF にしていた人は、Easy Test+ のキーを使わないままにする", () => {
 		const migrated = parseSettings({version: 1, features: {"easy-test": {enabled: true, options: {keyboardShortcuts: false, precompile: false}}}});
 		expect(migrated.features["easy-test"]).toEqual({enabled: true, options: {precompile: false}});
-		expect(migrated.features["keyboard-shortcuts"]?.options).toEqual({testAndSubmit: "none", testAll: "none", toggleEasyTest: "none"});
+		expect(migrated.features["keyboard-shortcuts"]?.options).toEqual({testAndSubmit: "", testAll: "", toggleEasyTest: ""});
 		const kept = parseSettings({version: 1, features: {"easy-test": {options: {keyboardShortcuts: true}}}});
 		expect(kept.features["keyboard-shortcuts"]).toBeUndefined();
 		// 新しい形式でキーを決めていれば、そちらを優先する
@@ -181,7 +181,16 @@ describe("キーの書き方", () => {
 		expect(normalizeShortcut("option+cmd+ctrl+[")).toBe("Ctrl+Alt+Cmd+[");
 		expect(normalizeShortcut("meta+p")).toBeNull();
 		expect(normalizeShortcut("ctrl+f12")).toBe("Ctrl+F12");
-		expect(isShortcutSetting("None")).toBe(true);
+	});
+
+	test("保存する値は短い名前にそろえ、読み直しても同じキーになる。none は空欄にする", () => {
+		expect(readShortcutSetting("None")).toBe("");
+		expect(readShortcutSetting("")).toBe("");
+		expect(readShortcutSetting("ctrl+arrowleft")).toBe("Ctrl+Left");
+		// 照合では空白の文字になるキーも、名前で保存する
+		expect(readShortcutSetting("Ctrl+space")).toBe("Ctrl+Space");
+		expect(normalizeShortcut("Ctrl+Space")).toBe("Ctrl+ ");
+		expect(readShortcutSetting("Ctrl+Control")).toBeUndefined();
 	});
 
 	test("修飾キーだけの設定は、修飾キーが1つ以上あり、ほかのキーを含まない", () => {
@@ -189,7 +198,18 @@ describe("キーの書き方", () => {
 		expect(normalizeModifiers("Cmd+Option")).toBe("Alt+Cmd");
 		expect(normalizeModifiers("Ctrl+Alt+1")).toBeNull();
 		expect(normalizeModifiers("")).toBeNull();
-		expect(isModifierSetting("none")).toBe(true);
-		expect(isModifierSetting("Ctrl+Shift+Alt")).toBe(true);
+		expect(readModifierSetting("none")).toBe("");
+		expect(readModifierSetting("shift+ctrl+alt")).toBe("Ctrl+Shift+Alt");
+		expect(readModifierSetting("Ctrl+1")).toBeUndefined();
+	});
+
+	test("押したキーで操作を探す。修飾キーだけの設定は、後ろに続けるキーまで押しても当たる", () => {
+		expect(matchesShortcut("Ctrl+Left", "Ctrl+ArrowLeft")).toBe(true);
+		expect(matchesShortcut("Ctrl+Enter", "Ctrl")).toBe(false);
+		expect(matchesShortcut("", "Ctrl")).toBe(false);
+		expect(matchesShortcut("Ctrl+Alt", "Ctrl+Alt", ["1"])).toBe(true);
+		expect(matchesShortcut("Ctrl+Alt", "Ctrl+Alt+1", ["1"])).toBe(true);
+		expect(matchesShortcut("Ctrl+Alt", "Ctrl+Alt+A", ["1"])).toBe(false);
+		expect(matchesShortcut("", "Ctrl", ["1"])).toBe(false);
 	});
 });
