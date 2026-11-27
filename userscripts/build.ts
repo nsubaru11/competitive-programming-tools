@@ -355,7 +355,7 @@ async function formatUserscriptOutput(outfile: string, banner: string, notices: 
 	await writeFile(outfile, `${banner}\n// @formatter:off\n${notices}${await formatOutput(body)}`, "utf8");
 }
 
-async function bundle(name: string, outdir: string, fileName: string, banner: string): Promise<void> {
+async function bundle(name: string, outdir: string, fileName: string, banner: string, footer = ""): Promise<void> {
 	await mkdir(outdir, {recursive: true});
 	const result = await Bun.build({
 		entrypoints: [scriptPaths(name).entry],
@@ -366,6 +366,7 @@ async function bundle(name: string, outdir: string, fileName: string, banner: st
 		naming: fileName,
 		minify: false,
 		banner,
+		footer,
 		alias: {"@shared": join(scriptDir, "../shared/src")},
 	} as Parameters<typeof Bun.build>[0]);
 
@@ -393,7 +394,6 @@ async function buildDev(name: string): Promise<void> {
 	const {devOutdir} = scriptPaths(name);
 	const bodyName = `${name}.body.js`;
 	const bodyFile = join(devOutdir, bodyName);
-	await bundle(name, devOutdir, bodyName, "");
 
 	// どのビルドが動いているかを、ページ側から確かめられるようにする
 	const builtAt = new Date().toISOString();
@@ -404,8 +404,7 @@ async function buildDev(name: string): Promise<void> {
 	const meta = await loadMeta(name);
 	// GM_info の版は導入した loader のヘッダーの値なので、導入し直さなくても本体の版が出るように差し替える
 	const gmInfo = `{...GM_info, script: {...GM_info.script, version: ${JSON.stringify(meta.version)}}}`;
-	const body = `((GM_info) => {\n${await readFile(bodyFile, "utf8")}\n${stamp}\n})(${gmInfo});\n`;
-	await writeFile(bodyFile, body, "utf8");
+	await bundle(name, devOutdir, bodyName, "((GM_info) => {", `${stamp}\n})(${gmInfo});`);
 
 	// 配布版と別のスクリプトにして、配布元からの更新で上書きされないようにする
 	const devMeta: ScriptMeta = {
