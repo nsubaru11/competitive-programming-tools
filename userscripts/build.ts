@@ -401,9 +401,12 @@ async function buildDev(name: string): Promise<void> {
 		`document.documentElement.dataset.userscriptBuild = ${JSON.stringify(builtAt)};`,
 		`console.info(${JSON.stringify(`[${name}] dev build ${builtAt}`)});`,
 	].join("\n");
-	await writeFile(bodyFile, `${await readFile(bodyFile, "utf8")}\n${stamp}\n`, "utf8");
-
 	const meta = await loadMeta(name);
+	// GM_info の版は導入した loader のヘッダーの値なので、導入し直さなくても本体の版が出るように差し替える
+	const gmInfo = `{...GM_info, script: {...GM_info.script, version: ${JSON.stringify(meta.version)}}}`;
+	const body = `((GM_info) => {\n${await readFile(bodyFile, "utf8")}\n${stamp}\n})(${gmInfo});\n`;
+	await writeFile(bodyFile, body, "utf8");
+
 	// 配布版と別のスクリプトにして、配布元からの更新で上書きされないようにする
 	const devMeta: ScriptMeta = {
 		...meta,

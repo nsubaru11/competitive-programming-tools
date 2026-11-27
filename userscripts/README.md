@@ -60,7 +60,7 @@ bun run --cwd userscripts ./build.ts CpToolkit
 bun run --cwd userscripts dev
 ```
 
-読み込まれたビルドの時刻は、ページの `<html>` の `data-userscript-build` とコンソールで確認できます。開発版は配布版と別のスクリプトなので、設定は引き継ぎません。`@match`、`@grant`、`@connect` が変わったときは、4 をやり直します。
+読み込まれたビルドの時刻は、ページの `<html>` の `data-userscript-build` とコンソールで確認できます。スクリプトの画面に出るバージョンは、本体をビルドした時点の `meta.json` の値です。Tampermonkey の一覧のバージョンは、貼り付けたときのままです。開発版は配布版と別のスクリプトなので、設定は引き継ぎません。`@match`、`@grant`、`@connect` が変わったときは、4 をやり直します。
 
 ## 型定義
 
