@@ -52,9 +52,8 @@ function collectPairs(dir: string): LocalSample[] {
 	}
 
 	// 入力・出力どちらか一方しか無いケースも含める
-	const keys = [...new Set([...inputs.keys(), ...outputs.keys()])].sort((a, b) =>
-		a.localeCompare(b, undefined, {numeric: true, sensitivity: "base"}),
-	);
+	const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: "base"});
+	const keys = [...new Set([...inputs.keys(), ...outputs.keys()])].sort(collator.compare);
 
 	const read = (name: string) => shared.normalizeNewlines(fs.readFileSync(path.join(dir, name), "utf8"));
 	const pairs: LocalSample[] = [];
