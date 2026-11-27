@@ -3192,9 +3192,10 @@ ${css}`,
 	};
 
 	function normalizeShortcut(text) {
-		const parts = text.split("+").map((part) => part.trim());
-		const key = parts.pop() ?? "";
-		const modifiers = readModifiers(parts);
+		const parts = text.split("+");
+		const last = parts.pop() ?? "";
+		const key = last === " " ? "Space" : last.trim();
+		const modifiers = readModifiers(parts.map((part) => part.trim()));
 		if (!modifiers) return null;
 		const named = NAMED_KEYS[key.toLowerCase()];
 		const normalizedKey =
@@ -3434,7 +3435,7 @@ ${css}`,
 		return h("span", {className: "shortcut-keys"}, ...keys.map((key) => h("kbd", {textContent: key})));
 	}
 
-	function createRow({definition, value, onChange}, {translate, dialog}) {
+	function createRow({definition, value, onChange}, {translate, dialog}, refreshFilter) {
 		let current = value;
 		let keys = createKeyCaps(current);
 		const label = translate(definition.label);
@@ -3451,6 +3452,7 @@ ${css}`,
 					keys.replaceWith(updated);
 					keys = updated;
 					onChange(next);
+					refreshFilter();
 				},
 			});
 		};
@@ -3464,11 +3466,14 @@ ${css}`,
 
 	function createShortcutList(params) {
 		const {entries, site, translate, dialog} = params;
+		let pressed = null;
+		const refreshFilter = () => {
+			if (pressed) filter(pressed);
+		};
 		const groups = [...Map.groupBy(entries, ({definition}) => definition.group)].map(([group, members]) => {
-			const rows = members.map((entry) => createRow(entry, params));
+			const rows = members.map((entry) => createRow(entry, params, refreshFilter));
 			return {element: createGroup(group, rows, site, translate), rows};
 		});
-		let pressed = null;
 		const searching = h("span", {className: "shortcut-searching", hidden: true});
 		const noMatch = h("p", {className: "empty", textContent: translate("settings.shortcutNoMatch"), hidden: true});
 		const filter = (next) => {

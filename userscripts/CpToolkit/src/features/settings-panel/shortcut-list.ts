@@ -30,7 +30,7 @@ function createKeyCaps(value: string): HTMLElement {
 }
 
 /** 操作の行。ダブルクリック、右クリック、Enter でキーを入力する画面を開く。 */
-function createRow({definition, value, onChange}: ShortcutEntry, {translate, dialog}: ShortcutListParams): Row {
+function createRow({definition, value, onChange}: ShortcutEntry, {translate, dialog}: ShortcutListParams, refreshFilter: () => void): Row {
 	let current = value;
 	let keys = createKeyCaps(current);
 	const label = translate(definition.label);
@@ -47,6 +47,7 @@ function createRow({definition, value, onChange}: ShortcutEntry, {translate, dia
 				keys.replaceWith(updated);
 				keys = updated;
 				onChange(next);
+				refreshFilter();
 			},
 		});
 	};
@@ -61,12 +62,15 @@ function createRow({definition, value, onChange}: ShortcutEntry, {translate, dia
 /** ショートカットキーを見出しごとに並べ、押したキーで絞り込めるようにする。 */
 export function createShortcutList(params: ShortcutListParams): HTMLElement {
 	const {entries, site, translate, dialog} = params;
+	let pressed: PressedShortcut | null = null;
+	const refreshFilter = () => {
+		if (pressed) filter(pressed);
+	};
 	const groups = [...Map.groupBy(entries, ({definition}) => definition.group)].map(([group, members]) => {
-		const rows = members.map((entry) => createRow(entry, params));
+		const rows = members.map((entry) => createRow(entry, params, refreshFilter));
 		return {element: createGroup(group, rows, site, translate), rows};
 	});
 
-	let pressed: PressedShortcut | null = null;
 	const searching = h("span", {className: "shortcut-searching", hidden: true});
 	const noMatch = h("p", {className: "empty", textContent: translate("settings.shortcutNoMatch"), hidden: true});
 	const filter = (next: PressedShortcut | null): void => {

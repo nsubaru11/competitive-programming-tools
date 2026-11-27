@@ -40,9 +40,10 @@ const SETTING_KEY_NAMES: Readonly<Record<string, string>> = {
  * 修飾キーは Ctrl、Shift、Alt、Cmd の順にし、文字のキーは大文字にする。読めなければ null。
  */
 export function normalizeShortcut(text: string): string | null {
-	const parts = text.split("+").map((part) => part.trim());
-	const key = parts.pop() ?? "";
-	const modifiers = readModifiers(parts);
+	const parts = text.split("+");
+	const last = parts.pop() ?? "";
+	const key = last === " " ? "Space" : last.trim();
+	const modifiers = readModifiers(parts.map((part) => part.trim()));
 	if (!modifiers) return null;
 	const named = NAMED_KEYS[key.toLowerCase()];
 	const normalizedKey = named ?? (/^\S$/u.test(key) ? key.toUpperCase() : /^F([1-9]|1[0-2])$/i.test(key) ? key.toUpperCase() : null);

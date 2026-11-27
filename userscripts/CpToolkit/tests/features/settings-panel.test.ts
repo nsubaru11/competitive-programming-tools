@@ -425,6 +425,23 @@ describe("ショートカットキーの設定", () => {
 		expect(caps(rows[0])).toEqual(["Ctrl", "Shift", "Left"]);
 	});
 
+	test("Space を割り当てて検索し、割り当てを削除すると検索結果から消える", async () => {
+		const {root, rows, caps, editor, doubleClick} = await open();
+		doubleClick(rows[0]);
+		pressKey(" ", {ctrlKey: true, code: "Space"}, editor().input);
+		editor().click("settings.shortcutOk");
+		expect(caps(rows[0])).toEqual(["Ctrl", "Space"]);
+
+		root.querySelector<HTMLButtonElement>(".shortcut-search")?.click();
+		pressKey(" ", {ctrlKey: true, code: "Space"}, editor().input);
+		editor().click("settings.shortcutOk");
+		expect(rows.map(row => row.hidden)).toEqual([false, true, true]);
+		doubleClick(rows[0]);
+		editor().click("settings.shortcutRemove");
+		expect(rows.every(row => row.hidden)).toBe(true);
+		expect(root.querySelector<HTMLElement>(".shortcut-list .empty")?.hidden).toBe(false);
+	});
+
 	test("右クリックで開き、削除すると空欄にする。キャンセルと Esc では変えない", async () => {
 		const {settings, rows, caps, editor} = await open();
 		const rightClick = () => rows[1]?.dispatchEvent(new MouseEvent("contextmenu", {bubbles: true, cancelable: true}));
