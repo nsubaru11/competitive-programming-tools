@@ -12,6 +12,8 @@ Local Runner の **実行バックエンド**です。 JVM を 1 つ起動しっ
 |------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | app  | `Dispatcher`                               | エントリポイント。`受信→解析→（必要なら受理通知）→実行→応答` の配線のみ                                                                 |
 | 解析 | `JavaSourceTransformer`、`JavaBundleNames` | javac で依存型と参照先を特定し、提出用の `Main.java` を生成して名前解決を確かめます。                                                   |
+| 解析 | `JavaLibraryIndex`                         | ライブラリの構文木、型とファイルの対応、依存関係を保存します。                                                                          |
+| 解析 | `JavaAnalysisTask`                         | 検証した javac タスクを保持し、同じ全文のコンパイルではバイトコードの生成から進めます。                                                 |
 | 通信 | `MessageChannel`                           | 行 IO ＋ 型付きメッセージ ⇄ 行 の変換（`ProtocolCodec` へ委譲）。`send(Response)` / `receive():ParseOutcome`                            |
 | 変換 | `ProtocolCodec`                            | 文字列・Base64・タブ・コマンド名を扱う唯一の場所。`parse` / `encode`（`ParseOutcome`/`ValidRequest`/`ProtocolError` を含む）            |
 | 実行 | `Executor`                                 | 要求をサービスへ振り分ける薄いルーター（`handle(Request):Response`）                                                                    |
